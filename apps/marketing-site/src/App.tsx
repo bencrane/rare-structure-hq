@@ -2,15 +2,24 @@ import { Route, Routes } from "react-router-dom";
 import { SiteHeader } from "./components/SiteHeader";
 import Home from "./routes/Home";
 import Briefing from "./routes/Briefing";
+import Proposal from "./routes/Proposal";
 
 export function App() {
   return (
-    <>
-      <SiteHeader />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/briefing" element={<Briefing />} />
-      </Routes>
-    </>
+    <Routes>
+      <Route path="/proposal" element={<Proposal />} />
+      <Route
+        path="*"
+        element={
+          <>
+            <SiteHeader />
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/briefing" element={<Briefing />} />
+            </Routes>
+          </>
+        }
+      />
+    </Routes>
   );
 }

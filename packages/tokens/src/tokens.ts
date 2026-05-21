@@ -83,7 +83,7 @@ export const color = {
     subtle: "#1c2333",
     default: "#2d3548",
     strong: "#3f4b63",
-    accent: "rgba(52, 97, 196, 0.4)", // accent.primary @ 40%
+    accent: "rgba(30, 58, 110, 0.4)", // accent.primary @ 40%
   },
   text: {
     // Contrast on surface.base:
@@ -99,15 +99,15 @@ export const color = {
     default: "#e4e4e7", // zinc-200
     muted: "#a1a1aa", // zinc-400
     subtle: "#82828c", // body-text contrast floor
-    accent: "#93b4f5", // restrained slate-blue accent text on dark
+    accent: "#7b9fd4", // muted steel-blue accent text on dark
     onAccent: "#fafafa", // light text on accent.primary
   },
   accent: {
-    primary: "#3461c4", // institutional slate-blue
-    primaryHover: "#5b8def", // lighter on hover
-    primaryActive: "#2f5bc0", // pressed
-    soft: "rgba(52, 97, 196, 0.1)",
-    softer: "rgba(52, 97, 196, 0.05)",
+    primary: "#1e3a6e", // deep midnight blue
+    primaryHover: "#2a4f8a", // slightly lighter on hover
+    primaryActive: "#182f5a", // pressed
+    soft: "rgba(30, 58, 110, 0.12)",
+    softer: "rgba(30, 58, 110, 0.06)",
   },
   state: {
     info: "#60a5fa", // blue-400 — 7.83:1
