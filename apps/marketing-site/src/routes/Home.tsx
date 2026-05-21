@@ -11,6 +11,14 @@ const BRIEFINGS = [
     stat: "847 entities · 68% UCC overlap",
     date: "May 2026",
   },
+  {
+    to: "/briefings/sba-pipeline",
+    title: "SBA 7(a) Pipeline Monitor",
+    description:
+      "23,724 undisbursed SBA approvals totaling $8.8B — sliced by industry, franchise, lender, and state. The disbursement gap is the origination window.",
+    stat: "$8.8B pending · 16% 2025 cancellation spike",
+    date: "May 2026",
+  },
 ];
 
 export default function Home() {
