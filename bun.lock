@@ -4,6 +4,10 @@
   "workspaces": {
     "": {
       "name": "rare-structure-hq",
+      "dependencies": {
+        "framer-motion": "^12.39.0",
+        "marketing-site": "",
+      },
       "devDependencies": {
         "@biomejs/biome": "1.9.4",
         "@playwright/test": "1.49.0",

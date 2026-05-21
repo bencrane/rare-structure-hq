@@ -1,17 +1,16 @@
-/**
- * App — the marketing-site router shell.
- *
- * One route: `/` → the Rare Structure homepage. The shell is deliberately
- * thin; the site is a single institutional page.
- */
-
 import { Route, Routes } from "react-router-dom";
+import { SiteHeader } from "./components/SiteHeader";
 import Home from "./routes/Home";
+import Briefing from "./routes/Briefing";
 
 export function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Home />} />
-    </Routes>
+    <>
+      <SiteHeader />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/briefing" element={<Briefing />} />
+      </Routes>
+    </>
   );
 }

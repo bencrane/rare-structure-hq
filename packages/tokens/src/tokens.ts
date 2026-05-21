@@ -63,7 +63,7 @@ export type FontSizeToken = keyof typeof fontSize;
 
 /**
  * Color tokens — semantic roles. Concrete hex values target WCAG AA contrast on
- * the `surface.base` (#09090b) background.
+ * the `surface.base` (#0a0e1a) background.
  *
  * Naming: `surface.*` (bg), `border.*`, `text.*`, `accent.*`, `state.*`.
  *
@@ -71,18 +71,18 @@ export type FontSizeToken = keyof typeof fontSize;
  * carries `text.onAccent` (#fafafa) at 5.51:1 (AA). One restrained accent, tunable.
  */
 export const color = {
-  // Surfaces — zinc-anchored, dark.
+  // Surfaces — midnight-blue-anchored, dark.
   surface: {
-    base: "#09090b", // zinc-950
-    raised: "#18181b", // zinc-900
-    sunken: "#000000",
-    overlay: "rgba(9, 9, 11, 0.8)",
-    "raised-translucent": "rgba(24, 24, 27, 0.5)",
+    base: "#0a0e1a",
+    raised: "#141827",
+    sunken: "#050812",
+    overlay: "rgba(10, 14, 26, 0.8)",
+    "raised-translucent": "rgba(20, 24, 39, 0.5)",
   },
   border: {
-    subtle: "#27272a", // zinc-800
-    default: "#3f3f46", // zinc-700
-    strong: "#52525b", // zinc-600
+    subtle: "#1c2333",
+    default: "#2d3548",
+    strong: "#3f4b63",
     accent: "rgba(52, 97, 196, 0.4)", // accent.primary @ 40%
   },
   text: {

@@ -32,3 +32,13 @@ body {
 #root {
   min-height: 100vh;
 }
+
+.rs-scanlines {
+  background: repeating-linear-gradient(
+    0deg,
+    var(--color-surface-sunken) 0px,
+    var(--color-surface-sunken) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}

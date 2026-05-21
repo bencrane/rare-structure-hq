@@ -32,5 +32,9 @@
     "eslint-plugin-rare-structure-hq": "workspace:*",
     "playwright": "1.49.0",
     "typescript": "5.7.2"
+  },
+  "dependencies": {
+    "framer-motion": "^12.39.0",
+    "marketing-site": "workspace:*"
   }
 }
