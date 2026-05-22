@@ -1,10 +1,27 @@
 /**
- * Display formatters for the catalyst map demo. Kept local to `src/demo/**`.
+ * Display formatters for the Rare Structure cockpit. Kept local to `src/demo/**`.
  */
 
-import type { CatalystSeverity } from "@rare-structure-hq/shared";
+/** Compact USD — 12_400_000 → "$12.4M", 1_900_000_000 → "$1.9B". */
+export function fmtUsd(n: number): string {
+  const abs = Math.abs(n);
+  if (abs >= 1_000_000_000) return `$${(n / 1_000_000_000).toFixed(1)}B`;
+  if (abs >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
+  if (abs >= 1_000) return `$${Math.round(n / 1_000)}K`;
+  return `$${Math.round(n)}`;
+}
 
-/** ISO timestamp → "May 12, 2026". */
+/** Full USD with thousands separators — "$12,400,000". */
+export function fmtUsdFull(n: number): string {
+  return `$${Math.round(n).toLocaleString("en-US")}`;
+}
+
+/** Integer with thousands separators. */
+export function fmtCount(n: number): string {
+  return n.toLocaleString("en-US");
+}
+
+/** ISO date → "May 12, 2026". */
 export function fmtDate(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
@@ -15,48 +32,9 @@ export function fmtDate(iso: string): string {
   });
 }
 
-/** ISO timestamp → "May 12" (compact, no year). */
-export function fmtDateShort(iso: string): string {
+/** ISO date → "May 2026". */
+export function fmtMonthYear(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}
-
-/** Thesis-fit score (0–100) → display tier for pill styling. */
-export function fitTier(score: number): "high" | "mid" | "low" {
-  return score >= 90 ? "high" : score >= 75 ? "mid" : "low";
-}
-
-/** Catalyst severity → the badge tone token name. */
-export function severityTone(severity: CatalystSeverity): "error" | "warn" | "info" | "default" {
-  switch (severity) {
-    case "critical":
-      return "error";
-    case "high":
-      return "warn";
-    case "medium":
-      return "info";
-    default:
-      return "default";
-  }
-}
-
-/** Catalyst kind enum → a human label. */
-export function kindLabel(kind: string): string {
-  switch (kind) {
-    case "regulatory":
-      return "Regulatory";
-    case "financing":
-      return "Financing";
-    case "leadership":
-      return "Leadership";
-    case "supply_chain":
-      return "Supply chain";
-    case "litigation":
-      return "Litigation";
-    case "market_structure":
-      return "Market structure";
-    default:
-      return "Other";
-  }
+  return d.toLocaleDateString("en-US", { month: "short", year: "numeric" });
 }

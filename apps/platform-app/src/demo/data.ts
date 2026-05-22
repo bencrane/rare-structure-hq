@@ -1,391 +1,1216 @@
 /**
- * Dummy data for the catalyst map demo — the single isolated data module.
+ * Fixture data for the Rare Structure cockpit — the single data module.
  *
- * Everything the demo plots and renders comes from here. It is deliberately
- * hardcoded: the experience, rhythm, and design get nailed before any real
- * catalyst-signal pipeline is wired in. When real data arrives, this one
- * module is the swap point — nothing else in `src/demo/**` reads data
- * directly.
+ * Everything the cockpit plots and renders comes from here. It is deliberately
+ * hardcoded dummy data: the experience, rhythm, and design get nailed before
+ * the platform-api BFF (fronting data-engine-x's Lance layer) is wired in.
+ * When real data arrives, this one module is the swap point — nothing else in
+ * `src/demo/**` reads data directly.
  *
- * The contract: every plotted catalyst is built around a `CatalystEvent`
- * record that is **validated at module load against `catalystEventSchema`
- * from `@rare-structure-hq/shared`** (see `CATALYST_EVENTS` below — the
- * `.parse()` call is the guarantee). The demo-presentation fields the UI
- * needs on top of the schema core (callout copy, thesis-fit reasoning,
- * deal scale) hang off a thin `DemoCatalyst` wrapper, with the validated
- * `CatalystEvent` as its typed spine.
- *
- * The cartographic geometry (state outlines, the scatter field, the catalyst
- * point pixel coordinates) lives in `us-geo.ts` — GENERATED, joined here by
- * id. The non-geographic demo copy (firehose count, the thesis-scan steps)
- * is also here.
+ * The values are fabricated; the *shape* is the contract. A plotted point is a
+ * `Company`; its "Capital Catalysts" (a federal-award record, a UCC-1 lien, a
+ * BDC loan nearing maturity) are the structural signals shown on its profile.
  */
 
-import {
-  type CatalystEvent,
-  type CatalystKind,
-  catalystEventSchema,
-} from "@rare-structure-hq/shared";
-import { GEO_CATALYST_POINTS, type GeoCatalystPoint } from "./us-geo";
+import { fmtMonthYear, fmtUsd, fmtUsdFull } from "./format";
+import type {
+  AggregateBar,
+  CapitalCatalyst,
+  Command,
+  Company,
+  Industry,
+  IndustryKey,
+  MapQuery,
+} from "./types";
+
+// The headline firehose number — shown in the terminal header.
+export const TRACKED_ENTITIES = 4_120_000;
+
+// Reference "today" for award-recency derivation. Fixed: the cockpit runs on a
+// frozen fixture — data staleness is a non-issue by design.
+const TODAY = new Date("2026-05-21");
+const ACTIVE_WINDOW_DAYS = 90;
 
 // ───────────────────────────────────────────────────────────────────
-// The viewer — a capital partner. The demo runs from this firm's seat;
-// the Match phase scores catalysts against this thesis.
+// Industries — the query verticals.
 // ───────────────────────────────────────────────────────────────────
 
-export type CapitalPartner = {
-  /** Display name of the partner firm. */
-  name: string;
-  /** Short institutional descriptor. */
-  kind: string;
-  /** The structural thesis the firm originates against. */
-  thesisLine: string;
-  /** Check size the firm writes. */
-  checkSize: string;
-  /** Stage / structural posture. */
-  posture: string;
-  /** Sectors the thesis covers. */
-  sectors: string[];
-  /** Geographies the thesis covers. */
-  geographies: string[];
-  /** The catalyst kinds the thesis is tuned to. */
-  catalystKinds: CatalystKind[];
-};
-
-export const CAPITAL_PARTNER: CapitalPartner = {
-  name: "Cardinal Bluff Capital",
-  kind: "Structural-origination partner",
-  thesisLine:
-    "Control positions in industrials and energy infrastructure dislocated by regulatory and supply-chain structural change.",
-  checkSize: "$40M – $120M equity",
-  posture: "Control / structured minority",
-  sectors: ["Energy infrastructure", "Industrials", "Materials"],
-  geographies: ["US — Gulf, Mountain West, Great Lakes"],
-  catalystKinds: ["regulatory", "supply_chain", "market_structure", "financing"],
-};
-
-// Headline catalyst universe count — shown in the terminal header. The map
-// plots the showpiece subset; this is the firehose the engine watches.
-export const ACTIVE_CATALYST_COUNT = 8_412;
-
-// ───────────────────────────────────────────────────────────────────
-// Phase 2 — the staged thesis-resolution scan. Each step is a discrete
-// line in the terminal scan; the demo cascades the firehose down to the
-// thesis-matched set. Copy is plain: what the engine is actually doing.
-// ───────────────────────────────────────────────────────────────────
-
-export type ScanStep = {
-  label: string;
-  detail: string;
-};
-
-export const SCAN_STEPS: ScanStep[] = [
-  { label: "Loading partner thesis", detail: "Cardinal Bluff Capital" },
-  { label: "Filtering catalyst firehose", detail: "8,412 live signals" },
-  { label: "Scoring structural fit", detail: "sector · geography · kind" },
-  { label: "Ranking matched catalysts", detail: "thesis-weighted" },
+export const INDUSTRIES: Industry[] = [
+  { key: "heavy_construction", label: "Heavy Construction", naicsPrefix: "237" },
+  { key: "energy_infrastructure", label: "Energy Infrastructure", naicsPrefix: "221" },
+  { key: "industrial_manufacturing", label: "Industrial Manufacturing", naicsPrefix: "333" },
+  { key: "defense_aerospace", label: "Defense & Aerospace", naicsPrefix: "336" },
+  { key: "it_services", label: "IT & Professional Services", naicsPrefix: "541" },
+  { key: "healthcare_life_sciences", label: "Healthcare & Life Sciences", naicsPrefix: "621" },
+  { key: "transportation_logistics", label: "Transportation & Logistics", naicsPrefix: "484" },
 ];
 
-/** Per-step hold (ms). Sum + the final settle = the full scan duration. */
-export const SCAN_STEP_MS = 460;
+const INDUSTRY_BY_KEY: Record<IndustryKey, Industry> = Object.fromEntries(
+  INDUSTRIES.map((i) => [i.key, i]),
+) as Record<IndustryKey, Industry>;
 
-// ───────────────────────────────────────────────────────────────────
-// The plotted catalysts.
-//
-// Each `DemoCatalyst` carries a `CatalystEvent` (the validated schema
-// spine) plus the demo-presentation fields. `geoId` joins to the pixel
-// coordinates in `us-geo.ts`.
-// ───────────────────────────────────────────────────────────────────
-
-/** A thesis-fit signal — one reason the engine routed a catalyst. */
-export type ThesisReason = {
-  kind: "sector" | "geo" | "catalyst-kind" | "scale" | "timing";
-  label: string;
-};
-
-/** A plotted catalyst — schema-validated event + demo-presentation fields. */
-export type DemoCatalyst = {
-  /** Joins to `GEO_CATALYST_POINTS` in `us-geo.ts`. */
-  geoId: string;
-  /** The validated schema record — the typed, contract-conforming spine. */
-  event: CatalystEvent;
-  /** Short label shown in the map callout (e.g. the entity / asset). */
-  subject: string;
-  /** Deal-scale framing shown in the callout + modal. */
-  scale: string;
-  /** 0–100 thesis-fit score — demo display only. */
-  thesisFit: number;
-  /** Why the engine routed this catalyst to the partner. */
-  thesisReasons: ThesisReason[];
-};
-
-/**
- * Raw catalyst seeds. The `event` object on each is `.parse()`d through
- * `catalystEventSchema` below — so every record provably conforms to the
- * `@rare-structure-hq/shared` contract, including the optional `location`
- * field that drives map plotting.
- */
-const CATALYST_SEEDS: Array<{
-  geoId: string;
-  subject: string;
-  scale: string;
-  thesisFit: number;
-  thesisReasons: ThesisReason[];
-  event: CatalystEvent;
-}> = [
-  {
-    geoId: "permian-tx",
-    subject: "Permian midstream operator",
-    scale: "$310M enterprise value",
-    thesisFit: 96,
-    thesisReasons: [
-      { kind: "catalyst-kind", label: "Regulatory — methane rule forces capital reallocation" },
-      { kind: "sector", label: "Energy infrastructure — core thesis sector" },
-      { kind: "geo", label: "Permian Basin — within the Gulf coverage geography" },
-      { kind: "scale", label: "Fits the $40M–$120M control-equity range" },
-    ],
-    event: catalystEventSchema.parse({
-      id: "11111111-1111-1111-1111-111111111101",
-      kind: "regulatory",
-      severity: "critical",
-      headline: "Final methane rule strands gathering capacity across Permian midstream",
-      occurred_at: "2026-05-12T14:00:00Z",
-      ingested_at: "2026-05-12T16:20:00Z",
-      source: "regulatory-feed · EPA docket",
-      status: "thesis_open",
-      summary:
-        "The finalized methane rule compresses the economics of legacy gathering systems, forcing operators into a recapitalization window — a control-equity opening for a structural buyer.",
-      tags: ["energy", "midstream", "Permian", "methane-rule"],
-      confidence: 0.91,
-      location: { lon: -102.0779, lat: 31.9974, region: "Permian Basin, TX" },
-    }),
-  },
-  {
-    geoId: "bay-area-ca",
-    subject: "Grid-scale storage developer",
-    scale: "$85M growth round",
-    thesisFit: 88,
-    thesisReasons: [
-      {
-        kind: "catalyst-kind",
-        label: "Financing — bridge round signals a structured-entry window",
-      },
-      { kind: "sector", label: "Energy infrastructure — core thesis sector" },
-      { kind: "scale", label: "Within the structured-minority check range" },
-      { kind: "timing", label: "Round closing inside 60 days — actionable now" },
-    ],
-    event: catalystEventSchema.parse({
-      id: "11111111-1111-1111-1111-111111111102",
-      kind: "financing",
-      severity: "high",
-      headline: "Grid-scale storage developer opens bridge round amid interconnection backlog",
-      occurred_at: "2026-05-09T09:30:00Z",
-      ingested_at: "2026-05-09T12:05:00Z",
-      source: "financing-feed · proprietary",
-      status: "triaged",
-      summary:
-        "An interconnection-queue delay has pushed a well-regarded storage developer into a bridge round — a structured-entry window ahead of a larger raise.",
-      tags: ["energy", "storage", "California", "bridge-round"],
-      confidence: 0.78,
-      location: { lon: -122.2712, lat: 37.8044, region: "Bay Area, CA" },
-    }),
-  },
-  {
-    geoId: "gulf-la",
-    subject: "Gulf petrochemical complex",
-    scale: "$520M carve-out",
-    thesisFit: 92,
-    thesisReasons: [
-      { kind: "catalyst-kind", label: "Supply-chain — feedstock dislocation forces a carve-out" },
-      { kind: "sector", label: "Materials — core thesis sector" },
-      { kind: "geo", label: "Gulf Coast — within the coverage geography" },
-      { kind: "catalyst-kind", label: "Market-structure shift in feedstock pricing" },
-    ],
-    event: catalystEventSchema.parse({
-      id: "11111111-1111-1111-1111-111111111103",
-      kind: "supply_chain",
-      severity: "high",
-      headline: "Feedstock dislocation pushes Gulf petrochemical parent to carve out a complex",
-      occurred_at: "2026-05-06T11:00:00Z",
-      ingested_at: "2026-05-06T15:40:00Z",
-      source: "supply-chain-feed · trade press",
-      status: "thesis_open",
-      summary:
-        "A sustained feedstock-cost dislocation has made a non-core Gulf complex a divestiture candidate — a carve-out a structural buyer can reposition.",
-      tags: ["materials", "petrochemical", "Gulf-Coast", "carve-out"],
-      confidence: 0.84,
-      location: { lon: -90.0715, lat: 29.9511, region: "Gulf Coast, LA" },
-    }),
-  },
-  {
-    geoId: "great-lakes-mi",
-    subject: "Auto-supplier tier-1",
-    scale: "$140M control position",
-    thesisFit: 90,
-    thesisReasons: [
-      { kind: "catalyst-kind", label: "Market-structure — EV transition strands an ICE supplier" },
-      { kind: "sector", label: "Industrials — core thesis sector" },
-      { kind: "geo", label: "Great Lakes — within the coverage geography" },
-      { kind: "scale", label: "Fits the control-equity range" },
-    ],
-    event: catalystEventSchema.parse({
-      id: "11111111-1111-1111-1111-111111111104",
-      kind: "market_structure",
-      severity: "high",
-      headline: "EV transition strands a Great Lakes ICE-powertrain tier-1 supplier",
-      occurred_at: "2026-04-29T13:15:00Z",
-      ingested_at: "2026-04-29T17:00:00Z",
-      source: "market-structure-feed · analyst",
-      status: "triaged",
-      summary:
-        "An ICE-powertrain tier-1 faces a structural demand cliff as OEM programs sunset — a control opening to reposition the asset's tooling base.",
-      tags: ["industrials", "automotive", "Michigan", "EV-transition"],
-      confidence: 0.8,
-      location: { lon: -83.0458, lat: 42.3314, region: "Detroit, MI" },
-    }),
-  },
-  {
-    geoId: "northeast-ny",
-    subject: "Regional utility holding co.",
-    scale: "$70M structured minority",
-    thesisFit: 73,
-    thesisReasons: [
-      { kind: "catalyst-kind", label: "Leadership — new CEO signals a structural reset" },
-      { kind: "sector", label: "Energy infrastructure — core thesis sector" },
-      { kind: "scale", label: "Within the structured-minority range" },
-    ],
-    event: catalystEventSchema.parse({
-      id: "11111111-1111-1111-1111-111111111105",
-      kind: "leadership",
-      severity: "medium",
-      headline: "Northeast utility holding company installs a turnaround chief executive",
-      occurred_at: "2026-05-02T08:00:00Z",
-      ingested_at: "2026-05-02T10:30:00Z",
-      source: "leadership-feed · filings",
-      status: "ingested",
-      summary:
-        "A new chief executive with a restructuring mandate signals a structural reset at a regional utility holding company — an early-stage origination signal.",
-      tags: ["energy", "utility", "New-York", "leadership-change"],
-      confidence: 0.55,
-      location: { lon: -73.9712, lat: 40.7831, region: "New York, NY" },
-    }),
-  },
-  {
-    geoId: "southeast-ga",
-    subject: "Port logistics operator",
-    scale: "$95M growth equity",
-    thesisFit: 79,
-    thesisReasons: [
-      { kind: "catalyst-kind", label: "Supply-chain — nearshoring reroutes container volume" },
-      { kind: "sector", label: "Industrials — core thesis sector" },
-      { kind: "scale", label: "Within the check range" },
-    ],
-    event: catalystEventSchema.parse({
-      id: "11111111-1111-1111-1111-111111111106",
-      kind: "supply_chain",
-      severity: "medium",
-      headline: "Nearshoring reroutes container volume toward a Southeast port operator",
-      occurred_at: "2026-04-24T10:45:00Z",
-      ingested_at: "2026-04-24T14:10:00Z",
-      source: "supply-chain-feed · port data",
-      status: "triaged",
-      summary:
-        "A sustained nearshoring shift is concentrating container volume at a Southeast port — a growth-equity opening for the logistics operator that handles it.",
-      tags: ["industrials", "logistics", "Georgia", "nearshoring"],
-      confidence: 0.68,
-      location: { lon: -81.0912, lat: 32.0809, region: "Savannah, GA" },
-    }),
-  },
-  {
-    geoId: "mountain-co",
-    subject: "Critical-minerals processor",
-    scale: "$210M control position",
-    thesisFit: 94,
-    thesisReasons: [
-      { kind: "catalyst-kind", label: "Regulatory — domestic-content rule lifts a processor" },
-      { kind: "sector", label: "Materials — core thesis sector" },
-      { kind: "geo", label: "Mountain West — within the coverage geography" },
-      { kind: "scale", label: "Fits the $40M–$120M control-equity range" },
-    ],
-    event: catalystEventSchema.parse({
-      id: "11111111-1111-1111-1111-111111111107",
-      kind: "regulatory",
-      severity: "critical",
-      headline: "Domestic-content rule resets the economics of a Mountain West minerals processor",
-      occurred_at: "2026-05-14T15:30:00Z",
-      ingested_at: "2026-05-14T18:00:00Z",
-      source: "regulatory-feed · agency rule",
-      status: "thesis_open",
-      summary:
-        "A domestic-content procurement rule structurally advantages a US critical-minerals processor — a control opening ahead of a demand step-change.",
-      tags: ["materials", "critical-minerals", "Colorado", "domestic-content"],
-      confidence: 0.88,
-      location: { lon: -104.9903, lat: 39.7392, region: "Denver, CO" },
-    }),
-  },
-  {
-    geoId: "pnw-wa",
-    subject: "Hydropower-adjacent operator",
-    scale: "$60M structured minority",
-    thesisFit: 70,
-    thesisReasons: [
-      { kind: "catalyst-kind", label: "Litigation — water-rights ruling reshapes the asset" },
-      { kind: "sector", label: "Energy infrastructure — core thesis sector" },
-      { kind: "geo", label: "Pacific Northwest — adjacent to coverage" },
-    ],
-    event: catalystEventSchema.parse({
-      id: "11111111-1111-1111-1111-111111111108",
-      kind: "litigation",
-      severity: "medium",
-      headline: "Water-rights ruling reshapes a Pacific Northwest hydropower-adjacent operator",
-      occurred_at: "2026-04-19T12:00:00Z",
-      ingested_at: "2026-04-19T16:30:00Z",
-      source: "litigation-feed · docket",
-      status: "ingested",
-      summary:
-        "A water-rights ruling alters the operating envelope of a hydropower-adjacent asset — an early structural signal worth tracking into a thesis.",
-      tags: ["energy", "hydropower", "Washington", "water-rights"],
-      confidence: 0.5,
-      location: { lon: -120.7401, lat: 47.7511, region: "Columbia Basin, WA" },
-    }),
-  },
-];
-
-/** The plotted catalysts — schema-validated, joined to geometry by id. */
-export const DEMO_CATALYSTS: DemoCatalyst[] = CATALYST_SEEDS.map((seed) => ({
-  geoId: seed.geoId,
-  event: seed.event,
-  subject: seed.subject,
-  scale: seed.scale,
-  thesisFit: seed.thesisFit,
-  thesisReasons: seed.thesisReasons,
-}));
-
-/** Just the validated `CatalystEvent` records — the contract-conforming layer. */
-export const CATALYST_EVENTS: CatalystEvent[] = DEMO_CATALYSTS.map((c) => c.event);
-
-/** Look up a plotted catalyst by its geometry id. */
-export function catalystByGeoId(geoId: string): DemoCatalyst | undefined {
-  return DEMO_CATALYSTS.find((c) => c.geoId === geoId);
+export function industryLabel(key: IndustryKey): string {
+  return INDUSTRY_BY_KEY[key].label;
 }
 
-/** Geometry point + its catalyst payload, zipped — what the map renders. */
-export type PlottedCatalyst = {
-  point: GeoCatalystPoint;
-  catalyst: DemoCatalyst;
+// ───────────────────────────────────────────────────────────────────
+// Company seeds — the compact authored data. `buildCompany` expands each
+// into a full `Company`, deriving award-recency and assembling the
+// Capital Catalysts. `x`/`y` are pixel coords in the us-geo 1000x590 viewBox.
+// ───────────────────────────────────────────────────────────────────
+
+type UccSeed = {
+  lender: string;
+  filed: string;
+  collateral: string;
+  estAmount: number;
+  lienCount: number;
 };
 
-export const PLOTTED_CATALYSTS: PlottedCatalyst[] = GEO_CATALYST_POINTS.flatMap((point) => {
-  const catalyst = catalystByGeoId(point.id);
-  return catalyst ? [{ point, catalyst }] : [];
-});
+type BdcSeed = {
+  lender: string;
+  facility: string;
+  loanSize: number;
+  maturity: string;
+};
+
+type CompanySeed = {
+  id: string;
+  name: string;
+  industry: IndustryKey;
+  naics: string;
+  naicsLabel: string;
+  city: string;
+  state: string;
+  x: number;
+  y: number;
+  founded: number;
+  employees: string;
+  totalAwarded: number;
+  contractCount: number;
+  latestAwardDate: string;
+  topAgency: string;
+  signatureAward: string;
+  ucc?: UccSeed;
+  bdc?: BdcSeed;
+};
+
+const SEEDS: CompanySeed[] = [
+  // ── Heavy Construction ────────────────────────────────────────────
+  {
+    id: "GRC4XK29M7PT",
+    name: "Granite Ridge Constructors",
+    industry: "heavy_construction",
+    naics: "237310",
+    naicsLabel: "Highway, Street & Bridge Construction",
+    city: "Denver",
+    state: "CO",
+    x: 370,
+    y: 285,
+    founded: 1986,
+    employees: "900–2,500",
+    totalAwarded: 184_000_000,
+    contractCount: 47,
+    latestAwardDate: "2026-04-08",
+    topAgency: "U.S. Army Corps of Engineers",
+    signatureAward: "Multi-year USACE highway & bridge rehabilitation IDIQ",
+    ucc: {
+      lender: "Caterpillar Financial Services",
+      filed: "2025-09-12",
+      collateral: "Heavy equipment fleet",
+      estAmount: 28_000_000,
+      lienCount: 3,
+    },
+  },
+  {
+    id: "CSC8MT41QW2R",
+    name: "Cascade Civil Group",
+    industry: "heavy_construction",
+    naics: "237990",
+    naicsLabel: "Other Heavy & Civil Engineering Construction",
+    city: "Seattle",
+    state: "WA",
+    x: 172,
+    y: 78,
+    founded: 1994,
+    employees: "400–900",
+    totalAwarded: 96_500_000,
+    contractCount: 31,
+    latestAwardDate: "2026-03-02",
+    topAgency: "Department of Transportation",
+    signatureAward: "Cascadia corridor seismic-retrofit program",
+  },
+  {
+    id: "LSI2QW73KX9N",
+    name: "Lone Star Infrastructure",
+    industry: "heavy_construction",
+    naics: "237310",
+    naicsLabel: "Highway, Street & Bridge Construction",
+    city: "Houston",
+    state: "TX",
+    x: 560,
+    y: 478,
+    founded: 1978,
+    employees: "2,500–6,000",
+    totalAwarded: 312_000_000,
+    contractCount: 58,
+    latestAwardDate: "2026-05-04",
+    topAgency: "U.S. Army Corps of Engineers",
+    signatureAward: "Gulf Coast levee & flood-control reconstruction",
+    ucc: {
+      lender: "Banc of America Leasing",
+      filed: "2025-11-20",
+      collateral: "All business assets (blanket lien)",
+      estAmount: 65_000_000,
+      lienCount: 5,
+    },
+    bdc: {
+      lender: "Ares Capital",
+      facility: "Senior secured term loan",
+      loanSize: 90_000_000,
+      maturity: "2027-03-15",
+    },
+  },
+  {
+    id: "KEW6RT82PL3M",
+    name: "Keystone Earthworks",
+    industry: "heavy_construction",
+    naics: "237110",
+    naicsLabel: "Water & Sewer Line Construction",
+    city: "Pittsburgh",
+    state: "PA",
+    x: 788,
+    y: 247,
+    founded: 2001,
+    employees: "150–400",
+    totalAwarded: 41_200_000,
+    contractCount: 22,
+    latestAwardDate: "2025-12-15",
+    topAgency: "Environmental Protection Agency",
+    signatureAward: "Allegheny watershed sewer-line replacement",
+  },
+  {
+    id: "TMC9KX52NW8Q",
+    name: "Tidewater Marine Construction",
+    industry: "heavy_construction",
+    naics: "237990",
+    naicsLabel: "Other Heavy & Civil Engineering Construction",
+    city: "Jacksonville",
+    state: "FL",
+    x: 805,
+    y: 470,
+    founded: 2009,
+    employees: "50–150",
+    totalAwarded: 7_800_000,
+    contractCount: 9,
+    latestAwardDate: "2025-08-30",
+    topAgency: "Department of the Navy",
+    signatureAward: "Naval Station pier & bulkhead repair",
+  },
+  {
+    id: "SLB3MW64RT7K",
+    name: "Summit Line Builders",
+    industry: "heavy_construction",
+    naics: "237130",
+    naicsLabel: "Power & Communication Line Construction",
+    city: "Salt Lake City",
+    state: "UT",
+    x: 270,
+    y: 255,
+    founded: 1991,
+    employees: "400–900",
+    totalAwarded: 58_400_000,
+    contractCount: 26,
+    latestAwardDate: "2026-03-28",
+    topAgency: "Department of Energy",
+    signatureAward: "Western Area Power transmission build-out",
+    bdc: {
+      lender: "Golub Capital BDC",
+      facility: "Unitranche facility",
+      loanSize: 42_000_000,
+      maturity: "2026-11-30",
+    },
+  },
+  // ── Energy Infrastructure ─────────────────────────────────────────
+  {
+    id: "MGP7KT38XW2L",
+    name: "Meridian Grid Partners",
+    industry: "energy_infrastructure",
+    naics: "237130",
+    naicsLabel: "Power & Communication Line Construction",
+    city: "Phoenix",
+    state: "AZ",
+    x: 245,
+    y: 400,
+    founded: 1988,
+    employees: "900–2,500",
+    totalAwarded: 142_000_000,
+    contractCount: 34,
+    latestAwardDate: "2026-04-22",
+    topAgency: "Department of Energy",
+    signatureAward: "Desert Southwest grid-hardening program",
+    ucc: {
+      lender: "Wells Fargo Equipment Finance",
+      filed: "2025-10-04",
+      collateral: "Plant machinery & equipment",
+      estAmount: 38_000_000,
+      lienCount: 4,
+    },
+  },
+  {
+    id: "BVE5RT91MK6P",
+    name: "Blue Vault Energy",
+    industry: "energy_infrastructure",
+    naics: "221115",
+    naicsLabel: "Wind Electric Power Generation",
+    city: "Denver",
+    state: "CO",
+    x: 378,
+    y: 292,
+    founded: 2007,
+    employees: "150–400",
+    totalAwarded: 88_000_000,
+    contractCount: 19,
+    latestAwardDate: "2026-02-26",
+    topAgency: "Department of Energy",
+    signatureAward: "High Plains wind generation & interconnect",
+  },
+  {
+    id: "GSP2MW84KX7R",
+    name: "Gulf Stream Power Systems",
+    industry: "energy_infrastructure",
+    naics: "221112",
+    naicsLabel: "Fossil Fuel Electric Power Generation",
+    city: "New Orleans",
+    state: "LA",
+    x: 615,
+    y: 475,
+    founded: 1972,
+    employees: "400–900",
+    totalAwarded: 47_500_000,
+    contractCount: 14,
+    latestAwardDate: "2025-11-08",
+    topAgency: "Department of Energy",
+    signatureAward: "Gulf generation-fleet reliability upgrades",
+    bdc: {
+      lender: "FS KKR Capital",
+      facility: "Second-lien term loan",
+      loanSize: 55_000_000,
+      maturity: "2026-09-30",
+    },
+  },
+  {
+    id: "SSI8KX27RT4M",
+    name: "Sierra Solar Infrastructure",
+    industry: "energy_infrastructure",
+    naics: "221114",
+    naicsLabel: "Solar Electric Power Generation",
+    city: "Las Vegas",
+    state: "NV",
+    x: 195,
+    y: 320,
+    founded: 2011,
+    employees: "400–900",
+    totalAwarded: 211_000_000,
+    contractCount: 28,
+    latestAwardDate: "2026-05-01",
+    topAgency: "General Services Administration",
+    signatureAward: "Federal-facility utility-scale solar IDIQ",
+    ucc: {
+      lender: "Key Equipment Finance",
+      filed: "2026-01-18",
+      collateral: "Specified equipment & inventory",
+      estAmount: 72_000_000,
+      lienCount: 6,
+    },
+    bdc: {
+      lender: "Blue Owl Credit",
+      facility: "Senior secured term loan",
+      loanSize: 120_000_000,
+      maturity: "2027-06-30",
+    },
+  },
+  {
+    id: "IWT4RT63MW9K",
+    name: "Ironwood Transmission",
+    industry: "energy_infrastructure",
+    naics: "237130",
+    naicsLabel: "Power & Communication Line Construction",
+    city: "Kansas City",
+    state: "MO",
+    x: 585,
+    y: 305,
+    founded: 2014,
+    employees: "50–150",
+    totalAwarded: 19_400_000,
+    contractCount: 11,
+    latestAwardDate: "2025-10-22",
+    topAgency: "Department of Energy",
+    signatureAward: "Midcontinent transmission-line construction",
+  },
+  {
+    id: "ACP9MW36KX2T",
+    name: "Atlantic Coast Power",
+    industry: "energy_infrastructure",
+    naics: "221112",
+    naicsLabel: "Fossil Fuel Electric Power Generation",
+    city: "Richmond",
+    state: "VA",
+    x: 835,
+    y: 295,
+    founded: 1969,
+    employees: "900–2,500",
+    totalAwarded: 64_000_000,
+    contractCount: 21,
+    latestAwardDate: "2026-03-14",
+    topAgency: "Department of the Navy",
+    signatureAward: "Naval-installation power-plant modernization",
+  },
+  // ── Industrial Manufacturing ──────────────────────────────────────
+  {
+    id: "FFM6KT45RW8X",
+    name: "Forge & Field Manufacturing",
+    industry: "industrial_manufacturing",
+    naics: "333120",
+    naicsLabel: "Construction Machinery Manufacturing",
+    city: "Detroit",
+    state: "MI",
+    x: 710,
+    y: 205,
+    founded: 1963,
+    employees: "900–2,500",
+    totalAwarded: 78_000_000,
+    contractCount: 41,
+    latestAwardDate: "2026-04-11",
+    topAgency: "Department of Defense",
+    signatureAward: "Defense materiel-handling equipment supply",
+    ucc: {
+      lender: "PNC Equipment Finance",
+      filed: "2025-12-02",
+      collateral: "Plant machinery & equipment",
+      estAmount: 31_000_000,
+      lienCount: 4,
+    },
+  },
+  {
+    id: "CTW3RT78MK5P",
+    name: "Caldwell Turbine Works",
+    industry: "industrial_manufacturing",
+    naics: "333611",
+    naicsLabel: "Turbine & Turbine Generator Set Manufacturing",
+    city: "Cincinnati",
+    state: "OH",
+    x: 725,
+    y: 280,
+    founded: 1955,
+    employees: "2,500–6,000",
+    totalAwarded: 134_000_000,
+    contractCount: 23,
+    latestAwardDate: "2026-02-19",
+    topAgency: "Department of Energy",
+    signatureAward: "Power-generation turbine overhaul program",
+    bdc: {
+      lender: "Owl Rock Capital",
+      facility: "Senior secured term loan",
+      loanSize: 80_000_000,
+      maturity: "2027-01-31",
+    },
+  },
+  {
+    id: "ASS8MW52KX6R",
+    name: "Anvil Structural Steel",
+    industry: "industrial_manufacturing",
+    naics: "332312",
+    naicsLabel: "Fabricated Structural Metal Manufacturing",
+    city: "Birmingham",
+    state: "AL",
+    x: 685,
+    y: 410,
+    founded: 1981,
+    employees: "400–900",
+    totalAwarded: 22_600_000,
+    contractCount: 30,
+    latestAwardDate: "2026-03-20",
+    topAgency: "U.S. Army Corps of Engineers",
+    signatureAward: "Fabricated structural steel for federal projects",
+    ucc: {
+      lender: "Regions Equipment Finance",
+      filed: "2025-07-29",
+      collateral: "Accounts receivable & inventory",
+      estAmount: 12_000_000,
+      lienCount: 2,
+    },
+  },
+  {
+    id: "PTS5KT29RW3M",
+    name: "Precision Tooling Systems",
+    industry: "industrial_manufacturing",
+    naics: "333517",
+    naicsLabel: "Machine Tool Manufacturing",
+    city: "Columbus",
+    state: "OH",
+    x: 745,
+    y: 255,
+    founded: 1998,
+    employees: "150–400",
+    totalAwarded: 9_100_000,
+    contractCount: 17,
+    latestAwardDate: "2026-01-09",
+    topAgency: "Department of Defense",
+    signatureAward: "Precision machine-tooling for depot maintenance",
+  },
+  {
+    id: "NHE7RT64MX8K",
+    name: "Northstar Heavy Equipment",
+    industry: "industrial_manufacturing",
+    naics: "333120",
+    naicsLabel: "Construction Machinery Manufacturing",
+    city: "Minneapolis",
+    state: "MN",
+    x: 590,
+    y: 175,
+    founded: 2013,
+    employees: "50–150",
+    totalAwarded: 3_400_000,
+    contractCount: 8,
+    latestAwardDate: "2025-09-17",
+    topAgency: "Department of Agriculture",
+    signatureAward: "Forest-service heavy-equipment supply",
+  },
+  {
+    id: "RFB2MW87KT4R",
+    name: "Republic Fabrication",
+    industry: "industrial_manufacturing",
+    naics: "332312",
+    naicsLabel: "Fabricated Structural Metal Manufacturing",
+    city: "St. Louis",
+    state: "MO",
+    x: 625,
+    y: 320,
+    founded: 1976,
+    employees: "400–900",
+    totalAwarded: 41_800_000,
+    contractCount: 26,
+    latestAwardDate: "2026-04-30",
+    topAgency: "Department of the Army",
+    signatureAward: "Modular structural fabrication for Army depots",
+    bdc: {
+      lender: "Prospect Capital",
+      facility: "Unitranche facility",
+      loanSize: 35_000_000,
+      maturity: "2026-12-31",
+    },
+  },
+  // ── Defense & Aerospace ───────────────────────────────────────────
+  {
+    id: "ADS9KX73MW6T",
+    name: "Atlantic Defense Systems",
+    industry: "defense_aerospace",
+    naics: "541330",
+    naicsLabel: "Engineering Services",
+    city: "Washington",
+    state: "DC",
+    x: 835,
+    y: 272,
+    founded: 1984,
+    employees: "2,500–6,000",
+    totalAwarded: 268_000_000,
+    contractCount: 52,
+    latestAwardDate: "2026-05-06",
+    topAgency: "Department of Defense",
+    signatureAward: "Defense systems-engineering & integration IDIQ",
+  },
+  {
+    id: "MAE4RT86KX2P",
+    name: "Meridian Aerospace",
+    industry: "defense_aerospace",
+    naics: "336411",
+    naicsLabel: "Aircraft Manufacturing",
+    city: "Los Angeles",
+    state: "CA",
+    x: 140,
+    y: 350,
+    founded: 1961,
+    employees: "6,000+",
+    totalAwarded: 540_000_000,
+    contractCount: 38,
+    latestAwardDate: "2026-04-17",
+    topAgency: "U.S. Air Force",
+    signatureAward: "Airframe sustainment & modification program",
+    bdc: {
+      lender: "Sixth Street Specialty Lending",
+      facility: "Senior secured term loan",
+      loanSize: 160_000_000,
+      maturity: "2027-09-30",
+    },
+  },
+  {
+    id: "VMU6MW48RT9K",
+    name: "Vanguard Munitions",
+    industry: "defense_aerospace",
+    naics: "332993",
+    naicsLabel: "Ammunition Manufacturing",
+    city: "Oklahoma City",
+    state: "OK",
+    x: 520,
+    y: 360,
+    founded: 1979,
+    employees: "900–2,500",
+    totalAwarded: 121_000_000,
+    contractCount: 29,
+    latestAwardDate: "2026-03-09",
+    topAgency: "Department of the Army",
+    signatureAward: "Small- & medium-caliber ammunition production",
+    ucc: {
+      lender: "U.S. Bank Equipment Finance",
+      filed: "2025-08-14",
+      collateral: "Plant machinery & equipment",
+      estAmount: 44_000_000,
+      lienCount: 3,
+    },
+  },
+  {
+    id: "SSG8KT35MX7R",
+    name: "Sentinel Systems Group",
+    industry: "defense_aerospace",
+    naics: "336414",
+    naicsLabel: "Guided Missile & Space Vehicle Manufacturing",
+    city: "Huntsville",
+    state: "AL",
+    x: 680,
+    y: 393,
+    founded: 1990,
+    employees: "2,500–6,000",
+    totalAwarded: 333_000_000,
+    contractCount: 44,
+    latestAwardDate: "2026-04-25",
+    topAgency: "Department of Defense",
+    signatureAward: "Missile-defense subsystem development & test",
+  },
+  {
+    id: "TTV3RW92KM5P",
+    name: "Talon Tactical Vehicles",
+    industry: "defense_aerospace",
+    naics: "336992",
+    naicsLabel: "Military Armored Vehicle Manufacturing",
+    city: "San Antonio",
+    state: "TX",
+    x: 510,
+    y: 480,
+    founded: 2004,
+    employees: "400–900",
+    totalAwarded: 36_000_000,
+    contractCount: 19,
+    latestAwardDate: "2025-12-03",
+    topAgency: "Department of the Army",
+    signatureAward: "Tactical-wheeled-vehicle upfit & sustainment",
+  },
+  {
+    id: "CBA7MX64RT8K",
+    name: "Cobalt Avionics",
+    industry: "defense_aerospace",
+    naics: "334511",
+    naicsLabel: "Navigation & Aerospace Instrument Manufacturing",
+    city: "San Diego",
+    state: "CA",
+    x: 155,
+    y: 385,
+    founded: 1995,
+    employees: "900–2,500",
+    totalAwarded: 87_000_000,
+    contractCount: 24,
+    latestAwardDate: "2026-02-28",
+    topAgency: "Department of the Navy",
+    signatureAward: "Naval-aviation navigation & sensor avionics",
+  },
+  // ── IT & Professional Services ────────────────────────────────────
+  {
+    id: "BFS5KT82MW3R",
+    name: "Beacon Federal Systems",
+    industry: "it_services",
+    naics: "541512",
+    naicsLabel: "Computer Systems Design Services",
+    city: "Washington",
+    state: "DC",
+    x: 840,
+    y: 268,
+    founded: 1999,
+    employees: "2,500–6,000",
+    totalAwarded: 196_000_000,
+    contractCount: 61,
+    latestAwardDate: "2026-05-09",
+    topAgency: "Department of Homeland Security",
+    signatureAward: "DHS enterprise systems-modernization IDIQ",
+  },
+  {
+    id: "CDG8RW47KX2M",
+    name: "Cipher Data Group",
+    industry: "it_services",
+    naics: "518210",
+    naicsLabel: "Data Processing, Hosting & Related Services",
+    city: "Reston",
+    state: "VA",
+    x: 825,
+    y: 278,
+    founded: 2006,
+    employees: "900–2,500",
+    totalAwarded: 92_000_000,
+    contractCount: 33,
+    latestAwardDate: "2026-03-31",
+    topAgency: "Department of Defense",
+    signatureAward: "Secure cloud hosting for defense workloads",
+    ucc: {
+      lender: "First-Citizens Bank",
+      filed: "2025-10-27",
+      collateral: "All business assets (blanket lien)",
+      estAmount: 26_000_000,
+      lienCount: 2,
+    },
+  },
+  {
+    id: "NSL2MX78RT6K",
+    name: "Northgate Software Labs",
+    industry: "it_services",
+    naics: "541511",
+    naicsLabel: "Custom Computer Programming Services",
+    city: "Austin",
+    state: "TX",
+    x: 520,
+    y: 460,
+    founded: 2010,
+    employees: "400–900",
+    totalAwarded: 44_500_000,
+    contractCount: 27,
+    latestAwardDate: "2026-04-02",
+    topAgency: "General Services Administration",
+    signatureAward: "Federal civilian-agency application development",
+    bdc: {
+      lender: "Golub Capital BDC",
+      facility: "Unitranche facility",
+      loanSize: 30_000_000,
+      maturity: "2026-10-31",
+    },
+  },
+  {
+    id: "QAN6KT93MW4R",
+    name: "Quorum Analytics",
+    industry: "it_services",
+    naics: "541512",
+    naicsLabel: "Computer Systems Design Services",
+    city: "Boston",
+    state: "MA",
+    x: 905,
+    y: 175,
+    founded: 2008,
+    employees: "400–900",
+    totalAwarded: 71_000_000,
+    contractCount: 22,
+    latestAwardDate: "2026-03-18",
+    topAgency: "Department of Health & Human Services",
+    signatureAward: "Health-agency data-analytics platform delivery",
+  },
+  {
+    id: "LCS9RW54KX7M",
+    name: "Lattice Cloud Services",
+    industry: "it_services",
+    naics: "518210",
+    naicsLabel: "Data Processing, Hosting & Related Services",
+    city: "Denver",
+    state: "CO",
+    x: 362,
+    y: 280,
+    founded: 2015,
+    employees: "150–400",
+    totalAwarded: 8_200_000,
+    contractCount: 12,
+    latestAwardDate: "2025-11-26",
+    topAgency: "General Services Administration",
+    signatureAward: "FedRAMP-authorized hosting for civilian agencies",
+  },
+  {
+    id: "HCS4MX26RT9K",
+    name: "Helix Cyber Solutions",
+    industry: "it_services",
+    naics: "541519",
+    naicsLabel: "Other Computer Related Services",
+    city: "Charlotte",
+    state: "NC",
+    x: 790,
+    y: 350,
+    founded: 2012,
+    employees: "150–400",
+    totalAwarded: 31_000_000,
+    contractCount: 18,
+    latestAwardDate: "2026-04-14",
+    topAgency: "Department of Homeland Security",
+    signatureAward: "Cyber threat-monitoring & incident response",
+    ucc: {
+      lender: "PNC Equipment Finance",
+      filed: "2026-01-05",
+      collateral: "Accounts receivable & inventory",
+      estAmount: 9_000_000,
+      lienCount: 2,
+    },
+  },
+  // ── Healthcare & Life Sciences ────────────────────────────────────
+  {
+    id: "HBL7KT63MW8X",
+    name: "Halford Biologics",
+    industry: "healthcare_life_sciences",
+    naics: "541714",
+    naicsLabel: "Biotechnology Research & Development",
+    city: "San Diego",
+    state: "CA",
+    x: 160,
+    y: 388,
+    founded: 2003,
+    employees: "400–900",
+    totalAwarded: 158_000_000,
+    contractCount: 19,
+    latestAwardDate: "2026-04-20",
+    topAgency: "Department of Health & Human Services",
+    signatureAward: "BARDA medical-countermeasure development",
+    bdc: {
+      lender: "Ares Capital",
+      facility: "Senior secured term loan",
+      loanSize: 75_000_000,
+      maturity: "2027-04-30",
+    },
+  },
+  {
+    id: "CMS3RW85KX6T",
+    name: "Cardinal Medical Supply",
+    industry: "healthcare_life_sciences",
+    naics: "339112",
+    naicsLabel: "Surgical & Medical Instrument Manufacturing",
+    city: "Memphis",
+    state: "TN",
+    x: 650,
+    y: 365,
+    founded: 1987,
+    employees: "900–2,500",
+    totalAwarded: 64_000_000,
+    contractCount: 35,
+    latestAwardDate: "2026-03-25",
+    topAgency: "Department of Veterans Affairs",
+    signatureAward: "VA medical-instrument supply schedule",
+    ucc: {
+      lender: "Wells Fargo Equipment Finance",
+      filed: "2025-09-30",
+      collateral: "Inventory & equipment",
+      estAmount: 18_000_000,
+      lienCount: 3,
+    },
+  },
+  {
+    id: "SPS8MX42RT5K",
+    name: "Summit Pharma Solutions",
+    industry: "healthcare_life_sciences",
+    naics: "325412",
+    naicsLabel: "Pharmaceutical Preparation Manufacturing",
+    city: "Philadelphia",
+    state: "PA",
+    x: 855,
+    y: 238,
+    founded: 1971,
+    employees: "2,500–6,000",
+    totalAwarded: 224_000_000,
+    contractCount: 28,
+    latestAwardDate: "2026-05-02",
+    topAgency: "Department of Health & Human Services",
+    signatureAward: "Strategic National Stockpile pharmaceutical supply",
+    ucc: {
+      lender: "Banc of America Leasing",
+      filed: "2025-12-19",
+      collateral: "All business assets (blanket lien)",
+      estAmount: 58_000_000,
+      lienCount: 4,
+    },
+    bdc: {
+      lender: "Blue Owl Credit",
+      facility: "Second-lien term loan",
+      loanSize: 110_000_000,
+      maturity: "2026-08-31",
+    },
+  },
+  {
+    id: "ECG5KT74MW2R",
+    name: "Evergreen Clinical Group",
+    industry: "healthcare_life_sciences",
+    naics: "621111",
+    naicsLabel: "Offices of Physicians",
+    city: "Portland",
+    state: "OR",
+    x: 135,
+    y: 122,
+    founded: 1996,
+    employees: "900–2,500",
+    totalAwarded: 12_400_000,
+    contractCount: 41,
+    latestAwardDate: "2026-02-23",
+    topAgency: "Department of Veterans Affairs",
+    signatureAward: "VA community-care clinical-services contract",
+  },
+  {
+    id: "ADG2RW63KX9M",
+    name: "Atlas Diagnostics",
+    industry: "healthcare_life_sciences",
+    naics: "339112",
+    naicsLabel: "Surgical & Medical Instrument Manufacturing",
+    city: "Tampa",
+    state: "FL",
+    x: 790,
+    y: 520,
+    founded: 2016,
+    employees: "50–150",
+    totalAwarded: 4_100_000,
+    contractCount: 14,
+    latestAwardDate: "2025-10-11",
+    topAgency: "Department of Veterans Affairs",
+    signatureAward: "Point-of-care diagnostic-device supply",
+  },
+  {
+    id: "RHS9MX38RT4K",
+    name: "Riverside Health Systems",
+    industry: "healthcare_life_sciences",
+    naics: "621111",
+    naicsLabel: "Offices of Physicians",
+    city: "Nashville",
+    state: "TN",
+    x: 685,
+    y: 360,
+    founded: 1984,
+    employees: "2,500–6,000",
+    totalAwarded: 38_000_000,
+    contractCount: 52,
+    latestAwardDate: "2026-04-06",
+    topAgency: "Department of Veterans Affairs",
+    signatureAward: "VA regional clinical-staffing services",
+  },
+  // ── Transportation & Logistics ────────────────────────────────────
+  {
+    id: "CFL6KT57MW8R",
+    name: "Crossroads Freight Lines",
+    industry: "transportation_logistics",
+    naics: "484121",
+    naicsLabel: "General Freight Trucking, Long-Distance",
+    city: "Chicago",
+    state: "IL",
+    x: 660,
+    y: 235,
+    founded: 1982,
+    employees: "900–2,500",
+    totalAwarded: 73_000_000,
+    contractCount: 44,
+    latestAwardDate: "2026-04-13",
+    topAgency: "Department of Defense",
+    signatureAward: "Defense Transportation System freight hauling",
+    ucc: {
+      lender: "Caterpillar Financial Services",
+      filed: "2025-11-11",
+      collateral: "Rolling stock & trailers",
+      estAmount: 22_000_000,
+      lienCount: 4,
+    },
+  },
+  {
+    id: "PCS3RW86KX5M",
+    name: "Pacific Cargo Systems",
+    industry: "transportation_logistics",
+    naics: "488510",
+    naicsLabel: "Freight Transportation Arrangement",
+    city: "Long Beach",
+    state: "CA",
+    x: 140,
+    y: 358,
+    founded: 1993,
+    employees: "400–900",
+    totalAwarded: 118_000_000,
+    contractCount: 31,
+    latestAwardDate: "2026-03-07",
+    topAgency: "Department of Defense",
+    signatureAward: "Port-to-installation freight forwarding",
+    bdc: {
+      lender: "FS KKR Capital",
+      facility: "Senior secured term loan",
+      loanSize: 60_000_000,
+      maturity: "2027-02-28",
+    },
+  },
+  {
+    id: "HLG8MX24RT7K",
+    name: "Heartland Logistics Group",
+    industry: "transportation_logistics",
+    naics: "493110",
+    naicsLabel: "General Warehousing & Storage",
+    city: "Kansas City",
+    state: "MO",
+    x: 588,
+    y: 308,
+    founded: 2000,
+    employees: "400–900",
+    totalAwarded: 52_000_000,
+    contractCount: 26,
+    latestAwardDate: "2026-04-28",
+    topAgency: "Defense Logistics Agency",
+    signatureAward: "Defense Logistics Agency distribution warehousing",
+    ucc: {
+      lender: "Key Equipment Finance",
+      filed: "2026-02-02",
+      collateral: "Equipment & inventory",
+      estAmount: 14_000_000,
+      lienCount: 2,
+    },
+  },
+  {
+    id: "EAF5KT72MW9R",
+    name: "Eagle Air Freight",
+    industry: "transportation_logistics",
+    naics: "481112",
+    naicsLabel: "Scheduled Freight Air Transportation",
+    city: "Memphis",
+    state: "TN",
+    x: 652,
+    y: 372,
+    founded: 1990,
+    employees: "900–2,500",
+    totalAwarded: 167_000_000,
+    contractCount: 22,
+    latestAwardDate: "2026-05-08",
+    topAgency: "Department of Defense",
+    signatureAward: "Air Mobility Command charter airlift",
+  },
+  {
+    id: "CDP2RW93KX6M",
+    name: "Coastal Drayage Partners",
+    industry: "transportation_logistics",
+    naics: "488320",
+    naicsLabel: "Marine Cargo Handling",
+    city: "Savannah",
+    state: "GA",
+    x: 765,
+    y: 448,
+    founded: 2011,
+    employees: "50–150",
+    totalAwarded: 9_600_000,
+    contractCount: 13,
+    latestAwardDate: "2025-12-29",
+    topAgency: "Department of the Navy",
+    signatureAward: "Military Ocean Terminal cargo handling",
+  },
+  {
+    id: "CTS7MX35RT8K",
+    name: "Continental Transport Services",
+    industry: "transportation_logistics",
+    naics: "484121",
+    naicsLabel: "General Freight Trucking, Long-Distance",
+    city: "Dallas",
+    state: "TX",
+    x: 522,
+    y: 425,
+    founded: 1997,
+    employees: "400–900",
+    totalAwarded: 29_000_000,
+    contractCount: 33,
+    latestAwardDate: "2026-03-12",
+    topAgency: "Department of Defense",
+    signatureAward: "Surface-freight movement for defense logistics",
+    bdc: {
+      lender: "Prospect Capital",
+      facility: "Revolving credit facility",
+      loanSize: 25_000_000,
+      maturity: "2026-12-15",
+    },
+  },
+];
 
 // ───────────────────────────────────────────────────────────────────
-// The thesis-matched set — what the Match phase ranks. The demo sorts
-// the plotted catalysts by thesis fit; the top set is "this week's
-// matched catalysts" routed to the partner.
+// Catalyst assembly — each seed expands to a Company with its Capital
+// Catalysts. `usaspending` is always first; `ucc_debt` / `bdc_maturity`
+// follow when the seed carries them.
 // ───────────────────────────────────────────────────────────────────
 
-export const MATCHED_CATALYSTS: DemoCatalyst[] = [...DEMO_CATALYSTS].sort(
-  (a, b) => b.thesisFit - a.thesisFit,
-);
+function isActive(latestAwardDate: string): boolean {
+  const d = new Date(latestAwardDate);
+  const ageDays = (TODAY.getTime() - d.getTime()) / 86_400_000;
+  return ageDays <= ACTIVE_WINDOW_DAYS;
+}
+
+function usaspendingCatalyst(seed: CompanySeed, activeAward: boolean): CapitalCatalyst {
+  return {
+    kind: "usaspending",
+    label: "Federal contract winner",
+    headline: seed.signatureAward,
+    summary: `${fmtUsd(seed.totalAwarded)} obligated across ${seed.contractCount} prime federal awards. ${activeAward ? "Award activity in the last 90 days." : `Most recent action ${fmtMonthYear(seed.latestAwardDate)}.`}`,
+    facts: [
+      { label: "Total federal obligations", value: fmtUsdFull(seed.totalAwarded) },
+      { label: "Prime awards", value: String(seed.contractCount) },
+      { label: "Top awarding agency", value: seed.topAgency },
+      {
+        label: "Award recency",
+        value: activeAward ? "Active — last 90 days" : fmtMonthYear(seed.latestAwardDate),
+      },
+    ],
+    tone: "accent",
+  };
+}
+
+function uccCatalyst(ucc: UccSeed): CapitalCatalyst {
+  return {
+    kind: "ucc_debt",
+    label: "UCC-1 secured debt",
+    headline: `Active secured lien held by ${ucc.lender}`,
+    summary: `A UCC-1 financing statement secures ${ucc.collateral.toLowerCase()} — an equipment or working-capital facility filed against the company's assets.`,
+    facts: [
+      { label: "Secured party", value: ucc.lender },
+      { label: "Collateral", value: ucc.collateral },
+      { label: "Est. facility size", value: fmtUsd(ucc.estAmount) },
+      { label: "Active UCC filings", value: String(ucc.lienCount) },
+    ],
+    tone: "warn",
+  };
+}
+
+function bdcCatalyst(bdc: BdcSeed): CapitalCatalyst {
+  return {
+    kind: "bdc_maturity",
+    label: "BDC loan — maturity window",
+    headline: `${bdc.facility} matures ${fmtMonthYear(bdc.maturity)}`,
+    summary: `A business-development-company loan from ${bdc.lender} approaches maturity — a refinancing or recapitalization window opens ahead of the maturity date.`,
+    facts: [
+      { label: "BDC lender", value: bdc.lender },
+      { label: "Facility", value: bdc.facility },
+      { label: "Loan size", value: fmtUsd(bdc.loanSize) },
+      { label: "Maturity", value: fmtMonthYear(bdc.maturity) },
+    ],
+    tone: "info",
+  };
+}
+
+function buildCompany(seed: CompanySeed): Company {
+  const activeAward = isActive(seed.latestAwardDate);
+  const catalysts: CapitalCatalyst[] = [usaspendingCatalyst(seed, activeAward)];
+  if (seed.ucc) catalysts.push(uccCatalyst(seed.ucc));
+  if (seed.bdc) catalysts.push(bdcCatalyst(seed.bdc));
+  return {
+    id: seed.id,
+    name: seed.name,
+    industry: seed.industry,
+    naics: seed.naics,
+    naicsLabel: seed.naicsLabel,
+    city: seed.city,
+    state: seed.state,
+    x: seed.x,
+    y: seed.y,
+    founded: seed.founded,
+    employees: seed.employees,
+    totalAwarded: seed.totalAwarded,
+    contractCount: seed.contractCount,
+    latestAwardDate: seed.latestAwardDate,
+    topAgency: seed.topAgency,
+    activeAward,
+    catalysts,
+  };
+}
+
+/** Every plotted company — the cockpit's universe. */
+export const COMPANIES: Company[] = SEEDS.map(buildCompany);
+
+// ───────────────────────────────────────────────────────────────────
+// The ⌘K command list — the cockpit is extended by adding to this array.
+// ───────────────────────────────────────────────────────────────────
+
+export const COMMANDS: Command[] = [
+  {
+    id: "q-heavy-construction",
+    kind: "map-query",
+    label: "Companies in heavy construction that won over $10M",
+    query: { industry: "heavy_construction", minAward: 10_000_000 },
+  },
+  {
+    id: "q-energy-infrastructure",
+    kind: "map-query",
+    label: "Companies in energy infrastructure that won over $25M",
+    query: { industry: "energy_infrastructure", minAward: 25_000_000 },
+  },
+  {
+    id: "q-industrial-manufacturing",
+    kind: "map-query",
+    label: "Companies in industrial manufacturing that won over $5M",
+    query: { industry: "industrial_manufacturing", minAward: 5_000_000 },
+  },
+  {
+    id: "q-defense-aerospace",
+    kind: "map-query",
+    label: "Companies in defense & aerospace that won over $50M",
+    query: { industry: "defense_aerospace", minAward: 50_000_000 },
+  },
+  {
+    id: "q-it-services",
+    kind: "map-query",
+    label: "Companies in IT & professional services that won over $10M",
+    query: { industry: "it_services", minAward: 10_000_000 },
+  },
+  {
+    id: "q-healthcare",
+    kind: "map-query",
+    label: "Companies in healthcare & life sciences that won over $5M",
+    query: { industry: "healthcare_life_sciences", minAward: 5_000_000 },
+  },
+  {
+    id: "q-transportation",
+    kind: "map-query",
+    label: "Companies in transportation & logistics that won over $10M",
+    query: { industry: "transportation_logistics", minAward: 10_000_000 },
+  },
+  {
+    id: "agg-industry",
+    kind: "aggregate",
+    label: "Aggregate federal contract spend by industry",
+    aggregate: {
+      groupBy: "industry",
+      title: "Federal contract spend by industry",
+      unitLabel: "Total obligations",
+    },
+  },
+  {
+    id: "agg-state",
+    kind: "aggregate",
+    label: "Aggregate federal contract spend by state",
+    aggregate: {
+      groupBy: "state",
+      title: "Federal contract spend by state",
+      unitLabel: "Total obligations",
+    },
+  },
+];
+
+// ───────────────────────────────────────────────────────────────────
+// Selectors — the cockpit reads the universe only through these.
+// ───────────────────────────────────────────────────────────────────
+
+/** Companies matching a map query — in the industry, above the award floor. */
+export function runQuery(q: MapQuery): Company[] {
+  return COMPANIES.filter((c) => c.industry === q.industry && c.totalAwarded >= q.minAward);
+}
+
+/** Look up a company by id. */
+export function companyById(id: string): Company | undefined {
+  return COMPANIES.find((c) => c.id === id);
+}
+
+/** Collapse the universe into aggregate bars, sorted by total descending. */
+export function aggregateBy(groupBy: "industry" | "state"): AggregateBar[] {
+  const acc = new Map<string, { label: string; total: number; count: number }>();
+  for (const c of COMPANIES) {
+    const key = groupBy === "industry" ? c.industry : c.state;
+    const label = groupBy === "industry" ? industryLabel(c.industry) : c.state;
+    const cur = acc.get(key) ?? { label, total: 0, count: 0 };
+    cur.total += c.totalAwarded;
+    cur.count += 1;
+    acc.set(key, cur);
+  }
+  return [...acc.entries()]
+    .map(([key, v]) => ({ key, label: v.label, total: v.total, count: v.count }))
+    .sort((a, b) => b.total - a.total);
+}
