@@ -6,12 +6,12 @@
  *
  *   1. marketing-site (5174) — the homepage renders, the "RARE STRUCTURE"
  *      wordmark is present, and the page loads with zero console errors.
- *   2. platform-app (5173) — the catalyst map demo: the US map renders
- *      (real state-path geometry in the DOM), catalyst points are plotted,
- *      clicking a point opens its callout, and every built phase of the
- *      four-moment choreography (map → filter → match → deliver) renders.
+ *   2. platform-app (5173) — the market cockpit: the US map renders (real
+ *      state-path geometry in the DOM), ⌘K runs a map-query that lights up
+ *      company dots, clicking a dot opens its profile with Capital
+ *      Catalysts, and an aggregate command swaps the map for the chart.
  *
- * Screenshots of the homepage and each map-demo phase are written to
+ * Screenshots of the homepage and each cockpit step are written to
  * `test-results/` (gitignored).
  */
 
@@ -51,10 +51,10 @@ test("marketing-site homepage renders the wordmark with zero console errors", as
 });
 
 // ───────────────────────────────────────────────────────────────────
-// platform-app — the catalyst map demo.
+// platform-app — the market cockpit.
 // ───────────────────────────────────────────────────────────────────
 
-test("platform-app map demo runs the full four-moment choreography", async ({
+test("platform-app cockpit runs the ⌘K query → profile → aggregate loop", async ({
   page,
 }) => {
   const consoleErrors: string[] = [];
@@ -63,12 +63,12 @@ test("platform-app map demo runs the full four-moment choreography", async ({
   });
   page.on("pageerror", (err) => consoleErrors.push(err.message));
 
-  // ── Phase 1: the map ──────────────────────────────────────────────
+  // ── The map — the cockpit's home surface ──────────────────────────
   await page.goto(`${PLATFORM_URL}/`, { waitUntil: "networkidle" });
 
-  // The demo starts on the `map` phase.
-  const demoRoot = page.locator("[data-demo-phase]");
-  await expect(demoRoot).toHaveAttribute("data-demo-phase", "map");
+  // The cockpit starts on the `map` view.
+  const cockpit = page.locator("[data-cockpit-view]");
+  await expect(cockpit).toHaveAttribute("data-cockpit-view", "map");
 
   // Real US geography — state-path geometry in the DOM. The map renders 51
   // states across three SVG layers (fill + border + edge), so well over 50
@@ -78,68 +78,51 @@ test("platform-app map demo runs the full four-moment choreography", async ({
     expect(await statePaths.count()).toBeGreaterThan(50);
   }).toPass();
 
-  // Catalyst points are plotted — the entrance animation fades them in, so
-  // poll until the clickable point groups are present.
-  const catalystPoints = page.locator('svg g[role="button"]');
-  await expect(async () => {
-    expect(await catalystPoints.count()).toBeGreaterThan(0);
-  }).toPass({ timeout: 15_000 });
+  await page.screenshot({ path: `${SHOTS}/cockpit-1-map.png`, fullPage: true });
 
-  await page.screenshot({ path: `${SHOTS}/map-phase-1-map.png`, fullPage: true });
-
-  // Clicking a catalyst point opens its callout (a rect drawn inside the SVG,
-  // stroked with the accent token). The point group is the outer @role=button;
-  // its callout is a nested group. SVG <g> elements overlap the state-path
-  // geometry, so a positional click is intercepted by a land-fill <path> —
-  // dispatch the click event directly, which the demo's onClick handles.
-  await catalystPoints.first().dispatchEvent("click");
-  const calloutRect = page.locator('svg rect[stroke*="accent"]');
-  await expect(calloutRect.first()).toBeVisible();
-
-  await page.screenshot({ path: `${SHOTS}/map-phase-1-callout.png`, fullPage: true });
-
-  // Clicking the callout opens the detail modal.
-  const callout = page.locator('svg g[role="button"][aria-label^="Open detail"]');
-  await callout.first().dispatchEvent("click");
-  const modal = page.locator('[role="dialog"][aria-label="Catalyst detail"]');
-  await expect(modal).toBeVisible();
-  await expect(modal.locator("h2")).toBeVisible();
-  await page.keyboard.press("Escape");
-  await expect(modal).toBeHidden();
-
-  // ── Phase 2: the filter cascade ───────────────────────────────────
-  // ⌘K opens the thesis palette; running the thesis advances to `filter`.
-  await page.keyboard.press("Meta+k");
-  const palette = page.locator('[role="dialog"][aria-label="Run partner thesis"]');
+  // ── Run a map-query command via the ⌘K palette ────────────────────
+  await page.getByRole("button", { name: /query the market/i }).click();
+  const palette = page.locator('[role="dialog"][aria-label="Cockpit command palette"]');
   await expect(palette).toBeVisible();
 
-  await page.getByRole("button", { name: /run thesis/i }).click();
-  await expect(demoRoot).toHaveAttribute("data-demo-phase", "filter");
-  await page.screenshot({ path: `${SHOTS}/map-phase-2-filter.png`, fullPage: true });
+  await page.getByRole("button", { name: /companies in heavy construction/i }).click();
+  await expect(palette).toBeHidden();
 
-  // ── Phase 3: the match split-screen ───────────────────────────────
-  // The cascade auto-advances to `match`.
-  await expect(demoRoot).toHaveAttribute("data-demo-phase", "match", {
-    timeout: 15_000,
-  });
-  // The matched-catalyst feed — buttons each labelled with a "% fit" score.
-  const matchRows = page.getByRole("button", { name: /% fit/i });
+  // The query lights up the map with clickable company dots — the entrance
+  // animation fades them in, so poll until the point groups are present.
+  const companyDots = page.locator('svg g[role="button"]');
   await expect(async () => {
-    expect(await matchRows.count()).toBeGreaterThan(0);
-  }).toPass();
-  await page.screenshot({ path: `${SHOTS}/map-phase-3-match.png`, fullPage: true });
+    expect(await companyDots.count()).toBeGreaterThan(0);
+  }).toPass({ timeout: 15_000 });
 
-  // ── Phase 4: the deliver deep-dive ────────────────────────────────
-  await matchRows.first().click();
-  await expect(demoRoot).toHaveAttribute("data-demo-phase", "deliver");
-  await expect(page.locator("h1")).toBeVisible();
-  await page.screenshot({ path: `${SHOTS}/map-phase-4-deliver.png`, fullPage: true });
+  await page.screenshot({ path: `${SHOTS}/cockpit-2-query.png`, fullPage: true });
 
-  // The outro gate auto-arms after a beat — its pipeline CTA appears.
+  // ── Click a company dot → its profile drawer ──────────────────────
+  // SVG <g> elements overlap the land-fill <path> geometry, so a positional
+  // click is intercepted — dispatch the click event directly.
+  await companyDots.first().dispatchEvent("click");
+  const profile = page.getByRole("dialog", { name: /^Profile/ });
+  await expect(profile).toBeVisible();
+  await expect(profile.getByText("Capital Catalysts")).toBeVisible();
+
+  await page.screenshot({ path: `${SHOTS}/cockpit-3-profile.png`, fullPage: true });
+
+  await page.keyboard.press("Escape");
+  await expect(profile).toBeHidden();
+
+  // ── Run an aggregate command → the chart view ─────────────────────
+  await page.getByRole("button", { name: /query the market/i }).click();
+  await expect(palette).toBeVisible();
+  await page
+    .getByRole("button", { name: /aggregate federal contract spend by industry/i })
+    .click();
+
+  await expect(cockpit).toHaveAttribute("data-cockpit-view", "aggregate");
   await expect(
-    page.getByRole("button", { name: /open the pipeline/i }),
-  ).toBeVisible({ timeout: 10_000 });
-  await page.screenshot({ path: `${SHOTS}/map-phase-4-outro.png`, fullPage: true });
+    page.getByRole("heading", { name: /federal contract spend by industry/i }),
+  ).toBeVisible();
+
+  await page.screenshot({ path: `${SHOTS}/cockpit-4-aggregate.png`, fullPage: true });
 
   expect(consoleErrors, `console errors: ${consoleErrors.join(" | ")}`).toEqual([]);
 });
