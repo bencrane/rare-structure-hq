@@ -1,9 +1,4 @@
-export type BriefingPhase =
-  | "national"
-  | "state-focus"
-  | "sector-drill"
-  | "cross-ref"
-  | "cta";
+export type BriefingPhase = "national" | "state-focus" | "sector-drill" | "cross-ref" | "cta";
 
 export type NarrativeSectionData = {
   id: BriefingPhase;

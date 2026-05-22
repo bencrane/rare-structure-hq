@@ -21,11 +21,10 @@ export function BriefingTakeaway() {
         </h2>
 
         <p className="mt-6 text-[0.9375rem] leading-[1.7] text-[color:var(--color-text-muted)]">
-          Every entity profiled above is one instance of a structural pattern
-          that repeats across the entire cohort. Sovereign revenue mandates
-          create working capital pressure. Active commercial debt reveals
-          credit literacy and existing lender relationships. The intersection
-          is where the highest-conviction refinance and facility origination
+          Every entity profiled above is one instance of a structural pattern that repeats across
+          the entire cohort. Sovereign revenue mandates create working capital pressure. Active
+          commercial debt reveals credit literacy and existing lender relationships. The
+          intersection is where the highest-conviction refinance and facility origination
           opportunities concentrate — before they reach the broker market.
         </p>
 

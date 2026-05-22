@@ -1,6 +1,6 @@
-import { Link } from "react-router-dom";
+import { DataSourceCycle, HomeMap } from "@/components/HomeMap";
 import { Wordmark } from "@/components/Wordmark";
-import { HomeMap, DataSourceCycle } from "@/components/HomeMap";
+import { Link } from "react-router-dom";
 
 const BRIEFINGS = [
   {
@@ -50,16 +50,15 @@ export default function Home() {
             The Firm
           </div>
           <p className="text-[1.125rem] leading-[1.65] text-[color:var(--color-text-default)] sm:text-[1.25rem]">
-            Rare Structure is a catalyst-driven origination firm. We operate
-            proprietary data infrastructure that identifies the exact moments
-            mid-market companies hit structural capital inflection points —
-            federal contract awards, refinancing windows, growth-equity
-            triggers — and originate senior-secured transaction flow for
-            institutional private credit partners.
+            Rare Structure is a catalyst-driven origination firm. We operate proprietary data
+            infrastructure that identifies the exact moments mid-market companies hit structural
+            capital inflection points — federal contract awards, refinancing windows, growth-equity
+            triggers — and originate senior-secured transaction flow for institutional private
+            credit partners.
           </p>
           <p className="mt-6 text-[1rem] leading-[1.65] text-[color:var(--color-text-muted)]">
-            Originated flow is routed directly to investment committees —
-            sourced at the structural catalyst, not the broker market.
+            Originated flow is routed directly to investment committees — sourced at the structural
+            catalyst, not the broker market.
           </p>
         </div>
       </section>
@@ -73,10 +72,7 @@ export default function Home() {
             { value: "$14.2B", label: "Contract value" },
             { value: "Daily", label: "Pipeline refresh" },
           ].map((s) => (
-            <div
-              key={s.label}
-              className="bg-[color:var(--color-surface-raised)] px-5 py-6 sm:px-6"
-            >
+            <div key={s.label} className="bg-[color:var(--color-surface-raised)] px-5 py-6 sm:px-6">
               <div className="font-display text-[1.5rem] font-semibold tabular-nums text-[color:var(--color-text-primary)]">
                 {s.value}
               </div>
@@ -131,8 +127,8 @@ export default function Home() {
             ))}
           </div>
           <p className="mt-6 font-mono text-[0.5625rem] uppercase tracking-[0.14em] text-[color:var(--color-text-muted)]">
-            100+ federal, state, and commercial data sources · cross-referenced
-            through 40+ identity bridges
+            100+ federal, state, and commercial data sources · cross-referenced through 40+ identity
+            bridges
           </p>
         </div>
       </section>
@@ -146,11 +142,7 @@ export default function Home() {
 
           <div className="divide-y divide-[color:var(--color-border-subtle)] border-y border-[color:var(--color-border-subtle)]">
             {BRIEFINGS.map((b) => (
-              <Link
-                key={b.to}
-                to={b.to}
-                className="group block py-6 transition-colors sm:py-8"
-              >
+              <Link key={b.to} to={b.to} className="group block py-6 transition-colors sm:py-8">
                 <div className="flex items-baseline justify-between gap-4">
                   <h3 className="font-display text-[1.125rem] font-semibold leading-[1.2] text-[color:var(--color-text-primary)] transition-colors group-hover:text-[color:var(--color-text-accent)] sm:text-[1.375rem]">
                     {b.title}

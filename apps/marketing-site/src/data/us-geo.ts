@@ -1005,4 +1005,3 @@ export const GEO_SCATTER: ScatterDot[] = [
 export const GEO_SCATTER_BANDS: ScatterDot[][] = Array.from({ length: GEO_BAND_COUNT }, (_, b) =>
   GEO_SCATTER.filter((d) => d.band === b),
 );
-

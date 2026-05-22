@@ -29,13 +29,23 @@ export const DISBURSEMENT = {
 
 export const TOP_INDUSTRIES = [
   { naics: "722513", name: "Limited-Service Restaurants", count: 3412, dollars: 1_240_000_000 },
-  { naics: "713940", name: "Fitness & Recreational Sports Centers", count: 1856, dollars: 890_000_000 },
+  {
+    naics: "713940",
+    name: "Fitness & Recreational Sports Centers",
+    count: 1856,
+    dollars: 890_000_000,
+  },
   { naics: "722511", name: "Full-Service Restaurants", count: 1645, dollars: 720_000_000 },
   { naics: "236220", name: "Commercial Building Construction", count: 1234, dollars: 680_000_000 },
   { naics: "621111", name: "Offices of Physicians", count: 987, dollars: 540_000_000 },
   { naics: "531110", name: "Lessors of Residential Buildings", count: 876, dollars: 490_000_000 },
   { naics: "812111", name: "Barber Shops", count: 654, dollars: 180_000_000 },
-  { naics: "484121", name: "General Freight Trucking, Long-Distance", count: 612, dollars: 310_000_000 },
+  {
+    naics: "484121",
+    name: "General Freight Trucking, Long-Distance",
+    count: 612,
+    dollars: 310_000_000,
+  },
   { naics: "561730", name: "Landscaping Services", count: 598, dollars: 190_000_000 },
   { naics: "238220", name: "Plumbing, Heating & AC Contractors", count: 542, dollars: 270_000_000 },
 ];

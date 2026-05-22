@@ -1,10 +1,18 @@
+import {
+  CANCELLATION_RATES,
+  DISBURSEMENT,
+  PIPELINE,
+  TOP_FRANCHISES,
+  TOP_INDUSTRIES,
+  TOP_LENDERS,
+  TOP_STATES,
+  fmtB,
+  fmtCount,
+  fmtK,
+  fmtM,
+} from "@/data/sba-insights-data";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import {
-  PIPELINE, DISBURSEMENT, TOP_INDUSTRIES, TOP_FRANCHISES,
-  TOP_LENDERS, CANCELLATION_RATES, TOP_STATES,
-  fmtB, fmtM, fmtK, fmtCount,
-} from "@/data/sba-insights-data";
 
 const ey = "font-mono text-[0.5625rem] font-semibold uppercase tracking-[0.18em]";
 const enter = {
@@ -14,7 +22,9 @@ const enter = {
   transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const },
 };
 
-const wait30Plus = DISBURSEMENT.buckets.filter((b) => b.minDays >= 30).reduce((s, b) => s + b.pct, 0);
+const wait30Plus = DISBURSEMENT.buckets
+  .filter((b) => b.minDays >= 30)
+  .reduce((s, b) => s + b.pct, 0);
 const maxIndustryCount = Math.max(...TOP_INDUSTRIES.map((i) => i.count));
 const maxLenderCount = Math.max(...TOP_LENDERS.map((l) => l.count));
 const maxBucketPct = Math.max(...DISBURSEMENT.buckets.map((b) => b.pct));
@@ -22,7 +32,7 @@ const maxCancRate = Math.max(...CANCELLATION_RATES.map((c) => c.rate), 20);
 
 function StatCell({ label, value, sub }: { label: string; value: string; sub: string }) {
   return (
-    <div className="bg-[color:var(--color-surface-base)] px-6 py-7">
+    <div className="bg-[color:var(--color-surface-base)] pl-6 pr-6 pt-7 pb-7">
       <p className={`${ey} text-[color:var(--color-text-subtle)]`}>{label}</p>
       <p className="mt-2 font-mono text-[1.75rem] font-semibold tabular-nums text-[color:var(--color-text-primary)] md:text-[2rem]">
         {value}
@@ -32,7 +42,12 @@ function StatCell({ label, value, sub }: { label: string; value: string; sub: st
   );
 }
 
-function SectionHead({ eyebrow, title, body, thesis }: { eyebrow: string; title: string; body: string; thesis?: string }) {
+function SectionHead({
+  eyebrow,
+  title,
+  body,
+  thesis,
+}: { eyebrow: string; title: string; body: string; thesis?: string }) {
   return (
     <motion.div {...enter}>
       <p className={`${ey} text-[color:var(--color-text-accent)]`}>{eyebrow}</p>
@@ -60,20 +75,26 @@ export default function SbaInsights() {
       <section className="border-b border-[color:var(--color-border-subtle)] px-6 pt-28 pb-20 md:pt-36 md:pb-28">
         <div className="mx-auto max-w-4xl">
           <motion.div {...enter}>
-            <p className={`${ey} text-[color:var(--color-text-accent)]`}>SBA 7(a) Pipeline Monitor</p>
+            <p className={`${ey} text-[color:var(--color-text-accent)]`}>
+              SBA 7(a) Pipeline Monitor
+            </p>
             <h1 className="mt-4 font-display text-[2.25rem] font-semibold leading-[1.08] text-[color:var(--color-text-primary)] sm:text-[3rem]">
               23,724 borrowers approved.
               <br />
-              <span className="text-[color:var(--color-text-muted)]">$8.8 billion undisbursed.</span>
+              <span className="text-[color:var(--color-text-muted)]">
+                $8.8 billion undisbursed.
+              </span>
             </h1>
             <p className="mt-6 max-w-2xl text-[0.9375rem] leading-[1.65] text-[color:var(--color-text-muted)]">
-              Every SBA 7(a) commitment since 2019 — sourced from SBA FOIA data, not
-              press releases. The disbursement gap is where origination leverage concentrates:
-              borrowers approved but not yet funded are the highest-conviction refinance
-              and bridge-lending opportunities in the mid-market.
+              Every SBA 7(a) commitment since 2019 — sourced from SBA FOIA data, not press releases.
+              The disbursement gap is where origination leverage concentrates: borrowers approved
+              but not yet funded are the highest-conviction refinance and bridge-lending
+              opportunities in the mid-market.
             </p>
             <div className="mt-8 inline-flex items-center gap-3 border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-raised)] px-4 py-2.5">
-              <span className={`${ey} text-[color:var(--color-text-subtle)]`}>{PIPELINE.quarterLabel} pipeline</span>
+              <span className={`${ey} text-[color:var(--color-text-subtle)]`}>
+                {PIPELINE.quarterLabel} pipeline
+              </span>
               <span className="font-mono text-[1rem] font-semibold text-[color:var(--color-text-primary)]">
                 {fmtCount(PIPELINE.quarterCount)} borrowers
               </span>
@@ -88,10 +109,26 @@ export default function SbaInsights() {
       {/* ── Stats strip ────────────────────────────────────────── */}
       <section className="border-b border-[color:var(--color-border-subtle)]">
         <div className="grid grid-cols-2 gap-px bg-[color:var(--color-border-subtle)] md:grid-cols-4">
-          <StatCell label="Total pending" value={fmtCount(PIPELINE.totalPendingCount)} sub="Full-decade COMMIT" />
-          <StatCell label="Pending capital" value={fmtB(PIPELINE.totalPendingDollars)} sub="SBA approved, undisbursed" />
-          <StatCell label="Median wait" value={`${DISBURSEMENT.p50Days} days`} sub="Approval → disbursement" />
-          <StatCell label="Wait 30+ days" value={`${wait30Plus.toFixed(0)}%`} sub="Of recent cohorts" />
+          <StatCell
+            label="Total pending"
+            value={fmtCount(PIPELINE.totalPendingCount)}
+            sub="Full-decade COMMIT"
+          />
+          <StatCell
+            label="Pending capital"
+            value={fmtB(PIPELINE.totalPendingDollars)}
+            sub="SBA approved, undisbursed"
+          />
+          <StatCell
+            label="Median wait"
+            value={`${DISBURSEMENT.p50Days} days`}
+            sub="Approval → disbursement"
+          />
+          <StatCell
+            label="Wait 30+ days"
+            value={`${wait30Plus.toFixed(0)}%`}
+            sub="Of recent cohorts"
+          />
         </div>
       </section>
 
@@ -112,18 +149,26 @@ export default function SbaInsights() {
               return (
                 <div key={b.label} className="flex items-center gap-4">
                   <div className="w-24 shrink-0">
-                    <span className="font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)]">{b.label}</span>
+                    <span className="font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)]">
+                      {b.label}
+                    </span>
                   </div>
                   <div className="flex-1">
                     <div className="h-5 bg-[color:var(--color-surface-raised)]">
                       <div
-                        className={isLong ? "h-full bg-red-900/50" : "h-full bg-[color:var(--color-accent-primary)]"}
+                        className={
+                          isLong
+                            ? "h-full bg-red-900/50"
+                            : "h-full bg-[color:var(--color-accent-primary)]"
+                        }
                         style={{ width: `${w}%`, opacity: isLong ? 1 : 0.5 }}
                       />
                     </div>
                   </div>
                   <div className="w-12 text-right">
-                    <span className="font-mono text-[0.8125rem] tabular-nums text-[color:var(--color-text-primary)]">{b.pct.toFixed(1)}%</span>
+                    <span className="font-mono text-[0.8125rem] tabular-nums text-[color:var(--color-text-primary)]">
+                      {b.pct.toFixed(1)}%
+                    </span>
                   </div>
                 </div>
               );
@@ -145,10 +190,14 @@ export default function SbaInsights() {
           <motion.div className="mt-8 space-y-2.5" {...enter}>
             {TOP_INDUSTRIES.map((ind, i) => (
               <div key={ind.naics} className="flex items-center gap-4">
-                <div className="w-5 shrink-0 font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)]">{i + 1}</div>
+                <div className="w-5 shrink-0 font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)]">
+                  {i + 1}
+                </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-baseline justify-between gap-2">
-                    <span className="truncate text-[0.75rem] text-[color:var(--color-text-default)]">{ind.name}</span>
+                    <span className="truncate text-[0.75rem] text-[color:var(--color-text-default)]">
+                      {ind.name}
+                    </span>
                     <span className="shrink-0 font-mono text-[0.6875rem] tabular-nums text-[color:var(--color-text-muted)]">
                       {fmtCount(ind.count)}
                     </span>
@@ -161,7 +210,9 @@ export default function SbaInsights() {
                   </div>
                 </div>
                 <div className="hidden w-16 text-right md:block">
-                  <span className="font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)]">{fmtM(ind.dollars)}</span>
+                  <span className="font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)]">
+                    {fmtM(ind.dollars)}
+                  </span>
                 </div>
               </div>
             ))}
@@ -184,17 +235,33 @@ export default function SbaInsights() {
               <thead>
                 <tr className="border-b border-[color:var(--color-border-default)]">
                   <th className={`${ey} py-2 pr-4 text-[color:var(--color-text-subtle)]`}>#</th>
-                  <th className={`${ey} py-2 pr-4 text-[color:var(--color-text-subtle)]`}>Franchise</th>
-                  <th className={`${ey} py-2 pr-4 text-right text-[color:var(--color-text-subtle)]`}>Pending</th>
-                  <th className={`${ey} py-2 pr-4 text-right text-[color:var(--color-text-subtle)]`}>Avg ticket</th>
-                  <th className={`${ey} py-2 text-right text-[color:var(--color-text-subtle)]`}>Total</th>
+                  <th className={`${ey} py-2 pr-4 text-[color:var(--color-text-subtle)]`}>
+                    Franchise
+                  </th>
+                  <th
+                    className={`${ey} py-2 pr-4 text-right text-[color:var(--color-text-subtle)]`}
+                  >
+                    Pending
+                  </th>
+                  <th
+                    className={`${ey} py-2 pr-4 text-right text-[color:var(--color-text-subtle)]`}
+                  >
+                    Avg ticket
+                  </th>
+                  <th className={`${ey} py-2 text-right text-[color:var(--color-text-subtle)]`}>
+                    Total
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {TOP_FRANCHISES.map((f, i) => (
                   <tr key={f.name} className="border-b border-[color:var(--color-border-subtle)]">
-                    <td className="py-3 pr-4 font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)]">{i + 1}</td>
-                    <td className="py-3 pr-4 text-[0.8125rem] text-[color:var(--color-text-default)]">{f.name}</td>
+                    <td className="py-3 pr-4 font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)]">
+                      {i + 1}
+                    </td>
+                    <td className="py-3 pr-4 text-[0.8125rem] text-[color:var(--color-text-default)]">
+                      {f.name}
+                    </td>
                     <td className="py-3 pr-4 text-right font-mono text-[0.75rem] tabular-nums text-[color:var(--color-text-primary)]">
                       {fmtCount(f.count)}
                     </td>
@@ -225,10 +292,14 @@ export default function SbaInsights() {
           <motion.div className="mt-8 space-y-2.5" {...enter}>
             {TOP_LENDERS.map((l, i) => (
               <div key={l.name} className="flex items-center gap-4">
-                <div className="w-5 shrink-0 font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)]">{i + 1}</div>
+                <div className="w-5 shrink-0 font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)]">
+                  {i + 1}
+                </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-baseline justify-between gap-2">
-                    <span className="truncate text-[0.75rem] text-[color:var(--color-text-default)]">{l.name}</span>
+                    <span className="truncate text-[0.75rem] text-[color:var(--color-text-default)]">
+                      {l.name}
+                    </span>
                     <span className="shrink-0 font-mono text-[0.6875rem] tabular-nums text-[color:var(--color-text-muted)]">
                       {fmtCount(l.count)}
                     </span>
@@ -240,8 +311,12 @@ export default function SbaInsights() {
                     />
                   </div>
                   <div className="mt-0.5 flex items-center gap-3">
-                    <span className="font-mono text-[0.5rem] text-[color:var(--color-text-subtle)]">{fmtM(l.dollars)}</span>
-                    <span className="font-mono text-[0.5rem] text-[color:var(--color-text-subtle)]">{l.franchisePct}% franchise</span>
+                    <span className="font-mono text-[0.5rem] text-[color:var(--color-text-subtle)]">
+                      {fmtM(l.dollars)}
+                    </span>
+                    <span className="font-mono text-[0.5rem] text-[color:var(--color-text-subtle)]">
+                      {l.franchisePct}% franchise
+                    </span>
                   </div>
                 </div>
               </div>
@@ -267,16 +342,28 @@ export default function SbaInsights() {
                 const isSpike = c.year === 2025;
                 return (
                   <div key={c.year} className="flex flex-1 flex-col items-center gap-1">
-                    <span className={`font-mono text-[0.5625rem] tabular-nums ${isSpike ? "text-red-400" : "text-[color:var(--color-text-subtle)]"}`}>
+                    <span
+                      className={`font-mono text-[0.5625rem] tabular-nums ${isSpike ? "text-red-400" : "text-[color:var(--color-text-subtle)]"}`}
+                    >
                       {c.rate.toFixed(1)}%
                     </span>
                     <div className="w-full" style={{ height: "80px" }}>
                       <div
-                        className={isSpike ? "w-full bg-red-900/60" : "w-full bg-[color:var(--color-text-muted)]"}
-                        style={{ height: `${h}%`, marginTop: `${100 - h}%`, opacity: isSpike ? 1 : 0.3 }}
+                        className={
+                          isSpike
+                            ? "w-full bg-red-900/60"
+                            : "w-full bg-[color:var(--color-text-muted)]"
+                        }
+                        style={{
+                          height: `${h}%`,
+                          marginTop: `${100 - h}%`,
+                          opacity: isSpike ? 1 : 0.3,
+                        }}
                       />
                     </div>
-                    <span className={`font-mono text-[0.5rem] tabular-nums ${isSpike ? "text-red-400" : "text-[color:var(--color-text-subtle)]"}`}>
+                    <span
+                      className={`font-mono text-[0.5rem] tabular-nums ${isSpike ? "text-red-400" : "text-[color:var(--color-text-subtle)]"}`}
+                    >
                       {c.year}
                     </span>
                   </div>
@@ -297,12 +384,21 @@ export default function SbaInsights() {
             thesis="CA, TX, and FL account for a third of the national pipeline. State-level concentration maps directly to origination territory — these are the markets where boots-on-the-ground lending produces the highest deal density."
           />
 
-          <motion.div className="mt-8 grid grid-cols-2 gap-px border border-[color:var(--color-border-default)] md:grid-cols-5" {...enter}>
+          <motion.div
+            className="mt-8 grid grid-cols-2 gap-px border border-[color:var(--color-border-default)] md:grid-cols-5"
+            {...enter}
+          >
             {TOP_STATES.map((s) => (
               <div key={s.state} className="bg-[color:var(--color-surface-raised)] px-5 py-5">
-                <p className="font-mono text-[1.5rem] font-semibold text-[color:var(--color-text-primary)]">{s.state}</p>
-                <p className="font-mono text-[0.8125rem] tabular-nums text-[color:var(--color-text-muted)]">{fmtCount(s.count)}</p>
-                <p className="mt-1 font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)]">{fmtM(s.dollars)}</p>
+                <p className="font-mono text-[1.5rem] font-semibold text-[color:var(--color-text-primary)]">
+                  {s.state}
+                </p>
+                <p className="font-mono text-[0.8125rem] tabular-nums text-[color:var(--color-text-muted)]">
+                  {fmtCount(s.count)}
+                </p>
+                <p className="mt-1 font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)]">
+                  {fmtM(s.dollars)}
+                </p>
               </div>
             ))}
           </motion.div>
@@ -312,15 +408,20 @@ export default function SbaInsights() {
       {/* ── Closing ────────────────────────────────────────────── */}
       <section className="px-6 py-20">
         <div className="mx-auto max-w-4xl">
-          <motion.div className="flex flex-col gap-8 md:flex-row md:items-center md:justify-between" {...enter}>
+          <motion.div
+            className="flex flex-col gap-8 md:flex-row md:items-center md:justify-between"
+            {...enter}
+          >
             <div>
-              <p className={`${ey} text-[color:var(--color-text-accent)]`}>The origination signal</p>
+              <p className={`${ey} text-[color:var(--color-text-accent)]`}>
+                The origination signal
+              </p>
               <h2 className="mt-2 font-display text-[1.5rem] font-semibold text-[color:var(--color-text-primary)]">
                 This pipeline is where we originate.
               </h2>
               <p className="mt-2 text-[0.875rem] text-[color:var(--color-text-muted)]">
-                Every data point above feeds the same proprietary infrastructure
-                that identifies structural catalysts in real time.
+                Every data point above feeds the same proprietary infrastructure that identifies
+                structural catalysts in real time.
               </p>
             </div>
             <Link
@@ -337,8 +438,8 @@ export default function SbaInsights() {
       <div className="border-t border-[color:var(--color-border-subtle)] px-6 py-3">
         <p className="mx-auto max-w-4xl font-mono text-[0.5rem] text-[color:var(--color-text-subtle)]">
           Sourced from SBA FOIA data. Dataset covers approvaldate 2019-10-01 through 2026-05-20.
-          Rare Structure makes no representations about completeness or accuracy beyond what the
-          SBA FOIA release includes.
+          Rare Structure makes no representations about completeness or accuracy beyond what the SBA
+          FOIA release includes.
         </p>
       </div>
 

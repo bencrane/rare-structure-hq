@@ -16,8 +16,18 @@ const GOV_CONTRACTS = [
 ];
 
 const DEBT_STACK = [
-  { type: "UCC-1 — Equipment", filed: "2024-08", secured: "Caterpillar Financial", status: "Active" },
-  { type: "UCC-1 — Line of Credit", filed: "2025-03", secured: "Pacific Western Bank", status: "Active" },
+  {
+    type: "UCC-1 — Equipment",
+    filed: "2024-08",
+    secured: "Caterpillar Financial",
+    status: "Active",
+  },
+  {
+    type: "UCC-1 — Line of Credit",
+    filed: "2025-03",
+    secured: "Pacific Western Bank",
+    status: "Active",
+  },
   { type: "SBA 7(a) — Term", filed: "2023-11", secured: "SBA / Live Oak Bank", status: "Current" },
 ];
 
@@ -40,9 +50,8 @@ export function BriefingDeepDive() {
             One company. Two capital structures. One origination signal.
           </h2>
           <p className="mt-3 max-w-[560px] text-[0.9375rem] leading-[1.6] text-[color:var(--color-text-muted)]">
-            This is a real entity in our pipeline — name and identifiers redacted.
-            The profile below is representative of the structural pattern we
-            surface at scale.
+            This is a real entity in our pipeline — name and identifiers redacted. The profile below
+            is representative of the structural pattern we surface at scale.
           </p>
         </motion.div>
 

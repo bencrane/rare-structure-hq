@@ -1,9 +1,9 @@
 import { Route, Routes } from "react-router-dom";
 import { SiteHeader } from "./components/SiteHeader";
-import Home from "./routes/Home";
 import Briefing from "./routes/Briefing";
-import SbaInsights from "./routes/SbaInsights";
+import Home from "./routes/Home";
 import Proposal from "./routes/Proposal";
+import SbaInsights from "./routes/SbaInsights";
 
 export function App() {
   return (

@@ -1,5 +1,5 @@
-import { motion } from "framer-motion";
 import { MASKED_FIELDS } from "@/data/briefing-data";
+import { motion } from "framer-motion";
 
 export function BriefingCTA() {
   return (
@@ -39,8 +39,8 @@ export function BriefingCTA() {
             This is what we surface.
           </h3>
           <p className="mt-3 text-[0.875rem] leading-[1.6] text-[color:var(--color-text-muted)]">
-            Proprietary data infrastructure capturing structural catalysts
-            at the source — originated and routed before the broker market.
+            Proprietary data infrastructure capturing structural catalysts at the source —
+            originated and routed before the broker market.
           </p>
 
           <button

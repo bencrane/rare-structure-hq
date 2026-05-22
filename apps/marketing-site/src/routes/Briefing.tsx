@@ -1,11 +1,11 @@
-import { useRef, useState } from "react";
-import { useScroll, useMotionValueEvent } from "framer-motion";
+import { BriefingDeepDive } from "@/components/BriefingDeepDive";
+import { BriefingMap } from "@/components/BriefingMap";
+import { BriefingTakeaway } from "@/components/BriefingTakeaway";
+import { NarrativeSection } from "@/components/NarrativeSection";
 import type { BriefingPhase } from "@/data/briefing-data";
 import { NARRATIVE_SECTIONS } from "@/data/briefing-data";
-import { BriefingMap } from "@/components/BriefingMap";
-import { NarrativeSection } from "@/components/NarrativeSection";
-import { BriefingDeepDive } from "@/components/BriefingDeepDive";
-import { BriefingTakeaway } from "@/components/BriefingTakeaway";
+import { useMotionValueEvent, useScroll } from "framer-motion";
+import { useRef, useState } from "react";
 
 const PHASE_ORDER: BriefingPhase[] = [
   "national",
@@ -16,10 +16,7 @@ const PHASE_ORDER: BriefingPhase[] = [
 ];
 
 function phaseFromProgress(p: number): BriefingPhase {
-  const idx = Math.min(
-    Math.floor(p * PHASE_ORDER.length),
-    PHASE_ORDER.length - 1,
-  );
+  const idx = Math.min(Math.floor(p * PHASE_ORDER.length), PHASE_ORDER.length - 1);
   return PHASE_ORDER[idx];
 }
 
@@ -56,9 +53,9 @@ export default function Briefing() {
               Commercial Leverage
             </h1>
             <p className="mx-auto mt-6 max-w-[460px] text-[0.9375rem] leading-[1.6] text-[color:var(--color-text-muted)]">
-              A structural view of where federal contract revenue intersects
-              with active commercial debt — and why that intersection is the
-              highest-conviction origination signal in mid-market lending.
+              A structural view of where federal contract revenue intersects with active commercial
+              debt — and why that intersection is the highest-conviction origination signal in
+              mid-market lending.
             </p>
             <div className="mt-10 font-mono text-[0.625rem] uppercase tracking-[0.22em] text-[color:var(--color-text-subtle)]">
               Scroll to begin ↓

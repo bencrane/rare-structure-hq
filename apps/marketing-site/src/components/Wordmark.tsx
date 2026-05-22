@@ -60,7 +60,6 @@ export function Wordmark() {
           >
             Catalyst-driven capital formation
           </Text>
-
         </div>
       </div>
     </div>

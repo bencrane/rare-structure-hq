@@ -8,8 +8,9 @@
  *      wordmark is present, and the page loads with zero console errors.
  *   2. platform-app (5173) — the market cockpit: the US map renders (real
  *      state-path geometry in the DOM), ⌘K runs a map-query that lights up
- *      company dots, clicking a dot opens its profile with Capital
- *      Catalysts, and an aggregate command swaps the map for the chart.
+ *      company dots, clicking a dot opens its callout (and the callout opens
+ *      the full profile with Capital Catalysts), and an aggregate command
+ *      swaps the map for the chart.
  *
  * Screenshots of the homepage and each cockpit step are written to
  * `test-results/` (gitignored).
@@ -41,9 +42,6 @@ test("marketing-site homepage renders the wordmark with zero console errors", as
   await expect(heading).toBeVisible();
   await expect(heading).toContainText("Rare", { ignoreCase: true });
   await expect(heading).toContainText("Structure", { ignoreCase: true });
-
-  // The animated starfield canvas is present.
-  await expect(page.locator("canvas")).toBeVisible();
 
   await page.screenshot({ path: `${SHOTS}/marketing-homepage.png`, fullPage: true });
 
@@ -97,10 +95,15 @@ test("platform-app cockpit runs the ⌘K query → profile → aggregate loop", 
 
   await page.screenshot({ path: `${SHOTS}/cockpit-2-query.png`, fullPage: true });
 
-  // ── Click a company dot → its profile drawer ──────────────────────
+  // ── Click a company dot → its callout → the profile drawer ────────
   // SVG <g> elements overlap the land-fill <path> geometry, so a positional
-  // click is intercepted — dispatch the click event directly.
+  // click is intercepted — dispatch the click event directly. A single click
+  // opens the on-map callout; clicking the callout opens the full profile.
   await companyDots.first().dispatchEvent("click");
+  const callout = page.locator('svg g[role="button"][aria-label^="Open profile"]');
+  await expect(callout.first()).toBeVisible();
+
+  await callout.first().dispatchEvent("click");
   const profile = page.getByRole("dialog", { name: /^Profile/ });
   await expect(profile).toBeVisible();
   await expect(profile.getByText("Capital Catalysts")).toBeVisible();

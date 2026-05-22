@@ -1,6 +1,6 @@
-import { motion, useReducedMotion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
 import { PROPOSAL_DEAL } from "@/data/proposal-data";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
 
 const d = PROPOSAL_DEAL;
 const enter = (delay = 0) => ({
@@ -52,7 +52,7 @@ function SidebarSection({
 
 function Sidebar() {
   return (
-    <aside className="flex w-[320px] shrink-0 flex-col gap-5 overflow-y-auto border-r border-[color:var(--color-border-subtle)] bg-[color:var(--color-surface-base)] p-6 pt-20">
+    <aside className="flex w-[320px] shrink-0 flex-col space-y-5 overflow-y-auto border-r border-[color:var(--color-border-subtle)] bg-[color:var(--color-surface-base)] p-6 pt-20">
       <SidebarSection title="Proposal" delay={0.1}>
         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2">
           <Label>Ref</Label>
@@ -154,6 +154,11 @@ function SignatureModal({
   onCancel: () => void;
 }) {
   const [typed, setTyped] = useState(name);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
 
   return (
     <motion.div
@@ -184,29 +189,33 @@ function SignatureModal({
         </div>
 
         <p className="mb-6 text-[0.8125rem] text-[color:var(--color-text-muted)]">
-          Type your full legal name below. This will serve as your electronic
-          signature on this engagement proposal.
+          Type your full legal name below. This will serve as your electronic signature on this
+          engagement proposal.
         </p>
 
         {/* Name input */}
         <div className="mb-4">
-          <label className="mb-2 block font-mono text-[0.5625rem] uppercase tracking-[0.16em] text-[color:var(--color-text-subtle)]">
+          <label
+            htmlFor="signer-name"
+            className="mb-2 block font-mono text-[0.5625rem] uppercase tracking-[0.16em] text-[color:var(--color-text-subtle)]"
+          >
             Full Legal Name
           </label>
           <input
+            id="signer-name"
+            ref={inputRef}
             type="text"
             value={typed}
             onChange={(e) => setTyped(e.target.value)}
             className="w-full border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-sunken)] px-4 py-3 text-[0.9375rem] text-[color:var(--color-text-primary)] outline-none focus:border-[color:var(--color-accent-primary)]"
-            autoFocus
           />
         </div>
 
         {/* Signature preview */}
         <div className="mb-6">
-          <label className="mb-2 block font-mono text-[0.5625rem] uppercase tracking-[0.16em] text-[color:var(--color-text-subtle)]">
+          <div className="mb-2 block font-mono text-[0.5625rem] uppercase tracking-[0.16em] text-[color:var(--color-text-subtle)]">
             Signature Preview
-          </label>
+          </div>
           <div className="flex min-h-[80px] items-center justify-center border border-[color:var(--color-border-subtle)] bg-[color:var(--color-surface-sunken)] px-6 py-4">
             {typed.trim() ? (
               <span className="font-display text-[2rem] italic text-[color:var(--color-text-primary)]">
@@ -251,7 +260,9 @@ function SigningEmbed({ onSigned }: { onSigned: () => void }) {
   const [signature, setSignature] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const signed = signature !== null;
-  const signedAt = signed ? new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) : null;
+  const signedAt = signed
+    ? new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
+    : null;
 
   return (
     <div>
@@ -271,7 +282,10 @@ function SigningEmbed({ onSigned }: { onSigned: () => void }) {
                     </div>
                     <button
                       type="button"
-                      onClick={() => { setSignature(null); setShowModal(true); }}
+                      onClick={() => {
+                        setSignature(null);
+                        setShowModal(true);
+                      }}
                       className="absolute -top-2 -right-2 flex size-6 items-center justify-center border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-raised)] font-mono text-[0.5625rem] text-[color:var(--color-text-muted)] opacity-0 transition-opacity hover:text-[color:var(--color-text-primary)] group-hover:opacity-100"
                       aria-label="Clear signature and re-sign"
                     >
@@ -385,7 +399,7 @@ function SigningEmbed({ onSigned }: { onSigned: () => void }) {
 
 function TermRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-baseline justify-between border-b border-[color:var(--color-border-subtle)] py-3">
+    <div className="flex items-baseline justify-between border-b border-[color:var(--color-border-subtle)] pt-3 pb-3">
       <span className="font-mono text-[0.6875rem] uppercase tracking-[0.12em] text-[color:var(--color-text-muted)]">
         {label}
       </span>
@@ -523,7 +537,17 @@ function PaymentArea() {
           transition={{ duration: 0.5 }}
         >
           <div className="mx-auto mb-4 flex size-12 items-center justify-center border border-[color:var(--color-text-accent)] text-[color:var(--color-text-accent)]">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              aria-hidden="true"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
               <polyline points="22 4 12 14.01 9 11.01" />
             </svg>
@@ -532,8 +556,8 @@ function PaymentArea() {
             Payment Received
           </div>
           <p className="mt-3 text-[0.875rem] text-[color:var(--color-text-muted)]">
-            A confirmation has been sent to {d.partner.contact} at {d.partner.firm}.
-            The engagement is now active.
+            A confirmation has been sent to {d.partner.contact} at {d.partner.firm}. The engagement
+            is now active.
           </p>
           <div className="mt-6 font-mono text-[0.5625rem] uppercase tracking-[0.14em] text-[color:var(--color-text-subtle)]">
             {d.ref} · Executed · Paid
@@ -553,7 +577,18 @@ function PaymentArea() {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.4 }}
         >
-          <svg className="text-[color:var(--color-text-accent)]" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            aria-hidden="true"
+            className="text-[color:var(--color-text-accent)]"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
             <polyline points="22 4 12 14.01 9 11.01" />
           </svg>
@@ -628,10 +663,14 @@ function PaymentArea() {
                 {/* Mock card form — replaced by Stripe PaymentElement when keys are wired */}
                 <div className="space-y-4">
                   <div>
-                    <label className="mb-2 block font-mono text-[0.5625rem] uppercase tracking-[0.16em] text-[color:var(--color-text-subtle)]">
+                    <label
+                      htmlFor="card-number"
+                      className="mb-2 block font-mono text-[0.5625rem] uppercase tracking-[0.16em] text-[color:var(--color-text-subtle)]"
+                    >
                       Card Number
                     </label>
                     <input
+                      id="card-number"
                       type="text"
                       placeholder="4242 4242 4242 4242"
                       className="w-full border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-sunken)] px-4 py-3 font-mono text-[0.875rem] tabular-nums text-[color:var(--color-text-primary)] outline-none placeholder:text-[color:var(--color-text-subtle)] focus:border-[color:var(--color-text-accent)]"
@@ -639,20 +678,28 @@ function PaymentArea() {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="mb-2 block font-mono text-[0.5625rem] uppercase tracking-[0.16em] text-[color:var(--color-text-subtle)]">
+                      <label
+                        htmlFor="card-expiration"
+                        className="mb-2 block font-mono text-[0.5625rem] uppercase tracking-[0.16em] text-[color:var(--color-text-subtle)]"
+                      >
                         Expiration
                       </label>
                       <input
+                        id="card-expiration"
                         type="text"
                         placeholder="MM / YY"
                         className="w-full border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-sunken)] px-4 py-3 font-mono text-[0.875rem] text-[color:var(--color-text-primary)] outline-none placeholder:text-[color:var(--color-text-subtle)] focus:border-[color:var(--color-text-accent)]"
                       />
                     </div>
                     <div>
-                      <label className="mb-2 block font-mono text-[0.5625rem] uppercase tracking-[0.16em] text-[color:var(--color-text-subtle)]">
+                      <label
+                        htmlFor="card-cvc"
+                        className="mb-2 block font-mono text-[0.5625rem] uppercase tracking-[0.16em] text-[color:var(--color-text-subtle)]"
+                      >
                         CVC
                       </label>
                       <input
+                        id="card-cvc"
                         type="text"
                         placeholder="123"
                         className="w-full border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-sunken)] px-4 py-3 font-mono text-[0.875rem] text-[color:var(--color-text-primary)] outline-none placeholder:text-[color:var(--color-text-subtle)] focus:border-[color:var(--color-text-accent)]"
@@ -673,8 +720,8 @@ function PaymentArea() {
             ) : (
               <div>
                 <p className="mb-6 text-[0.8125rem] leading-[1.6] text-[color:var(--color-text-muted)]">
-                  ACH transfers typically arrive within 1–3 business days.
-                  The engagement activates upon receipt of funds.
+                  ACH transfers typically arrive within 1–3 business days. The engagement activates
+                  upon receipt of funds.
                 </p>
 
                 <div className="space-y-0">
@@ -686,7 +733,9 @@ function PaymentArea() {
                     <div
                       key={row.label}
                       className={`flex items-center justify-between py-3 ${
-                        i < arr.length - 1 ? "border-b border-[color:var(--color-border-subtle)]" : ""
+                        i < arr.length - 1
+                          ? "border-b border-[color:var(--color-border-subtle)]"
+                          : ""
                       }`}
                     >
                       <span className="font-mono text-[0.6875rem] uppercase tracking-[0.12em] text-[color:var(--color-text-muted)]">
@@ -709,7 +758,8 @@ function PaymentArea() {
                 </div>
 
                 <div className="mt-4 font-mono text-[0.5625rem] uppercase tracking-[0.12em] text-[color:var(--color-text-subtle)]">
-                  Bank details provided upon engagement execution. Contact the origination desk for wire instructions.
+                  Bank details provided upon engagement execution. Contact the origination desk for
+                  wire instructions.
                 </div>
               </div>
             )}

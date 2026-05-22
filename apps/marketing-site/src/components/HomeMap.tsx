@@ -1,6 +1,6 @@
-import { motion, useReducedMotion, AnimatePresence } from "framer-motion";
-import { useState, useEffect } from "react";
 import { GEO_SCATTER_BANDS, GEO_VIEW, STATE_PATHS } from "@/data/us-geo";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { useEffect, useState } from "react";
 
 const DATA_SOURCES = [
   "USAspending · Federal Contracts",
@@ -24,13 +24,29 @@ function Graticule() {
   for (let c = 1; c < cols; c++) {
     const x = (GEO_VIEW.w / cols) * c;
     lines.push(
-      <line key={`gv-${c}`} x1={x} y1={0} x2={x} y2={GEO_VIEW.h} stroke="var(--color-border-subtle)" strokeWidth={0.4} />,
+      <line
+        key={`gv-${c}`}
+        x1={x}
+        y1={0}
+        x2={x}
+        y2={GEO_VIEW.h}
+        stroke="var(--color-border-subtle)"
+        strokeWidth={0.4}
+      />,
     );
   }
   for (let r = 1; r < rows; r++) {
     const y = (GEO_VIEW.h / rows) * r;
     lines.push(
-      <line key={`gh-${r}`} x1={0} y1={y} x2={GEO_VIEW.w} y2={y} stroke="var(--color-border-subtle)" strokeWidth={0.4} />,
+      <line
+        key={`gh-${r}`}
+        x1={0}
+        y1={y}
+        x2={GEO_VIEW.w}
+        y2={y}
+        stroke="var(--color-border-subtle)"
+        strokeWidth={0.4}
+      />,
     );
   }
   return <g opacity={0.3}>{lines}</g>;

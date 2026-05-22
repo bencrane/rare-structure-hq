@@ -1,5 +1,5 @@
-import { motion } from "framer-motion";
 import type { NarrativeSectionData } from "@/data/briefing-data";
+import { motion } from "framer-motion";
 
 const ALIGN_CLASS = {
   left: "items-start justify-start pl-8 sm:pl-16 lg:pl-24",
@@ -9,9 +9,7 @@ const ALIGN_CLASS = {
 
 export function NarrativeSection({ section }: { section: NarrativeSectionData }) {
   return (
-    <section
-      className={`flex min-h-screen ${ALIGN_CLASS[section.align]} py-32`}
-    >
+    <section className={`flex min-h-screen ${ALIGN_CLASS[section.align]} py-32`}>
       <motion.div
         className="max-w-[420px] border border-[color:var(--color-border-subtle)] bg-[color:var(--color-surface-overlay)] p-8 backdrop-blur-md sm:p-10"
         initial={{ opacity: 0, y: 28 }}
