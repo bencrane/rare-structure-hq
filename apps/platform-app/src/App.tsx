@@ -2,18 +2,20 @@
  * App — the platform-app router shell.
  *
  * Routes:
- *   `/`                          → unauthenticated catalyst map demo (untouched).
+ *   `/`                          → redirects to `/map`.
+ *   `/map`                       → unauthenticated catalyst map demo.
  *   `/opportunities`             → SAM.gov active opportunities list (auth).
  *   `/opportunities/:notice_id`  → single opportunity detail (auth).
  *
  * The /opportunities surface is gated by <RequireAuth>; the map route
- * remains anonymous so the demo link still works. Both branches live
- * under one <AuthProvider> at the App root so that signing in on the
- * /opportunities page also reflects on any other future authenticated
- * surface without a remount.
+ * remains anonymous so the demo link still works. The apex `/` redirects
+ * to `/map` so the bare-domain link keeps landing on the demo. Both
+ * branches live under one <AuthProvider> at the App root so that signing
+ * in on the /opportunities page also reflects on any other future
+ * authenticated surface without a remount.
  */
 
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 
 import MapDemo from "./routes/MapDemo";
 import { AuthProvider, useAuth } from "./lib/auth";
@@ -32,7 +34,8 @@ export function App() {
   return (
     <AuthProvider>
       <Routes>
-        <Route path="/" element={<MapDemo />} />
+        <Route path="/" element={<Navigate to="/map" replace />} />
+        <Route path="/map" element={<MapDemo />} />
         <Route
           path="/opportunities"
           element={
