@@ -731,6 +731,26 @@ function ProposalLoading() {
   );
 }
 
+// Bare /proposal has no ref → nothing to show. Render a branded prompt rather
+// than a blank screen; a specific deal is never shown without its ref.
+function ProposalMissingRef() {
+  return (
+    <div className="flex h-screen flex-col items-center justify-center gap-4 bg-[color:var(--color-surface-base)] px-6 text-center">
+      <div className="font-display font-semibold text-[0.9375rem] uppercase tracking-[0.18em] text-[color:var(--color-text-primary)]">
+        Rare Structure
+      </div>
+      <div className="font-mono text-[0.625rem] uppercase tracking-[0.2em] text-[color:var(--color-text-accent)]">
+        Engagement Proposal
+      </div>
+      <p className="max-w-[420px] text-[0.8125rem] leading-relaxed text-[color:var(--color-text-muted)]">
+        This proposal link requires a reference. Open the personalized URL from
+        your engagement email — e.g.{" "}
+        <span className="text-[color:var(--color-text-primary)]">/proposal/RS-2026-0847</span>.
+      </p>
+    </div>
+  );
+}
+
 /**
  * Proposal — public capability route mounted at `/proposal/:ref`.
  *
@@ -741,24 +761,25 @@ function ProposalLoading() {
  * the bundled fixture so the surface stays fully interactive.
  */
 export default function Proposal() {
-  const { ref } = useParams<{ ref: string }>();
+  const { ref } = useParams<{ ref?: string }>();
   const [deal, setDeal] = useState<ProposalDeal | null>(null);
 
   useEffect(() => {
+    if (!ref) return; // bare /proposal — render the missing-ref prompt below
     let active = true;
-    const refCode = ref ?? PROPOSAL_DEAL.ref;
     setDeal(null);
-    getProposal(refCode).then((fetched) => {
+    getProposal(ref).then((fetched) => {
       if (!active) return;
       // Fixture fallback keeps the page live pre-backend; the swap point is
       // `getProposal` returning a real deal for this ref.
-      setDeal(fetched ?? { ...PROPOSAL_DEAL, ref: refCode });
+      setDeal(fetched ?? { ...PROPOSAL_DEAL, ref });
     });
     return () => {
       active = false;
     };
   }, [ref]);
 
+  if (!ref) return <ProposalMissingRef />;
   if (!deal) return <ProposalLoading />;
 
   return (
