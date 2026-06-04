@@ -1,0 +1,113 @@
+/**
+ * Anvil Etch e-sign integration for the proposal surface.
+ *
+ * The API key + cast config are read from the environment (Doppler) lazily, so
+ * the BFF still boots without Anvil configured — only the proposal e-sign
+ * routes fail, and with a clear error. The key NEVER leaves this server.
+ */
+import Anvil from "@anvilco/anvil";
+
+let client: Anvil | null = null;
+function anvilClient(): Anvil {
+  if (client) return client;
+  const apiKey = process.env.ANVIL_API_KEY_DEV;
+  if (!apiKey) throw new AnvilError("ANVIL_API_KEY_DEV is not configured", 500);
+  client = new Anvil({ apiKey });
+  return client;
+}
+
+// The proposal PDF template (an Anvil "cast") + the client's signature field.
+// Defaults point at the strategic_origination_mandate template; override via
+// env to repoint at a different cast/version (e.g. a real "v1") with no code
+// change. These are not secrets — they're template identifiers.
+const CAST_EID = process.env.ANVIL_PROPOSAL_CAST_EID ?? "u4xqZ9ENuvGyfq4qo5eT";
+const CLIENT_SIG_FIELD =
+  process.env.ANVIL_CLIENT_SIG_FIELD ?? "cast5ed480e05faa11f1b2e3a785f179bd1b";
+
+export class AnvilError extends Error {
+  statusCode: number;
+  detail: unknown;
+  constructor(message: string, statusCode = 502, detail?: unknown) {
+    super(message);
+    this.name = "AnvilError";
+    this.statusCode = statusCode;
+    this.detail = detail;
+  }
+}
+
+export interface ProposalSigner {
+  name: string;
+  email: string; // required by Anvil even for embedded signers (no email is sent)
+  title?: string;
+}
+
+export interface ProposalPacket {
+  etchPacketEid: string;
+  documentGroupEid: string;
+  signerEid: string;
+}
+
+/**
+ * Create an Etch packet for a proposal against the cast template, with a single
+ * EMBEDDED client signer (signerType 'embedded' => Anvil sends no email).
+ * Returns the signerEid the sign-url step consumes.
+ */
+export async function createProposalPacket(
+  ref: string,
+  signer: ProposalSigner,
+): Promise<ProposalPacket> {
+  const isTest = process.env.APP_ENV !== "prd"; // real, billable packets only in prod
+  const res = (await anvilClient().createEtchPacket({
+    variables: {
+      name: `Rare Structure Engagement — ${ref}`,
+      isTest,
+      isDraft: false,
+      files: [{ id: "proposal", castEid: CAST_EID }],
+      data: {
+        payloads: {
+          proposal: {
+            data: {
+              clientInstitutionalPartnerSignerName: signer.name,
+              clientInstitutionalPartnerSignerTitle: signer.title ?? "",
+              rareStructureLlcSignerName: "Rare Structure LLC",
+            },
+          },
+        },
+      },
+      signers: [
+        {
+          id: "client",
+          name: signer.name,
+          email: signer.email,
+          signerType: "embedded",
+          fields: [{ fileId: "proposal", fieldId: CLIENT_SIG_FIELD }],
+        },
+      ],
+    },
+  })) as { statusCode: number; data?: any; errors?: unknown };
+
+  if (res.errors) throw new AnvilError("createEtchPacket failed", res.statusCode, res.errors);
+  const packet = res.data?.data?.createEtchPacket ?? res.data?.createEtchPacket;
+  const signerEid = packet?.documentGroup?.signers?.[0]?.eid;
+  if (!signerEid) throw new AnvilError("no signerEid in packet response", 502, res.data);
+  return {
+    etchPacketEid: packet.eid,
+    documentGroupEid: packet.documentGroup?.eid,
+    signerEid,
+  };
+}
+
+/** Generate a short-lived embedded signing URL for a signer (valid ~2h). */
+export async function generateProposalSignUrl(
+  signerEid: string,
+  clientUserId: string,
+): Promise<string> {
+  const res = (await anvilClient().generateEtchSignUrl({
+    variables: { signerEid, clientUserId },
+  })) as { statusCode: number; url?: string; errors?: unknown };
+
+  if (res.errors || !res.url) {
+    throw new AnvilError("generateEtchSignUrl failed", res.statusCode ?? 502, res.errors ?? res);
+  }
+  return res.url;
+}

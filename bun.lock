@@ -70,6 +70,7 @@
       "name": "platform-app",
       "version": "0.1.0",
       "dependencies": {
+        "@anvilco/anvil-embed-frame": "^2.2.2",
         "@fontsource-variable/geist": "5.1.0",
         "@fontsource-variable/geist-mono": "5.1.0",
         "@rare-structure-hq/shared": "workspace:*",
@@ -158,6 +159,8 @@
     "@adobe/css-tools": ["@adobe/css-tools@4.4.4", "", {}, "sha512-Elp+iwUx5rN5+Y8xLt5/GRoG20WGoDCQ/1Fb+1LiGtvwbDavuSk0jhD/eZdckHAuzcDzccnkv+rEjyWfRx18gg=="],
 
     "@anvilco/anvil": ["@anvilco/anvil@3.3.2", "", { "dependencies": { "@anvilco/node-fetch": "^3.3.3-beta.0", "abort-controller": "^3.0.0", "extract-files": "^13", "limiter": "^2.1.0" } }, "sha512-YRynwKahehEfmNtXjWZ+ZqN9NsmcsqjvyK4XmYpB18D4402/kkrtbdUjh5MrPgHPV4aRgEXdYufHqnwugT3g/Q=="],
+
+    "@anvilco/anvil-embed-frame": ["@anvilco/anvil-embed-frame@2.2.2", "", { "peerDependencies": { "prop-types": "^15.6.0", "react": ">=16", "react-dom": ">=16" } }, "sha512-eahx+Eu2c8gM6rn2IAon0UnzoEDydD1HiIf78pUKbZO8YuSoO4kwX6KQl5yWWmmXKqUoRHKfeV93mvyf9gUwtg=="],
 
     "@anvilco/node-fetch": ["@anvilco/node-fetch@3.3.3-beta.0", "", { "dependencies": { "data-uri-to-buffer": "^4.0.0", "fetch-blob": "^3.1.4", "formdata-polyfill": "^4.0.10" } }, "sha512-hiruVZHjUvBxaTBSCRoeGNRknJWSwatrAm+uczyjcDGMpblOQb28sPjFVqGJ3EyOFzbIfXrm03/uIg8pr1NILA=="],
 

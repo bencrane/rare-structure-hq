@@ -6,6 +6,7 @@
  * - /health (unauthenticated) for liveness probes
  * - /api/v1/me (auth-required) echoes the validated user
  * - /api/v1/sam-opps/* (auth-required) brokers to data-engine-x
+ * - /api/v1/proposals/:ref/* (public, ref-scoped) Anvil embedded e-sign
  *
  * Deferred: Recipient profile, project matching.
  */
@@ -18,6 +19,7 @@ import { requestId } from "hono/request-id";
 import { allowedOrigins, env } from "./env.ts";
 import { requireUser, type AuthVariables } from "./auth.ts";
 import { samOppsRoutes } from "./routes/sam-opps.ts";
+import { proposalRoutes } from "./routes/proposals.ts";
 
 const app = new Hono<{ Variables: AuthVariables & { requestId: string } }>();
 
@@ -43,6 +45,7 @@ app.get("/api/v1/me", requireUser, (c) => {
 });
 
 app.route("/api/v1/sam-opps", samOppsRoutes);
+app.route("/api/v1/proposals", proposalRoutes);
 
 const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 8000;
 console.log(`platform-api listening on :${port} [${env.APP_ENV}]`);
