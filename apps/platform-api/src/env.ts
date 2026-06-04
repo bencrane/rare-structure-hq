@@ -17,6 +17,9 @@ const envSchema = z.object({
   RSH_SUPABASE_ISSUER: z.string().url(),
   RSH_SUPABASE_ANON_KEY: z.string().min(1),
   RSH_SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
+  // Gen-3 core-x catalyst_api — the BFF's data bridge for federal award profiles.
+  COREX_API_URL: z.string().url(),
+  COREX_SERVICE_TOKEN: z.string().min(1),
   ALLOWED_ORIGINS: z.string().default("http://localhost:5173"),
   APP_ENV: z.enum(["prd", "stg", "dev"]),
 });
@@ -27,6 +30,8 @@ const parsed = envSchema.safeParse({
   RSH_SUPABASE_ISSUER: process.env.RSH_SUPABASE_ISSUER,
   RSH_SUPABASE_ANON_KEY: process.env.RSH_SUPABASE_ANON_KEY,
   RSH_SUPABASE_SERVICE_ROLE_KEY: process.env.RSH_SUPABASE_SERVICE_ROLE_KEY,
+  COREX_API_URL: process.env.COREX_API_URL,
+  COREX_SERVICE_TOKEN: process.env.COREX_SERVICE_TOKEN,
   ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS,
   APP_ENV: process.env.APP_ENV,
 });
