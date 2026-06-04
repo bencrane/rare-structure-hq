@@ -21,8 +21,13 @@ function anvilClient(): Anvil {
 // env to repoint at a different cast/version (e.g. a real "v1") with no code
 // change. These are not secrets — they're template identifiers.
 const CAST_EID = process.env.ANVIL_PROPOSAL_CAST_EID ?? "u4xqZ9ENuvGyfq4qo5eT";
+// Signature fields detected on the v1 template (page 2). The client is the
+// embedded signer (Rare Structure counter-signs "7da75937…" separately).
+// Override via env if the cast/template changes.
 const CLIENT_SIG_FIELD =
-  process.env.ANVIL_CLIENT_SIG_FIELD ?? "cast5ed480e05faa11f1b2e3a785f179bd1b";
+  process.env.ANVIL_CLIENT_SIG_FIELD ?? "1684d126-d007-403d-9b04-dcb21062ad2d";
+const CLIENT_SIG_DATE_FIELD =
+  process.env.ANVIL_CLIENT_SIG_DATE_FIELD ?? "6b1d8fc8-e307-4e16-b5f9-16e66462dea0";
 
 export class AnvilError extends Error {
   statusCode: number;
@@ -80,7 +85,10 @@ export async function createProposalPacket(
           name: signer.name,
           email: signer.email,
           signerType: "embedded",
-          fields: [{ fileId: "proposal", fieldId: CLIENT_SIG_FIELD }],
+          fields: [
+            { fileId: "proposal", fieldId: CLIENT_SIG_FIELD },
+            { fileId: "proposal", fieldId: CLIENT_SIG_DATE_FIELD },
+          ],
         },
       ],
     },

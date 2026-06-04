@@ -46,7 +46,7 @@ if (!targetEid) {
 
 const d = await gql(
   `query C($eid: String!) {
-     cast(eid: $eid) { eid name title isTemplate allowedAliasIds exampleData }
+     cast(eid: $eid) { eid name title isTemplate allowedAliasIds exampleData config }
    }`,
   { eid: targetEid },
 );
@@ -54,5 +54,11 @@ const cast = d.cast;
 console.log("\n══════ v1 cast detail ══════");
 console.log("castEid          :", cast.eid);
 console.log("allowedAliasIds  :", JSON.stringify(cast.allowedAliasIds));
-console.log("fieldInfo        :", JSON.stringify(cast.fieldInfo, null, 2));
 console.log("exampleData keys :", JSON.stringify(Object.keys(cast.exampleData ?? {})));
+// config holds the detected field definitions (id, type, page, rect).
+const fields = cast.config?.fields ?? [];
+console.log(`config.fields    : ${fields.length} fields`);
+for (const f of fields) {
+  console.log(`  ${String(f.type).padEnd(12)} id=${f.id}  name=${JSON.stringify(f.name)}  page=${f.pageNum}`);
+}
+console.log("signature fields :", JSON.stringify(fields.filter((f: any) => f.type === "signature").map((f: any) => f.id)));
