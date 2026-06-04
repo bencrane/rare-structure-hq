@@ -22,10 +22,14 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   );
 }
 
-export const supabase = createClient(SUPABASE_URL ?? "https://invalid.invalid", SUPABASE_ANON_KEY ?? "invalid", {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
+export const supabase = createClient(
+  SUPABASE_URL ?? "https://invalid.invalid",
+  SUPABASE_ANON_KEY ?? "invalid",
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+    },
   },
-});
+);
