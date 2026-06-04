@@ -94,7 +94,7 @@ Ranked by how much weight each control bears today:
 | R2 | Plain HTTP on the wire (`disable_ssl := true`) | Medium | Token + data in cleartext on the private network; no defense if the network boundary is breached |
 | R3 | `QUACK_TOKEN` min length 4 chars | Low–Medium | Trivially brute-forceable if the port is ever reachable; Quack's own floor, not raised here |
 | R4 | Security depends on a single network control with no provable app-layer fallback | Medium | A misconfig flipping the service to public-facing collapses to R1+R2+R3 simultaneously |
-| R5 | (`platform-api`) `DEX_SERVICE_TOKEN` required-but-unused | Low | Boot-blocking secret that guards nothing; see Layer 1 |
+| R5 | (`platform-api`) `DEX_SERVICE_TOKEN` required-but-unused | Low | **RESOLVED** — data-engine-x decommissioned: the `sam-opps` broker and both `DEX_BASE_URL` + `DEX_SERVICE_TOKEN_` secrets were removed from `platform-api` and Doppler `hq-rare-structure-hq/prd` |
 
 ---
 
@@ -106,7 +106,7 @@ Ordered by blast radius, not effort:
 2. **Strengthen the token.** Set `QUACK_TOKEN` to ≥32 random chars in Doppler `hq-x/prd`. The 4-char floor is a footgun.
 3. **Keep the private-network invariant explicit.** Treat the `pserv` type in [render.yaml](../../../bi-compute/render.yaml) as a security control: never promote to a public service without first fronting Quack with a TLS-terminating proxy (per `README.md:70-72`). Encode this as a review gate.
 4. **If `bi-compute` ever serves a non-DuckDB client** (e.g. the BFF), do not reuse the plain-HTTP shared-token model — terminate TLS and verify a scoped token in operator-owned middleware, returning a real 401.
-5. **Resolve `DEX_SERVICE_TOKEN`** (R5): wire it into the `sam-opps` broker if DEX expects a service identity, or delete it from [src/env.ts](../../apps/platform-api/src/env.ts).
+5. ~~**Resolve `DEX_SERVICE_TOKEN`** (R5): wire it into the `sam-opps` broker if DEX expects a service identity, or delete it from [src/env.ts](../../apps/platform-api/src/env.ts).~~ **Done** — data-engine-x was decommissioned. The `sam-opps` broker, the `/opportunities` surface, and both `DEX_*` secrets were deleted from source and Doppler; the only DEX consumer is gone.
 
 ---
 

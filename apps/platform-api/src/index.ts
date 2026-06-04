@@ -5,7 +5,6 @@
  * - Validate rare-structure-hq Supabase JWTs (ES256 + JWKS)
  * - /health (unauthenticated) for liveness probes
  * - /api/v1/me (auth-required) echoes the validated user
- * - /api/v1/sam-opps/* (auth-required) brokers to data-engine-x
  *
  * Deferred: Recipient profile, project matching.
  */
@@ -17,7 +16,6 @@ import { requestId } from "hono/request-id";
 
 import { allowedOrigins, env } from "./env.ts";
 import { requireUser, type AuthVariables } from "./auth.ts";
-import { samOppsRoutes } from "./routes/sam-opps.ts";
 
 const app = new Hono<{ Variables: AuthVariables & { requestId: string } }>();
 
@@ -41,8 +39,6 @@ app.get("/api/v1/me", requireUser, (c) => {
   const user = c.get("user");
   return c.json({ user_id: user.user_id, email: user.email, app_env: env.APP_ENV });
 });
-
-app.route("/api/v1/sam-opps", samOppsRoutes);
 
 const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 8000;
 console.log(`platform-api listening on :${port} [${env.APP_ENV}]`);
