@@ -134,3 +134,40 @@ export async function getProposal(ref: string): Promise<ProposalDeal | null> {
     return null;
   }
 }
+
+// ────────────── Anvil embedded e-sign (public, ref-scoped) ──────────────
+
+export interface ProposalPacket {
+  etchPacketEid: string;
+  documentGroupEid: string;
+  signerEid: string;
+}
+
+/**
+ * Create the Anvil Etch packet for a proposal; returns the embedded signer's
+ * eid. Public (no bearer) — the ref is the capability. The Anvil API key stays
+ * on the BFF; the browser only ever sees the signerEid and the sign URL.
+ */
+export async function createProposalPacket(
+  ref: string,
+  signer: { signerName: string; signerEmail?: string; signerTitle?: string },
+): Promise<ProposalPacket> {
+  const res = await fetch(`${API_BASE}/api/v1/proposals/${encodeURIComponent(ref)}/packet`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(signer),
+  });
+  if (!res.ok) throw new Error(`packet failed: ${res.status} ${await res.text()}`);
+  return (await res.json()).data as ProposalPacket;
+}
+
+/** Mint the short-lived embedded signing URL for a signer from /packet. */
+export async function getProposalSignUrl(ref: string, signerEid: string): Promise<string> {
+  const res = await fetch(`${API_BASE}/api/v1/proposals/${encodeURIComponent(ref)}/sign-url`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ signerEid }),
+  });
+  if (!res.ok) throw new Error(`sign-url failed: ${res.status} ${await res.text()}`);
+  return (await res.json()).data.url as string;
+}
