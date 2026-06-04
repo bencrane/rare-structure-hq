@@ -1,4 +1,43 @@
-export const PROPOSAL_DEAL = {
+/**
+ * Proposal deal contract + dev fixture.
+ *
+ * `ProposalDeal` is the shape the platform-api BFF returns for a given
+ * `/proposal/:ref`. `PROPOSAL_DEAL` is the bundled fixture (the Cardinal Bluff
+ * Capital engagement) used as the fallback until that endpoint lands — it keeps
+ * the surface fully interactive in dev and pre-backend. When the Anvil/BFF
+ * phase ships, promote this type to `@rare-structure-hq/shared` (Zod) so the
+ * frontend and platform-api share one schema.
+ */
+export type ProposalDeal = {
+  ref: string;
+  date: string;
+  partner: { firm: string; contact: string; title: string };
+  entity: { name: string; type: string; state: string; naics: string };
+  catalyst: {
+    type: string;
+    source: string;
+    value: string;
+    agency: string;
+    period: string;
+    status: string;
+  };
+  leverage: { uccFilings: number; uccTypes: string[]; sbaHistory: string };
+  thesis: { fit: string; signal: string };
+  pipeline: { sources: string[]; bridgeMethod: string; matchTier: string };
+  terms: {
+    facility: string;
+    amount: string;
+    rate: string;
+    term: string;
+    collateral: string;
+    covenants: string;
+    closingFee: string;
+    minimumDraw: string;
+  };
+  engagement: { fee: string; feeNumeric: number; description: string; paymentTerms: string };
+};
+
+export const PROPOSAL_DEAL: ProposalDeal = {
   ref: "RS-2026-0847",
   date: "May 20, 2026",
   partner: {
