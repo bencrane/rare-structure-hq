@@ -1,8 +1,9 @@
+import AnvilEmbedFrame from "@anvilco/anvil-embed-frame";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
-import { getProposal } from "@/lib/api";
+import { createProposalPacket, getProposal, getProposalSignUrl } from "@/lib/api";
 import { PROPOSAL_DEAL, type ProposalDeal } from "./proposal-data";
 
 // The proposal deal is fetched per `:ref` and shared with every sub-view via
@@ -156,194 +157,97 @@ function Sidebar() {
   );
 }
 
-function SignatureModal({
-  name,
-  onConfirm,
-  onCancel,
-}: {
-  name: string;
-  onConfirm: (signature: string) => void;
-  onCancel: () => void;
-}) {
-  const [typed, setTyped] = useState(name);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
-
-  return (
-    <motion.div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.2 }}
-    >
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={onCancel}
-        onKeyDown={() => {}}
-        role="presentation"
-      />
-
-      {/* Modal */}
-      <motion.div
-        className="relative w-full max-w-[520px] border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-base)] p-8"
-        initial={{ opacity: 0, y: 16, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: 16, scale: 0.98 }}
-        transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-      >
-        <div className="mb-6 font-mono text-[0.625rem] uppercase tracking-[0.2em] text-[color:var(--color-text-accent)]">
-          Apply Signature
-        </div>
-
-        <p className="mb-6 text-[0.8125rem] text-[color:var(--color-text-muted)]">
-          Type your full legal name below. This will serve as your electronic signature on this
-          engagement proposal.
-        </p>
-
-        {/* Name input */}
-        <div className="mb-4">
-          <label
-            htmlFor="signer-name"
-            className="mb-2 block font-mono text-[0.5625rem] uppercase tracking-[0.16em] text-[color:var(--color-text-subtle)]"
-          >
-            Full Legal Name
-          </label>
-          <input
-            id="signer-name"
-            ref={inputRef}
-            type="text"
-            value={typed}
-            onChange={(e) => setTyped(e.target.value)}
-            className="w-full border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-sunken)] px-4 py-3 text-[0.9375rem] text-[color:var(--color-text-primary)] outline-none focus:border-[color:var(--color-accent-primary)]"
-          />
-        </div>
-
-        {/* Signature preview */}
-        <div className="mb-6">
-          <div className="mb-2 block font-mono text-[0.5625rem] uppercase tracking-[0.16em] text-[color:var(--color-text-subtle)]">
-            Signature Preview
-          </div>
-          <div className="flex min-h-[80px] items-center justify-center border border-[color:var(--color-border-subtle)] bg-[color:var(--color-surface-sunken)] px-6 py-4">
-            {typed.trim() ? (
-              <span className="font-display text-[2rem] italic text-[color:var(--color-text-primary)]">
-                {typed}
-              </span>
-            ) : (
-              <span className="font-mono text-[0.6875rem] text-[color:var(--color-text-subtle)]">
-                Type your name above
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Actions */}
-        <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="flex-1 border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-raised)] py-3 font-mono text-[0.6875rem] uppercase tracking-[0.14em] text-[color:var(--color-text-muted)] transition-colors hover:text-[color:var(--color-text-primary)]"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={() => typed.trim() && onConfirm(typed.trim())}
-            disabled={!typed.trim()}
-            className="flex-1 border border-[color:var(--color-text-primary)] bg-[color:var(--color-text-primary)] py-3.5 font-mono text-[0.75rem] font-semibold uppercase tracking-[0.14em] text-[color:var(--color-surface-base)] transition-all hover:bg-[color:var(--color-text-accent)] disabled:opacity-30"
-          >
-            Sign & Execute ✓
-          </button>
-        </div>
-
-        <p className="mt-4 text-center font-mono text-[0.5625rem] uppercase tracking-[0.12em] text-[color:var(--color-text-subtle)]">
-          By signing, you agree to the terms of this engagement proposal
-        </p>
-      </motion.div>
-    </motion.div>
-  );
-}
-
-function SigningEmbed({ onSigned, signURL }: { onSigned: () => void; signURL?: string | null }) {
+function SigningEmbed({ onSigned }: { onSigned: () => void }) {
   const d = useDeal();
-  // ── Anvil wiring seam ─────────────────────────────────────────────────
-  // The placeholder type-to-sign mock below stands in until the platform-api
-  // Anvil phase mints a short-lived embedded sign URL for this proposal's
-  // signer. `signURL` is already plumbed through, so wiring is a one-spot
-  // change here:
-  //
-  //   import AnvilEmbedFrame from "@anvilco/anvil-embed-frame";
-  //   if (signURL) {
-  //     return (
-  //       <AnvilEmbedFrame
-  //         iframeURL={signURL}
-  //         onEvent={(e) => { if (e.action === "signerComplete") onSigned(); }}
-  //         style={{ border: "none", width: "100%", minHeight: 640 }}
-  //       />
-  //     );
-  //   }
-  void signURL;
-  const [signature, setSignature] = useState<string | null>(null);
-  const [showModal, setShowModal] = useState(false);
-  const signed = signature !== null;
-  const signedAt = signed
-    ? new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
-    : null;
+  const [signURL, setSignURL] = useState<string | null>(null);
+  const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
+  const [error, setError] = useState<string | null>(null);
+
+  // "Click to sign" → create the embedded Etch packet and mint the one-time
+  // sign URL on the BFF, then hand off to the Anvil iframe. The Anvil API key
+  // never reaches the browser — only the signerEid and short-lived URL do.
+  async function startSigning() {
+    setStatus("loading");
+    setError(null);
+    try {
+      const { signerEid } = await createProposalPacket(d.ref, {
+        signerName: d.partner.contact,
+        signerTitle: d.partner.title,
+      });
+      const url = await getProposalSignUrl(d.ref, signerEid);
+      setSignURL(url);
+      setStatus("idle");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not start signing");
+      setStatus("error");
+    }
+  }
+
+  // Once the embedded URL exists, the Anvil iframe IS the signing surface;
+  // `signerComplete` advances the cockpit to payment.
+  if (signURL) {
+    return (
+      <div className="border border-[color:var(--color-border-subtle)] bg-[color:var(--color-surface-sunken)]">
+        <AnvilEmbedFrame
+          iframeURL={signURL}
+          scroll="auto"
+          onEvent={(event: { action?: string }) => {
+            if (event?.action === "signerComplete") onSigned();
+          }}
+          className="w-full"
+          style={{ border: "none", width: "100%", minHeight: 680 }}
+        />
+        <div className="flex items-center justify-between border-[color:var(--color-border-subtle)] border-t px-4 py-3">
+          <span className="font-mono text-[0.5625rem] uppercase tracking-[0.14em] text-[color:var(--color-text-subtle)]">
+            Secured by Anvil · Legally binding e-signature
+          </span>
+          <span className="font-mono text-[0.5625rem] uppercase tracking-[0.14em] text-[color:var(--color-text-subtle)]">
+            Audit trail preserved
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  const busy = status === "loading";
 
   return (
     <div>
       <div className="border border-[color:var(--color-border-subtle)] bg-[color:var(--color-surface-sunken)] p-8">
-        <div className="w-full max-w-[480px] mx-auto">
-          {/* Partner signature */}
+        <div className="mx-auto w-full max-w-[480px]">
+          {/* Capital Partner signature — triggers the embedded ceremony */}
           <div className="mb-8">
             <div className="mb-3 font-mono text-[0.5625rem] uppercase tracking-[0.16em] text-[color:var(--color-text-subtle)]">
               Capital Partner Signature
             </div>
             <div className="flex items-end gap-4">
               <div className="flex-1">
-                {signed ? (
-                  <div className="group relative">
-                    <div className="border border-[color:var(--color-accent-primary)] bg-[color:var(--color-accent-soft)] py-6 text-center font-display text-[1.5rem] italic text-[color:var(--color-text-primary)]">
-                      {signature}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSignature(null);
-                        setShowModal(true);
-                      }}
-                      className="absolute -top-2 -right-2 flex size-6 items-center justify-center border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-raised)] font-mono text-[0.5625rem] text-[color:var(--color-text-muted)] opacity-0 transition-opacity hover:text-[color:var(--color-text-primary)] group-hover:opacity-100"
-                      aria-label="Clear signature and re-sign"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setShowModal(true)}
-                    className="w-full border border-[color:var(--color-accent-primary)] bg-[color:var(--color-accent-soft)] py-6 text-center font-mono text-[0.75rem] uppercase tracking-[0.14em] text-[color:var(--color-text-accent)] transition-colors hover:bg-[color:var(--color-accent-primary)] hover:text-[color:var(--color-text-onAccent)]"
-                  >
-                    Click to sign
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={startSigning}
+                  disabled={busy}
+                  className="w-full border border-[color:var(--color-accent-primary)] bg-[color:var(--color-accent-soft)] py-6 text-center font-mono text-[0.75rem] uppercase tracking-[0.14em] text-[color:var(--color-text-accent)] transition-colors hover:bg-[color:var(--color-accent-primary)] hover:text-[color:var(--color-text-onAccent)] disabled:opacity-40"
+                >
+                  {busy ? "Preparing document…" : "Click to sign"}
+                </button>
                 <div className="mt-2 text-[0.8125rem] text-[color:var(--color-text-muted)]">
                   {d.partner.contact}
                 </div>
                 <div className="text-[0.75rem] text-[color:var(--color-text-subtle)]">
                   {d.partner.title}, {d.partner.firm}
                 </div>
+                {error && (
+                  <div className="mt-2 font-mono text-[0.625rem] text-[color:var(--color-state-warn)]">
+                    {error}
+                  </div>
+                )}
               </div>
               <div className="shrink-0 pb-8">
                 <div className="font-mono text-[0.5625rem] uppercase tracking-[0.14em] text-[color:var(--color-text-subtle)]">
                   Date
                 </div>
                 <div className="mt-1 border-b border-[color:var(--color-border-default)] pb-1 text-[0.8125rem] text-[color:var(--color-text-muted)]">
-                  {signedAt ?? "—"}
+                  —
                 </div>
               </div>
             </div>
@@ -381,48 +285,14 @@ function SigningEmbed({ onSigned, signURL }: { onSigned: () => void; signURL?: s
         </div>
       </div>
 
-      {signed && (
-        <motion.div
-          className="mt-4 space-y-3"
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <div className="border border-[color:var(--color-accent-primary)] bg-[color:var(--color-accent-soft)] px-4 py-3 text-center">
-            <span className="font-mono text-[0.6875rem] uppercase tracking-[0.14em] text-[color:var(--color-text-accent)]">
-              Executed — signed by both parties · {signedAt}
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={onSigned}
-            className="w-full border border-[color:var(--color-text-primary)] bg-[color:var(--color-text-primary)] py-3.5 font-mono text-[0.75rem] font-semibold uppercase tracking-[0.14em] text-[color:var(--color-surface-base)] transition-all hover:bg-[color:var(--color-text-accent)]"
-          >
-            Proceed to Payment →
-          </button>
-        </motion.div>
-      )}
-
       <div className="mt-4 flex items-center justify-between">
         <span className="font-mono text-[0.5625rem] uppercase tracking-[0.14em] text-[color:var(--color-text-subtle)]">
-          Secured by Documenso · Legally binding e-signature
+          Secured by Anvil · Legally binding e-signature
         </span>
         <span className="font-mono text-[0.5625rem] uppercase tracking-[0.14em] text-[color:var(--color-text-subtle)]">
           Audit trail preserved
         </span>
       </div>
-
-      <AnimatePresence>
-        {showModal && (
-          <SignatureModal
-            name={d.partner.contact}
-            onConfirm={(sig) => {
-              setSignature(sig);
-              setShowModal(false);
-            }}
-            onCancel={() => setShowModal(false)}
-          />
-        )}
-      </AnimatePresence>
     </div>
   );
 }
