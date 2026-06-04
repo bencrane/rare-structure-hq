@@ -3,6 +3,14 @@
 **Directive 43** · audit subject: authentication enforcement between `apps/platform-api` (Hono BFF) and the `bi-compute` Quack compute instance.
 **Date:** 2026-06-03 · **Status:** audited against source on branch `claude/objective-williamson-ab3a68` (HEAD `e9c4019`) and the `bi-compute` repo (HEAD as of `2026-06-01`).
 
+> **Superseded in part by Directive 38 (2026-06-03).** The BFF's outbound dependency
+> is no longer `data-engine-x`. DEX was ripped; the BFF now proxies to the core-x
+> `catalyst_api` (`COREX_API_URL`) presenting an internal operator service token
+> (`COREX_SERVICE_TOKEN`) as Bearer — **not** the end-user JWT. The `sam-opps.ts`
+> broker referenced below was deleted. Finding **R5** (`DEX_SERVICE_TOKEN`
+> required-but-unused) is **resolved by removal** — the secret no longer exists in
+> the schema. The bi-compute verdict (the audit's actual subject) is unaffected.
+
 ---
 
 ## TL;DR — Verdict
@@ -26,8 +34,8 @@ It is **not** a naked, tokenless connection — `QUACK_TOKEN` is required at boo
 platform-app (browser)
       │  Supabase JWT (Bearer)
       ▼
-platform-api (Hono BFF) ──fetch──►  data-engine-x  (DEX_BASE_URL)   ← the ONLY outbound dependency
-      │                              forwards the END-USER's Supabase JWT, not a service token
+platform-api (Hono BFF) ──fetch──►  core-x catalyst_api  (COREX_API_URL)   ← the ONLY outbound dependency (Directive 38; was data-engine-x)
+      │                              presents the internal operator service token (COREX_SERVICE_TOKEN), not the end-user JWT
       ✗  no link to bi-compute
 
 Metabase (embedded DuckDB)  ──CREATE SECRET(TYPE quack)+ATTACH 'quack:bi-compute:10000'──►  bi-compute
