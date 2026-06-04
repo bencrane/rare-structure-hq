@@ -1,8 +1,19 @@
-import { PROPOSAL_DEAL } from "@/data/proposal-data";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { useParams } from "react-router-dom";
 
-const d = PROPOSAL_DEAL;
+import { getProposal } from "@/lib/api";
+import { PROPOSAL_DEAL, type ProposalDeal } from "./proposal-data";
+
+// The proposal deal is fetched per `:ref` and shared with every sub-view via
+// this context — it replaces the old module-level `const d = PROPOSAL_DEAL`,
+// since the data is now dynamic rather than a static import.
+const DealContext = createContext<ProposalDeal | null>(null);
+function useDeal(): ProposalDeal {
+  const deal = useContext(DealContext);
+  if (!deal) throw new Error("useDeal must be used within a DealContext provider");
+  return deal;
+}
 const enter = (delay = 0) => ({
   initial: { opacity: 0, y: 12 } as const,
   animate: { opacity: 1, y: 0 } as const,
@@ -51,6 +62,7 @@ function SidebarSection({
 }
 
 function Sidebar() {
+  const d = useDeal();
   return (
     <aside className="flex w-[320px] shrink-0 flex-col space-y-5 overflow-y-auto border-r border-[color:var(--color-border-subtle)] bg-[color:var(--color-surface-base)] p-6 pt-20">
       <SidebarSection title="Proposal" delay={0.1}>
@@ -256,7 +268,25 @@ function SignatureModal({
   );
 }
 
-function SigningEmbed({ onSigned }: { onSigned: () => void }) {
+function SigningEmbed({ onSigned, signURL }: { onSigned: () => void; signURL?: string | null }) {
+  const d = useDeal();
+  // ── Anvil wiring seam ─────────────────────────────────────────────────
+  // The placeholder type-to-sign mock below stands in until the platform-api
+  // Anvil phase mints a short-lived embedded sign URL for this proposal's
+  // signer. `signURL` is already plumbed through, so wiring is a one-spot
+  // change here:
+  //
+  //   import AnvilEmbedFrame from "@anvilco/anvil-embed-frame";
+  //   if (signURL) {
+  //     return (
+  //       <AnvilEmbedFrame
+  //         iframeURL={signURL}
+  //         onEvent={(e) => { if (e.action === "signerComplete") onSigned(); }}
+  //         style={{ border: "none", width: "100%", minHeight: 640 }}
+  //       />
+  //     );
+  //   }
+  void signURL;
   const [signature, setSignature] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const signed = signature !== null;
@@ -409,6 +439,7 @@ function TermRow({ label, value }: { label: string; value: string }) {
 }
 
 function DocumentArea({ onSigned }: { onSigned: () => void }) {
+  const d = useDeal();
   const reduced = !!useReducedMotion();
   return (
     <div className="flex flex-1 flex-col overflow-y-auto bg-[color:var(--color-surface-sunken)] pt-16">
@@ -515,6 +546,7 @@ function DocumentArea({ onSigned }: { onSigned: () => void }) {
 // provides a client_secret + publishable_key, swap to real Elements.
 
 function PaymentArea() {
+  const d = useDeal();
   const [method, setMethod] = useState<"card" | "ach">("card");
   const [processing, setProcessing] = useState(false);
   const [complete, setComplete] = useState(false);
@@ -786,7 +818,7 @@ function PaymentArea() {
   );
 }
 
-export default function Proposal() {
+function ProposalView() {
   const [phase, setPhase] = useState<"proposal" | "payment">("proposal");
 
   return (
@@ -815,5 +847,53 @@ export default function Proposal() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+// Dark-theme placeholder shown while the deal for `:ref` resolves.
+function ProposalLoading() {
+  return (
+    <div className="flex h-screen items-center justify-center bg-[color:var(--color-surface-base)]">
+      <div className="font-mono text-[0.625rem] uppercase tracking-[0.2em] text-[color:var(--color-text-subtle)]">
+        Loading proposal…
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Proposal — public capability route mounted at `/proposal/:ref`.
+ *
+ * The `:ref` itself is the credential (an unguessable proposal reference), so
+ * the fetch is intentionally unauthenticated — no Supabase bearer, unlike the
+ * authenticated surfaces. `getProposal` hits the platform-api BFF; until that
+ * endpoint lands (the Anvil wiring phase) it returns null and we fall back to
+ * the bundled fixture so the surface stays fully interactive.
+ */
+export default function Proposal() {
+  const { ref } = useParams<{ ref: string }>();
+  const [deal, setDeal] = useState<ProposalDeal | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    const refCode = ref ?? PROPOSAL_DEAL.ref;
+    setDeal(null);
+    getProposal(refCode).then((fetched) => {
+      if (!active) return;
+      // Fixture fallback keeps the page live pre-backend; the swap point is
+      // `getProposal` returning a real deal for this ref.
+      setDeal(fetched ?? { ...PROPOSAL_DEAL, ref: refCode });
+    });
+    return () => {
+      active = false;
+    };
+  }, [ref]);
+
+  if (!deal) return <ProposalLoading />;
+
+  return (
+    <DealContext.Provider value={deal}>
+      <ProposalView />
+    </DealContext.Provider>
   );
 }

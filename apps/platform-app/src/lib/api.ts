@@ -5,6 +5,8 @@
  */
 import { supabase } from "./supabase";
 
+import type { ProposalDeal } from "@/routes/proposal/proposal-data";
+
 const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "";
 
 if (!API_BASE) {
@@ -108,4 +110,27 @@ export async function statsOpps(
   if (!res.ok) throw new Error(`stats failed: ${res.status} ${await res.text()}`);
   const json = await res.json();
   return json.data as StatsRow[];
+}
+
+/**
+ * Public proposal fetch — the capability URL `/proposal/:ref` carries its own
+ * credential (the unguessable ref), so this call is intentionally
+ * UNAUTHENTICATED (no Supabase bearer, unlike the sam-opps calls above).
+ *
+ * Returns null when no BFF is configured (local dev) or the endpoint is not yet
+ * live / the ref is unknown — the proposal route falls back to its bundled
+ * fixture in that case. The backend endpoint `GET /api/v1/proposals/:ref` lands
+ * in the Anvil wiring phase and is expected to return the DEX-style { data }
+ * envelope.
+ */
+export async function getProposal(ref: string): Promise<ProposalDeal | null> {
+  if (!API_BASE) return null;
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/proposals/${encodeURIComponent(ref)}`);
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json.data as ProposalDeal;
+  } catch {
+    return null;
+  }
 }
