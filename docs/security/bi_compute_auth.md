@@ -3,6 +3,14 @@
 **Directive 43** · audit subject: authentication enforcement between `apps/platform-api` (Hono BFF) and the `bi-compute` Quack compute instance.
 **Date:** 2026-06-03 · **Status:** audited against source on branch `claude/objective-williamson-ab3a68` (HEAD `e9c4019`) and the `bi-compute` repo (HEAD as of `2026-06-01`).
 
+> **Update (Directive 38, 2026-06-04).** DEX is decommissioned (#17). The BFF's
+> outbound dependencies are now **Anvil** (proposal e-sign, `/api/v1/proposals/:ref/*`)
+> and the **core-x `catalyst_api`** (federal award profiles, `/api/v1/award-profile/:domain`).
+> The catalyst_api hop presents an internal operator service token
+> (`COREX_SERVICE_TOKEN`) — not the end-user JWT — and reaches core-x over the Railway
+> private network (no public URL). The bi-compute verdict below is unaffected; the
+> DEX/`sam-opps` references in the topology + Layer 1 sections are historical.
+
 ---
 
 ## TL;DR — Verdict
@@ -26,8 +34,9 @@ It is **not** a naked, tokenless connection — `QUACK_TOKEN` is required at boo
 platform-app (browser)
       │  Supabase JWT (Bearer)
       ▼
-platform-api (Hono BFF) ──fetch──►  data-engine-x  (DEX_BASE_URL)   ← the ONLY outbound dependency
-      │                              forwards the END-USER's Supabase JWT, not a service token
+platform-api (Hono BFF) ──fetch──►  core-x catalyst_api  (COREX_API_URL, private net)   ← outbound (Directive 38; DEX decommissioned)
+      │                              presents the internal operator service token (COREX_SERVICE_TOKEN), not the end-user JWT
+      │  ──fetch──►  Anvil  (proposal e-sign packets)
       ✗  no link to bi-compute
 
 Metabase (embedded DuckDB)  ──CREATE SECRET(TYPE quack)+ATTACH 'quack:bi-compute:10000'──►  bi-compute
