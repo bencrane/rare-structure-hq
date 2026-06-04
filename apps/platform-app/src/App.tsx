@@ -5,6 +5,7 @@
  *   `/`                          → redirects to `/map`.
  *   `/map`                       → unauthenticated catalyst map demo.
  *   `/proposal/:ref`             → public engagement proposal (unauth, by ref).
+ *   `/proposal`                  → "reference required" prompt (no deal shown).
  *
  * Every route is anonymous: the map is a public demo and the proposal's
  * unguessable ref is its own capability credential. <AuthProvider> stays
@@ -24,6 +25,7 @@ export function App() {
       <Routes>
         <Route path="/" element={<Navigate to="/map" replace />} />
         <Route path="/map" element={<MapDemo />} />
+        <Route path="/proposal" element={<Proposal />} />
         <Route path="/proposal/:ref" element={<Proposal />} />
       </Routes>
     </AuthProvider>
