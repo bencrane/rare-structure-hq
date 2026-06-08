@@ -144,20 +144,15 @@ function SidebarContent({
           <>
             <Inline gap="3" align="center" unsafe_className="shrink-0">
               <BrandMark />
-              <Stack gap="1">
-                <Text
-                  as="span"
-                  size="body-sm"
-                  face="display"
-                  color="primary"
-                  className="whitespace-nowrap font-semibold uppercase leading-none tracking-[0.16em]"
-                >
-                  Rare Structure
-                </Text>
-                <Text as="span" size="mono-xs" mono color="muted" className="whitespace-nowrap">
-                  Catalyst Cockpit
-                </Text>
-              </Stack>
+              <Text
+                as="span"
+                size="body-sm"
+                face="display"
+                color="primary"
+                className="whitespace-nowrap font-semibold uppercase tracking-[0.16em]"
+              >
+                Rare Structure
+              </Text>
             </Inline>
             {onToggleCollapse ? (
               <button

@@ -63,9 +63,6 @@ export default function SignIn() {
           >
             Rare Structure
           </Text>
-          <Text as="span" size="mono-xs" mono color="accent">
-            Catalyst Cockpit
-          </Text>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
