@@ -20,6 +20,7 @@ import {
   Menu,
   PanelLeftClose,
   Radar,
+  SlidersHorizontal,
   Workflow,
   X,
 } from "lucide-react";
@@ -32,12 +33,20 @@ import { useAuth } from "@/lib/auth";
 
 type NavItem = { to: string; label: string; icon: LucideIcon };
 
-const NAV: NavItem[] = [
+// Operator (you) gets the full origination cockpit; a client gets a scoped
+// portal — Account + Preferences. The tab set is the role boundary in the UI;
+// operator-only routes are also redirect-gated in App.tsx.
+const OPERATOR_NAV: NavItem[] = [
   { to: "/app/map", label: "Map", icon: Radar },
   { to: "/app/overview", label: "Overview", icon: LayoutDashboard },
   { to: "/app/pipeline", label: "Pipeline", icon: Workflow },
   { to: "/app/applications", label: "Applications", icon: ClipboardList },
   { to: "/app/account", label: "Account", icon: CircleUser },
+];
+
+const CLIENT_NAV: NavItem[] = [
+  { to: "/app/account", label: "Account", icon: CircleUser },
+  { to: "/app/preferences", label: "Preferences", icon: SlidersHorizontal },
 ];
 
 const COLLAPSE_KEY = "rs.cockpit.sidebarCollapsed";
@@ -111,9 +120,10 @@ function SidebarContent({
   onToggleCollapse?: () => void;
   onNavigate?: () => void;
 }) {
-  const { user, signOut } = useAuth();
+  const { user, signOut, isOperator } = useAuth();
   const email = user?.email ?? "—";
   const initials = email.slice(0, 2).toUpperCase();
+  const nav = isOperator ? OPERATOR_NAV : CLIENT_NAV;
 
   return (
     <div className="flex h-full flex-col">
@@ -170,7 +180,7 @@ function SidebarContent({
         px={collapsed ? "2" : "3"}
         unsafe_className="flex-1 overflow-y-auto pt-8 pb-4"
       >
-        {NAV.map((item) => (
+        {nav.map((item) => (
           <NavRow key={item.to} item={item} collapsed={collapsed} onNavigate={onNavigate} />
         ))}
       </Stack>

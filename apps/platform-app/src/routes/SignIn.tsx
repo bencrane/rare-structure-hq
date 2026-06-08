@@ -125,13 +125,23 @@ export default function SignIn() {
         </button>
 
         {import.meta.env.DEV ? (
-          <button
-            type="button"
-            onClick={devSignIn}
-            className="mt-3 w-full text-center font-mono text-mono-xs uppercase text-[color:var(--color-text-subtle)] transition-colors hover:text-[color:var(--color-text-accent)]"
-          >
-            Preview as operator (dev)
-          </button>
+          <div className="mt-3 flex items-center justify-center gap-3 font-mono text-mono-xs uppercase text-[color:var(--color-text-subtle)]">
+            <button
+              type="button"
+              onClick={() => devSignIn("operator")}
+              className="transition-colors hover:text-[color:var(--color-text-accent)]"
+            >
+              Preview: operator
+            </button>
+            <span aria-hidden="true">·</span>
+            <button
+              type="button"
+              onClick={() => devSignIn("client")}
+              className="transition-colors hover:text-[color:var(--color-text-accent)]"
+            >
+              Preview: client
+            </button>
+          </div>
         ) : null}
       </div>
     </div>
