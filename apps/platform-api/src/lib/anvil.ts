@@ -115,7 +115,77 @@ export async function createProposalPacket(
     } catch (e) {
       lastDetail = e instanceof AnvilError ? e.detail : e;
       // eslint-disable-next-line no-console
-      console.error(`createProposalPacket attempt ${attempt}/3 failed:`, JSON.stringify(lastDetail));
+      console.error(
+        `createProposalPacket attempt ${attempt}/3 failed:`,
+        JSON.stringify(lastDetail),
+      );
+      if (attempt < 3) await new Promise((r) => setTimeout(r, 400 * attempt));
+    }
+  }
+  throw new AnvilError("createEtchPacket failed after retries", 502, lastDetail);
+}
+
+export interface TemplateBinding {
+  /** The Anvil cast (PDF template) this proposal instantiates. */
+  castEid: string;
+  /** Cast field ids the embedded client signer is assigned (signature + date). */
+  clientSignerFieldIds: string[];
+}
+
+/**
+ * Record-aware variant of createProposalPacket: instantiate the cast named by
+ * the proposal's chosen POSTURE, filling its data fields from the record's
+ * stored field_values (success-fee tiers + client identity). Used by the new
+ * /:ref/sign-session route; the original createProposalPacket is left untouched.
+ */
+export async function createPacketFromTemplate(
+  ref: string,
+  binding: TemplateBinding,
+  fieldValues: Record<string, string>,
+  signer: ProposalSigner,
+): Promise<ProposalPacket> {
+  const isTest = process.env.APP_ENV !== "prd";
+  const variables = {
+    name: `Rare Structure Engagement — ${ref}`,
+    isTest,
+    isDraft: false,
+    files: [{ id: "proposal", castEid: binding.castEid }],
+    data: { payloads: { proposal: { data: fieldValues } } },
+    signers: [
+      {
+        id: "client",
+        name: signer.name,
+        email: signer.email,
+        signerType: "embedded",
+        fields: binding.clientSignerFieldIds.map((fieldId) => ({ fileId: "proposal", fieldId })),
+      },
+    ],
+  };
+
+  let lastDetail: unknown;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const res = (await anvilClient().createEtchPacket({ variables })) as {
+        statusCode: number;
+        data?: any;
+        errors?: unknown;
+      };
+      if (res.errors) throw new AnvilError("createEtchPacket failed", res.statusCode, res.errors);
+      const packet = res.data?.data?.createEtchPacket ?? res.data?.createEtchPacket;
+      const signerEid = packet?.documentGroup?.signers?.[0]?.eid;
+      if (!signerEid) throw new AnvilError("no signerEid in packet response", 502, res.data);
+      return {
+        etchPacketEid: packet.eid,
+        documentGroupEid: packet.documentGroup?.eid,
+        signerEid,
+      };
+    } catch (e) {
+      lastDetail = e instanceof AnvilError ? e.detail : e;
+      // eslint-disable-next-line no-console
+      console.error(
+        `createPacketFromTemplate attempt ${attempt}/3 failed:`,
+        JSON.stringify(lastDetail),
+      );
       if (attempt < 3) await new Promise((r) => setTimeout(r, 400 * attempt));
     }
   }

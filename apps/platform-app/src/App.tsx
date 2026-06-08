@@ -32,6 +32,7 @@ import MapTab from "./routes/app/MapTab";
 import Overview from "./routes/app/Overview";
 import Pipeline from "./routes/app/Pipeline";
 import Preferences from "./routes/app/Preferences";
+import ProposalShellPage from "./routes/p/ProposalShell";
 import Proposal from "./routes/proposal/Proposal";
 
 function RequireAuth({ children }: { children: ReactNode }) {
@@ -73,6 +74,8 @@ export function App() {
         <Route path="/map" element={<MapDemo />} />
         <Route path="/proposal" element={<Proposal />} />
         <Route path="/proposal/:ref" element={<Proposal />} />
+        {/* New lean instantiate shell — distinct from the legacy /proposal/:ref. */}
+        <Route path="/p/:ref" element={<ProposalShellPage />} />
 
         {/* Email + password gate. */}
         <Route path="/signin" element={<SignIn />} />

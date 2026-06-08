@@ -9,6 +9,7 @@
 import type {
   CreateProposalInput,
   CreateProposalResult,
+  ProposalShell,
   ProposalTemplateMeta,
 } from "@rare-structure-hq/shared";
 
@@ -39,4 +40,23 @@ export async function createProposal(
   });
   if (!res.ok) throw new Error(`create failed: ${res.status} ${await res.text()}`);
   return (await res.json()).data as CreateProposalResult;
+}
+
+// ── Public client-shell calls (the ref is the capability — no auth) ──────────
+
+/** Fetch the lean shell projection for `/p/:ref`. Returns null when unknown. */
+export async function getProposalShell(ref: string): Promise<ProposalShell | null> {
+  const res = await fetch(`${API_BASE}/api/v1/proposals/${encodeURIComponent(ref)}`);
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`shell failed: ${res.status}`);
+  return (await res.json()).data as ProposalShell;
+}
+
+/** Mint a fresh embedded sign URL for this proposal (record-aware, server-side). */
+export async function startSignSession(ref: string): Promise<string> {
+  const res = await fetch(`${API_BASE}/api/v1/proposals/${encodeURIComponent(ref)}/sign-session`, {
+    method: "POST",
+  });
+  if (!res.ok) throw new Error(`sign-session failed: ${res.status} ${await res.text()}`);
+  return (await res.json()).data.url as string;
 }
