@@ -28,8 +28,11 @@ import { GEO_SCATTER_BANDS, GEO_VIEW, STATE_PATHS } from "./us-geo";
 // than rewriting the path coordinates.
 const INSET_IDS = new Set(["02", "15"]);
 const INSET_TRANSFORM: Record<string, string> = {
-  "02": "translate(40.4 306.4) scale(0.4)", // Alaska — small inset, smaller than California now
-  "15": "translate(99.3 358.4) scale(0.3)", // Hawaii — small, to the right of AK
+  // Both insets share one scale (0.65) so AK:HI keep their true relative size.
+  // The SW states bottom out at y~440, leaving clean room below for full-size
+  // insets — Alaska ~1.4x California, Hawaii snug to its right.
+  "02": "translate(-3.1 193.4) scale(0.65)", // Alaska — bottom-left, below the SW
+  "15": "translate(-15.4 176.7) scale(0.65)", // Hawaii — nestled just below-right of AK
 };
 const CONTINENTAL = STATE_PATHS.filter((s) => !INSET_IDS.has(s.id));
 const INSETS = STATE_PATHS.filter((s) => INSET_IDS.has(s.id));
@@ -216,8 +219,6 @@ export function MapView({
           </g>
         </svg>
 
-        <InsetLabels reduced={reduced} />
-
         {query && <ResultBanner query={query} results={results} reduced={reduced} />}
       </div>
 
@@ -288,23 +289,6 @@ function ScanSweep() {
       animate={{ x: GEO_VIEW.w, opacity: [0, 0.75, 0.75, 0] }}
       transition={{ duration: 0.95, ease: "easeInOut" }}
     />
-  );
-}
-
-// ───────────────────────────────────────────────────────────────────
-// Inset labels — name the AK / HI insets so the map reads as deliberate.
-// ───────────────────────────────────────────────────────────────────
-
-function InsetLabels({ reduced }: { reduced: boolean }) {
-  return (
-    <motion.div
-      className="pointer-events-none absolute bottom-6 left-6 font-mono text-[0.625rem] uppercase tracking-[0.14em] text-[color:var(--color-text-muted)] sm:bottom-8 sm:left-10"
-      initial={reduced ? false : { opacity: 0 }}
-      animate={{ opacity: 0.35 }}
-      transition={{ duration: 0.5, delay: reduced ? 0 : 1.4 }}
-    >
-      AK · HI shown as insets
-    </motion.div>
   );
 }
 
