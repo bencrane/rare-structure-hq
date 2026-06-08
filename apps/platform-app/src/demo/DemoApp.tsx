@@ -16,7 +16,6 @@
  * renders it (`src/routes/MapDemo.tsx`) authors no geometry.
  */
 
-import { InstantiateProposalDialog } from "@/proposals/InstantiateProposalDialog";
 import { AnimatePresence } from "framer-motion";
 import { useCallback, useEffect, useState } from "react";
 import { AggregateView } from "./AggregateView";
@@ -31,7 +30,6 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
   const [query, setQuery] = useState<MapQuery | null>(null);
   const [aggregate, setAggregate] = useState<AggregateSpec | null>(null);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
-  const [proposalOpen, setProposalOpen] = useState(false);
 
   // ⌘K toggles the palette from anywhere; Esc backs out one layer at a time.
   useEffect(() => {
@@ -42,9 +40,7 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
         return;
       }
       if (e.key === "Escape") {
-        if (proposalOpen) {
-          setProposalOpen(false);
-        } else if (commandOpen) {
+        if (commandOpen) {
           setCommandOpen(false);
         } else if (selectedCompany) {
           setSelectedCompany(null);
@@ -55,18 +51,13 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [commandOpen, selectedCompany, aggregate, proposalOpen]);
+  }, [commandOpen, selectedCompany, aggregate]);
 
   // Running any command closes the palette and the open profile; a map-query
-  // lights up the map, an aggregate swaps the map for the chart, and the
-  // proposal action opens the instantiate dialog.
+  // lights up the map, an aggregate swaps the map for the chart.
   const handleRun = useCallback((command: Command) => {
     setCommandOpen(false);
     setSelectedCompany(null);
-    if (command.kind === "proposal") {
-      setProposalOpen(true);
-      return;
-    }
     if (command.kind === "map-query") {
       setAggregate(null);
       setQuery(command.query);
@@ -105,7 +96,6 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
 
       <CommandPalette open={commandOpen} onClose={() => setCommandOpen(false)} onRun={handleRun} />
       <CompanyProfile company={selectedCompany} onClose={() => setSelectedCompany(null)} />
-      <InstantiateProposalDialog open={proposalOpen} onClose={() => setProposalOpen(false)} />
     </div>
   );
 }

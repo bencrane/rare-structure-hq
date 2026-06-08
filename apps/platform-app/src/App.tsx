@@ -32,6 +32,7 @@ import MapTab from "./routes/app/MapTab";
 import Overview from "./routes/app/Overview";
 import Pipeline from "./routes/app/Pipeline";
 import Preferences from "./routes/app/Preferences";
+import Proposals from "./routes/app/Proposals";
 import ProposalShellPage from "./routes/p/ProposalShell";
 import Proposal from "./routes/proposal/Proposal";
 
@@ -119,6 +120,14 @@ export function App() {
             element={
               <RequireOperator>
                 <Applications />
+              </RequireOperator>
+            }
+          />
+          <Route
+            path="proposals"
+            element={
+              <RequireOperator>
+                <Proposals />
               </RequireOperator>
             }
           />

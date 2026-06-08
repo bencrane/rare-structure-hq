@@ -15,7 +15,11 @@
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 
-import { type ProposalShell, createProposalInputSchema } from "@rare-structure-hq/shared";
+import {
+  type ProposalShell,
+  type ProposalSummary,
+  createProposalInputSchema,
+} from "@rare-structure-hq/shared";
 
 import { type AuthVariables, requireUser } from "../auth.ts";
 import { AnvilError, createPacketFromTemplate, generateProposalSignUrl } from "../lib/anvil.ts";
@@ -71,6 +75,25 @@ proposalAdminRoutes.post("/", requireUser, async (c) => {
   if (error) throw new HTTPException(500, { message: `insert failed: ${error.message}` });
 
   return c.json({ data: { ref, path: `/p/${ref}` } }, 201);
+});
+
+// GET /api/v1/proposals — operator-facing list (most recent first), for the
+// cockpit Proposals tab. Auth-gated.
+proposalAdminRoutes.get("/", requireUser, async (c) => {
+  const { data, error } = await db()
+    .from("proposals")
+    .select("ref,client_name,template_label,status,created_at")
+    .order("created_at", { ascending: false })
+    .limit(100);
+  if (error) throw new HTTPException(500, { message: error.message });
+  const list: ProposalSummary[] = (data ?? []).map((r) => ({
+    ref: r.ref,
+    clientName: r.client_name,
+    templateLabel: r.template_label,
+    status: r.status,
+    createdAt: r.created_at,
+  }));
+  return c.json({ data: list });
 });
 
 // GET /api/v1/proposals/:ref — public, ref-scoped read for the client shell. The

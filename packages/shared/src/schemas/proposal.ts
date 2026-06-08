@@ -90,3 +90,13 @@ export const proposalShellSchema = z.object({
   createdAt: isoTimestampSchema,
 });
 export type ProposalShell = z.infer<typeof proposalShellSchema>;
+
+/** BFF → operator: one row in the proposals list (the cockpit tab). */
+export const proposalSummarySchema = z.object({
+  ref: z.string(),
+  clientName: z.string(),
+  templateLabel: z.string(),
+  status: proposalStatusSchema,
+  createdAt: isoTimestampSchema,
+});
+export type ProposalSummary = z.infer<typeof proposalSummarySchema>;

@@ -14,6 +14,7 @@ import {
   CircleUser,
   ClipboardList,
   Crosshair,
+  FileSignature,
   LayoutDashboard,
   LogOut,
   type LucideIcon,
@@ -41,6 +42,7 @@ const OPERATOR_NAV: NavItem[] = [
   { to: "/app/overview", label: "Overview", icon: LayoutDashboard },
   { to: "/app/pipeline", label: "Pipeline", icon: Workflow },
   { to: "/app/applications", label: "Applications", icon: ClipboardList },
+  { to: "/app/proposals", label: "Proposals", icon: FileSignature },
   { to: "/app/account", label: "Account", icon: CircleUser },
 ];
 

@@ -131,12 +131,6 @@ export type Command =
       kind: "aggregate";
       label: string;
       aggregate: AggregateSpec;
-    }
-  | {
-      /** Opens the proposal-instantiate dialog — a cockpit action, not a query. */
-      id: string;
-      kind: "proposal";
-      label: string;
     };
 
 /** One bar in an aggregate chart. */
