@@ -45,6 +45,38 @@ export async function sendProposalLink(input: SendLinkInput): Promise<EmailResul
   }
 }
 
+export interface SignedCopyInput {
+  to: string;
+  clientName: string;
+  ref: string;
+  /** The executed documents (Anvil returns a zip of the signed PDFs). */
+  pdf: Buffer;
+}
+
+/** Email the countersigned copy after the completion webhook fires. */
+export async function sendSignedCopy(input: SignedCopyInput): Promise<EmailResult> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return { sent: false, error: "RESEND_API_KEY not configured" };
+  const from = process.env.PROPOSAL_FROM_EMAIL ?? DEFAULT_FROM;
+
+  try {
+    const resend = new Resend(apiKey);
+    const { data, error } = await resend.emails.send({
+      from,
+      to: input.to,
+      subject: `Rare Structure — Executed Agreement (${input.ref})`,
+      html: `<p style="font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.6;color:#1a1a1a">${escapeHtml(
+        input.clientName,
+      )}, your countersigned engagement agreement is attached. The engagement is now active pending payment. — Rare Structure LLC</p>`,
+      attachments: [{ filename: `rare-structure-${input.ref}.zip`, content: input.pdf }],
+    });
+    if (error) return { sent: false, error: `${error.name}: ${error.message}` };
+    return { sent: true, id: data?.id };
+  } catch (e) {
+    return { sent: false, error: e instanceof Error ? e.message : String(e) };
+  }
+}
+
 function renderEmail(i: SendLinkInput): string {
   return `<!doctype html>
 <html>
