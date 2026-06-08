@@ -26,7 +26,9 @@ export const DOCUMENSO_APP_URL = (
 export class EdgeError extends Error {}
 
 function base(): string {
-  if (!EDGE_API_URL) throw new EdgeError("EDGE_API_URL is not set");
+  if (!EDGE_API_URL) {
+    throw new EdgeError("EDGE_API_URL is not set (Doppler hq-rare-structure-hq → edge_api base URL)");
+  }
   return EDGE_API_URL;
 }
 
