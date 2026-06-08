@@ -9,13 +9,13 @@
  * No catalyst/leverage sidebar; the headline numbers are snapshotted server-side
  * so they always match what is bound into the cast.
  */
-import AnvilEmbedFrame from "@anvilco/anvil-embed-frame";
+import { EmbedSignDocument } from "@documenso/embed-react";
 import type { ProposalShell } from "@rare-structure-hq/shared";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
-import { getProposalShell, startSignSession } from "@/proposals/api";
+import { getProposalShell } from "@/proposals/api";
 
 export default function ProposalShellPage() {
   const { ref } = useParams<{ ref: string }>();
@@ -146,7 +146,11 @@ function Shell({ shell, proposalRef }: { shell: ProposalShell; proposalRef: stri
                 The full engagement agreement is prepared for your signature. Review and sign below
                 — a countersigned copy is sent to you on completion.
               </p>
-              <SignSection proposalRef={proposalRef} onSigned={() => setSigned(true)} />
+              <SignSection
+                signingToken={shell.signingToken}
+                documensoHost={shell.documensoHost}
+                onSigned={() => setSigned(true)}
+              />
             </motion.div>
           )}
         </AnimatePresence>
@@ -159,61 +163,80 @@ function Shell({ shell, proposalRef }: { shell: ProposalShell; proposalRef: stri
   );
 }
 
-// "Review & sign" → mint a fresh embedded sign URL → hand off to the Anvil
-// iframe. The cast's full text IS the legal instrument; `signerComplete`
-// advances to the executed state.
-function SignSection({ proposalRef, onSigned }: { proposalRef: string; onSigned: () => void }) {
-  const [url, setUrl] = useState<string | null>(null);
-  const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
-  const [error, setError] = useState<string | null>(null);
+// Dark cssVars matching the proposal page so the Documenso embed reads native rather than
+// like a stock signing product (full theming is the Documenso Platform tier).
+const DOCUMENSO_CSS_VARS = {
+  background: "#0a0a0f",
+  foreground: "#e7e9ee",
+  muted: "#1a1b22",
+  mutedForeground: "#9aa0aa",
+  popover: "#0d0d12",
+  popoverForeground: "#e7e9ee",
+  card: "#0d0d12",
+  cardForeground: "#e7e9ee",
+  cardBorder: "rgba(255,255,255,0.10)",
+  border: "rgba(255,255,255,0.10)",
+  input: "#13141a",
+  primary: "#5b8cff",
+  primaryForeground: "#ffffff",
+  secondary: "#1a1b22",
+  secondaryForeground: "#e7e9ee",
+  accent: "#5b8cff",
+  accentForeground: "#ffffff",
+  ring: "#5b8cff",
+  radius: "0px",
+} as const;
 
-  async function start() {
-    setStatus("loading");
-    setError(null);
-    try {
-      setUrl(await startSignSession(proposalRef));
-      setStatus("idle");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not start signing");
-      setStatus("error");
-    }
+// "Review & sign" → reveal the Documenso embedded signing surface for the recipient token.
+// The sealed PDF is the legal instrument; `onDocumentCompleted` advances to the executed
+// state on the client, while the server-side webhook remains the source of truth.
+function SignSection({
+  signingToken,
+  documensoHost,
+  onSigned,
+}: {
+  signingToken?: string;
+  documensoHost?: string;
+  onSigned: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  // No token yet → the Documenso envelope is still being provisioned (e.g. before the
+  // Documenso plan is live). Show a preparing state rather than a dead button.
+  if (!signingToken) {
+    return (
+      <div className="border border-[color:var(--color-border-subtle)] bg-[color:var(--color-surface-sunken)] px-4 py-5 text-center font-mono text-[0.625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
+        Document is being prepared — refresh in a moment.
+      </div>
+    );
   }
 
-  if (url) {
+  if (open) {
     return (
       <div className="border border-[color:var(--color-border-subtle)] bg-[color:var(--color-surface-sunken)]">
-        <AnvilEmbedFrame
-          iframeURL={url}
-          scroll="auto"
-          onEvent={(event: { action?: string }) => {
-            if (event?.action === "signerComplete") onSigned();
-          }}
-          className="w-full"
-          style={{ border: "none", width: "100%", minHeight: 680 }}
+        <EmbedSignDocument
+          token={signingToken}
+          host={documensoHost ?? "https://app.documenso.com"}
+          darkModeDisabled={false}
+          cssVars={DOCUMENSO_CSS_VARS}
+          onDocumentCompleted={() => onSigned()}
+          onDocumentError={(e) => console.error("documenso sign error", e)}
         />
         <div className="border-[color:var(--color-border-subtle)] border-t px-4 py-3 font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
-          Secured by Anvil · Legally binding e-signature
+          Secured by Documenso · Legally binding e-signature
         </div>
       </div>
     );
   }
 
   return (
-    <div>
-      <button
-        type="button"
-        onClick={start}
-        disabled={status === "loading"}
-        className="w-full border border-[color:var(--color-accent-primary)] bg-[color:var(--color-accent-soft)] py-4 text-center font-mono text-[0.75rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.14em] transition-colors hover:bg-[color:var(--color-accent-primary)] hover:text-[color:var(--color-text-onAccent)] disabled:opacity-40"
-      >
-        {status === "loading" ? "Preparing document…" : "Review & sign agreement"}
-      </button>
-      {error && (
-        <div className="mt-2 font-mono text-[0.625rem] text-[color:var(--color-state-warn)]">
-          {error}
-        </div>
-      )}
-    </div>
+    <button
+      type="button"
+      onClick={() => setOpen(true)}
+      className="w-full border border-[color:var(--color-accent-primary)] bg-[color:var(--color-accent-soft)] py-4 text-center font-mono text-[0.75rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.14em] transition-colors hover:bg-[color:var(--color-accent-primary)] hover:text-[color:var(--color-text-onAccent)]"
+    >
+      Review &amp; sign agreement
+    </button>
   );
 }
 

@@ -17,6 +17,7 @@ import { HTTPException } from "hono/http-exception";
 
 import {
   type ProposalShell,
+  type ProposalStatus,
   type ProposalSummary,
   createProposalInputSchema,
 } from "@rare-structure-hq/shared";
@@ -24,16 +25,43 @@ import {
 import { type AuthVariables, requireUser } from "../auth.ts";
 import { AnvilError, createPacketFromTemplate, generateProposalSignUrl } from "../lib/anvil.ts";
 import { db } from "../lib/db.ts";
+import {
+  DOCUMENSO_APP_URL,
+  EdgeError,
+  edgeCreateProposal,
+  edgeGetProposal,
+  edgeListProposals,
+  postureMonthlyFeeCents,
+} from "../lib/edge.ts";
 import { sendProposalLink } from "../lib/email.ts";
-import { newProposalRef } from "../lib/ids.ts";
 import { getTemplate, listTemplateMeta } from "../lib/proposal-templates.ts";
 
 export const proposalAdminRoutes = new Hono<{ Variables: AuthVariables }>();
 
-// POST /api/v1/proposals — operator instantiates a proposal record. Auth-gated:
-// only a signed-in operator may mint proposals.
+// edge_api lifecycle (draft|sent|opened|signed|completed|rejected|voided) → the shell's
+// enum (created|sent|signed|paid). "paid" stays reserved for an actual payment event.
+function mapStatus(s: string): ProposalStatus {
+  switch (s) {
+    case "draft":
+      return "created";
+    case "signed":
+    case "completed":
+      return "signed";
+    default:
+      return "sent"; // sent | opened | rejected | voided all read as "in flight"
+  }
+}
+
+const EXEC_SUMMARY =
+  "Rare Structure originates and structures off-market deal flow against your investment " +
+  "mandate. This engagement deploys dedicated sourcing infrastructure on a success-based fee " +
+  "schedule — the transaction success fee below applies only to capital that closes and funds.";
+
+// POST /api/v1/proposals — operator instantiates a proposal. Auth-gated. Delegates to the
+// core-x engine (edge_api), which renders the legal PDF (DocRaptor) and creates the Documenso
+// envelope. The posture selects the (hardcoded) monthly infrastructure fee; the signer identity
+// rides through. The Anvil path stays intact but is not used here.
 proposalAdminRoutes.post("/", requireUser, async (c) => {
-  const user = c.get("user");
   const parsed = createProposalInputSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) {
     throw new HTTPException(400, {
@@ -41,81 +69,75 @@ proposalAdminRoutes.post("/", requireUser, async (c) => {
     });
   }
   const input = parsed.data;
-  const template = getTemplate(input.templateId);
-  if (!template)
-    throw new HTTPException(400, { message: `unknown templateId: ${input.templateId}` });
+  const signerName = input.client.name.trim();
+  const email =
+    input.client.email?.trim() || `noreply+${encodeURIComponent(signerName)}@rarestructure.com`;
 
-  // Posture-baked commercial values + operator-supplied dynamic vars + the
-  // client identity bound to the cast's signer-name/title aliases. The posture
-  // (template) carries the substance; client vars are cosmetic-bespoke.
-  const fieldValues: Record<string, string> = {
-    ...template.dataDefaults,
-    ...input.fieldValues,
-    clientInstitutionalPartnerSignerName: input.client.name,
-    clientInstitutionalPartnerSignerTitle: input.client.title ?? "",
-  };
-  const headline = template.headline(fieldValues);
-  const ref = newProposalRef();
-
-  const { error } = await db()
-    .from("proposals")
-    .insert({
-      ref,
-      template_id: template.id,
-      client_name: input.client.name,
-      client_email: input.client.email ?? null,
-      client_title: input.client.title ?? null,
-      field_values: fieldValues,
-      headline,
-      exec_summary: template.execSummary,
-      template_label: template.label,
-      status: "created",
-      created_by: user.user_id,
+  try {
+    const r = await edgeCreateProposal({
+      // The intake form collects one identity; it doubles as the institutional entity and the
+      // signer until a distinct firm/entity field is added to the form.
+      clientName: signerName,
+      clientSignerName: signerName,
+      clientEmail: email,
+      clientTitle: input.client.title,
+      monthlyFeeCents: postureMonthlyFeeCents(input.templateId),
     });
-  if (error) throw new HTTPException(500, { message: `insert failed: ${error.message}` });
-
-  return c.json({ data: { ref, path: `/p/${ref}` } }, 201);
+    return c.json({ data: { ref: r.ref, path: r.path } }, 201);
+  } catch (e) {
+    if (e instanceof EdgeError) throw new HTTPException(502, { message: e.message });
+    throw e;
+  }
 });
 
-// GET /api/v1/proposals — operator-facing list (most recent first), for the
-// cockpit Proposals tab. Auth-gated.
+// GET /api/v1/proposals — operator-facing list (most recent first), for the cockpit Proposals
+// tab. Auth-gated. Delegates to the engine.
 proposalAdminRoutes.get("/", requireUser, async (c) => {
-  const { data, error } = await db()
-    .from("proposals")
-    .select("ref,client_name,template_label,status,created_at")
-    .order("created_at", { ascending: false })
-    .limit(100);
-  if (error) throw new HTTPException(500, { message: error.message });
-  const list: ProposalSummary[] = (data ?? []).map((r) => ({
-    ref: r.ref,
-    clientName: r.client_name,
-    templateLabel: r.template_label,
-    status: r.status,
-    createdAt: r.created_at,
-  }));
-  return c.json({ data: list });
+  try {
+    const rows = await edgeListProposals();
+    const list: ProposalSummary[] = rows.map((r) => ({
+      ref: r.ref,
+      clientName: r.client_name,
+      templateLabel: "Strategic Origination Mandate",
+      status: mapStatus(r.status),
+      createdAt: r.created_at ?? new Date().toISOString(),
+    }));
+    return c.json({ data: list });
+  } catch (e) {
+    if (e instanceof EdgeError) throw new HTTPException(502, { message: e.message });
+    throw e;
+  }
 });
 
-// GET /api/v1/proposals/:ref — public, ref-scoped read for the client shell. The
-// ref is the capability credential, so no auth. Returns the lean projection only.
+// GET /api/v1/proposals/:ref — public, ref-scoped read for the client shell. The ref is the
+// capability credential, so no auth. Maps the engine's public projection (incl. the Documenso
+// signing token) onto the lean shell the client page renders.
 proposalAdminRoutes.get("/:ref", async (c) => {
   const ref = c.req.param("ref");
-  const { data, error } = await db()
-    .from("proposals")
-    .select("ref,status,template_label,client_name,client_title,exec_summary,headline,created_at")
-    .eq("ref", ref)
-    .maybeSingle();
-  if (error) throw new HTTPException(500, { message: error.message });
-  if (!data) throw new HTTPException(404, { message: "proposal not found" });
+  let p: Awaited<ReturnType<typeof edgeGetProposal>>;
+  try {
+    p = await edgeGetProposal(ref);
+  } catch (e) {
+    if (e instanceof EdgeError) throw new HTTPException(502, { message: e.message });
+    throw e;
+  }
+  if (!p) throw new HTTPException(404, { message: "proposal not found" });
 
+  const headline = [
+    { label: "Infrastructure Fee", value: `${p.monthly_fee} / month` },
+    { label: "Quarterly · 3 mo. advance", value: p.quarterly_total },
+    ...p.success_fee_tiers.map((t) => ({ label: t.tier, value: t.rate })),
+  ];
   const shell: ProposalShell = {
-    ref: data.ref,
-    status: data.status,
-    templateLabel: data.template_label,
-    client: { name: data.client_name, title: data.client_title ?? undefined },
-    execSummary: data.exec_summary,
-    headline: data.headline,
-    createdAt: data.created_at,
+    ref: p.ref,
+    status: mapStatus(p.status),
+    templateLabel: p.template_label,
+    client: { name: p.client.name, title: p.client.title ?? undefined },
+    execSummary: EXEC_SUMMARY,
+    headline,
+    createdAt: p.created_at ?? new Date().toISOString(),
+    signingToken: p.signing_token ?? undefined,
+    documensoHost: DOCUMENSO_APP_URL,
   };
   return c.json({ data: shell });
 });
