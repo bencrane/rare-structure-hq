@@ -12,8 +12,14 @@
  */
 import { createClient } from "@supabase/supabase-js";
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+// Prefer the LIVE hq-x creds (VITE_HQX_*); the legacy VITE_SUPABASE_* values are
+// stale (the project rotated to the new publishable-key system). The publishable
+// key (`sb_publishable_…`) is the client-side key in the new scheme.
+const SUPABASE_URL = (import.meta.env.VITE_HQX_SUPABASE_URL ?? import.meta.env.VITE_SUPABASE_URL) as
+  | string
+  | undefined;
+const SUPABASE_ANON_KEY = (import.meta.env.VITE_HQX_SUPABASE_PUBLISHABLE_KEY ??
+  import.meta.env.VITE_SUPABASE_ANON_KEY) as string | undefined;
 
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   // eslint-disable-next-line no-console
