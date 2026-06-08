@@ -138,8 +138,9 @@ function SidebarContent({
                 <Text
                   as="span"
                   size="body-sm"
+                  face="display"
                   color="primary"
-                  className="whitespace-nowrap font-display font-semibold uppercase leading-none tracking-[0.16em]"
+                  className="whitespace-nowrap font-semibold uppercase leading-none tracking-[0.16em]"
                 >
                   Rare Structure
                 </Text>
@@ -280,8 +281,9 @@ export function AppShell() {
             <Text
               as="span"
               size="body-sm"
+              face="display"
               color="primary"
-              className="font-display font-semibold uppercase tracking-[0.16em]"
+              className="font-semibold uppercase tracking-[0.16em]"
             >
               Rare Structure
             </Text>

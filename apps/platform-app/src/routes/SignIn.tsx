@@ -1,11 +1,15 @@
 import { type FormEvent, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { Button } from "@rare-structure-hq/ui";
+import { Button, Text } from "@rare-structure-hq/ui";
 
 import { useAuth } from "@/lib/auth";
 
 type Mode = "signin" | "signup";
+
+const LABEL = "font-mono text-mono-xs uppercase text-[color:var(--color-text-subtle)]";
+const INPUT =
+  "border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-sunken)] px-3 py-3 text-body-sm text-[color:var(--color-text-primary)] outline-none placeholder:text-[color:var(--color-text-subtle)] focus:border-[color:var(--color-text-accent)]";
 
 /**
  * SignIn — email + password gate for the authenticated cockpit (`/app/*`).
@@ -50,20 +54,23 @@ export default function SignIn() {
     <div className="flex min-h-dvh items-center justify-center bg-[color:var(--color-surface-base)]">
       <div className="w-full max-w-[22rem] px-6">
         <div className="mb-8 flex flex-col items-center gap-2 text-center">
-          <span className="font-display text-[0.9375rem] font-semibold uppercase tracking-[0.18em] text-[color:var(--color-text-primary)]">
+          <Text
+            as="span"
+            size="body-sm"
+            face="display"
+            color="primary"
+            className="font-semibold uppercase tracking-[0.18em]"
+          >
             Rare Structure
-          </span>
-          <span className="font-mono text-[0.625rem] uppercase tracking-[0.2em] text-[color:var(--color-text-accent)]">
+          </Text>
+          <Text as="span" size="mono-xs" mono color="accent">
             Catalyst Cockpit
-          </span>
+          </Text>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <label
-              htmlFor="email"
-              className="font-mono text-[0.625rem] uppercase tracking-[0.16em] text-[color:var(--color-text-subtle)]"
-            >
+            <label htmlFor="email" className={LABEL}>
               Email
             </label>
             <input
@@ -74,14 +81,11 @@ export default function SignIn() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@firm.com"
-              className="border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-sunken)] px-3 py-2.5 text-body-sm text-[color:var(--color-text-primary)] outline-none placeholder:text-[color:var(--color-text-subtle)] focus:border-[color:var(--color-text-accent)]"
+              className={INPUT}
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label
-              htmlFor="password"
-              className="font-mono text-[0.625rem] uppercase tracking-[0.16em] text-[color:var(--color-text-subtle)]"
-            >
+            <label htmlFor="password" className={LABEL}>
               Password
             </label>
             <input
@@ -92,19 +96,15 @@ export default function SignIn() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-sunken)] px-3 py-2.5 text-body-sm text-[color:var(--color-text-primary)] outline-none placeholder:text-[color:var(--color-text-subtle)] focus:border-[color:var(--color-text-accent)]"
+              className={INPUT}
             />
           </div>
 
           {error ? (
-            <p className="font-mono text-[0.6875rem] text-[color:var(--color-state-error)]">
-              {error}
-            </p>
+            <p className="font-mono text-mono-xs text-[color:var(--color-state-error)]">{error}</p>
           ) : null}
           {notice ? (
-            <p className="font-mono text-[0.6875rem] text-[color:var(--color-text-accent)]">
-              {notice}
-            </p>
+            <p className="font-mono text-mono-xs text-[color:var(--color-text-accent)]">{notice}</p>
           ) : null}
 
           <Button type="submit" variant="primary" disabled={busy} className="w-full">
@@ -119,7 +119,7 @@ export default function SignIn() {
             setError(null);
             setNotice(null);
           }}
-          className="mt-5 w-full text-center font-mono text-[0.625rem] uppercase tracking-[0.12em] text-[color:var(--color-text-muted)] transition-colors hover:text-[color:var(--color-text-default)]"
+          className="mt-5 w-full text-center font-mono text-mono-xs uppercase text-[color:var(--color-text-muted)] transition-colors hover:text-[color:var(--color-text-default)]"
         >
           {mode === "signin" ? "Need an account? Create one" : "Have an account? Sign in"}
         </button>
@@ -128,7 +128,7 @@ export default function SignIn() {
           <button
             type="button"
             onClick={devSignIn}
-            className="mt-3 w-full text-center font-mono text-[0.625rem] uppercase tracking-[0.16em] text-[color:var(--color-text-subtle)] transition-colors hover:text-[color:var(--color-text-accent)]"
+            className="mt-3 w-full text-center font-mono text-mono-xs uppercase text-[color:var(--color-text-subtle)] transition-colors hover:text-[color:var(--color-text-accent)]"
           >
             Preview as operator (dev)
           </button>

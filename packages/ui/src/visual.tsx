@@ -24,18 +24,29 @@ export interface TextProps extends Omit<HTMLAttributes<HTMLElement>, "color"> {
   as?: "p" | "span" | "div" | "h1" | "h2" | "h3" | "h4" | "label";
   /** Render with the mono label treatment (uppercase + tracking). */
   mono?: boolean;
+  /**
+   * Font face. `display` = the brand display face (Geist Mono) for headings and
+   * brand lockups; `mono` = mono; `sans` = body. Omitted → inherits the page
+   * sans face, or mono when the `mono` shorthand is set. Additive: existing
+   * callers are unaffected.
+   */
+  face?: "sans" | "mono" | "display";
   children?: ReactNode;
 }
 
+const faceClass = { sans: "font-sans", mono: "font-mono", display: "font-display" } as const;
+
 export const Text = forwardRef<HTMLElement, TextProps>(function Text(
-  { size = "body-md", color = "default", as: As = "p", mono, className, children, ...rest },
+  { size = "body-md", color = "default", as: As = "p", mono, face, className, children, ...rest },
   ref,
 ) {
+  // `face` wins; `mono` is the eyebrow shorthand (mono family + uppercase).
+  const family = face ? faceClass[face] : mono ? "font-mono" : undefined;
   return (
     <As
       // forwardRef on a polymorphic intrinsic — ref type is widened to HTMLElement.
       ref={ref as React.Ref<never>}
-      className={cx(fontSize[size], textColor[color], mono && "font-mono uppercase", className)}
+      className={cx(fontSize[size], textColor[color], family, mono && "uppercase", className)}
       {...rest}
     >
       {children}

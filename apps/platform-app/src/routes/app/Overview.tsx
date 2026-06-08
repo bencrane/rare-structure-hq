@@ -1,8 +1,8 @@
 import { Activity, ClipboardList, FileSignature, Radar, TrendingUp, Workflow } from "lucide-react";
 
-import { Card, Grid } from "@rare-structure-hq/ui";
+import { Grid } from "@rare-structure-hq/ui";
 
-import { CockpitPage, EmptyState, SectionLabel, StatCard } from "@/app/cockpit";
+import { CockpitPage, EmptyState, Panel, Section, StatCard } from "@/app/cockpit";
 
 export default function Overview() {
   return (
@@ -19,16 +19,15 @@ export default function Overview() {
         <StatCard icon={Activity} label="Engagements" value="—" />
       </Grid>
 
-      <section className="mt-10">
-        <SectionLabel>Recent activity</SectionLabel>
-        <Card>
+      <Section label="Recent activity">
+        <Panel padded={false}>
           <EmptyState
             icon={Activity}
             title="No activity yet"
             description="Origination, pipeline, and proposal events will stream in here as the desk goes live."
           />
-        </Card>
-      </section>
+        </Panel>
+      </Section>
     </CockpitPage>
   );
 }
