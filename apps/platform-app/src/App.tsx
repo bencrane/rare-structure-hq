@@ -9,9 +9,11 @@
  *
  * Auth + cockpit:
  *   `/signin`            → email + password gate.
- *   `/app`               → authenticated cockpit shell; defaults to the Map tab.
- *                          Tabs: Map · Overview · Pipeline · Applications · Account.
- *                          The sidebar is collapsible (persisted per browser).
+ *   `/app`               → authenticated cockpit, role-gated on
+ *                          `app_metadata.role`. Operator: full set (Map ·
+ *                          Overview · Pipeline · Applications · Account), lands
+ *                          on Map. Client: Account · Preferences, lands on
+ *                          Account. The sidebar is collapsible (persisted).
  *
  * <AuthProvider> wraps everything; only the `/app/*` subtree gates on a session
  * via <RequireAuth>. The public surfaces stay anonymous.
@@ -29,6 +31,7 @@ import Applications from "./routes/app/Applications";
 import MapTab from "./routes/app/MapTab";
 import Overview from "./routes/app/Overview";
 import Pipeline from "./routes/app/Pipeline";
+import Preferences from "./routes/app/Preferences";
 import Proposal from "./routes/proposal/Proposal";
 
 function RequireAuth({ children }: { children: ReactNode }) {
@@ -44,6 +47,20 @@ function RequireAuth({ children }: { children: ReactNode }) {
   }
   if (!session) return <Navigate to="/signin" replace />;
   return <>{children}</>;
+}
+
+// `/app` index → the role's home tab.
+function AppIndex() {
+  const { isOperator } = useAuth();
+  return <Navigate to={isOperator ? "/app/map" : "/app/account"} replace />;
+}
+
+// Operator-only surface. A client who reaches one (e.g. by typing the URL) is
+// bounced to their home tab. Real per-tenant data scoping is server-side; this
+// gates the UI.
+function RequireOperator({ children }: { children: ReactNode }) {
+  const { isOperator } = useAuth();
+  return isOperator ? <>{children}</> : <Navigate to="/app/account" replace />;
 }
 
 export function App() {
@@ -69,12 +86,41 @@ export function App() {
             </RequireAuth>
           }
         >
-          <Route index element={<Navigate to="/app/map" replace />} />
-          <Route path="map" element={<MapTab />} />
-          <Route path="overview" element={<Overview />} />
-          <Route path="pipeline" element={<Pipeline />} />
-          <Route path="applications" element={<Applications />} />
+          <Route index element={<AppIndex />} />
+          <Route
+            path="map"
+            element={
+              <RequireOperator>
+                <MapTab />
+              </RequireOperator>
+            }
+          />
+          <Route
+            path="overview"
+            element={
+              <RequireOperator>
+                <Overview />
+              </RequireOperator>
+            }
+          />
+          <Route
+            path="pipeline"
+            element={
+              <RequireOperator>
+                <Pipeline />
+              </RequireOperator>
+            }
+          />
+          <Route
+            path="applications"
+            element={
+              <RequireOperator>
+                <Applications />
+              </RequireOperator>
+            }
+          />
           <Route path="account" element={<Account />} />
+          <Route path="preferences" element={<Preferences />} />
         </Route>
       </Routes>
     </AuthProvider>

@@ -4,9 +4,9 @@ import { CockpitPage, DataRow, Panel } from "@/app/cockpit";
 import { useAuth } from "@/lib/auth";
 
 export default function Account() {
-  const { user } = useAuth();
+  const { user, isOperator } = useAuth();
   return (
-    <CockpitPage title="Account" description="Your operator profile and engagement billing.">
+    <CockpitPage title="Account" description="Your profile and billing.">
       <Grid cols={1} mdCols={2} gap="4">
         <Panel>
           <Stack gap="3">
@@ -15,8 +15,8 @@ export default function Account() {
             </Text>
             <div>
               <DataRow label="Email" value={user?.email ?? "—"} />
-              <DataRow label="Organization" value="Rare Structure LLC" />
-              <DataRow label="Role" value="Operator" />
+              <DataRow label="Organization" value={isOperator ? "Rare Structure LLC" : "—"} />
+              <DataRow label="Role" value={isOperator ? "Operator" : "Client"} />
             </div>
           </Stack>
         </Panel>
