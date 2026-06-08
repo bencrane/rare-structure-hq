@@ -8,6 +8,7 @@
  * - /api/v1/proposals/:ref/* (public, ref-scoped) Anvil embedded e-sign
  * - /api/v1/proposals (auth) instantiate; /api/v1/proposals/:ref (public) shell read
  * - /api/v1/proposal-templates (auth) the non-revealing posture catalog
+ * - /api/v1/webhooks/anvil (shared-secret) Anvil completion → signed + copy
  * - /api/v1/award-profile/:domain (auth-required) brokers to core-x catalyst_api
  *
  * Deferred: Recipient profile, project matching.
@@ -23,6 +24,7 @@ import { allowedOrigins, env } from "./env.ts";
 import { awardProfileRoutes } from "./routes/award-profile.ts";
 import { proposalAdminRoutes, proposalTemplateRoutes } from "./routes/proposals-admin.ts";
 import { proposalRoutes } from "./routes/proposals.ts";
+import { anvilWebhookRoutes } from "./routes/webhooks-anvil.ts";
 
 const app = new Hono<{ Variables: AuthVariables & { requestId: string } }>();
 
@@ -50,6 +52,7 @@ app.get("/api/v1/me", requireUser, (c) => {
 app.route("/api/v1/proposals", proposalRoutes);
 app.route("/api/v1/proposals", proposalAdminRoutes);
 app.route("/api/v1/proposal-templates", proposalTemplateRoutes);
+app.route("/api/v1/webhooks", anvilWebhookRoutes);
 app.route("/api/v1/award-profile", awardProfileRoutes);
 
 const port = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 8000;

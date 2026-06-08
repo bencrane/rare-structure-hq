@@ -160,6 +160,10 @@ export async function createPacketFromTemplate(
         fields: binding.clientSignerFieldIds.map((fieldId) => ({ fileId: "proposal", fieldId })),
       },
     ],
+    // Per-packet completion webhook (Phase 2 of the e-sign flow). Anvil POSTs the
+    // configured URL on signerComplete/etchPacketComplete; we flip status=signed
+    // and deliver the executed copy. Absent in dev → no webhook on the packet.
+    ...(process.env.ANVIL_WEBHOOK_URL ? { webhookURL: process.env.ANVIL_WEBHOOK_URL } : {}),
   };
 
   let lastDetail: unknown;
@@ -205,4 +209,18 @@ export async function generateProposalSignUrl(
     throw new AnvilError("generateEtchSignUrl failed", res.statusCode ?? 502, res.errors ?? res);
   }
   return res.url;
+}
+
+/**
+ * Download the executed packet's documents as a buffer (zip of signed PDFs;
+ * watermarked in test mode). Used to deliver the countersigned copy after the
+ * completion webhook fires.
+ */
+export async function downloadProposalDocuments(documentGroupEid: string): Promise<Buffer> {
+  const res = (await anvilClient().downloadDocuments(documentGroupEid, {
+    dataType: "buffer",
+  })) as { data?: Buffer; response?: { data?: Buffer } };
+  const buf = res?.data ?? res?.response?.data;
+  if (!buf) throw new AnvilError("downloadDocuments returned no data", 502, res);
+  return Buffer.isBuffer(buf) ? buf : Buffer.from(buf);
 }
