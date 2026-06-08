@@ -2,7 +2,7 @@
  * App — the platform-app router shell.
  *
  * Public surfaces (anonymous):
- *   `/`                  → redirects to `/map`.
+ *   `/`                  → redirects to `/signin` (the gate is the front door).
  *   `/map`               → catalyst map demo.
  *   `/proposal/:ref`     → engagement proposal (the ref is its own credential).
  *   `/proposal`          → "reference required" prompt.
@@ -50,8 +50,9 @@ export function App() {
   return (
     <AuthProvider>
       <Routes>
-        {/* Public surfaces. */}
-        <Route path="/" element={<Navigate to="/map" replace />} />
+        {/* Public surfaces. The root lands on the sign-in gate; the map keeps
+            its own path. */}
+        <Route path="/" element={<Navigate to="/signin" replace />} />
         <Route path="/map" element={<MapDemo />} />
         <Route path="/proposal" element={<Proposal />} />
         <Route path="/proposal/:ref" element={<Proposal />} />
