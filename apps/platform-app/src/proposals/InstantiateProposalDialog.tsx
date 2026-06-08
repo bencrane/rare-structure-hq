@@ -15,12 +15,12 @@
  */
 import type { CreateProposalResult, ProposalTemplateMeta } from "@rare-structure-hq/shared";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Check, Copy, ExternalLink, FileSignature } from "lucide-react";
+import { Check, Copy, ExternalLink, FileSignature, Send } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-import { createProposal, listTemplates } from "./api";
+import { createProposal, listTemplates, sendProposal } from "./api";
 
 export function InstantiateProposalDialog({
   open,
@@ -189,7 +189,10 @@ function ProposalForm({ token, onClose }: { token: string; onClose: () => void }
     }
   }
 
-  if (result) return <ReadyPanel result={result} onClose={onClose} />;
+  if (result)
+    return (
+      <ReadyPanel result={result} token={token} clientEmail={email.trim()} onClose={onClose} />
+    );
 
   return (
     <div className="max-h-[64vh] overflow-y-auto px-5 py-5">
@@ -269,14 +272,38 @@ function ProposalForm({ token, onClose }: { token: string; onClose: () => void }
 }
 
 // ── Ready: the link is live ──────────────────────────────────────────────────
-function ReadyPanel({ result, onClose }: { result: CreateProposalResult; onClose: () => void }) {
+function ReadyPanel({
+  result,
+  token,
+  clientEmail,
+  onClose,
+}: {
+  result: CreateProposalResult;
+  token: string;
+  clientEmail: string;
+  onClose: () => void;
+}) {
   const url = `${window.location.origin}${result.path}`;
   const [copied, setCopied] = useState(false);
+  const [sendState, setSendState] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [sendError, setSendError] = useState<string | null>(null);
 
   async function copy() {
     await navigator.clipboard.writeText(url);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
+  }
+
+  async function send() {
+    setSendState("sending");
+    setSendError(null);
+    try {
+      await sendProposal(token, result.ref);
+      setSendState("sent");
+    } catch (e) {
+      setSendError(e instanceof Error ? e.message : "Send failed");
+      setSendState("error");
+    }
   }
 
   return (
@@ -286,7 +313,7 @@ function ReadyPanel({ result, onClose }: { result: CreateProposalResult; onClose
         <span className="font-mono text-mono-xs uppercase tracking-[0.16em]">Proposal ready</span>
       </div>
       <p className="mb-4 text-[color:var(--color-text-muted)] text-body-sm">
-        Drop this link on the call, or open it yourself.
+        Drop this link on the call, send it, or open it yourself.
       </p>
 
       <div className="mb-4 flex items-center gap-2 border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-sunken)] px-3 py-2.5">
@@ -309,6 +336,27 @@ function ReadyPanel({ result, onClose }: { result: CreateProposalResult; onClose
           Open live
         </button>
       </div>
+
+      {/* "Instantiate and send" — email the link to the client. */}
+      <button
+        type="button"
+        onClick={send}
+        disabled={!clientEmail || sendState === "sending" || sendState === "sent"}
+        title={clientEmail ? `Email the link to ${clientEmail}` : "Add a client email to send"}
+        className={`${primaryBtnCls} flex items-center justify-center gap-2`}
+      >
+        {sendState === "sent" ? <Check className="size-3.5" /> : <Send className="size-3.5" />}
+        {sendState === "sending"
+          ? "Sending…"
+          : sendState === "sent"
+            ? `Sent to ${clientEmail}`
+            : clientEmail
+              ? "Send to client"
+              : "Send — no client email"}
+      </button>
+      {sendError && (
+        <p className="mt-2 text-[color:var(--color-state-warn)] text-mono-xs">{sendError}</p>
+      )}
 
       <button
         type="button"

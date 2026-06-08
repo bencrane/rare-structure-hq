@@ -42,6 +42,19 @@ export async function createProposal(
   return (await res.json()).data as CreateProposalResult;
 }
 
+/** Email the shell link to the proposal's client (operator-only). */
+export async function sendProposal(
+  token: string,
+  ref: string,
+): Promise<{ sent: boolean; id?: string }> {
+  const res = await fetch(`${API_BASE}/api/v1/proposals/${encodeURIComponent(ref)}/send`, {
+    method: "POST",
+    headers: authHeaders(token),
+  });
+  if (!res.ok) throw new Error(`send failed: ${res.status} ${await res.text()}`);
+  return (await res.json()).data as { sent: boolean; id?: string };
+}
+
 // ── Public client-shell calls (the ref is the capability — no auth) ──────────
 
 /** Fetch the lean shell projection for `/p/:ref`. Returns null when unknown. */
