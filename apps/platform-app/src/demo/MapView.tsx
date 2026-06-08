@@ -22,6 +22,18 @@ import { fmtUsd } from "./format";
 import type { Company, MapQuery } from "./types";
 import { GEO_SCATTER_BANDS, GEO_VIEW, STATE_PATHS } from "./us-geo";
 
+// AK and HI are baked into the Albers-USA composite oversized and crowding the
+// lower-48 (AK's panhandle reaches Texas; HI sits on top of it). Re-place them
+// as small lower-left insets with a render transform (scale + translate) rather
+// than rewriting the path coordinates.
+const INSET_IDS = new Set(["02", "15"]);
+const INSET_TRANSFORM: Record<string, string> = {
+  "02": "translate(40.4 306.4) scale(0.4)", // Alaska — small inset, smaller than California now
+  "15": "translate(99.3 358.4) scale(0.3)", // Hawaii — small, to the right of AK
+};
+const CONTINENTAL = STATE_PATHS.filter((s) => !INSET_IDS.has(s.id));
+const INSETS = STATE_PATHS.filter((s) => INSET_IDS.has(s.id));
+
 export function MapView({
   query,
   results,
@@ -107,10 +119,10 @@ export function MapView({
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
           >
-            {STATE_PATHS.map((s) => (
+            {CONTINENTAL.map((s) => (
               <path key={`fill-${s.id}`} d={s.d} fill="url(#rs-map-landglow)" />
             ))}
-            {STATE_PATHS.map((s, i) => (
+            {CONTINENTAL.map((s, i) => (
               <motion.path
                 key={`line-${s.id}`}
                 d={s.d}
@@ -127,7 +139,7 @@ export function MapView({
                 }}
               />
             ))}
-            {STATE_PATHS.map((s) => (
+            {CONTINENTAL.map((s) => (
               <path
                 key={`edge-${s.id}`}
                 d={s.d}
@@ -137,6 +149,28 @@ export function MapView({
                 strokeWidth={0.5}
                 strokeLinejoin="round"
               />
+            ))}
+
+            {/* AK / HI insets — re-placed small in the lower-left. */}
+            {INSETS.map((s) => (
+              <g key={`inset-${s.id}`} transform={INSET_TRANSFORM[s.id]}>
+                <path d={s.d} fill="url(#rs-map-landglow)" />
+                <path
+                  d={s.d}
+                  fill="none"
+                  stroke="var(--color-border-default)"
+                  strokeWidth={0.7}
+                  strokeLinejoin="round"
+                />
+                <path
+                  d={s.d}
+                  fill="none"
+                  stroke="var(--color-text-muted)"
+                  strokeOpacity={0.28}
+                  strokeWidth={0.5}
+                  strokeLinejoin="round"
+                />
+              </g>
             ))}
           </motion.g>
 
@@ -264,9 +298,9 @@ function ScanSweep() {
 function InsetLabels({ reduced }: { reduced: boolean }) {
   return (
     <motion.div
-      className="pointer-events-none absolute bottom-6 left-6 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase sm:bottom-8 sm:left-10"
+      className="pointer-events-none absolute bottom-6 left-6 font-mono text-[0.625rem] uppercase tracking-[0.14em] text-[color:var(--color-text-muted)] sm:bottom-8 sm:left-10"
       initial={reduced ? false : { opacity: 0 }}
-      animate={{ opacity: 0.7 }}
+      animate={{ opacity: 0.35 }}
       transition={{ duration: 0.5, delay: reduced ? 0 : 1.4 }}
     >
       AK · HI shown as insets
