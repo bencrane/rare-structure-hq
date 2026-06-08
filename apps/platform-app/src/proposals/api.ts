@@ -10,6 +10,7 @@ import type {
   CreateProposalInput,
   CreateProposalResult,
   ProposalShell,
+  ProposalSummary,
   ProposalTemplateMeta,
 } from "@rare-structure-hq/shared";
 
@@ -17,6 +18,13 @@ const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? ""
 
 function authHeaders(token: string): HeadersInit {
   return { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
+}
+
+/** The operator's recent proposals (most recent first) for the cockpit tab. */
+export async function listProposals(token: string): Promise<ProposalSummary[]> {
+  const res = await fetch(`${API_BASE}/api/v1/proposals`, { headers: authHeaders(token) });
+  if (!res.ok) throw new Error(`list failed: ${res.status} ${await res.text()}`);
+  return (await res.json()).data as ProposalSummary[];
 }
 
 /** The non-revealing posture catalog the operator picks from. */
