@@ -9,7 +9,15 @@ import { Crosshair } from "lucide-react";
 import { TRACKED_ENTITIES } from "../data";
 
 /** The fixed terminal header — wordmark, terminal name, live entity count. */
-export function TerminalHeader({ reduced }: { reduced: boolean }) {
+export function TerminalHeader({
+  reduced,
+  showBrand = true,
+}: {
+  reduced: boolean;
+  /** Hide the wordmark + terminal name when the map is embedded in the
+   * authenticated cockpit — the sidebar already carries the brand there. */
+  showBrand?: boolean;
+}) {
   return (
     <motion.header
       className="relative z-10 flex items-start justify-between px-6 pt-6 sm:px-10 sm:pt-8"
@@ -17,15 +25,19 @@ export function TerminalHeader({ reduced }: { reduced: boolean }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.1 }}
     >
-      <div>
-        <div className="font-display font-semibold text-[color:var(--color-text-primary)] text-body-lg uppercase tracking-[0.18em]">
-          Rare Structure
+      {showBrand ? (
+        <div>
+          <div className="font-display font-semibold text-[color:var(--color-text-primary)] text-body-lg uppercase tracking-[0.18em]">
+            Rare Structure
+          </div>
+          <div className="mt-1.5 flex items-center gap-1.5 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase">
+            <Crosshair className="size-3 text-[color:var(--color-text-accent)]" />
+            Catalyst Origination Terminal
+          </div>
         </div>
-        <div className="mt-1.5 flex items-center gap-1.5 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase">
-          <Crosshair className="size-3 text-[color:var(--color-text-accent)]" />
-          Catalyst Origination Terminal
-        </div>
-      </div>
+      ) : (
+        <div />
+      )}
       <div className="text-right">
         <div className="flex items-center justify-end gap-2 font-mono text-[color:var(--color-text-accent)] text-mono-xs uppercase">
           <span className="size-1.5 animate-pulse bg-[color:var(--color-accent-primary)]" />

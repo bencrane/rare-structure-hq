@@ -25,7 +25,7 @@ import { CompanyProfile } from "./components/CompanyProfile";
 import { runQuery } from "./data";
 import type { AggregateSpec, Command, Company, MapQuery } from "./types";
 
-export function DemoApp() {
+export function DemoApp({ embedded = false }: { embedded?: boolean }) {
   const [commandOpen, setCommandOpen] = useState(false);
   const [query, setQuery] = useState<MapQuery | null>(null);
   const [aggregate, setAggregate] = useState<AggregateSpec | null>(null);
@@ -79,6 +79,7 @@ export function DemoApp() {
             key="aggregate"
             spec={aggregate}
             onInvokeCommand={() => setCommandOpen(true)}
+            embedded={embedded}
           />
         ) : (
           <MapView
@@ -88,6 +89,7 @@ export function DemoApp() {
             selectedId={selectedCompany?.id ?? null}
             onSelectCompany={(company) => setSelectedCompany(company)}
             onInvokeCommand={() => setCommandOpen(true)}
+            embedded={embedded}
           />
         )}
       </AnimatePresence>
