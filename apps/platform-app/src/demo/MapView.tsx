@@ -28,12 +28,14 @@ export function MapView({
   selectedId,
   onSelectCompany,
   onInvokeCommand,
+  embedded = false,
 }: {
   query: MapQuery | null;
   results: Company[];
   selectedId: string | null;
   onSelectCompany: (company: Company) => void;
   onInvokeCommand: () => void;
+  embedded?: boolean;
 }) {
   const reduced = !!useReducedMotion();
   const [hovered, setHovered] = useState<string | null>(null);
@@ -73,7 +75,7 @@ export function MapView({
       />
       <div className="rs-scanlines pointer-events-none absolute inset-0 opacity-60" />
 
-      <TerminalHeader reduced={reduced} />
+      <TerminalHeader reduced={reduced} showBrand={!embedded} />
 
       <div className="relative flex min-h-0 flex-1 items-center justify-center px-6">
         <svg

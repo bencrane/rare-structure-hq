@@ -17,9 +17,11 @@ import type { AggregateBar, AggregateSpec } from "./types";
 export function AggregateView({
   spec,
   onInvokeCommand,
+  embedded = false,
 }: {
   spec: AggregateSpec;
   onInvokeCommand: () => void;
+  embedded?: boolean;
 }) {
   const reduced = !!useReducedMotion();
   const bars = aggregateBy(spec.groupBy);
@@ -37,7 +39,7 @@ export function AggregateView({
     >
       <div className="rs-scanlines pointer-events-none absolute inset-0 opacity-60" />
 
-      <TerminalHeader reduced={reduced} />
+      <TerminalHeader reduced={reduced} showBrand={!embedded} />
 
       <div className="relative flex min-h-0 flex-1 flex-col px-6 pt-2 pb-2 sm:px-10">
         <ChartHeader spec={spec} total={total} groups={bars.length} reduced={reduced} />
