@@ -20,6 +20,7 @@ import { type ProposalShell, createProposalInputSchema } from "@rare-structure-h
 import { type AuthVariables, requireUser } from "../auth.ts";
 import { AnvilError, createPacketFromTemplate, generateProposalSignUrl } from "../lib/anvil.ts";
 import { db } from "../lib/db.ts";
+import { sendProposalLink } from "../lib/email.ts";
 import { newProposalRef } from "../lib/ids.ts";
 import { getTemplate, listTemplateMeta } from "../lib/proposal-templates.ts";
 
@@ -154,6 +155,42 @@ proposalAdminRoutes.post("/:ref/sign-session", async (c) => {
     if (e instanceof AnvilError) throw new HTTPException(502, { message: e.message });
     throw e;
   }
+});
+
+// POST /api/v1/proposals/:ref/send — operator emails the shell link to the
+// client (the "instantiate and send" path). Auth-gated. Advances status to
+// 'sent' without downgrading an already signed/paid record.
+proposalAdminRoutes.post("/:ref/send", requireUser, async (c) => {
+  const ref = c.req.param("ref");
+  const { data: rec, error } = await db()
+    .from("proposals")
+    .select("ref,client_name,client_email,template_label,status")
+    .eq("ref", ref)
+    .maybeSingle();
+  if (error) throw new HTTPException(500, { message: error.message });
+  if (!rec) throw new HTTPException(404, { message: "proposal not found" });
+  if (!rec.client_email) {
+    throw new HTTPException(400, { message: "this proposal has no client email" });
+  }
+
+  const base = (process.env.PROPOSAL_BASE_URL ?? "").replace(/\/$/, "");
+  const result = await sendProposalLink({
+    to: rec.client_email,
+    clientName: rec.client_name,
+    ref,
+    url: `${base}/p/${ref}`,
+    templateLabel: rec.template_label,
+  });
+  if (!result.sent) throw new HTTPException(502, { message: `send failed: ${result.error}` });
+
+  const nextStatus = rec.status === "created" ? "sent" : rec.status;
+  const { error: upErr } = await db()
+    .from("proposals")
+    .update({ status: nextStatus, sent_at: new Date().toISOString() })
+    .eq("ref", ref);
+  if (upErr) throw new HTTPException(500, { message: `persist failed: ${upErr.message}` });
+
+  return c.json({ data: { sent: true, id: result.id } });
 });
 
 // GET /api/v1/proposal-templates — operator-facing posture list (non-revealing).
