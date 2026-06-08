@@ -13,10 +13,20 @@
  */
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { BarChart3, CornerDownLeft, MapPin, Search } from "lucide-react";
+import { BarChart3, CornerDownLeft, FileSignature, MapPin, Search } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { COMMANDS } from "../data";
 import type { Command } from "../types";
+
+// The proposal-instantiate action sits at the top of the palette — a cockpit
+// action, not a market query. Defined here (not in data.ts) so the market
+// fixtures stay pure; DemoApp keys off `kind === "proposal"` to open the dialog.
+const PROPOSAL_COMMAND: Command = {
+  id: "gen-proposal",
+  kind: "proposal",
+  label: "Generate engagement proposal…",
+};
+const ALL_COMMANDS: Command[] = [PROPOSAL_COMMAND, ...COMMANDS];
 
 export function CommandPalette({
   open,
@@ -43,8 +53,8 @@ export function CommandPalette({
 
   const filtered = useMemo(() => {
     const tokens = queryText.toLowerCase().split(/\s+/).filter(Boolean);
-    if (tokens.length === 0) return COMMANDS;
-    return COMMANDS.filter((c) => {
+    if (tokens.length === 0) return ALL_COMMANDS;
+    return ALL_COMMANDS.filter((c) => {
       const hay = c.label.toLowerCase();
       return tokens.every((t) => hay.includes(t));
     });
@@ -156,8 +166,10 @@ function CommandRow({
   onHover: () => void;
   onRun: () => void;
 }) {
-  const Icon = command.kind === "aggregate" ? BarChart3 : MapPin;
-  const kindLabel = command.kind === "aggregate" ? "Chart" : "Map";
+  const Icon =
+    command.kind === "aggregate" ? BarChart3 : command.kind === "proposal" ? FileSignature : MapPin;
+  const kindLabel =
+    command.kind === "aggregate" ? "Chart" : command.kind === "proposal" ? "Proposal" : "Map";
 
   return (
     <li>
