@@ -88,6 +88,15 @@ export const proposalShellSchema = z.object({
   execSummary: z.string(),
   headline: z.array(headlineRowSchema),
   createdAt: isoTimestampSchema,
+  /**
+   * Documenso recipient signing token (the engine's `signing_token`). Drives the
+   * embedded `EmbedSignDocument`. Absent until the proposal's Documenso envelope is
+   * provisioned (e.g. before the Documenso plan is live) — the shell then shows a
+   * "preparing" state instead of the embed. The `ref` is the bearer for this token.
+   */
+  signingToken: z.string().optional(),
+  /** Documenso instance host the embed points at — MUST match where the doc was created. */
+  documensoHost: z.string().optional(),
 });
 export type ProposalShell = z.infer<typeof proposalShellSchema>;
 
