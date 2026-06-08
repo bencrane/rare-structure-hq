@@ -111,7 +111,7 @@ function SidebarContent({
       {/* Nav. */}
       <nav
         className={cx(
-          "flex flex-1 flex-col gap-0.5 overflow-y-auto py-4",
+          "flex flex-1 flex-col gap-1.5 overflow-y-auto pt-8 pb-4",
           collapsed ? "px-2" : "px-3",
         )}
       >
@@ -126,7 +126,7 @@ function SidebarContent({
               className={({ isActive }) =>
                 cx(
                   "group flex items-center font-mono text-[0.75rem] uppercase tracking-[0.1em] transition-colors",
-                  collapsed ? "justify-center p-2.5" : "gap-3 px-3 py-2",
+                  collapsed ? "justify-center p-2.5" : "gap-3 px-3 py-2.5",
                   isActive
                     ? "bg-[color:var(--color-accent-soft)] text-[color:var(--color-text-primary)]"
                     : "text-[color:var(--color-text-muted)] hover:bg-[color:var(--color-surface-raised)] hover:text-[color:var(--color-text-default)]",
