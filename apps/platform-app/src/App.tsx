@@ -9,8 +9,9 @@
  *
  * Auth + cockpit:
  *   `/signin`            → email + password gate.
- *   `/app`               → authenticated cockpit shell (sidebar) with tabs:
- *                          Overview · Map · Pipeline · Applications · Account.
+ *   `/app`               → authenticated cockpit shell; defaults to the Map tab.
+ *                          Tabs: Map · Overview · Pipeline · Applications · Account.
+ *                          The sidebar is collapsible (persisted per browser).
  *
  * <AuthProvider> wraps everything; only the `/app/*` subtree gates on a session
  * via <RequireAuth>. The public surfaces stay anonymous.
@@ -67,8 +68,9 @@ export function App() {
             </RequireAuth>
           }
         >
-          <Route index element={<Overview />} />
+          <Route index element={<Navigate to="/app/map" replace />} />
           <Route path="map" element={<MapTab />} />
+          <Route path="overview" element={<Overview />} />
           <Route path="pipeline" element={<Pipeline />} />
           <Route path="applications" element={<Applications />} />
           <Route path="account" element={<Account />} />
