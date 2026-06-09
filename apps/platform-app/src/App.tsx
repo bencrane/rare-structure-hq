@@ -4,8 +4,8 @@
  * Public surfaces (anonymous):
  *   `/`                  → redirects to `/signin` (the gate is the front door).
  *   `/map`               → catalyst map demo.
- *   `/proposal/:ref`     → engagement proposal (the ref is its own credential).
- *   `/proposal`          → "reference required" prompt.
+ *   `/p/:ref`            → engagement proposal shell (the ref is its own credential).
+ *   `/p/:ref/sign`       → full-page Documenso signing view.
  *
  * Auth + cockpit:
  *   `/signin`            → email + password gate.
@@ -35,7 +35,6 @@ import Preferences from "./routes/app/Preferences";
 import Proposals from "./routes/app/Proposals";
 import ProposalShellPage from "./routes/p/ProposalShell";
 import SignPage from "./routes/p/SignPage";
-import Proposal from "./routes/proposal/Proposal";
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const { session, loading } = useAuth();
@@ -74,9 +73,7 @@ export function App() {
             its own path. */}
         <Route path="/" element={<Navigate to="/signin" replace />} />
         <Route path="/map" element={<MapDemo />} />
-        <Route path="/proposal" element={<Proposal />} />
-        <Route path="/proposal/:ref" element={<Proposal />} />
-        {/* New lean instantiate shell — distinct from the legacy /proposal/:ref. */}
+        {/* Engagement proposal shell — the ref is its own credential. */}
         <Route path="/p/:ref" element={<ProposalShellPage />} />
         {/* Full-page signing view — Documenso two-column embed, on our domain. */}
         <Route path="/p/:ref/sign" element={<SignPage />} />

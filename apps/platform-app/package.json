@@ -11,7 +11,6 @@
     "typecheck": "tsc -b --noEmit"
   },
   "dependencies": {
-    "@anvilco/anvil-embed-frame": "^2.2.2",
     "@documenso/embed-react": "^0.6.1",
     "@fontsource-variable/geist": "5.1.0",
     "@fontsource-variable/geist-mono": "5.1.0",
