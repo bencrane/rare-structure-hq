@@ -35,6 +35,8 @@ import Pipeline from "./routes/app/Pipeline";
 import Preferences from "./routes/app/Preferences";
 import Proposals from "./routes/app/Proposals";
 import Settings from "./routes/app/Settings";
+import TemplateEditor from "./routes/app/TemplateEditor";
+import TemplatesTable from "./routes/app/TemplatesTable";
 import ProposalShellPage from "./routes/p/ProposalShell";
 import SignPage from "./routes/p/SignPage";
 
@@ -146,6 +148,30 @@ export function App() {
             element={
               <RequireOperator>
                 <Settings />
+              </RequireOperator>
+            }
+          />
+          <Route
+            path="settings/templates"
+            element={
+              <RequireOperator>
+                <TemplatesTable />
+              </RequireOperator>
+            }
+          />
+          <Route
+            path="settings/templates/new"
+            element={
+              <RequireOperator>
+                <TemplateEditor />
+              </RequireOperator>
+            }
+          />
+          <Route
+            path="settings/templates/:id"
+            element={
+              <RequireOperator>
+                <TemplateEditor />
               </RequireOperator>
             }
           />

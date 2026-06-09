@@ -54,7 +54,7 @@ export function CockpitPage({
   children: ReactNode;
 }) {
   return (
-    <div className="px-6 py-10 md:px-10">
+    <div className="px-6 pt-10 pb-28 md:px-10">
       <Page variant={width} py="0">
         <Stack gap="8">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
