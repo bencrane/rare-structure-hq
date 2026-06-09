@@ -1,17 +1,18 @@
 /**
  * ProposalShell — the client-facing executive summary at `/p/:ref`.
  *
- * A lean conversion surface: letterhead, exec summary, headline terms, and a native EXECUTION
- * panel. The panel mirrors the signature block of the legal instrument — the pre-signed Rare
- * Structure originator block beside a "PROCEED TO PROPOSAL" call to action. Clicking it routes to
- * the full-page signing view (`/p/:ref/sign`), where the agreement + the Documenso signing widget
- * render together on our own domain. The PDF never appears on this summary page.
+ * A lean conversion surface housed in the shared `ProposalViewerShell` so it reads as one
+ * continuous experience with the signing view (`/p/:ref/sign`): same utility bar, framed card,
+ * letterhead header, and trust-strip footer. The body carries the exec summary, headline terms,
+ * and a native EXECUTION panel — the pre-signed Rare Structure originator block beside a "PROCEED
+ * TO PROPOSAL" CTA that routes into the signing view. The agreement PDF never appears here.
  */
 import type { ProposalShell } from "@rare-structure-hq/shared";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 
+import { ProposalViewerShell } from "@/proposals/ProposalViewerShell";
 import { getProposalShell } from "@/proposals/api";
 import { useProposalShell } from "@/proposals/useProposalShell";
 
@@ -47,32 +48,18 @@ function Shell({
         };
 
   return (
-    <div className="min-h-screen bg-[color:var(--color-surface-base)]">
-      <div className="mx-auto w-full max-w-[620px] px-6 py-[12vh]">
-        {/* Letterhead */}
-        <motion.div {...enter(0.05)} className="mb-8 flex items-start justify-between">
-          <div>
-            <div className="font-display font-semibold text-[0.9375rem] text-[color:var(--color-text-primary)] uppercase tracking-[0.18em]">
-              Rare Structure
-            </div>
-            <div className="mt-1 font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
-              Catalyst-Driven Origination
-            </div>
-          </div>
-          <div className="text-right">
-            <div className="font-mono text-[0.625rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.14em]">
-              Engagement Proposal
-            </div>
-            <div className="mt-1 font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] tracking-[0.1em]">
-              {proposalRef}
-            </div>
-          </div>
-        </motion.div>
-
+    <ProposalViewerShell
+      title="Engagement Proposal"
+      proposalRef={proposalRef}
+      clientName={shell.client.name}
+      status={shell.status}
+      maxWidthClass="max-w-[820px]"
+    >
+      <div className="px-6 py-10 md:px-10 md:py-12">
         {/* Prepared for */}
         <motion.div
-          {...enter(0.12)}
-          className="mb-6 border-[color:var(--color-border-subtle)] border-y py-4"
+          {...enter(0.05)}
+          className="mb-6 border-[color:var(--color-border-subtle)] border-b pb-4"
         >
           <div className="mb-1 font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.16em]">
             Prepared for
@@ -89,14 +76,14 @@ function Shell({
 
         {/* Exec summary */}
         <motion.p
-          {...enter(0.18)}
+          {...enter(0.12)}
           className="mb-8 text-[0.9375rem] text-[color:var(--color-text-muted)] leading-[1.6]"
         >
           {shell.execSummary}
         </motion.p>
 
         {/* Headline terms — grok at a glance */}
-        <motion.div {...enter(0.24)} className="mb-10">
+        <motion.div {...enter(0.18)} className="mb-10">
           <div className="mb-3 font-mono text-[0.625rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.2em]">
             {shell.templateLabel}
           </div>
@@ -122,7 +109,7 @@ function Shell({
           {signed ? (
             <ExecutedPanel key="executed" proposalRef={proposalRef} client={shell.client.name} />
           ) : (
-            <motion.div key="exec" {...enter(0.3)}>
+            <motion.div key="exec" {...enter(0.24)}>
               <ExecutionPanel shell={shell} proposalRef={proposalRef} />
             </motion.div>
           )}
@@ -132,13 +119,13 @@ function Shell({
           {proposalRef} · Confidential · Originated by Rare Structure LLC
         </div>
       </div>
-    </div>
+    </ProposalViewerShell>
   );
 }
 
 // Native execution block — mirrors the legal signature block. The Capital Partner side is a
-// "PROCEED TO PROPOSAL" CTA that routes to the full-page signing view; the Originator side is
-// the pre-signed Rare Structure mark. No PDF on this page.
+// "PROCEED TO PROPOSAL" CTA that routes to the signing view; the Originator side is the pre-signed
+// Rare Structure mark. No PDF on this page.
 function ExecutionPanel({ shell, proposalRef }: { shell: ProposalShell; proposalRef: string }) {
   const ready = !!shell.signingToken;
   return (
@@ -198,11 +185,6 @@ function ExecutionPanel({ shell, proposalRef }: { shell: ProposalShell; proposal
         <div className="text-[0.75rem] text-[color:var(--color-text-muted)]">
           Catalyst Origination Desk
         </div>
-      </div>
-
-      <div className="mt-3 flex items-center justify-between font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
-        <span>Secured by Documenso · Legally binding e-signature</span>
-        <span>Audit trail preserved</span>
       </div>
     </div>
   );

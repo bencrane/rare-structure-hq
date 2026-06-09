@@ -1,17 +1,16 @@
 /**
  * SignPage — the signing view at `/p/:ref/sign`.
  *
- * Presents the Documenso embed inside a production-grade PROPOSAL VIEWER shell that reads as a
- * continuation of the executive summary (`/p/:ref`): the same dark identity, mono letterhead, and
- * sharp-edged framing. The embed (Platform-themed via `cssVars`/`css`) is the signing surface — its
- * two-column layout (sign widget + the on-brand agreement) sits framed inside our viewer rather
- * than sprawling full-bleed. Signing once seals the document; on completion we route back to the
- * summary, which then shows the executed state.
+ * Houses the Documenso embed in the shared `ProposalViewerShell`, so the signing surface reads as
+ * a seamless continuation of the executive summary (`/p/:ref`) — same utility bar, framed card,
+ * letterhead header, and trust-strip footer. The embed (Platform-themed via `cssVars`/`css`) is the
+ * two-column signing surface; on completion we route back to the summary, which shows the executed
+ * state.
  */
 import { EmbedSignDocument } from "@documenso/embed-react";
-import type { ProposalShell } from "@rare-structure-hq/shared";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
+import { ProposalViewerShell } from "@/proposals/ProposalViewerShell";
 import { getProposalShell } from "@/proposals/api";
 import {
   DOCUMENSO_CSS_VARS,
@@ -48,71 +47,16 @@ export default function SignPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-[color:var(--color-surface-base)]">
-      {/* Utility bar — app chrome */}
-      <div className="flex items-center justify-between border-[color:var(--color-border-subtle)] border-b px-6 py-4">
-        <Link
-          to={ref ? `/p/${ref}` : "/"}
-          className="font-mono text-[0.625rem] text-[color:var(--color-text-muted)] uppercase tracking-[0.16em] transition-colors hover:text-[color:var(--color-text-accent)]"
-        >
-          ← Back to summary
-        </Link>
-        <div className="font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
-          Rare Structure · Strategic Origination Mandate
-        </div>
-      </div>
-
-      {/* Proposal viewer — framed, centered, on-brand */}
-      <div className="flex flex-1 justify-center px-4 py-6 md:px-8 md:py-10">
-        <div className="flex w-full max-w-[1152px] flex-col overflow-hidden border border-[color:var(--color-border-subtle)] bg-[color:var(--color-surface-sunken)] shadow-[0_24px_64px_-32px_rgba(0,0,0,0.8)]">
-          {/* Viewer header — document identity (letterhead-grade) */}
-          <div className="flex items-center justify-between gap-4 border-[color:var(--color-border-subtle)] border-b bg-[color:var(--color-surface-raised)] px-6 py-4">
-            <div className="min-w-0">
-              <div className="font-display font-semibold text-[0.8125rem] text-[color:var(--color-text-primary)] uppercase tracking-[0.16em]">
-                Engagement Agreement
-              </div>
-              <div className="mt-1 truncate font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
-                {shell?.client.name
-                  ? `Prepared for ${shell.client.name}`
-                  : "Strategic Origination Mandate"}
-                {ref ? ` · ${ref}` : ""}
-              </div>
-            </div>
-            <StatusPill status={shell?.status} />
-          </div>
-
-          {/* Body — the signing surface */}
-          <div className="relative flex-1 bg-[color:var(--color-surface-base)]">{body}</div>
-
-          {/* Viewer footer — trust strip (mirrors the exec-summary execution panel) */}
-          <div className="flex items-center justify-between gap-4 border-[color:var(--color-border-subtle)] border-t bg-[color:var(--color-surface-raised)] px-6 py-3">
-            <span className="font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
-              Secured by Documenso · Legally binding e-signature
-            </span>
-            <span className="font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
-              Audit trail preserved
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Small mono status chip — mirrors the proposal lifecycle on the viewer header.
-function StatusPill({ status }: { status?: ProposalShell["status"] }) {
-  const executed = status === "signed" || status === "paid";
-  const label =
-    status === "paid" ? "Executed" : status === "signed" ? "Signed" : "Awaiting signature";
-  const tone = executed
-    ? "border-[color:var(--color-border-accent)] bg-[color:var(--color-accent-soft)] text-[color:var(--color-text-accent)]"
-    : "border-[color:var(--color-border-default)] text-[color:var(--color-text-muted)]";
-  return (
-    <span
-      className={`shrink-0 border px-2.5 py-1 font-mono text-[0.5rem] uppercase tracking-[0.16em] ${tone}`}
+    <ProposalViewerShell
+      title="Engagement Agreement"
+      proposalRef={ref}
+      clientName={shell?.client.name}
+      status={shell?.status}
+      backHref={ref ? `/p/${ref}` : "/"}
+      maxWidthClass="max-w-[1152px]"
     >
-      {label}
-    </span>
+      {body}
+    </ProposalViewerShell>
   );
 }
 
