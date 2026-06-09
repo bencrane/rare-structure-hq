@@ -37,7 +37,7 @@ type SectionKey = "identity" | "signer" | "overview" | "focus" | "industries" | 
 
 const SECTION_LABELS: Record<SectionKey, string> = {
   identity: "Identity",
-  signer: "Signer",
+  signer: "Main contact",
   overview: "Overview",
   focus: "Focus areas",
   industries: "Industries",
@@ -249,7 +249,7 @@ export function ProspectDossierBoard({ token }: { token: string }) {
           onToggle={() => toggleVerified("signer")}
         >
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <Field label="Signer name">
+            <Field label="Name">
               <BoxedInput
                 value={signerName}
                 onChange={setSignerName}
@@ -660,7 +660,8 @@ function TagEditor({
             }
           }}
           placeholder={placeholder}
-          className="w-[12ch] bg-transparent py-1 text-[color:var(--color-text-primary)] text-body-sm outline-none placeholder:text-[color:var(--color-text-subtle)]"
+          size={Math.max((placeholder?.length ?? 0) + 1, 10)}
+          className="min-w-0 bg-transparent py-1 text-[color:var(--color-text-primary)] text-body-sm outline-none placeholder:text-[color:var(--color-text-subtle)]"
         />
         <button
           type="button"
