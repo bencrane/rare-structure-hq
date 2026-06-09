@@ -13,8 +13,8 @@ import { z } from "zod";
 
 const envSchema = z.object({
   RSH_SUPABASE_URL: z.string().url(),
-  RSH_SUPABASE_JWKS_URL: z.string().url(),
-  RSH_SUPABASE_ISSUER: z.string().url(),
+  HQX_SUPABASE_JWKS_URL: z.string().url(),
+  HQX_SUPABASE_ISSUER: z.string().url(),
   RSH_SUPABASE_ANON_KEY: z.string().min(1),
   RSH_SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
   // Gen-3 core-x catalyst_api — the BFF's data bridge for federal award profiles.
@@ -26,8 +26,8 @@ const envSchema = z.object({
 
 const parsed = envSchema.safeParse({
   RSH_SUPABASE_URL: process.env.RSH_SUPABASE_URL,
-  RSH_SUPABASE_JWKS_URL: process.env.RSH_SUPABASE_JWKS_URL,
-  RSH_SUPABASE_ISSUER: process.env.RSH_SUPABASE_ISSUER,
+  HQX_SUPABASE_JWKS_URL: process.env.HQX_SUPABASE_JWKS_URL,
+  HQX_SUPABASE_ISSUER: process.env.HQX_SUPABASE_ISSUER,
   RSH_SUPABASE_ANON_KEY: process.env.RSH_SUPABASE_ANON_KEY,
   RSH_SUPABASE_SERVICE_ROLE_KEY: process.env.RSH_SUPABASE_SERVICE_ROLE_KEY,
   COREX_API_URL: process.env.COREX_API_URL,

@@ -19,7 +19,7 @@ export type CurrentUser = {
   email: string;
 };
 
-const jwks = createRemoteJWKSet(new URL(env.RSH_SUPABASE_JWKS_URL));
+const jwks = createRemoteJWKSet(new URL(env.HQX_SUPABASE_JWKS_URL));
 
 export type AuthVariables = {
   user: CurrentUser;
@@ -36,7 +36,7 @@ export const requireUser: MiddlewareHandler<{ Variables: AuthVariables }> = asyn
 
   try {
     const { payload } = await jwtVerify(token, jwks, {
-      issuer: env.RSH_SUPABASE_ISSUER,
+      issuer: env.HQX_SUPABASE_ISSUER,
       audience: "authenticated",
     });
 
