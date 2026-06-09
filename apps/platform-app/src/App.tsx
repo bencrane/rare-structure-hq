@@ -28,6 +28,7 @@ import MapDemo from "./routes/MapDemo";
 import SignIn from "./routes/SignIn";
 import Account from "./routes/app/Account";
 import Applications from "./routes/app/Applications";
+import Dossier from "./routes/app/Dossier";
 import MapTab from "./routes/app/MapTab";
 import Overview from "./routes/app/Overview";
 import Pipeline from "./routes/app/Pipeline";
@@ -120,6 +121,14 @@ export function App() {
             element={
               <RequireOperator>
                 <Applications />
+              </RequireOperator>
+            }
+          />
+          <Route
+            path="dossier"
+            element={
+              <RequireOperator>
+                <Dossier />
               </RequireOperator>
             }
           />

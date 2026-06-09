@@ -21,6 +21,7 @@ import {
   Menu,
   PanelLeftClose,
   Radar,
+  ScanSearch,
   SlidersHorizontal,
   Workflow,
   X,
@@ -42,6 +43,7 @@ const OPERATOR_NAV: NavItem[] = [
   { to: "/app/overview", label: "Overview", icon: LayoutDashboard },
   { to: "/app/pipeline", label: "Pipeline", icon: Workflow },
   { to: "/app/applications", label: "Applications", icon: ClipboardList },
+  { to: "/app/dossier", label: "Dossier", icon: ScanSearch },
   { to: "/app/proposals", label: "Proposals", icon: FileSignature },
   { to: "/app/account", label: "Account", icon: CircleUser },
 ];
