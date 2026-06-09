@@ -28,15 +28,14 @@ doppler run --project hq-rare-structure-hq --config dev -- bun run dev
 
 ## Env vars
 
-Injected by Doppler at runtime. All `RSH_*` keys live in the `hq-rare-structure-hq` Doppler project.
+Injected by Doppler at runtime. `HQX_*` keys come from the hq-x Supabase project via the `hq-rare-structure-hq` Doppler config.
 
 | Key | Description |
 |-----|-------------|
-| `RSH_SUPABASE_URL` | Supabase project URL |
-| `RSH_SUPABASE_JWKS_URL` | JWKS endpoint for JWT verification |
-| `RSH_SUPABASE_ISSUER` | Expected JWT issuer |
-| `RSH_SUPABASE_ANON_KEY` | Supabase anon key |
-| `RSH_SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key |
+| `HQX_SUPABASE_URL` | Supabase (hq-x) project URL |
+| `HQX_SUPABASE_JWKS_URL` | JWKS endpoint for JWT verification |
+| `HQX_SUPABASE_ISSUER` | Expected JWT issuer |
+| `HQX_SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key |
 | `COREX_API_URL` | core-x `catalyst_api` base URL (private: `http://catalyst-api.railway.internal:8080`) |
 | `COREX_SERVICE_TOKEN` | operator token presented to core-x as Bearer (matches its `CATALYST_API_TOKEN`) |
 | `ALLOWED_ORIGINS` | Comma-separated CORS origins |
