@@ -20,6 +20,7 @@ import { requestId } from "hono/request-id";
 import { type AuthVariables, requireUser } from "./auth.ts";
 import { allowedOrigins, env } from "./env.ts";
 import { awardProfileRoutes } from "./routes/award-profile.ts";
+import { bookingAdminRoutes } from "./routes/bookings-admin.ts";
 import { proposalTemplateEditorRoutes } from "./routes/proposal-templates-admin.ts";
 import { proposalAdminRoutes, proposalTemplateRoutes } from "./routes/proposals-admin.ts";
 
@@ -51,6 +52,7 @@ app.route("/api/v1/proposals", proposalAdminRoutes);
 app.route("/api/v1/proposal-templates/manage", proposalTemplateEditorRoutes);
 app.route("/api/v1/proposal-templates", proposalTemplateRoutes);
 app.route("/api/v1/award-profile", awardProfileRoutes);
+app.route("/api/v1/bookings", bookingAdminRoutes);
 
 const port = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 8000;
 console.log(`platform-api listening on :${port} [${env.APP_ENV}]`);

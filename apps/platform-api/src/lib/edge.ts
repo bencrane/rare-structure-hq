@@ -116,6 +116,30 @@ export async function edgeListProposals(): Promise<EdgeProposalSummary[]> {
   return (await res.json()) as EdgeProposalSummary[];
 }
 
+// ── Bookings (Pipeline surface) ──────────────────────────────────────────────
+// Thin passthrough to edge_api's GET /api/v1/bookings (corex.bookings). Operator list
+// for the Pipeline tab; the BFF brokers the service token across the auth boundary.
+
+export interface EdgeBookingSummary {
+  booking_id: string;
+  cal_event_uid: string;
+  first_name: string | null;
+  last_name: string | null;
+  email: string | null;
+  company_name: string | null;
+  domain: string | null;
+  title: string | null;
+  status: string;
+  start_time: string | null;
+  created_at: string | null;
+}
+
+export async function edgeListBookings(): Promise<EdgeBookingSummary[]> {
+  const res = await fetch(`${base()}/api/v1/bookings`, { headers: serviceHeaders(false) });
+  if (!res.ok) throw new EdgeError(`edge bookings list failed: ${res.status}`);
+  return (await res.json()) as EdgeBookingSummary[];
+}
+
 // ── Proposal-template authoring (Settings surface) ───────────────────────────
 // Thin passthrough to edge_api's /api/v1/proposal-templates/* — the engine owns markdown→HTML,
 // DocRaptor preview (→ R2 presigned link), and the publish registry. The BFF only brokers the

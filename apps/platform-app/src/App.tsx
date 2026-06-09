@@ -135,6 +135,17 @@ export function App() {
               </RequireOperator>
             }
           />
+          {/* Per-company dossier (keyed by domain — the canonical resolution key).
+              Reached from a Pipeline booking row. Renders the same board until the
+              per-domain dossier read is wired. */}
+          <Route
+            path="dossier/:domain"
+            element={
+              <RequireOperator>
+                <Dossier />
+              </RequireOperator>
+            }
+          />
           <Route
             path="proposals"
             element={
