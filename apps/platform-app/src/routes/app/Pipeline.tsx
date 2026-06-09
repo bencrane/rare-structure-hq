@@ -170,12 +170,11 @@ export default function Pipeline() {
 }
 
 function Th({ children }: { children?: React.ReactNode }) {
-  return (
-    <th className="px-4 py-2.5 text-left font-mono font-normal text-[color:var(--color-text-subtle)] text-mono-xs uppercase tracking-[0.14em]">
-      {children}
-    </th>
-  );
+  return <th className={thCls}>{children}</th>;
 }
+
+const thCls =
+  "px-4 py-2.5 text-left font-mono font-normal text-[color:var(--color-text-subtle)] text-mono-xs uppercase tracking-[0.14em]";
 
 const secondaryBtnCls =
   "flex items-center justify-center gap-2 border border-[color:var(--color-border-default)] px-4 py-2.5 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase tracking-[0.14em] transition-colors hover:border-[color:var(--color-text-accent)] hover:text-[color:var(--color-text-accent)]";

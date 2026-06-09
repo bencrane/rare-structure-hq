@@ -168,12 +168,11 @@ export default function TemplatesTable() {
 }
 
 function Th({ children }: { children?: React.ReactNode }) {
-  return (
-    <th className="px-4 py-2.5 text-left font-mono font-normal text-[color:var(--color-text-subtle)] text-mono-xs uppercase tracking-[0.14em]">
-      {children}
-    </th>
-  );
+  return <th className={thCls}>{children}</th>;
 }
+
+const thCls =
+  "px-4 py-2.5 text-left font-mono font-normal text-[color:var(--color-text-subtle)] text-mono-xs uppercase tracking-[0.14em]";
 
 const primaryBtnCls =
   "flex items-center justify-center gap-2 border border-[color:var(--color-accent-primary)] bg-[color:var(--color-accent-soft)] px-4 py-2.5 font-mono text-[color:var(--color-text-accent)] text-mono-xs uppercase tracking-[0.14em] transition-colors hover:bg-[color:var(--color-accent-primary)] hover:text-[color:var(--color-text-onAccent)]";
