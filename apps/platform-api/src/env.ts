@@ -2,8 +2,8 @@
  * Runtime settings for platform-api. Values come from Doppler project
  * `hq-rare-structure-hq` config `prd` (see ../doppler.yaml).
  *
- * Naming convention: `RSH_*` for server-side rare-structure-hq keys
- * (mirrors the prefix convention used by sibling platform services).
+ * Naming convention: `HQX_*` for the hq-x Supabase project keys,
+ * `COREX_*` for the core-x catalyst_api bridge.
  *
  * PORT lives at the Railway layer — NOT in Doppler. Read separately
  * from process.env.PORT with a local-dev default of 8000.
@@ -12,11 +12,10 @@
 import { z } from "zod";
 
 const envSchema = z.object({
-  RSH_SUPABASE_URL: z.string().url(),
+  HQX_SUPABASE_URL: z.string().url(),
   HQX_SUPABASE_JWKS_URL: z.string().url(),
   HQX_SUPABASE_ISSUER: z.string().url(),
-  RSH_SUPABASE_ANON_KEY: z.string().min(1),
-  RSH_SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
+  HQX_SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
   // Gen-3 core-x catalyst_api — the BFF's data bridge for federal award profiles.
   COREX_API_URL: z.string().url(),
   COREX_SERVICE_TOKEN: z.string().min(1),
@@ -25,11 +24,10 @@ const envSchema = z.object({
 });
 
 const parsed = envSchema.safeParse({
-  RSH_SUPABASE_URL: process.env.RSH_SUPABASE_URL,
+  HQX_SUPABASE_URL: process.env.HQX_SUPABASE_URL,
   HQX_SUPABASE_JWKS_URL: process.env.HQX_SUPABASE_JWKS_URL,
   HQX_SUPABASE_ISSUER: process.env.HQX_SUPABASE_ISSUER,
-  RSH_SUPABASE_ANON_KEY: process.env.RSH_SUPABASE_ANON_KEY,
-  RSH_SUPABASE_SERVICE_ROLE_KEY: process.env.RSH_SUPABASE_SERVICE_ROLE_KEY,
+  HQX_SUPABASE_SERVICE_ROLE_KEY: process.env.HQX_SUPABASE_SERVICE_ROLE_KEY,
   COREX_API_URL: process.env.COREX_API_URL,
   COREX_SERVICE_TOKEN: process.env.COREX_SERVICE_TOKEN,
   ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS,
