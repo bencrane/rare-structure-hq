@@ -2,7 +2,7 @@
  * Supabase service-role client for platform-api.
  *
  * Server-only: the SERVICE-ROLE key bypasses RLS. It must NEVER reach the
- * browser. Constructed lazily (like lib/anvil.ts) so the BFF still boots when
+ * browser. Constructed lazily so the BFF still boots when
  * Supabase env is absent — only the proposal-store routes then fail, loudly.
  *
  * Reads the LIVE `HQX_*` Supabase creds (the hq-x project). The legacy `RSH_*`

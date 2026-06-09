@@ -4,7 +4,7 @@
  * Exposes `<AuthProvider>` (mounted at the App root) and `useAuth()` returning
  * `{ session, user, role, isOperator, loading, signIn, signUp, signOut,
  * devSignIn }`. The cockpit (`/app/*`) gates on `session`; operator-only tabs
- * gate on `isOperator`. Public surfaces (`/map`, `/proposal/:ref`) gate on
+ * gate on `isOperator`. Public surfaces (`/map`, `/p/:ref`) gate on
  * nothing.
  *
  * Role comes from `app_metadata.role` on the Supabase user — server-set and

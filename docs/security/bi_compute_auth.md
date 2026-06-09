@@ -4,12 +4,14 @@
 **Date:** 2026-06-03 · **Status:** audited against source on branch `claude/objective-williamson-ab3a68` (HEAD `e9c4019`) and the `bi-compute` repo (HEAD as of `2026-06-01`).
 
 > **Update (Directive 38, 2026-06-04).** DEX is decommissioned (#17). The BFF's
-> outbound dependencies are now **Anvil** (proposal e-sign, `/api/v1/proposals/:ref/*`)
-> and the **core-x `catalyst_api`** (federal award profiles, `/api/v1/award-profile/:domain`).
-> The catalyst_api hop presents an internal operator service token
-> (`COREX_SERVICE_TOKEN`) — not the end-user JWT — and reaches core-x over the Railway
-> private network (no public URL). The bi-compute verdict below is unaffected; the
-> DEX/`sam-opps` references in the topology + Layer 1 sections are historical.
+> outbound dependencies are now the **core-x `edge_api`** (proposal lifecycle +
+> Documenso e-sign, `/api/v1/proposals/*`; presents `EDGE_API_SERVICE_TOKEN`) and the
+> **core-x `catalyst_api`** (federal award profiles, `/api/v1/award-profile/:domain`).
+> Both core-x hops present an internal operator service token — not the end-user JWT —
+> and reach core-x over the Railway private network (no public URL). The bi-compute
+> verdict below is unaffected; the DEX/`sam-opps` references in the topology + Layer 1
+> sections are historical. (The retired **Anvil** e-sign path was removed; e-signature
+> now lives in edge_api via DocRaptor → Documenso.)
 
 ---
 
@@ -36,7 +38,7 @@ platform-app (browser)
       ▼
 platform-api (Hono BFF) ──fetch──►  core-x catalyst_api  (COREX_API_URL, private net)   ← outbound (Directive 38; DEX decommissioned)
       │                              presents the internal operator service token (COREX_SERVICE_TOKEN), not the end-user JWT
-      │  ──fetch──►  Anvil  (proposal e-sign packets)
+      │  ──fetch──►  core-x edge_api  (proposal lifecycle → DocRaptor + Documenso e-sign)
       ✗  no link to bi-compute
 
 Metabase (embedded DuckDB)  ──CREATE SECRET(TYPE quack)+ATTACH 'quack:bi-compute:10000'──►  bi-compute

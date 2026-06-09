@@ -4,16 +4,15 @@ import { isoTimestampSchema } from "./common";
 /**
  * Proposal instantiation contract — shared by platform-api and platform-app.
  *
- * This is the NEW one-click-instantiate surface (operator mints a proposal on a
- * call → client signs/pays at a capability link). It is intentionally distinct
- * from the legacy `ProposalDeal` fixture in platform-app's `routes/proposal`,
- * which backs the original `/proposal/:ref` page and is left untouched.
+ * The one-click-instantiate surface: operator mints a proposal on a call → client
+ * signs/pays at a capability link (`/p/:ref`).
  *
  * Two artifacts, decoupled:
- *  - the Anvil document (the full legal instrument — the cast, instantiated);
+ *  - the legal instrument (the full agreement — rendered by core-x edge_api:
+ *    DocRaptor → Documenso, and signed there);
  *  - the shell (this lean projection: exec summary + headline terms + sign).
  * Headline rows are SNAPSHOTTED at create time, so the shell is self-consistent
- * with what was bound into the cast and immune to later registry edits.
+ * with what was bound at instantiation and immune to later registry edits.
  */
 
 /** Lifecycle of a proposal record. */
@@ -29,7 +28,7 @@ export type ProposalFieldKind = z.infer<typeof proposalFieldKindSchema>;
  * exactly this list — the form contract is dictated by the chosen template.
  */
 export const proposalTemplateFieldSchema = z.object({
-  /** Anvil cast data alias this value is bound to. */
+  /** Data alias this value binds to in the agreement template. */
   alias: z.string(),
   /** Operator-facing form label. */
   label: z.string(),
@@ -78,7 +77,7 @@ export type HeadlineRow = z.infer<typeof headlineRowSchema>;
 
 /**
  * BFF → client shell: the lean public projection of a proposal. No internal cast
- * ids, no operator id, no full legal text — that lives in the Anvil document.
+ * ids, no operator id, no full legal text — that lives in the rendered agreement.
  */
 export const proposalShellSchema = z.object({
   ref: z.string(),

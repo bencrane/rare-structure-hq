@@ -72,12 +72,3 @@ export async function getProposalShell(ref: string): Promise<ProposalShell | nul
   if (!res.ok) throw new Error(`shell failed: ${res.status}`);
   return (await res.json()).data as ProposalShell;
 }
-
-/** Mint a fresh embedded sign URL for this proposal (record-aware, server-side). */
-export async function startSignSession(ref: string): Promise<string> {
-  const res = await fetch(`${API_BASE}/api/v1/proposals/${encodeURIComponent(ref)}/sign-session`, {
-    method: "POST",
-  });
-  if (!res.ok) throw new Error(`sign-session failed: ${res.status} ${await res.text()}`);
-  return (await res.json()).data.url as string;
-}

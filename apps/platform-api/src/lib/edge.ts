@@ -6,9 +6,6 @@
  *   - CREATE / LIST  → service-token (`Authorization: Bearer ${EDGE_API_SERVICE_TOKEN}`)
  *   - PUBLIC ref read → unauthenticated (the proposal `ref` is the capability)
  *
- * The Anvil path (`lib/anvil.ts`, `routes/proposals.ts` sign-session, `webhooks-anvil`)
- * is left intact and unused by the new flow — swap first, delete later.
- *
  * Required env (Doppler `hq-rare-structure-hq`):
  *   EDGE_API_URL            base URL of the deployed edge_api service
  *   EDGE_API_SERVICE_TOKEN  shared secret matching edge_api's EDGE_API_SERVICE_TOKEN (core-x/prd)

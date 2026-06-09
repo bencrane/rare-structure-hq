@@ -171,7 +171,7 @@ function ReadyPanel({
   clientEmail: string;
   onReset: () => void;
 }) {
-  const url = `${window.location.origin}${result.path}`;
+  const url = `${window.location.origin}/p/${result.ref}`;
   const [copied, setCopied] = useState(false);
   const [sendState, setSendState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [sendError, setSendError] = useState<string | null>(null);
@@ -217,7 +217,7 @@ function ReadyPanel({
         </button>
         <button
           type="button"
-          onClick={() => window.open(result.path, "_blank", "noopener")}
+          onClick={() => window.open(`/p/${result.ref}`, "_blank", "noopener")}
           className={secondaryBtnCls}
         >
           <ExternalLink className="size-3.5" />
