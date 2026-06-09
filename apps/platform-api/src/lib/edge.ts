@@ -24,7 +24,9 @@ export class EdgeError extends Error {}
 
 function base(): string {
   if (!EDGE_API_URL) {
-    throw new EdgeError("EDGE_API_URL is not set (Doppler hq-rare-structure-hq → edge_api base URL)");
+    throw new EdgeError(
+      "EDGE_API_URL is not set (Doppler hq-rare-structure-hq → edge_api base URL)",
+    );
   }
   return EDGE_API_URL;
 }
@@ -49,6 +51,8 @@ export interface EdgeCreateInput {
   clientEmail: string;
   clientTitle?: string;
   monthlyFeeCents: number;
+  /** Published-template slug the operator selected; the engine resolves its body + fee. */
+  templateId?: string;
 }
 
 export interface EdgeCreateResult {
@@ -64,6 +68,7 @@ export async function edgeCreateProposal(input: EdgeCreateInput): Promise<EdgeCr
     method: "POST",
     headers: serviceHeaders(),
     body: JSON.stringify({
+      template_id: input.templateId ?? null,
       client_name: input.clientName,
       client_signer_name: input.clientSignerName,
       client_email: input.clientEmail,
@@ -109,4 +114,121 @@ export async function edgeListProposals(): Promise<EdgeProposalSummary[]> {
   const res = await fetch(`${base()}/api/v1/proposals`, { headers: serviceHeaders(false) });
   if (!res.ok) throw new EdgeError(`edge list failed: ${res.status}`);
   return (await res.json()) as EdgeProposalSummary[];
+}
+
+// ── Proposal-template authoring (Settings surface) ───────────────────────────
+// Thin passthrough to edge_api's /api/v1/proposal-templates/* — the engine owns markdown→HTML,
+// DocRaptor preview (→ R2 presigned link), and the publish registry. The BFF only brokers the
+// service token across the auth boundary; the operator session is checked in-router.
+
+export interface EdgeTemplateSummary {
+  id: string;
+  slug: string | null;
+  name: string | null;
+  status: string;
+  monthly_fee_cents: number | null;
+  updated_at: string | null;
+}
+
+export interface EdgeTemplateRow extends EdgeTemplateSummary {
+  markdown: string;
+  apply_brand: boolean;
+  token_manifest: string[];
+  created_by: string | null;
+  created_at: string | null;
+  published_at: string | null;
+}
+
+export interface EdgeTemplateConvertResult {
+  html: string;
+  detected_tokens: string[];
+}
+
+export interface EdgeTemplatePreviewResult {
+  pdf_url: string;
+  expires_seconds: number;
+  detected_tokens: string[];
+}
+
+const TEMPLATES = "/api/v1/proposal-templates";
+
+async function edgeTemplateJson<T>(path: string, init: RequestInit): Promise<T> {
+  const res = await fetch(`${base()}${path}`, { ...init, headers: serviceHeaders() });
+  if (!res.ok)
+    throw new EdgeError(`edge template ${init.method} ${path}: ${res.status} ${await res.text()}`);
+  return (await res.json()) as T;
+}
+
+export function edgeTemplateConvert(body: { markdown: string; apply_brand: boolean }) {
+  return edgeTemplateJson<EdgeTemplateConvertResult>(`${TEMPLATES}/convert`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export function edgeTemplatePreview(body: {
+  markdown: string;
+  apply_brand: boolean;
+  token_values: Record<string, string>;
+}) {
+  return edgeTemplateJson<EdgeTemplatePreviewResult>(`${TEMPLATES}/preview`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export function edgeTemplateCreate(body: {
+  markdown?: string;
+  apply_brand?: boolean;
+  name?: string | null;
+  created_by?: string | null;
+}) {
+  return edgeTemplateJson<EdgeTemplateRow>(TEMPLATES, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function edgeTemplateList(publishedOnly = false): Promise<EdgeTemplateSummary[]> {
+  const qs = publishedOnly ? "?published=true" : "";
+  const res = await fetch(`${base()}${TEMPLATES}${qs}`, { headers: serviceHeaders(false) });
+  if (!res.ok) throw new EdgeError(`edge template list: ${res.status}`);
+  return (await res.json()) as EdgeTemplateSummary[];
+}
+
+export function edgeTemplateGet(id: string) {
+  return edgeTemplateJson<EdgeTemplateRow>(`${TEMPLATES}/${encodeURIComponent(id)}`, {
+    method: "GET",
+  });
+}
+
+export function edgeTemplateUpdate(
+  id: string,
+  body: { markdown?: string; apply_brand?: boolean; name?: string | null },
+) {
+  return edgeTemplateJson<EdgeTemplateRow>(`${TEMPLATES}/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    body: JSON.stringify(body),
+  });
+}
+
+export interface EdgeTemplatePublishError {
+  status: number;
+  message: string;
+}
+
+export async function edgeTemplatePublish(
+  id: string,
+  body: { name: string; slug?: string | null; monthly_fee_cents?: number | null },
+): Promise<EdgeTemplateRow> {
+  const res = await fetch(`${base()}${TEMPLATES}/${encodeURIComponent(id)}/publish`, {
+    method: "POST",
+    headers: serviceHeaders(),
+    body: JSON.stringify(body),
+  });
+  if (res.status === 409) {
+    throw new EdgeError(`slug conflict: ${await res.text()}`);
+  }
+  if (!res.ok) throw new EdgeError(`edge template publish: ${res.status} ${await res.text()}`);
+  return (await res.json()) as EdgeTemplateRow;
 }

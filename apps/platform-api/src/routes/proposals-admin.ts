@@ -17,6 +17,7 @@ import {
   type ProposalShell,
   type ProposalStatus,
   type ProposalSummary,
+  type ProposalTemplateMeta,
   createProposalInputSchema,
 } from "@rare-structure-hq/shared";
 
@@ -28,6 +29,7 @@ import {
   edgeCreateProposal,
   edgeGetProposal,
   edgeListProposals,
+  edgeTemplateList,
   postureMonthlyFeeCents,
 } from "../lib/edge.ts";
 import { sendProposalLink } from "../lib/email.ts";
@@ -78,6 +80,9 @@ proposalAdminRoutes.post("/", requireUser, async (c) => {
       clientSignerName: signerName,
       clientEmail: email,
       clientTitle: input.client.title,
+      // Forward the selected template id; a published template's body + fee win in the engine.
+      // postureMonthlyFeeCents is the fallback fee (seed postures + any template without one).
+      templateId: input.templateId,
       monthlyFeeCents: postureMonthlyFeeCents(input.templateId),
     });
     return c.json({ data: { ref: r.ref, path: r.path } }, 201);
@@ -176,6 +181,21 @@ proposalAdminRoutes.post("/:ref/send", requireUser, async (c) => {
   return c.json({ data: { sent: true, id: result.id } });
 });
 
-// GET /api/v1/proposal-templates — operator-facing posture list (non-revealing).
+// GET /api/v1/proposal-templates — the operator's posture picker for the Proposals intake form.
+// Built-in seed postures PLUS any PUBLISHED templates authored in Settings (mapped to the same
+// meta shape, keyed by slug). The seed always renders so the form works even if the registry is
+// unreachable or empty.
 export const proposalTemplateRoutes = new Hono<{ Variables: AuthVariables }>();
-proposalTemplateRoutes.get("/", requireUser, (c) => c.json({ data: listTemplateMeta() }));
+proposalTemplateRoutes.get("/", requireUser, async (c) => {
+  const seed = listTemplateMeta();
+  try {
+    const published = await edgeTemplateList(true);
+    const fromRegistry: ProposalTemplateMeta[] = published
+      .filter((t) => t.slug)
+      .map((t) => ({ id: t.slug as string, label: t.name ?? (t.slug as string), fields: [] }));
+    const seen = new Set(seed.map((t) => t.id));
+    return c.json({ data: [...seed, ...fromRegistry.filter((t) => !seen.has(t.id))] });
+  } catch {
+    return c.json({ data: seed });
+  }
+});

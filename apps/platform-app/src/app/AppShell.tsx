@@ -14,6 +14,7 @@ import {
   CircleUser,
   ClipboardList,
   Crosshair,
+  FileCog,
   FileSignature,
   LayoutDashboard,
   LogOut,
@@ -45,6 +46,7 @@ const OPERATOR_NAV: NavItem[] = [
   { to: "/app/applications", label: "Applications", icon: ClipboardList },
   { to: "/app/dossier", label: "Dossier", icon: ScanSearch },
   { to: "/app/proposals", label: "Proposals", icon: FileSignature },
+  { to: "/app/settings", label: "Settings", icon: FileCog },
   { to: "/app/account", label: "Account", icon: CircleUser },
 ];
 
