@@ -12,6 +12,8 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 
+import { useAuth } from "@/lib/auth";
+import { OperatorProposalDraft } from "@/proposals/OperatorProposalDraft";
 import { ProposalViewerShell } from "@/proposals/ProposalViewerShell";
 import { getProposalShell } from "@/proposals/api";
 import { useProposalShell } from "@/proposals/useProposalShell";
@@ -21,9 +23,15 @@ export default function ProposalShellPage() {
   const location = useLocation();
   const justSigned = (location.state as { justSigned?: boolean } | null)?.justSigned === true;
   const { shell, state } = useProposalShell(ref, getProposalShell);
+  const { isOperator, loading: authLoading } = useAuth();
 
-  if (state === "loading") return <CenterNote>Loading proposal…</CenterNote>;
+  // Wait for BOTH the shell and the auth session before deciding operator vs prospect — otherwise
+  // an operator (session hydrates a tick late) flashes the prospect view first.
+  if (state === "loading" || authLoading) return <CenterNote>Loading proposal…</CenterNote>;
   if (state === "notfound" || !shell || !ref) return <NotFound />;
+  // Signed-in operator → their editable "draft" version. Prospects see the read-only summary.
+  // `key={ref}` forces a fresh draft when navigating operator-side between proposals.
+  if (isOperator) return <OperatorProposalDraft key={ref} shell={shell} proposalRef={ref} />;
   return <Shell shell={shell} proposalRef={ref} initialSigned={justSigned} />;
 }
 
