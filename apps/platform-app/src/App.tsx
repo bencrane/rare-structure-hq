@@ -34,6 +34,7 @@ import Pipeline from "./routes/app/Pipeline";
 import Preferences from "./routes/app/Preferences";
 import Proposals from "./routes/app/Proposals";
 import ProposalShellPage from "./routes/p/ProposalShell";
+import SignPage from "./routes/p/SignPage";
 import Proposal from "./routes/proposal/Proposal";
 
 function RequireAuth({ children }: { children: ReactNode }) {
@@ -77,6 +78,8 @@ export function App() {
         <Route path="/proposal/:ref" element={<Proposal />} />
         {/* New lean instantiate shell — distinct from the legacy /proposal/:ref. */}
         <Route path="/p/:ref" element={<ProposalShellPage />} />
+        {/* Full-page signing view — Documenso two-column embed, on our domain. */}
+        <Route path="/p/:ref/sign" element={<SignPage />} />
 
         {/* Email + password gate. */}
         <Route path="/signin" element={<SignIn />} />

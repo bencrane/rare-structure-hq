@@ -97,6 +97,8 @@ export const proposalShellSchema = z.object({
   signingToken: z.string().optional(),
   /** Documenso instance host the embed points at — MUST match where the doc was created. */
   documensoHost: z.string().optional(),
+  /** Agreement effective date (ISO ``YYYY-MM-DD``) — shown on the execution panel. */
+  effectiveDate: z.string().optional(),
 });
 export type ProposalShell = z.infer<typeof proposalShellSchema>;
 
