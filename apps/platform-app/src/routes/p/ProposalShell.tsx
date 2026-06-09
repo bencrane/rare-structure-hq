@@ -1,58 +1,42 @@
 /**
- * ProposalShell — the client-facing capability page at `/p/:ref`.
+ * ProposalShell — the client-facing executive summary at `/p/:ref`.
  *
- * A deliberately LEAN surface, distinct from the legacy `/proposal/:ref` page
- * (which stays as-is). Two artifacts are decoupled: this shell is the
- * conversion veneer — exec summary + headline terms a client groks at a glance,
- * then the embedded signing ceremony — while the FULL legal instrument is the
- * Anvil document itself (signed in the iframe, delivered as the executed copy).
- * No catalyst/leverage sidebar; the headline numbers are snapshotted server-side
- * so they always match what is bound into the cast.
+ * A lean conversion surface: letterhead, exec summary, headline terms, and a native EXECUTION
+ * panel. The panel mirrors the signature block of the legal instrument — the pre-signed Rare
+ * Structure originator block beside a "PROCEED TO PROPOSAL" call to action. Clicking it routes to
+ * the full-page signing view (`/p/:ref/sign`), where the agreement + the Documenso signing widget
+ * render together on our own domain. The PDF never appears on this summary page.
  */
-import { EmbedSignDocument } from "@documenso/embed-react";
 import type { ProposalShell } from "@rare-structure-hq/shared";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useState } from "react";
+import { Link, useLocation, useParams } from "react-router-dom";
 
 import { getProposalShell } from "@/proposals/api";
+import { useProposalShell } from "@/proposals/useProposalShell";
 
 export default function ProposalShellPage() {
   const { ref } = useParams<{ ref: string }>();
-  const [shell, setShell] = useState<ProposalShell | null>(null);
-  const [state, setState] = useState<"loading" | "ready" | "notfound">("loading");
-
-  useEffect(() => {
-    if (!ref) {
-      setState("notfound");
-      return;
-    }
-    let active = true;
-    setState("loading");
-    getProposalShell(ref)
-      .then((s) => {
-        if (!active) return;
-        if (!s) {
-          setState("notfound");
-        } else {
-          setShell(s);
-          setState("ready");
-        }
-      })
-      .catch(() => active && setState("notfound"));
-    return () => {
-      active = false;
-    };
-  }, [ref]);
+  const location = useLocation();
+  const justSigned = (location.state as { justSigned?: boolean } | null)?.justSigned === true;
+  const { shell, state } = useProposalShell(ref, getProposalShell);
 
   if (state === "loading") return <CenterNote>Loading proposal…</CenterNote>;
   if (state === "notfound" || !shell || !ref) return <NotFound />;
-  return <Shell shell={shell} proposalRef={ref} />;
+  return <Shell shell={shell} proposalRef={ref} initialSigned={justSigned} />;
 }
 
-function Shell({ shell, proposalRef }: { shell: ProposalShell; proposalRef: string }) {
+function Shell({
+  shell,
+  proposalRef,
+  initialSigned,
+}: {
+  shell: ProposalShell;
+  proposalRef: string;
+  initialSigned: boolean;
+}) {
   const reduced = !!useReducedMotion();
-  const [signed, setSigned] = useState(shell.status === "signed" || shell.status === "paid");
+  const [signed] = useState(initialSigned || shell.status === "signed" || shell.status === "paid");
   const enter = (delay = 0) =>
     reduced
       ? {}
@@ -138,19 +122,8 @@ function Shell({ shell, proposalRef }: { shell: ProposalShell; proposalRef: stri
           {signed ? (
             <ExecutedPanel key="executed" proposalRef={proposalRef} client={shell.client.name} />
           ) : (
-            <motion.div key="sign" {...enter(0.3)}>
-              <div className="mb-3 font-mono text-[0.625rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.2em]">
-                Execution
-              </div>
-              <p className="mb-4 text-[0.8125rem] text-[color:var(--color-text-muted)] leading-[1.55]">
-                The full engagement agreement is prepared for your signature. Review and sign below
-                — a countersigned copy is sent to you on completion.
-              </p>
-              <SignSection
-                signingToken={shell.signingToken}
-                documensoHost={shell.documensoHost}
-                onSigned={() => setSigned(true)}
-              />
+            <motion.div key="exec" {...enter(0.3)}>
+              <ExecutionPanel shell={shell} proposalRef={proposalRef} />
             </motion.div>
           )}
         </AnimatePresence>
@@ -163,89 +136,101 @@ function Shell({ shell, proposalRef }: { shell: ProposalShell; proposalRef: stri
   );
 }
 
-// Dark cssVars matching the proposal page so the Documenso embed reads native rather than
-// like a stock signing product (full theming is the Documenso Platform tier).
-const DOCUMENSO_CSS_VARS = {
-  background: "#0a0a0f",
-  foreground: "#e7e9ee",
-  muted: "#1a1b22",
-  mutedForeground: "#9aa0aa",
-  popover: "#0d0d12",
-  popoverForeground: "#e7e9ee",
-  card: "#0d0d12",
-  cardForeground: "#e7e9ee",
-  cardBorder: "rgba(255,255,255,0.10)",
-  border: "rgba(255,255,255,0.10)",
-  input: "#13141a",
-  primary: "#5b8cff",
-  primaryForeground: "#ffffff",
-  secondary: "#1a1b22",
-  secondaryForeground: "#e7e9ee",
-  accent: "#5b8cff",
-  accentForeground: "#ffffff",
-  ring: "#5b8cff",
-  radius: "0px",
-} as const;
-
-// "Review & sign" → reveal the Documenso embedded signing surface for the recipient token.
-// The sealed PDF is the legal instrument; `onDocumentCompleted` advances to the executed
-// state on the client, while the server-side webhook remains the source of truth.
-function SignSection({
-  signingToken,
-  documensoHost,
-  onSigned,
-}: {
-  signingToken?: string;
-  documensoHost?: string;
-  onSigned: () => void;
-}) {
-  const [open, setOpen] = useState(false);
-
-  // No token yet → the Documenso envelope is still being provisioned (e.g. before the
-  // Documenso plan is live). Show a preparing state rather than a dead button.
-  if (!signingToken) {
-    return (
-      <div className="border border-[color:var(--color-border-subtle)] bg-[color:var(--color-surface-sunken)] px-4 py-5 text-center font-mono text-[0.625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
-        Document is being prepared — refresh in a moment.
+// Native execution block — mirrors the legal signature block. The Capital Partner side is a
+// "PROCEED TO PROPOSAL" CTA that routes to the full-page signing view; the Originator side is
+// the pre-signed Rare Structure mark. No PDF on this page.
+function ExecutionPanel({ shell, proposalRef }: { shell: ProposalShell; proposalRef: string }) {
+  const ready = !!shell.signingToken;
+  return (
+    <div>
+      <div className="mb-3 font-mono text-[0.625rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.2em]">
+        Execution
       </div>
-    );
-  }
+      <p className="mb-5 text-[0.8125rem] text-[color:var(--color-text-muted)] leading-[1.55]">
+        The full engagement agreement is prepared for your signature. Proceed to review and execute
+        — a countersigned copy is sent to you on completion.
+      </p>
 
-  if (open) {
-    return (
-      <div className="border border-[color:var(--color-border-subtle)] bg-[color:var(--color-surface-sunken)]">
-        <EmbedSignDocument
-          token={signingToken}
-          host={documensoHost ?? "https://app.documenso.com"}
-          darkModeDisabled={false}
-          cssVars={DOCUMENSO_CSS_VARS}
-          onDocumentCompleted={() => onSigned()}
-          onDocumentError={(e) => console.error("documenso sign error", e)}
-        />
-        <div className="border-[color:var(--color-border-subtle)] border-t px-4 py-3 font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
-          Secured by Documenso · Legally binding e-signature
+      <div className="border border-[color:var(--color-border-subtle)] p-6">
+        {/* Capital Partner — the CTA */}
+        <div className="mb-2.5 font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.16em]">
+          Capital Partner Signature
+        </div>
+        <div className="flex items-end gap-5">
+          {ready ? (
+            <Link
+              to={`/p/${proposalRef}/sign`}
+              className="flex h-[84px] flex-1 items-center justify-center border border-[color:var(--color-accent-primary)] bg-[color:var(--color-accent-soft)] font-mono text-[0.8125rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.2em] transition-colors hover:bg-[color:var(--color-accent-primary)] hover:text-[color:var(--color-text-onAccent)]"
+            >
+              Proceed to Proposal
+            </Link>
+          ) : (
+            <div className="flex h-[84px] flex-1 items-center justify-center border border-[color:var(--color-border-default)] font-mono text-[0.6875rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.16em]">
+              Preparing document…
+            </div>
+          )}
+          <DateStub label="Date" value="—" />
+        </div>
+        <div className="mt-3 text-[0.875rem] text-[color:var(--color-text-primary)]">
+          {shell.client.name}
+        </div>
+        {shell.client.title && (
+          <div className="text-[0.75rem] text-[color:var(--color-text-muted)]">
+            {shell.client.title}
+          </div>
+        )}
+
+        <div className="my-6 border-[color:var(--color-border-subtle)] border-t" />
+
+        {/* Originator — pre-signed */}
+        <div className="mb-2.5 font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.16em]">
+          Originator Signature
+        </div>
+        <div className="flex items-end gap-5">
+          <div className="flex h-[84px] flex-1 items-center justify-center bg-[color:var(--color-surface-raised)] font-mono text-[1.0625rem] text-[color:var(--color-text-primary)] italic tracking-[0.04em]">
+            Rare Structure LLC
+          </div>
+          <DateStub label="Date" value={formatDate(shell.effectiveDate)} />
+        </div>
+        <div className="mt-3 text-[0.875rem] text-[color:var(--color-text-primary)]">
+          Rare Structure LLC
+        </div>
+        <div className="text-[0.75rem] text-[color:var(--color-text-muted)]">
+          Catalyst Origination Desk
         </div>
       </div>
-    );
-  }
 
-  return (
-    <button
-      type="button"
-      onClick={() => setOpen(true)}
-      className="w-full border border-[color:var(--color-accent-primary)] bg-[color:var(--color-accent-soft)] py-4 text-center font-mono text-[0.75rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.14em] transition-colors hover:bg-[color:var(--color-accent-primary)] hover:text-[color:var(--color-text-onAccent)]"
-    >
-      Review &amp; sign agreement
-    </button>
+      <div className="mt-3 flex items-center justify-between font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
+        <span>Secured by Documenso · Legally binding e-signature</span>
+        <span>Audit trail preserved</span>
+      </div>
+    </div>
   );
 }
 
-// Executed — signed by the client. The Stripe ACH payment handoff is grafted in
-// Phase 5; for now this is the terminal confirmation.
+function DateStub({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex w-[88px] shrink-0 flex-col">
+      <div className="mb-1 font-mono text-[0.5rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.16em]">
+        {label}
+      </div>
+      <div className="border-[color:var(--color-border-subtle)] border-b pb-1 text-[0.8125rem] text-[color:var(--color-text-muted)] tabular-nums">
+        {value || "—"}
+      </div>
+    </div>
+  );
+}
+
+function formatDate(iso?: string): string {
+  if (!iso) return "";
+  const d = new Date(`${iso}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+}
+
+// Executed — signed by the client. The Stripe ACH payment handoff is grafted in Phase 5; for now
+// this is the terminal confirmation.
 function ExecutedPanel({ proposalRef, client }: { proposalRef: string; client: string }) {
-  // The Stripe ACH page is an external surface the operator grafts in. When
-  // VITE_PROPOSAL_PAY_URL is set, the executed state offers a payment CTA
-  // (`<base>?ref=<ref>`); until then it degrades to the confirmation copy.
   const payBase = import.meta.env.VITE_PROPOSAL_PAY_URL as string | undefined;
   const payUrl = payBase
     ? `${payBase.replace(/\/$/, "")}?ref=${encodeURIComponent(proposalRef)}`

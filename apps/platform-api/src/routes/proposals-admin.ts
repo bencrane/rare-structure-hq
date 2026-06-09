@@ -138,6 +138,7 @@ proposalAdminRoutes.get("/:ref", async (c) => {
     createdAt: p.created_at ?? new Date().toISOString(),
     signingToken: p.signing_token ?? undefined,
     documensoHost: DOCUMENSO_APP_URL,
+    effectiveDate: p.effective_date,
   };
   return c.json({ data: shell });
 });
