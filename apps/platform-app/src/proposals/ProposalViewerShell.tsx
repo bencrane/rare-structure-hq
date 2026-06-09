@@ -14,8 +14,6 @@ import { Link } from "react-router-dom";
 
 export function ProposalViewerShell({
   title,
-  proposalRef,
-  clientName,
   status,
   backHref,
   maxWidthClass = "max-w-[768px]",
@@ -24,8 +22,6 @@ export function ProposalViewerShell({
 }: {
   /** Document identity shown in the card header — e.g. "Engagement Proposal" / "Engagement Agreement". */
   title: string;
-  proposalRef?: string;
-  clientName?: string;
   status?: ProposalShell["status"];
   /** When set, the utility bar's left slot is a "← Back to summary" link; otherwise the brand tagline. */
   backHref?: string;
@@ -63,14 +59,8 @@ export function ProposalViewerShell({
         >
           {/* Header — document identity (letterhead-grade). */}
           <div className="flex items-center justify-between gap-4 border-[color:var(--color-border-subtle)] border-b bg-[color:var(--color-surface-raised)] px-6 py-4">
-            <div className="min-w-0">
-              <div className="font-display font-semibold text-[0.8125rem] text-[color:var(--color-text-primary)] uppercase tracking-[0.16em]">
-                {title}
-              </div>
-              <div className="mt-1 truncate font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
-                {clientName ? `Prepared for ${clientName}` : "Strategic Origination Mandate"}
-                {proposalRef ? ` · ${proposalRef}` : ""}
-              </div>
+            <div className="font-display font-semibold text-[0.8125rem] text-[color:var(--color-text-primary)] uppercase tracking-[0.16em]">
+              {title}
             </div>
             {headerAccessory ?? <StatusPill status={status} />}
           </div>
@@ -81,7 +71,7 @@ export function ProposalViewerShell({
           {/* Footer — trust strip, identical across both pages. */}
           <div className="flex items-center justify-between gap-4 border-[color:var(--color-border-subtle)] border-t bg-[color:var(--color-surface-raised)] px-6 py-3">
             <span className="font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
-              Secured by Documenso · Legally binding e-signature
+              Legally binding e-signature
             </span>
             <span className="font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
               Audit trail preserved

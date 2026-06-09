@@ -49,8 +49,6 @@ export default function SignPage() {
   return (
     <ProposalViewerShell
       title="Engagement Agreement"
-      proposalRef={ref}
-      clientName={shell?.client.name}
       status={shell?.status}
       backHref={ref ? `/p/${ref}` : "/"}
       maxWidthClass="max-w-[1152px]"

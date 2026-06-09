@@ -58,12 +58,10 @@ function Shell({
   return (
     <ProposalViewerShell
       title="Engagement Proposal"
-      proposalRef={proposalRef}
-      clientName={shell.client.name}
       status={shell.status}
       maxWidthClass="max-w-[820px]"
     >
-      <div className="px-6 py-10 md:px-10 md:py-12">
+      <div className="px-6 pt-10 pb-14 md:px-10 md:pt-12 md:pb-16">
         {/* Prepared for */}
         <motion.div
           {...enter(0.05)}
@@ -149,7 +147,7 @@ function ExecutionPanel({ shell, proposalRef }: { shell: ProposalShell; proposal
       <div className="border border-[color:var(--color-border-subtle)] p-6">
         {/* Capital Partner — the CTA */}
         <div className="mb-2.5 font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.16em]">
-          Capital Partner Signature
+          Signature
         </div>
         <div className="flex items-end gap-5">
           {ready ? (
@@ -179,7 +177,7 @@ function ExecutionPanel({ shell, proposalRef }: { shell: ProposalShell; proposal
 
         {/* Originator — pre-signed */}
         <div className="mb-2.5 font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.16em]">
-          Originator Signature
+          Signature
         </div>
         <div className="flex items-end gap-5">
           <div className="flex h-[84px] flex-1 items-center justify-center bg-[color:var(--color-surface-raised)] font-mono text-[1.0625rem] text-[color:var(--color-text-primary)] italic tracking-[0.04em]">
@@ -189,9 +187,6 @@ function ExecutionPanel({ shell, proposalRef }: { shell: ProposalShell; proposal
         </div>
         <div className="mt-3 text-[0.875rem] text-[color:var(--color-text-primary)]">
           Rare Structure LLC
-        </div>
-        <div className="text-[0.75rem] text-[color:var(--color-text-muted)]">
-          Catalyst Origination Desk
         </div>
       </div>
     </div>
