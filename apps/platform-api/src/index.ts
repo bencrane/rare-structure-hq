@@ -20,6 +20,7 @@ import { requestId } from "hono/request-id";
 import { type AuthVariables, requireUser } from "./auth.ts";
 import { allowedOrigins, env } from "./env.ts";
 import { awardProfileRoutes } from "./routes/award-profile.ts";
+import { proposalTemplateEditorRoutes } from "./routes/proposal-templates-admin.ts";
 import { proposalAdminRoutes, proposalTemplateRoutes } from "./routes/proposals-admin.ts";
 
 const app = new Hono<{ Variables: AuthVariables & { requestId: string } }>();
@@ -46,6 +47,8 @@ app.get("/api/v1/me", requireUser, (c) => {
 });
 
 app.route("/api/v1/proposals", proposalAdminRoutes);
+// Authoring surface mounts BEFORE the bare picker so the more specific prefix wins.
+app.route("/api/v1/proposal-templates/manage", proposalTemplateEditorRoutes);
 app.route("/api/v1/proposal-templates", proposalTemplateRoutes);
 app.route("/api/v1/award-profile", awardProfileRoutes);
 

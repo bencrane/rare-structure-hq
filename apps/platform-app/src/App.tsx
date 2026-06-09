@@ -34,6 +34,7 @@ import Overview from "./routes/app/Overview";
 import Pipeline from "./routes/app/Pipeline";
 import Preferences from "./routes/app/Preferences";
 import Proposals from "./routes/app/Proposals";
+import Settings from "./routes/app/Settings";
 import ProposalShellPage from "./routes/p/ProposalShell";
 import SignPage from "./routes/p/SignPage";
 
@@ -137,6 +138,14 @@ export function App() {
             element={
               <RequireOperator>
                 <Proposals />
+              </RequireOperator>
+            }
+          />
+          <Route
+            path="settings"
+            element={
+              <RequireOperator>
+                <Settings />
               </RequireOperator>
             }
           />
