@@ -177,8 +177,8 @@ export function ProspectDossierBoard({ token }: { token: string }) {
       {/* ── Profile (left, 2/3) ───────────────────────────────────────────── */}
       <div className="flex flex-col gap-4 lg:col-span-2">
         {/* Identity header */}
-        <div className="border border-[color:var(--color-border-subtle)] bg-[color:var(--color-surface-raised)] p-6">
-          <div className="mb-4 flex items-start justify-between gap-4">
+        <div className="border border-[color:var(--color-border-subtle)] bg-[color:var(--color-surface-raised)] p-6 md:p-8">
+          <div className="mb-6 flex items-start justify-between gap-4">
             <div className="flex items-center gap-3 font-mono text-[0.5625rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.2em]">
               <Building2 className="size-3.5" />
               Prospect Dossier
@@ -195,8 +195,8 @@ export function ProspectDossierBoard({ token }: { token: string }) {
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="flex size-12 shrink-0 items-center justify-center border border-[color:var(--color-border-accent)] bg-[color:var(--color-accent-soft)] font-display font-semibold text-[1.125rem] text-[color:var(--color-text-accent)]">
+          <div className="flex items-center gap-5">
+            <div className="flex size-14 shrink-0 items-center justify-center border border-[color:var(--color-border-accent)] bg-[color:var(--color-accent-soft)] font-display font-semibold text-[1.25rem] text-[color:var(--color-text-accent)]">
               {(identityName || "—").slice(0, 1).toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
@@ -204,20 +204,20 @@ export function ProspectDossierBoard({ token }: { token: string }) {
                 value={company}
                 onChange={setCompany}
                 placeholder="Whitfield Capital Partners, LP"
-                className="font-display font-semibold text-[1.25rem] text-[color:var(--color-text-primary)]"
+                className="pb-0.5 font-display font-semibold text-[1.1875rem] text-[color:var(--color-text-primary)] leading-tight"
               />
               <GhostInput
                 value={domain}
                 onChange={setDomain}
                 placeholder="whitfieldcap.com"
-                className="mt-0.5 font-mono text-[0.75rem] text-[color:var(--color-text-subtle)]"
+                className="mt-1.5 font-mono text-[0.75rem] text-[color:var(--color-text-subtle)]"
               />
             </div>
             <VerifyToggle on={verified.identity} onToggle={() => toggleVerified("identity")} />
           </div>
 
           {/* Firmographic stat strip */}
-          <div className="mt-5 grid grid-cols-1 gap-px border border-[color:var(--color-border-subtle)] bg-[color:var(--color-border-subtle)] sm:grid-cols-3">
+          <div className="mt-7 grid grid-cols-1 gap-px border border-[color:var(--color-border-subtle)] bg-[color:var(--color-border-subtle)] sm:grid-cols-3">
             <Stat
               icon={MapPin}
               label="Headquarters"
