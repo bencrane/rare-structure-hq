@@ -21,6 +21,7 @@ import {
   Check,
   MapPin,
   Plus,
+  Save,
   ShieldCheck,
   Sparkles,
   Users,
@@ -73,6 +74,8 @@ export function ProspectDossierBoard({ token }: { token: string }) {
   const [pulled, setPulled] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [savedAt, setSavedAt] = useState<string | null>(null);
+  const [justSaved, setJustSaved] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -135,214 +138,282 @@ export function ProspectDossierBoard({ token }: { token: string }) {
     }
   }
 
+  // Save the verified company profile. PROTOTYPE: persists the full dossier to localStorage keyed by
+  // domain/company so it survives a reload — the seam where this becomes a real "save prospect" call.
+  function saveProfile() {
+    const slug =
+      (domain.trim() || company.trim() || "untitled")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "") || "untitled";
+    const profile = {
+      company,
+      domain,
+      signerName,
+      title,
+      email,
+      hq,
+      headcount,
+      capital,
+      overview,
+      focus,
+      industries,
+      geographies,
+      verified,
+      savedAt: new Date().toISOString(),
+    };
+    try {
+      window.localStorage.setItem(`rs.dossier.${slug}`, JSON.stringify(profile));
+    } catch {
+      // storage unavailable — the save is still acknowledged in-session.
+    }
+    setSavedAt(profile.savedAt);
+    setJustSaved(true);
+    setTimeout(() => setJustSaved(false), 1800);
+  }
+
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-      {/* ── Profile (left, 2/3) ───────────────────────────────────────────── */}
-      <div className="flex flex-col gap-4 lg:col-span-2">
-        {/* Identity header */}
-        <div className="border border-[color:var(--color-border-subtle)] bg-[color:var(--color-surface-raised)] p-6 md:p-8">
-          <div className="mb-6 flex items-start justify-between gap-4">
-            <div className="flex items-center gap-3 font-mono text-[0.5625rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.2em]">
-              <Building2 className="size-3.5" />
-              Prospect Dossier
-            </div>
-            <div className="flex items-center gap-2">
-              {pulled && (
-                <span className="border border-[color:var(--color-border-default)] px-2 py-1 font-mono text-[0.5rem] text-[color:var(--color-text-muted)] uppercase tracking-[0.16em]">
-                  Draft · verify
+    <div className="pb-16 md:pb-24">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        {/* ── Profile (left, 2/3) ───────────────────────────────────────────── */}
+        <div className="flex flex-col gap-4 lg:col-span-2">
+          {/* Identity header */}
+          <div className="border border-[color:var(--color-border-subtle)] bg-[color:var(--color-surface-raised)] p-6 md:p-8">
+            <div className="mb-6 flex items-start justify-between gap-4">
+              <div className="flex items-center gap-3 font-mono text-[0.5625rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.2em]">
+                <Building2 className="size-3.5" />
+                Prospect Dossier
+              </div>
+              <div className="flex items-center gap-2">
+                {pulled && (
+                  <span className="border border-[color:var(--color-border-default)] px-2 py-1 font-mono text-[0.5rem] text-[color:var(--color-text-muted)] uppercase tracking-[0.16em]">
+                    Draft · verify
+                  </span>
+                )}
+                <span className="font-mono text-[0.5rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.16em]">
+                  {verifiedCount}/6 verified
                 </span>
-              )}
-              <span className="font-mono text-[0.5rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.16em]">
-                {verifiedCount}/6 verified
+              </div>
+            </div>
+
+            <div className="flex items-center gap-5">
+              <div className="flex size-14 shrink-0 items-center justify-center border border-[color:var(--color-border-accent)] bg-[color:var(--color-accent-soft)] font-display font-semibold text-[1.25rem] text-[color:var(--color-text-accent)]">
+                {(identityName || "—").slice(0, 1).toUpperCase()}
+              </div>
+              <div className="min-w-0 flex-1">
+                <GhostInput
+                  value={company}
+                  onChange={setCompany}
+                  placeholder="Whitfield Capital Partners, LP"
+                  className="pb-0.5 font-display font-semibold text-[1.1875rem] text-[color:var(--color-text-primary)] leading-tight"
+                />
+                <GhostInput
+                  value={domain}
+                  onChange={setDomain}
+                  placeholder="whitfieldcap.com"
+                  className="mt-1.5 font-mono text-[0.75rem] text-[color:var(--color-text-subtle)]"
+                />
+              </div>
+              <VerifyToggle on={verified.identity} onToggle={() => toggleVerified("identity")} />
+            </div>
+
+            {/* Firmographic stat strip */}
+            <div className="mt-7 grid grid-cols-1 gap-px border border-[color:var(--color-border-subtle)] bg-[color:var(--color-border-subtle)] sm:grid-cols-3">
+              <Stat
+                icon={MapPin}
+                label="Headquarters"
+                value={hq}
+                onChange={setHq}
+                placeholder="New York, NY"
+              />
+              <Stat
+                icon={Users}
+                label="Headcount"
+                value={headcount}
+                onChange={setHeadcount}
+                placeholder="40–60"
+              />
+              <Stat
+                icon={Banknote}
+                label="Capital / AUM"
+                value={capital}
+                onChange={setCapital}
+                placeholder="$1.2B"
+              />
+            </div>
+          </div>
+
+          {/* Signer */}
+          <SectionCard
+            label={SECTION_LABELS.signer}
+            verified={verified.signer}
+            onToggle={() => toggleVerified("signer")}
+          >
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <Field label="Name">
+                <BoxedInput
+                  value={signerName}
+                  onChange={setSignerName}
+                  placeholder="James Whitfield"
+                />
+              </Field>
+              <Field label="Title">
+                <BoxedInput value={title} onChange={setTitle} placeholder="Managing Director" />
+              </Field>
+              <Field label="Email">
+                <BoxedInput
+                  value={email}
+                  onChange={setEmail}
+                  placeholder="jw@whitfieldcap.com"
+                  type="email"
+                />
+              </Field>
+            </div>
+          </SectionCard>
+
+          {/* Overview */}
+          <SectionCard
+            label={SECTION_LABELS.overview}
+            verified={verified.overview}
+            onToggle={() => toggleVerified("overview")}
+          >
+            <textarea
+              value={overview}
+              onChange={(e) => setOverview(e.target.value)}
+              rows={3}
+              placeholder="A short, on-the-record description of the firm — strategy, posture, why they're a fit for the mandate."
+              className="w-full resize-y border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-sunken)] px-3 py-2.5 text-[color:var(--color-text-primary)] text-body-sm leading-[1.6] outline-none placeholder:text-[color:var(--color-text-subtle)] focus:border-[color:var(--color-text-accent)]"
+            />
+          </SectionCard>
+
+          {/* Focus / Industries / Geographies */}
+          <SectionCard
+            label={SECTION_LABELS.focus}
+            verified={verified.focus}
+            onToggle={() => toggleVerified("focus")}
+          >
+            <TagEditor tags={focus} onChange={setFocus} placeholder="Add a focus area" />
+          </SectionCard>
+          <SectionCard
+            label={SECTION_LABELS.industries}
+            verified={verified.industries}
+            onToggle={() => toggleVerified("industries")}
+          >
+            <TagEditor tags={industries} onChange={setIndustries} placeholder="Add an industry" />
+          </SectionCard>
+          <SectionCard
+            label={SECTION_LABELS.geographies}
+            verified={verified.geographies}
+            onToggle={() => toggleVerified("geographies")}
+          >
+            <TagEditor tags={geographies} onChange={setGeographies} placeholder="Add a geography" />
+          </SectionCard>
+
+          {/* Save the verified company profile */}
+          <div className="mt-2 flex flex-col gap-4 border-[color:var(--color-border-subtle)] border-t pt-6 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <div className="font-mono text-[0.625rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.2em]">
+                Company profile
+              </div>
+              <p className="mt-1.5 text-[color:var(--color-text-subtle)] text-body-sm">
+                {savedAt
+                  ? `Last saved at ${formatTime(savedAt)}`
+                  : "Save the verified specifications for this prospect."}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={saveProfile}
+              className={`flex shrink-0 items-center justify-center gap-2 border px-6 py-2.5 font-mono text-mono-xs uppercase tracking-[0.14em] transition-colors ${
+                justSaved
+                  ? "border-[color:var(--color-border-accent)] bg-[color:var(--color-accent-soft)] text-[color:var(--color-text-accent)]"
+                  : "border-[color:var(--color-border-default)] text-[color:var(--color-text-muted)] hover:border-[color:var(--color-text-accent)] hover:text-[color:var(--color-text-accent)]"
+              }`}
+            >
+              {justSaved ? <Check className="size-3.5" /> : <Save className="size-3.5" />}
+              {justSaved ? "Saved" : "Save profile"}
+            </button>
+          </div>
+        </div>
+
+        {/* ── Origination (right, 1/3) ─────────────────────────────────────── */}
+        <aside className="lg:sticky lg:top-6 lg:self-start">
+          <div className="border border-[color:var(--color-border-subtle)] bg-[color:var(--color-surface-raised)] p-5">
+            <div className="mb-1 font-mono text-[0.625rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.2em]">
+              Originate
+            </div>
+            <p className="mb-4 text-[color:var(--color-text-muted)] text-body-sm leading-[1.5]">
+              On save the agreement is rendered and the executive summary materializes at its link —
+              no separate "create a proposal" step.
+            </p>
+
+            <button
+              type="button"
+              onClick={pullResearch}
+              className="mb-4 flex w-full items-center justify-center gap-2 border border-[color:var(--color-border-default)] py-2.5 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase tracking-[0.14em] transition-colors hover:border-[color:var(--color-text-accent)] hover:text-[color:var(--color-text-accent)]"
+            >
+              <Sparkles className="size-3.5" />
+              {pulled ? "Re-pull research" : "Pull research"}
+            </button>
+
+            <label className="mb-4 block">
+              <span className="mb-1.5 block font-mono text-[color:var(--color-text-subtle)] text-mono-xs uppercase tracking-[0.14em]">
+                Engagement
+              </span>
+              {/* biome-ignore lint/a11y/noLabelWithoutControl: label wraps the select. */}
+              <select
+                value={templateId}
+                onChange={(e) => setTemplateId(e.target.value)}
+                disabled={!templates}
+                className="w-full border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-sunken)] px-3 py-2.5 text-[color:var(--color-text-primary)] text-body-sm outline-none focus:border-[color:var(--color-text-accent)]"
+              >
+                {!templates && <option>Loading…</option>}
+                {templates?.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <div className="mb-4 flex items-center justify-between gap-2 border-[color:var(--color-border-subtle)] border-t border-b py-3 font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
+              <span className="flex items-center gap-1.5">
+                <ShieldCheck className="size-3.5 text-[color:var(--color-text-accent)]" />
+                Verified
+              </span>
+              <span className="text-[color:var(--color-text-muted)]">
+                {verifiedCount} of 6 sections
               </span>
             </div>
-          </div>
 
-          <div className="flex items-center gap-5">
-            <div className="flex size-14 shrink-0 items-center justify-center border border-[color:var(--color-border-accent)] bg-[color:var(--color-accent-soft)] font-display font-semibold text-[1.25rem] text-[color:var(--color-text-accent)]">
-              {(identityName || "—").slice(0, 1).toUpperCase()}
-            </div>
-            <div className="min-w-0 flex-1">
-              <GhostInput
-                value={company}
-                onChange={setCompany}
-                placeholder="Whitfield Capital Partners, LP"
-                className="pb-0.5 font-display font-semibold text-[1.1875rem] text-[color:var(--color-text-primary)] leading-tight"
-              />
-              <GhostInput
-                value={domain}
-                onChange={setDomain}
-                placeholder="whitfieldcap.com"
-                className="mt-1.5 font-mono text-[0.75rem] text-[color:var(--color-text-subtle)]"
-              />
-            </div>
-            <VerifyToggle on={verified.identity} onToggle={() => toggleVerified("identity")} />
-          </div>
+            {error && (
+              <p className="mb-3 text-[color:var(--color-state-warn)] text-mono-xs">{error}</p>
+            )}
 
-          {/* Firmographic stat strip */}
-          <div className="mt-7 grid grid-cols-1 gap-px border border-[color:var(--color-border-subtle)] bg-[color:var(--color-border-subtle)] sm:grid-cols-3">
-            <Stat
-              icon={MapPin}
-              label="Headquarters"
-              value={hq}
-              onChange={setHq}
-              placeholder="New York, NY"
-            />
-            <Stat
-              icon={Users}
-              label="Headcount"
-              value={headcount}
-              onChange={setHeadcount}
-              placeholder="40–60"
-            />
-            <Stat
-              icon={Banknote}
-              label="Capital / AUM"
-              value={capital}
-              onChange={setCapital}
-              placeholder="$1.2B"
-            />
-          </div>
-        </div>
-
-        {/* Signer */}
-        <SectionCard
-          label={SECTION_LABELS.signer}
-          verified={verified.signer}
-          onToggle={() => toggleVerified("signer")}
-        >
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <Field label="Name">
-              <BoxedInput
-                value={signerName}
-                onChange={setSignerName}
-                placeholder="James Whitfield"
-              />
-            </Field>
-            <Field label="Title">
-              <BoxedInput value={title} onChange={setTitle} placeholder="Managing Director" />
-            </Field>
-            <Field label="Email">
-              <BoxedInput
-                value={email}
-                onChange={setEmail}
-                placeholder="jw@whitfieldcap.com"
-                type="email"
-              />
-            </Field>
-          </div>
-        </SectionCard>
-
-        {/* Overview */}
-        <SectionCard
-          label={SECTION_LABELS.overview}
-          verified={verified.overview}
-          onToggle={() => toggleVerified("overview")}
-        >
-          <textarea
-            value={overview}
-            onChange={(e) => setOverview(e.target.value)}
-            rows={3}
-            placeholder="A short, on-the-record description of the firm — strategy, posture, why they're a fit for the mandate."
-            className="w-full resize-y border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-sunken)] px-3 py-2.5 text-[color:var(--color-text-primary)] text-body-sm leading-[1.6] outline-none placeholder:text-[color:var(--color-text-subtle)] focus:border-[color:var(--color-text-accent)]"
-          />
-        </SectionCard>
-
-        {/* Focus / Industries / Geographies */}
-        <SectionCard
-          label={SECTION_LABELS.focus}
-          verified={verified.focus}
-          onToggle={() => toggleVerified("focus")}
-        >
-          <TagEditor tags={focus} onChange={setFocus} placeholder="Add a focus area" />
-        </SectionCard>
-        <SectionCard
-          label={SECTION_LABELS.industries}
-          verified={verified.industries}
-          onToggle={() => toggleVerified("industries")}
-        >
-          <TagEditor tags={industries} onChange={setIndustries} placeholder="Add an industry" />
-        </SectionCard>
-        <SectionCard
-          label={SECTION_LABELS.geographies}
-          verified={verified.geographies}
-          onToggle={() => toggleVerified("geographies")}
-        >
-          <TagEditor tags={geographies} onChange={setGeographies} placeholder="Add a geography" />
-        </SectionCard>
-      </div>
-
-      {/* ── Origination (right, 1/3) ─────────────────────────────────────── */}
-      <aside className="lg:sticky lg:top-6 lg:self-start">
-        <div className="border border-[color:var(--color-border-subtle)] bg-[color:var(--color-surface-raised)] p-5">
-          <div className="mb-1 font-mono text-[0.625rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.2em]">
-            Originate
-          </div>
-          <p className="mb-4 text-[color:var(--color-text-muted)] text-body-sm leading-[1.5]">
-            On save the agreement is rendered and the executive summary materializes at its link —
-            no separate "create a proposal" step.
-          </p>
-
-          <button
-            type="button"
-            onClick={pullResearch}
-            className="mb-4 flex w-full items-center justify-center gap-2 border border-[color:var(--color-border-default)] py-2.5 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase tracking-[0.14em] transition-colors hover:border-[color:var(--color-text-accent)] hover:text-[color:var(--color-text-accent)]"
-          >
-            <Sparkles className="size-3.5" />
-            {pulled ? "Re-pull research" : "Pull research"}
-          </button>
-
-          <label className="mb-4 block">
-            <span className="mb-1.5 block font-mono text-[color:var(--color-text-subtle)] text-mono-xs uppercase tracking-[0.14em]">
-              Engagement
-            </span>
-            {/* biome-ignore lint/a11y/noLabelWithoutControl: label wraps the select. */}
-            <select
-              value={templateId}
-              onChange={(e) => setTemplateId(e.target.value)}
-              disabled={!templates}
-              className="w-full border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-sunken)] px-3 py-2.5 text-[color:var(--color-text-primary)] text-body-sm outline-none focus:border-[color:var(--color-text-accent)]"
+            <button
+              type="button"
+              onClick={originate}
+              disabled={!canOriginate}
+              className="flex w-full items-center justify-center gap-2 border border-[color:var(--color-accent-primary)] bg-[color:var(--color-accent-soft)] py-3 font-mono text-[color:var(--color-text-accent)] text-mono-xs uppercase tracking-[0.16em] transition-colors hover:bg-[color:var(--color-accent-primary)] hover:text-[color:var(--color-text-onAccent)] disabled:opacity-40"
             >
-              {!templates && <option>Loading…</option>}
-              {templates?.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <div className="mb-4 flex items-center justify-between gap-2 border-[color:var(--color-border-subtle)] border-t border-b py-3 font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
-            <span className="flex items-center gap-1.5">
-              <ShieldCheck className="size-3.5 text-[color:var(--color-text-accent)]" />
-              Verified
-            </span>
-            <span className="text-[color:var(--color-text-muted)]">
-              {verifiedCount} of 6 sections
-            </span>
+              {submitting ? "Originating…" : "Originate Mandate →"}
+            </button>
+            {!identityName && (
+              <p className="mt-2 text-center font-mono text-[0.5rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
+                Add the prospect to originate
+              </p>
+            )}
           </div>
-
-          {error && (
-            <p className="mb-3 text-[color:var(--color-state-warn)] text-mono-xs">{error}</p>
-          )}
-
-          <button
-            type="button"
-            onClick={originate}
-            disabled={!canOriginate}
-            className="flex w-full items-center justify-center gap-2 border border-[color:var(--color-accent-primary)] bg-[color:var(--color-accent-soft)] py-3 font-mono text-[color:var(--color-text-accent)] text-mono-xs uppercase tracking-[0.16em] transition-colors hover:bg-[color:var(--color-accent-primary)] hover:text-[color:var(--color-text-onAccent)] disabled:opacity-40"
-          >
-            {submitting ? "Originating…" : "Originate Mandate →"}
-          </button>
-          {!identityName && (
-            <p className="mt-2 text-center font-mono text-[0.5rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
-              Add the prospect to originate
-            </p>
-          )}
-        </div>
-      </aside>
+        </aside>
+      </div>
     </div>
   );
+}
+
+function formatTime(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 }
 
 // ── Building blocks ──────────────────────────────────────────────────────
