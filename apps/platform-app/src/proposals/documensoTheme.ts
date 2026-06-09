@@ -54,10 +54,14 @@ export const DOCUMENSO_CSS_VARS = {
   warning: "#fbbf24", // state.warn
 } as const;
 
-// Raw CSS injected into the embed (Platform). Element + pseudo selectors only — defensive, since
-// Documenso's internal class names are not a stable contract. Sets our type fallback chain (our
-// @fontsource faces aren't loaded cross-origin, so this is the system approximation) and pulls
-// scrollbars into the dark identity.
+// Raw CSS injected into the embed (Platform). Two concerns:
+//   1. Type face + dark scrollbars — identity touches `cssVars` can't express.
+//   2. LAYOUT of Documenso's internal two-column. `.embed--DocumentContainer { row-reverse }` puts
+//      the SIGN panel on the left and the agreement PDF on the right; `.embed--Root` caps the
+//      content width. These internal class names are VERIFIED against a live Platform embed
+//      (`revenue-engineer-v3/src/app/native-proposal/page.tsx`), not guessed — they only take
+//      effect on Platform (where raw `css` is honored), which is also the only tier that renders
+//      the surface at all.
 export const DOCUMENSO_EMBED_CSS = `
   body, button, input, textarea, select {
     font-family: "Geist Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
@@ -68,6 +72,10 @@ export const DOCUMENSO_EMBED_CSS = `
   ::-webkit-scrollbar-track { background: #0a0e1a; }
   ::-webkit-scrollbar-thumb { background: #2d3548; border: 2px solid #0a0e1a; }
   ::-webkit-scrollbar-thumb:hover { background: #3f4b63; }
+  @media (min-width: 768px) {
+    .embed--DocumentContainer { flex-direction: row-reverse; }
+    .embed--Root { max-width: 72rem; }
+  }
 `;
 
 export const DOCUMENSO_DEFAULT_HOST = "https://app.documenso.com";
