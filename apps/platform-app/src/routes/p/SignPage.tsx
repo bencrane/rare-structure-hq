@@ -64,7 +64,7 @@ export default function SignPage() {
 
       {/* Proposal viewer — framed, centered, on-brand */}
       <div className="flex flex-1 justify-center px-4 py-6 md:px-8 md:py-10">
-        <div className="flex w-full max-w-[1120px] flex-col overflow-hidden border border-[color:var(--color-border-subtle)] bg-[color:var(--color-surface-sunken)] shadow-[0_24px_64px_-32px_rgba(0,0,0,0.8)]">
+        <div className="flex w-full max-w-[1152px] flex-col overflow-hidden border border-[color:var(--color-border-subtle)] bg-[color:var(--color-surface-sunken)] shadow-[0_24px_64px_-32px_rgba(0,0,0,0.8)]">
           {/* Viewer header — document identity (letterhead-grade) */}
           <div className="flex items-center justify-between gap-4 border-[color:var(--color-border-subtle)] border-b bg-[color:var(--color-surface-raised)] px-6 py-4">
             <div className="min-w-0">
