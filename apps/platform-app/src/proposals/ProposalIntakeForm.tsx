@@ -88,7 +88,6 @@ export function ProposalIntakeForm({
   return (
     <div>
       <Field label="Engagement">
-        {/* biome-ignore lint/a11y/noLabelWithoutControl: Field wraps the select. */}
         <select
           value={templateId}
           onChange={(e) => setTemplateId(e.target.value)}

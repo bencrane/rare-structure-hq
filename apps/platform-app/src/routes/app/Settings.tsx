@@ -44,8 +44,9 @@ export default function Settings() {
   );
 }
 
-// ── HubCard — a full-bleed clickable card. Keyboard-operable (Enter/Space) so it
-//    reads as a button to assistive tech while filling the card surface.
+// ── HubCard — a full-bleed clickable card rendered as a semantic <button>, so it is
+//    natively keyboard-operable (Enter/Space) and announced as a button to assistive
+//    tech. The button owns the behavior; the Card supplies the surface.
 function HubCard({
   icon: Icon,
   title,
@@ -62,45 +63,42 @@ function HubCard({
   onClick: () => void;
 }) {
   return (
-    <Card
-      interactive
-      role="button"
-      tabIndex={0}
+    <button
+      type="button"
       onClick={onClick}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onClick();
-        }
-      }}
-      className="cursor-pointer p-5 outline-none focus-visible:border-[color:var(--color-border-accent)]"
+      className="group block w-full cursor-pointer text-left outline-none"
     >
-      <Stack gap="4">
-        <Tile size="10" tone={tone}>
-          <Icon
-            className={cx(
-              "size-5",
-              tone === "accent"
-                ? "text-[color:var(--color-text-accent)]"
-                : "text-[color:var(--color-text-default)]",
-            )}
-          />
-        </Tile>
-        <Stack gap="2">
-          <Text size="body-md" color="strong">
-            {title}
-          </Text>
-          <Text size="body-sm" color="muted">
-            {description}
-          </Text>
+      <Card
+        interactive
+        className="p-5 group-focus-visible:border-[color:var(--color-border-accent)]"
+      >
+        <Stack gap="4">
+          <Tile size="10" tone={tone}>
+            <Icon
+              className={cx(
+                "size-5",
+                tone === "accent"
+                  ? "text-[color:var(--color-text-accent)]"
+                  : "text-[color:var(--color-text-default)]",
+              )}
+            />
+          </Tile>
+          <Stack gap="2">
+            <Text size="body-md" color="strong">
+              {title}
+            </Text>
+            <Text size="body-sm" color="muted">
+              {description}
+            </Text>
+          </Stack>
+          <Inline gap="1" align="center">
+            <Text size="mono-xs" mono color="accent">
+              {cta}
+            </Text>
+            <ChevronRight className="size-3.5 text-[color:var(--color-text-accent)]" />
+          </Inline>
         </Stack>
-        <Inline gap="1" align="center">
-          <Text size="mono-xs" mono color="accent">
-            {cta}
-          </Text>
-          <ChevronRight className="size-3.5 text-[color:var(--color-text-accent)]" />
-        </Inline>
-      </Stack>
-    </Card>
+      </Card>
+    </button>
   );
 }
