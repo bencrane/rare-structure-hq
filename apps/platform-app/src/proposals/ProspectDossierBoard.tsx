@@ -14,24 +14,22 @@
  * Lives in `proposals/` (not `routes/`) so it owns its own geometry; the Dossier route stays a
  * thin CockpitPage composition.
  */
-import type { CreateProposalResult, ProposalTemplateMeta } from "@rare-structure-hq/shared";
+import type { ProposalTemplateMeta } from "@rare-structure-hq/shared";
 import {
   Banknote,
   Building2,
   Check,
-  Copy,
-  ExternalLink,
   MapPin,
   Plus,
-  Send,
   ShieldCheck,
   Sparkles,
   Users,
   X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-import { createProposal, listTemplates, sendProposal } from "./api";
+import { createProposal, listTemplates } from "./api";
 
 type SectionKey = "identity" | "signer" | "overview" | "focus" | "industries" | "geographies";
 
@@ -75,7 +73,7 @@ export function ProspectDossierBoard({ token }: { token: string }) {
   const [pulled, setPulled] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<{ res: CreateProposalResult; email: string } | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     let active = true;
@@ -128,48 +126,13 @@ export function ProspectDossierBoard({ token }: { token: string }) {
         },
         fieldValues: {},
       });
-      setResult({ res, email: email.trim() });
+      // Land the operator in the proposal — signed in, it opens as their editable draft.
+      navigate(`/p/${res.ref}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not originate the mandate");
     } finally {
       setSubmitting(false);
     }
-  }
-
-  function reset() {
-    setResult(null);
-    setCompany("");
-    setDomain("");
-    setSignerName("");
-    setTitle("");
-    setEmail("");
-    setHq("");
-    setHeadcount("");
-    setCapital("");
-    setOverview("");
-    setFocus([]);
-    setIndustries([]);
-    setGeographies([]);
-    setPulled(false);
-    setVerified({
-      identity: false,
-      signer: false,
-      overview: false,
-      focus: false,
-      industries: false,
-      geographies: false,
-    });
-  }
-
-  if (result) {
-    return (
-      <MaterializedPanel
-        result={result.res}
-        token={token}
-        clientEmail={result.email}
-        onReset={reset}
-      />
-    );
   }
 
   return (
@@ -378,105 +341,6 @@ export function ProspectDossierBoard({ token }: { token: string }) {
           )}
         </div>
       </aside>
-    </div>
-  );
-}
-
-// ── Materialized — the post-save confirmation: the agreement is created, the summary is live. ──
-function MaterializedPanel({
-  result,
-  token,
-  clientEmail,
-  onReset,
-}: {
-  result: CreateProposalResult;
-  token: string;
-  clientEmail: string;
-  onReset: () => void;
-}) {
-  const url = `${window.location.origin}/p/${result.ref}`;
-  const [copied, setCopied] = useState(false);
-  const [sendState, setSendState] = useState<"idle" | "sending" | "sent" | "error">("idle");
-  const [sendError, setSendError] = useState<string | null>(null);
-
-  async function copy() {
-    await navigator.clipboard.writeText(url);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  }
-
-  async function send() {
-    setSendState("sending");
-    setSendError(null);
-    try {
-      await sendProposal(token, result.ref);
-      setSendState("sent");
-    } catch (e) {
-      setSendError(e instanceof Error ? e.message : "Send failed");
-      setSendState("error");
-    }
-  }
-
-  return (
-    <div className="mx-auto max-w-[560px] border border-[color:var(--color-border-subtle)] bg-[color:var(--color-surface-raised)] p-8">
-      <div className="mb-2 flex items-center gap-2 text-[color:var(--color-text-accent)]">
-        <Check className="size-4" />
-        <span className="font-mono text-mono-xs uppercase tracking-[0.16em]">
-          Mandate originated
-        </span>
-      </div>
-      <p className="mb-5 text-[color:var(--color-text-muted)] text-body-sm leading-[1.55]">
-        The agreement is rendered and sealed for signature. The executive summary is live at the
-        link below — open it, drop it on the call, or send it.
-      </p>
-
-      <div className="mb-4 flex items-center gap-2 border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-sunken)] px-3 py-2.5">
-        <span className="flex-1 truncate font-mono text-[color:var(--color-text-primary)] text-mono-xs">
-          {url}
-        </span>
-      </div>
-
-      <a
-        href={`/p/${result.ref}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="mb-3 flex w-full items-center justify-center gap-2 border border-[color:var(--color-accent-primary)] bg-[color:var(--color-accent-soft)] py-3 font-mono text-[color:var(--color-text-accent)] text-mono-xs uppercase tracking-[0.16em] transition-colors hover:bg-[color:var(--color-accent-primary)] hover:text-[color:var(--color-text-onAccent)]"
-      >
-        <ExternalLink className="size-3.5" />
-        View the proposal
-      </a>
-
-      <div className="grid grid-cols-2 gap-3">
-        <button
-          type="button"
-          onClick={copy}
-          className="flex items-center justify-center gap-2 border border-[color:var(--color-border-default)] py-2.5 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase tracking-[0.14em] transition-colors hover:border-[color:var(--color-text-accent)] hover:text-[color:var(--color-text-accent)]"
-        >
-          {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
-          {copied ? "Copied" : "Copy link"}
-        </button>
-        <button
-          type="button"
-          onClick={send}
-          disabled={!clientEmail || sendState === "sending" || sendState === "sent"}
-          title={clientEmail ? `Email the link to ${clientEmail}` : "Add a signer email to send"}
-          className="flex items-center justify-center gap-2 border border-[color:var(--color-border-default)] py-2.5 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase tracking-[0.14em] transition-colors hover:border-[color:var(--color-text-accent)] hover:text-[color:var(--color-text-accent)] disabled:opacity-40"
-        >
-          {sendState === "sent" ? <Check className="size-3.5" /> : <Send className="size-3.5" />}
-          {sendState === "sending" ? "Sending…" : sendState === "sent" ? "Sent" : "Send"}
-        </button>
-      </div>
-      {sendError && (
-        <p className="mt-2 text-[color:var(--color-state-warn)] text-mono-xs">{sendError}</p>
-      )}
-
-      <button
-        type="button"
-        onClick={onReset}
-        className="mt-5 w-full text-center font-mono text-[color:var(--color-text-subtle)] text-mono-xs uppercase tracking-[0.14em] transition-colors hover:text-[color:var(--color-text-muted)]"
-      >
-        New dossier
-      </button>
     </div>
   );
 }

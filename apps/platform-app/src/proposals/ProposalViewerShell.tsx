@@ -19,6 +19,7 @@ export function ProposalViewerShell({
   status,
   backHref,
   maxWidthClass = "max-w-[768px]",
+  headerAccessory,
   children,
 }: {
   /** Document identity shown in the card header — e.g. "Engagement Proposal" / "Engagement Agreement". */
@@ -30,6 +31,8 @@ export function ProposalViewerShell({
   backHref?: string;
   /** Card width — narrow for the reading summary, wide for the two-column signing embed. */
   maxWidthClass?: string;
+  /** Top-right header slot. Replaces the default StatusPill (e.g. the operator's draft controls). */
+  headerAccessory?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
@@ -69,7 +72,7 @@ export function ProposalViewerShell({
                 {proposalRef ? ` · ${proposalRef}` : ""}
               </div>
             </div>
-            <StatusPill status={status} />
+            {headerAccessory ?? <StatusPill status={status} />}
           </div>
 
           {/* Body — page-specific (summary content, or the signing embed). */}
