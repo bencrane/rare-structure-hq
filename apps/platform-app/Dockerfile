@@ -4,16 +4,9 @@
 # `RUN --mount`); the uncached install is fine.
 #
 # Build-time env: Vite reads `VITE_*` env vars at build time and bakes
-# them into dist/. Two supported injection paths, picked at build time:
-#
-#   (a) DOPPLER_TOKEN is set on the Railway service env → wrap the build
-#       with `doppler run` to pull VITE_* from Doppler.
-#   (b) DOPPLER_TOKEN is absent → fall back to whatever VITE_* env vars
-#       Railway already exposes as build ARGs (operator can set them
-#       directly on the service in the Railway UI).
-#
-# This dual path keeps the deploy unblocked while the operator decides
-# which secret store to use; both routes feed the same `vite build`.
+# them into dist/. DOPPLER_TOKEN is the ONLY service variable Railway
+# provides; the build runs under `doppler run`, which pulls VITE_* from
+# the Doppler prd config and injects them so `vite build` bakes them in.
 
 FROM dopplerhq/cli:3 AS doppler
 
@@ -31,25 +24,15 @@ RUN bun install --frozen-lockfile
 RUN bun run --filter @rare-structure-hq/tokens build
 WORKDIR /app/apps/platform-app
 
-# Build-time secrets. Railway promotes service variables declared as ARG
-# into the build env, so any subset of these may be set or unset.
+# Build-time secret. DOPPLER_TOKEN is the only service variable Railway
+# promotes into the build env; VITE_* are NOT expected from Railway —
+# `doppler run` pulls them from the Doppler prd config below.
 ARG DOPPLER_TOKEN
-ARG VITE_SUPABASE_URL
-ARG VITE_SUPABASE_ANON_KEY
-ARG VITE_API_BASE_URL
-ENV DOPPLER_TOKEN=$DOPPLER_TOKEN \
-    VITE_SUPABASE_URL=$VITE_SUPABASE_URL \
-    VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY \
-    VITE_API_BASE_URL=$VITE_API_BASE_URL
+ENV DOPPLER_TOKEN=$DOPPLER_TOKEN
 
-# Run via Doppler when a token is present, else fall through to the
-# already-injected ARG values. Either way Vite ends up with the right
-# VITE_* env at build time.
-RUN if [ -n "$DOPPLER_TOKEN" ]; then \
-      doppler run -- bun run build; \
-    else \
-      bun run build; \
-    fi
+# Vite reads VITE_* from the env at build time; doppler run injects them
+# from the prd config so they get baked into dist/.
+RUN doppler run -- bun run build
 
 # ── runtime: serve the static dist/ via Express (serve.js) ───────────────────
 # serve.js listens on process.env.PORT (Railway injects it). express is
