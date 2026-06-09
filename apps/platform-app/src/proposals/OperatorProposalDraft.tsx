@@ -40,8 +40,6 @@ export function OperatorProposalDraft({
   return (
     <ProposalViewerShell
       title="Engagement Proposal"
-      proposalRef={proposalRef}
-      clientName={shell.client.name}
       maxWidthClass="max-w-[820px]"
       headerAccessory={
         <DraftControls
@@ -52,15 +50,7 @@ export function OperatorProposalDraft({
         />
       }
     >
-      <div className="px-6 py-10 md:px-10 md:py-12">
-        {/* Edit-mode hint — the only "draft" tell, and only while editing. */}
-        {canEditValues && (
-          <div className="mb-6 flex items-center gap-2 border border-[color:var(--color-border-accent)] bg-[color:var(--color-accent-soft)] px-3 py-2 font-mono text-[0.5625rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.16em]">
-            <LockOpen className="size-3" />
-            Editing terms — click the lock to finish
-          </div>
-        )}
-
+      <div className="px-6 pt-10 pb-14 md:px-10 md:pt-12 md:pb-16">
         {/* Prepared for */}
         <div className="mb-6 border-[color:var(--color-border-subtle)] border-b pb-4">
           <div className="mb-1 font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.16em]">
@@ -173,7 +163,7 @@ function DraftControls({
     <button
       type="button"
       onClick={onToggle}
-      title={editing ? "Lock the terms" : "Unlock to edit the terms"}
+      aria-label={editing ? "Lock terms" : "Edit terms"}
       className={`flex shrink-0 items-center gap-1.5 border px-2.5 py-1 font-mono text-[0.5rem] uppercase tracking-[0.16em] transition-colors ${
         editing
           ? "border-[color:var(--color-border-accent)] bg-[color:var(--color-accent-soft)] text-[color:var(--color-text-accent)]"
@@ -181,7 +171,6 @@ function DraftControls({
       }`}
     >
       {editing ? <LockOpen className="size-3" /> : <Lock className="size-3" />}
-      {editing ? "Editing" : "Edit"}
     </button>
   );
 }
@@ -226,19 +215,19 @@ function ExecutionBlock({
       <div className="mb-3 font-mono text-[0.625rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.2em]">
         Execution
       </div>
-      <p className="mb-5 text-[0.8125rem] text-[color:var(--color-text-muted)] leading-[1.55]">
-        {finalized
-          ? "Your version is locked and rendering. Share the link once the sealed PDF is ready."
-          : "This is your version of the mandate. Adjust the terms if needed, then sign and confirm."}
-      </p>
+      {!finalized && (
+        <p className="mb-5 text-[0.8125rem] text-[color:var(--color-text-muted)] leading-[1.55]">
+          This is your version of the mandate. Adjust the terms if needed, then sign and confirm.
+        </p>
+      )}
 
       <div className="border border-[color:var(--color-border-subtle)] p-6">
         {/* Capital Partner — awaits the prospect */}
         <div className="mb-2.5 font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.16em]">
-          Capital Partner Signature
+          Signature
         </div>
         <div className="flex h-[84px] items-center justify-center border border-[color:var(--color-border-default)] font-mono text-[0.625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.16em]">
-          Awaiting capital partner
+          Pending
         </div>
         <div className="mt-3 text-[0.875rem] text-[color:var(--color-text-primary)]">
           {shell.client.name}
@@ -254,7 +243,7 @@ function ExecutionBlock({
         {/* Originator — the operator signs in the moment */}
         <div className="mb-2.5 flex items-center justify-between">
           <span className="font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.16em]">
-            Originator Signature
+            Signature
           </span>
           {signature && !finalized && (
             <button
@@ -281,12 +270,15 @@ function ExecutionBlock({
             Sign the mandate
           </button>
         )}
-        <div className="mt-3 text-[0.875rem] text-[color:var(--color-text-primary)]">
-          Rare Structure LLC
-        </div>
-        <div className="text-[0.75rem] text-[color:var(--color-text-muted)]">
-          Catalyst Origination Desk
-          {signedAt ? ` · ${formatDate(signedAt)}` : ""}
+        <div className="mt-3 flex items-baseline justify-between gap-4">
+          <span className="text-[0.875rem] text-[color:var(--color-text-primary)]">
+            Rare Structure LLC
+          </span>
+          {signedAt && (
+            <span className="text-[0.75rem] text-[color:var(--color-text-muted)] tabular-nums">
+              {formatDate(signedAt)}
+            </span>
+          )}
         </div>
       </div>
     </div>
@@ -315,11 +307,11 @@ function DraftActionBar({
         >
           Confirm &amp; originate
         </button>
-        <p className="mt-2 text-center font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
-          {hasSignature
-            ? "Locks the terms + signature and renders the agreement. You share the link yourself."
-            : "Sign the mandate to confirm"}
-        </p>
+        {hasSignature && (
+          <p className="mt-2 text-center font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
+            Locks the terms + signature and renders the agreement. You share the link yourself.
+          </p>
+        )}
       </div>
     );
   }
