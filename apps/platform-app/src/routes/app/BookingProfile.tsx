@@ -11,18 +11,10 @@ import { Link, useParams } from "react-router-dom";
 import type { BookingDetail } from "@rare-structure-hq/shared";
 import { Badge, Text } from "@rare-structure-hq/ui";
 
-import { CockpitPage, DataRow, Panel, Section } from "@/app/cockpit";
+import { CockpitPage, Panel } from "@/app/cockpit";
 import { useAuth } from "@/lib/auth";
 import { getBooking } from "@/pipeline/api";
-
-const DAY = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" });
-const SLOT = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-  hour: "numeric",
-  minute: "2-digit",
-});
-const TIME = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit" });
+import { type DossierSeed, ProspectDossierBoard } from "@/proposals/ProspectDossierBoard";
 
 function fullName(b: BookingDetail): string {
   const n = [b.firstName, b.lastName].filter(Boolean).join(" ").trim();
@@ -32,23 +24,6 @@ function fullName(b: BookingDetail): string {
 function statusTone(status: string): "info" | "warn" | "success" {
   if (/cancel/i.test(status)) return "warn";
   return status === "booked" ? "info" : "success";
-}
-
-function dayOf(iso: string | null): string {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? "—" : DAY.format(d);
-}
-
-function meetingWindow(b: BookingDetail): string {
-  if (!b.startTime) return "—";
-  const start = new Date(b.startTime);
-  if (Number.isNaN(start.getTime())) return "—";
-  if (!b.endTime) return SLOT.format(start);
-  const end = new Date(b.endTime);
-  return Number.isNaN(end.getTime())
-    ? SLOT.format(start)
-    : `${SLOT.format(start)} – ${TIME.format(end)}`;
 }
 
 export default function BookingProfile() {
@@ -119,35 +94,26 @@ export default function BookingProfile() {
   }
 
   const b = booking;
+  const name = fullName(b);
+  // Seed the dossier from the booking intelligence we already have; enrichment (firmographics,
+  // overview, focus/industries/geos) populates the rest out of band. This page IS the Dossier.
+  const seed: DossierSeed = {
+    company: b.companyName ?? "",
+    domain: b.domain ?? "",
+    signerName: name === "—" ? "" : name,
+    title: b.title ?? "",
+    email: b.email ?? "",
+  };
   return (
     <CockpitPage
-      title={b.companyName || fullName(b)}
-      description="Booking captured from cal.com. Enrichment will populate the full dossier."
+      title="Dossier"
+      description="Pull the prospect, verify the intelligence on the call, then originate — the agreement materializes on save."
+      width="wide"
       actions={<Badge tone={statusTone(b.status)}>{b.status}</Badge>}
     >
       {back}
-
-      <Section label="Prospect">
-        <Panel>
-          <DataRow label="Name" value={fullName(b)} />
-          <DataRow label="Title" value={b.title ?? "—"} />
-          <DataRow label="Email" value={b.email ?? "—"} />
-        </Panel>
-      </Section>
-
-      <Section label="Company">
-        <Panel>
-          <DataRow label="Company" value={b.companyName ?? "—"} />
-          <DataRow label="Domain" value={b.domain ?? "—"} />
-        </Panel>
-      </Section>
-
-      <Section label="Meeting">
-        <Panel>
-          <DataRow label="When" value={meetingWindow(b)} />
-          <DataRow label="Booked" value={dayOf(b.bookedAt ?? b.createdAt)} />
-        </Panel>
-      </Section>
+      {/* key=bookingId remounts the board so it re-seeds when navigating between bookings. */}
+      <ProspectDossierBoard key={bookingId} token={token} seed={seed} />
     </CockpitPage>
   );
 }

@@ -45,22 +45,40 @@ const SECTION_LABELS: Record<SectionKey, string> = {
   geographies: "Geographies",
 };
 
-export function ProspectDossierBoard({ token }: { token: string }) {
+/** Initial dossier values. A caller (e.g. the booking profile) pre-fills the board from whatever
+ * intelligence it already has; every field is optional and editable on the call. Remount the board
+ * (a React `key`) to re-seed it for a different prospect. */
+export type DossierSeed = {
+  company?: string;
+  domain?: string;
+  signerName?: string;
+  title?: string;
+  email?: string;
+  hq?: string;
+  headcount?: string;
+  revenue?: string;
+  overview?: string;
+  focus?: string[];
+  industries?: string[];
+  geographies?: string[];
+};
+
+export function ProspectDossierBoard({ token, seed }: { token: string; seed?: DossierSeed }) {
   // Identity + the only fields that drive the create.
-  const [company, setCompany] = useState("");
-  const [domain, setDomain] = useState("");
-  const [signerName, setSignerName] = useState("");
-  const [title, setTitle] = useState("");
-  const [email, setEmail] = useState("");
+  const [company, setCompany] = useState(seed?.company ?? "");
+  const [domain, setDomain] = useState(seed?.domain ?? "");
+  const [signerName, setSignerName] = useState(seed?.signerName ?? "");
+  const [title, setTitle] = useState(seed?.title ?? "");
+  const [email, setEmail] = useState(seed?.email ?? "");
 
   // Firmographics + enrichment — the evaluation surface (cosmetic to the agreement).
-  const [hq, setHq] = useState("");
-  const [headcount, setHeadcount] = useState("");
-  const [capital, setCapital] = useState("");
-  const [overview, setOverview] = useState("");
-  const [focus, setFocus] = useState<string[]>([]);
-  const [industries, setIndustries] = useState<string[]>([]);
-  const [geographies, setGeographies] = useState<string[]>([]);
+  const [hq, setHq] = useState(seed?.hq ?? "");
+  const [headcount, setHeadcount] = useState(seed?.headcount ?? "");
+  const [revenue, setRevenue] = useState(seed?.revenue ?? "");
+  const [overview, setOverview] = useState(seed?.overview ?? "");
+  const [focus, setFocus] = useState<string[]>(seed?.focus ?? []);
+  const [industries, setIndustries] = useState<string[]>(seed?.industries ?? []);
+  const [geographies, setGeographies] = useState<string[]>(seed?.geographies ?? []);
 
   const [verified, setVerified] = useState<Record<SectionKey, boolean>>({
     identity: false,
@@ -112,7 +130,7 @@ export function ProspectDossierBoard({ token }: { token: string }) {
       email,
       hq,
       headcount,
-      capital,
+      revenue,
       overview,
       focus,
       industries,
@@ -212,10 +230,10 @@ export function ProspectDossierBoard({ token }: { token: string }) {
               />
               <Stat
                 icon={Banknote}
-                label="Capital / AUM"
-                value={capital}
-                onChange={setCapital}
-                placeholder="$1.2B"
+                label="Estimated Revenue Range"
+                value={revenue}
+                onChange={setRevenue}
+                placeholder="$10M–$50M"
               />
             </div>
           </div>
