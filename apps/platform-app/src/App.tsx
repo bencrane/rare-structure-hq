@@ -28,6 +28,7 @@ import MapDemo from "./routes/MapDemo";
 import SignIn from "./routes/SignIn";
 import Account from "./routes/app/Account";
 import Applications from "./routes/app/Applications";
+import Calendar from "./routes/app/Calendar";
 import Dossier from "./routes/app/Dossier";
 import MapTab from "./routes/app/MapTab";
 import Overview from "./routes/app/Overview";
@@ -151,6 +152,14 @@ export function App() {
             element={
               <RequireOperator>
                 <Proposals />
+              </RequireOperator>
+            }
+          />
+          <Route
+            path="calendar"
+            element={
+              <RequireOperator>
+                <Calendar />
               </RequireOperator>
             }
           />
