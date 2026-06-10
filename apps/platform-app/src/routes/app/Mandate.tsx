@@ -24,7 +24,8 @@ export default function Mandate() {
   if (state === "notfound" || !shell || !ref) return <Note>This mandate could not be found.</Note>;
 
   // `key={ref}` forces a fresh draft when moving between mandates without leaving the portal.
-  return <OperatorProposalDraft key={ref} shell={shell} proposalRef={ref} />;
+  // `housing="cockpit"` aligns the viewer's utility bar to the AppShell sidebar header band.
+  return <OperatorProposalDraft key={ref} shell={shell} proposalRef={ref} housing="cockpit" />;
 }
 
 function Note({ children }: { children: ReactNode }) {

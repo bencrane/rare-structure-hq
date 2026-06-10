@@ -18,6 +18,7 @@ export function ProposalViewerShell({
   backHref,
   maxWidthClass = "max-w-[768px]",
   headerAccessory,
+  housing = "standalone",
   children,
 }: {
   /** Document identity shown in the card header — e.g. "Engagement Proposal" / "Engagement Agreement". */
@@ -29,12 +30,25 @@ export function ProposalViewerShell({
   maxWidthClass?: string;
   /** Top-right header slot. Replaces the default StatusPill (e.g. the operator's draft controls). */
   headerAccessory?: React.ReactNode;
+  /**
+   * Where the shell is mounted. `"standalone"` (default) is the public proposal surface
+   * (`/p/:ref` and its sign/pay steps) — the utility bar keeps its own `py-4` band. `"cockpit"`
+   * is the operator's Mandate page (`/app/m/:ref`), housed inside AppShell: the utility bar
+   * adopts the sidebar header's fixed `min-h-16` band so the two dividers sit on one plane.
+   */
+  housing?: "standalone" | "cockpit";
   children: React.ReactNode;
 }) {
   return (
     <div className="flex min-h-screen flex-col bg-[color:var(--color-surface-base)]">
-      {/* Utility bar — persistent app chrome, identical across both pages. */}
-      <div className="flex items-center justify-between border-[color:var(--color-border-subtle)] border-b px-6 py-4">
+      {/* Utility bar — persistent app chrome. Standalone (public `/p/:ref`) keeps its own `py-4`
+          band; in the cockpit it adopts the sidebar header's fixed `min-h-16` band so the bottom
+          border lands on the same horizontal plane as the sidebar divider (`/app/m/:ref`). */}
+      <div
+        className={`flex items-center justify-between border-[color:var(--color-border-subtle)] border-b px-6 ${
+          housing === "cockpit" ? "min-h-16" : "py-4"
+        }`}
+      >
         {backHref ? (
           <Link
             to={backHref}
@@ -48,7 +62,9 @@ export function ProposalViewerShell({
           </span>
         )}
         <div className="font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
-          Rare Structure · Strategic Origination Mandate
+          {housing === "cockpit"
+            ? "Strategic Origination Mandate"
+            : "Rare Structure · Strategic Origination Mandate"}
         </div>
       </div>
 

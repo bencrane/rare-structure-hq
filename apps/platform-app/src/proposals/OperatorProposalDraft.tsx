@@ -23,9 +23,12 @@ import { type DraftStatus, useProposalDraft } from "@/proposals/useProposalDraft
 export function OperatorProposalDraft({
   shell,
   proposalRef,
+  housing = "standalone",
 }: {
   shell: ProposalShell;
   proposalRef: string;
+  /** Forwarded to ProposalViewerShell. `"cockpit"` only when mounted in the Mandate page. */
+  housing?: "standalone" | "cockpit";
 }) {
   const { draft, setOverride, setSignature, clearSignature, submit } =
     useProposalDraft(proposalRef);
@@ -41,6 +44,7 @@ export function OperatorProposalDraft({
     <ProposalViewerShell
       title="Engagement Proposal"
       maxWidthClass="max-w-[820px]"
+      housing={housing}
       headerAccessory={
         <DraftControls
           status={draft.status}
