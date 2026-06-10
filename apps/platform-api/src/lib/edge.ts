@@ -92,6 +92,8 @@ export interface EdgeProposalPublic {
   signing_token: string | null;
   signed_pdf_url: string | null;
   created_at: string | null;
+  /** Stripe ACH payment state ('none' until a PaymentIntent exists; 'succeeded' once funds settle). */
+  payment_status?: string;
 }
 
 export async function edgeGetProposal(ref: string): Promise<EdgeProposalPublic | null> {
@@ -274,4 +276,46 @@ export async function edgeTemplatePublish(
   }
   if (!res.ok) throw new EdgeError(`edge template publish: ${res.status} ${await res.text()}`);
   return (await res.json()) as EdgeTemplateRow;
+}
+
+// ── Payments (public, ACH) — the ref is the capability, no service token ─────────────────────
+// edge_api owns the Stripe surface: it mints/reuses the PaymentIntent (amount resolved server-side
+// from the proposal content) and verifies the webhook. This BFF only brokers the public ref
+// endpoints; the Stripe SECRET key never leaves core-x. The publishable key + client_secret flow
+// through to the browser (both are safe to expose by design).
+
+export interface EdgePaymentInit {
+  client_secret: string;
+  publishable_key: string;
+  amount_cents: number;
+  currency: string;
+  payment_status: string;
+}
+
+export interface EdgePaymentState {
+  payment_status: string;
+  amount_cents: number | null;
+  currency: string;
+  paid_at: string | null;
+}
+
+/** Raised when the agreement is not yet signed (edge_api 409). The pay page maps it to a prompt. */
+export class EdgePaymentNotReady extends EdgeError {}
+
+/** Mint (or reuse) the ACH PaymentIntent. edge_api resolves the amount; we never send one. */
+export async function edgeCreatePaymentIntent(ref: string): Promise<EdgePaymentInit> {
+  const res = await fetch(`${base()}/api/v1/proposals/${encodeURIComponent(ref)}/payment-intent`, {
+    method: "POST",
+  });
+  if (res.status === 409) throw new EdgePaymentNotReady("agreement not yet signed");
+  if (!res.ok) throw new EdgeError(`edge payment-intent failed: ${res.status} ${await res.text()}`);
+  return (await res.json()) as EdgePaymentInit;
+}
+
+/** The authoritative (webhook-driven) payment state. Returns null on 404. */
+export async function edgeGetPayment(ref: string): Promise<EdgePaymentState | null> {
+  const res = await fetch(`${base()}/api/v1/proposals/${encodeURIComponent(ref)}/payment`);
+  if (res.status === 404) return null;
+  if (!res.ok) throw new EdgeError(`edge payment state failed: ${res.status}`);
+  return (await res.json()) as EdgePaymentState;
 }

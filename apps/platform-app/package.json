@@ -17,6 +17,8 @@
     "@rare-structure-hq/shared": "workspace:*",
     "@rare-structure-hq/tokens": "workspace:*",
     "@rare-structure-hq/ui": "workspace:*",
+    "@stripe/react-stripe-js": "^6.1.0",
+    "@stripe/stripe-js": "^9.1.0",
     "@supabase/supabase-js": "2.49.4",
     "framer-motion": "12.39.0",
     "lucide-react": "0.469.0",

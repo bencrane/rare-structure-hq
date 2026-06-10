@@ -110,3 +110,45 @@ export const proposalSummarySchema = z.object({
   createdAt: isoTimestampSchema,
 });
 export type ProposalSummary = z.infer<typeof proposalSummarySchema>;
+
+// ── Payments (Stripe ACH) ─────────────────────────────────────────────────────
+// The post-signature step: the client authorizes a single ACH debit of the quarterly fee.
+// Mirrors edge_api's payment projections. Money is integer minor units (cents). Card is never
+// offered — the PaymentIntent is created with us_bank_account only.
+
+/** Stripe ACH PaymentIntent lifecycle, mirrored from edge_api. */
+export const paymentStatusSchema = z.enum([
+  "none",
+  "requires_payment",
+  "processing",
+  "succeeded",
+  "failed",
+  "canceled",
+]);
+export type PaymentStatus = z.infer<typeof paymentStatusSchema>;
+
+/**
+ * BFF → pay page: everything the browser needs to mount the ACH PaymentElement. `clientSecret` is a
+ * per-intent capability; `publishableKey` is public by design. No secret key crosses this boundary.
+ */
+export const paymentInitSchema = z.object({
+  clientSecret: z.string(),
+  publishableKey: z.string(),
+  amountCents: z.number().int(),
+  currency: z.string().default("usd"),
+  paymentStatus: paymentStatusSchema,
+});
+export type PaymentInit = z.infer<typeof paymentInitSchema>;
+
+/**
+ * BFF → pay page: the authoritative (webhook-driven) payment state the page polls after confirm.
+ * ACH settles asynchronously, so this — not the client confirm result — is how the page learns the
+ * funds actually settled.
+ */
+export const paymentStateSchema = z.object({
+  paymentStatus: paymentStatusSchema,
+  amountCents: z.number().int().nullable(),
+  currency: z.string().default("usd"),
+  paidAt: z.string().nullable().optional(),
+});
+export type PaymentState = z.infer<typeof paymentStateSchema>;

@@ -216,11 +216,6 @@ function formatDate(iso?: string): string {
 // Executed — signed by the client. The Stripe ACH payment handoff is grafted in Phase 5; for now
 // this is the terminal confirmation.
 function ExecutedPanel({ proposalRef, client }: { proposalRef: string; client: string }) {
-  const payBase = import.meta.env.VITE_PROPOSAL_PAY_URL as string | undefined;
-  const payUrl = payBase
-    ? `${payBase.replace(/\/$/, "")}?ref=${encodeURIComponent(proposalRef)}`
-    : null;
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -248,19 +243,15 @@ function ExecutedPanel({ proposalRef, client }: { proposalRef: string; client: s
         Agreement executed
       </div>
       <p className="mt-2 text-[0.875rem] text-[color:var(--color-text-muted)] leading-[1.55]">
-        Thank you, {client}. A countersigned copy is on its way to you.
-        {payUrl
-          ? " Continue to payment to activate the engagement."
-          : " Payment instructions follow to activate the engagement."}
+        Thank you, {client}. A countersigned copy is on its way to you. Continue to payment to
+        activate the engagement.
       </p>
-      {payUrl && (
-        <a
-          href={payUrl}
-          className="mt-5 inline-block border border-[color:var(--color-accent-primary)] bg-[color:var(--color-accent-soft)] px-6 py-3 font-mono text-[0.75rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.14em] transition-colors hover:bg-[color:var(--color-accent-primary)] hover:text-[color:var(--color-text-onAccent)]"
-        >
-          Continue to payment →
-        </a>
-      )}
+      <Link
+        to={`/p/${proposalRef}/pay`}
+        className="mt-5 inline-block border border-[color:var(--color-accent-primary)] bg-[color:var(--color-accent-soft)] px-6 py-3 font-mono text-[0.75rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.14em] transition-colors hover:bg-[color:var(--color-accent-primary)] hover:text-[color:var(--color-text-onAccent)]"
+      >
+        Continue to payment →
+      </Link>
       <div className="mt-5 font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
         {proposalRef} · Executed
       </div>
