@@ -42,8 +42,8 @@ import {
 } from "./data";
 
 const DOW = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
-const GRID_COLS = "grid grid-cols-[3.5rem_repeat(7,minmax(0,1fr))]";
-const GUTTER_PX = 56; // 3.5rem
+const GRID_COLS = "grid grid-cols-[4.5rem_repeat(7,minmax(0,1fr))]";
+const GUTTER_PX = 72; // 4.5rem
 const HOURS = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => START_HOUR + i);
 const BORDER = "border-[color:var(--color-border-subtle)]";
 const END_MIN = END_HOUR * 60;
@@ -216,7 +216,7 @@ export function WeekGrid({
   );
 
   return (
-    <div className="flex-1 overflow-auto">
+    <div className="max-h-[calc(100dvh-20rem)] overflow-auto">
       <div className="min-w-[52rem]">
         {/* Sticky header — weekday/date row + all-day band. */}
         <div
@@ -224,7 +224,7 @@ export function WeekGrid({
         >
           <div className={GRID_COLS}>
             <div className="flex items-end justify-end pr-2 pb-2">
-              <Text size="mono-xs" mono color="subtle">
+              <Text size="mono-xs" mono color="subtle" className="whitespace-nowrap">
                 {gmtLabel(now)}
               </Text>
             </div>
@@ -255,11 +255,7 @@ export function WeekGrid({
           </div>
 
           <div className={`${GRID_COLS} border-t ${BORDER}`}>
-            <div className="flex items-center justify-end py-1 pr-2">
-              <Text size="mono-xs" mono color="subtle">
-                ALL-DAY
-              </Text>
-            </div>
+            <div className="py-1 pr-2" />
             {days.map((d, i) => (
               <div key={d.toISOString()} className={`min-h-7 border-l p-1 ${BORDER}`}>
                 {allDay

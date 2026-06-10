@@ -280,17 +280,15 @@ export function CalendarInstrument() {
           </Inline>
         </Inline>
 
-        <div className="flex h-[calc(100dvh-19rem)] min-h-[30rem] flex-col overflow-hidden">
-          <WeekGrid
-            weekStart={weekStart}
-            events={events}
-            anonymized={anonymized}
-            now={now}
-            onCreate={onCreate}
-            onOpen={onOpen}
-            onMove={onMove}
-          />
-        </div>
+        <WeekGrid
+          weekStart={weekStart}
+          events={events}
+          anonymized={anonymized}
+          now={now}
+          onCreate={onCreate}
+          onOpen={onOpen}
+          onMove={onMove}
+        />
       </Box>
 
       {composer ? (
