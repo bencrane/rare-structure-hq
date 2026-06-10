@@ -1,5 +1,5 @@
 /**
- * CalendarInstrument — the full-bleed calendar tab. Toolbar (Today · week nav ·
+ * CalendarInstrument — the calendar tab. Toolbar (Today · week nav ·
  * week label · New · anonymize) over an interactive week grid backed by the
  * overlay store. Holds the view state (week offset, anonymized) and the composer/
  * toast UI state; the grid owns geometry + direct manipulation, the store owns
@@ -12,8 +12,9 @@
 import { CalendarPlus, ChevronLeft, ChevronRight, Eye, EyeOff, RotateCcw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { Button, Inline, Text } from "@rare-structure-hq/ui";
+import { Box, Button, Inline, Text } from "@rare-structure-hq/ui";
 
+import { CockpitPage } from "@/app/cockpit";
 import { type ComposerDraft, EventComposer } from "./EventComposer";
 import { WeekGrid } from "./WeekGrid";
 import {
@@ -210,79 +211,87 @@ export function CalendarInstrument() {
   };
 
   return (
-    <div className="flex h-[calc(100dvh-3.25rem)] flex-col overflow-hidden md:h-dvh">
-      <Inline
-        justify="between"
-        align="center"
-        px="4"
-        py="3"
-        unsafe_className="shrink-0 border-b border-[color:var(--color-border-subtle)]"
-      >
-        <Inline gap="3" align="center">
-          <Button size="sm" variant="secondary" onClick={() => setOffset(0)}>
-            Today
-          </Button>
-          <Inline gap="0" align="center">
-            <button
-              type="button"
-              aria-label="Previous week"
-              onClick={() => setOffset((o) => o - 1)}
-              className={ICON_BTN}
-            >
-              <ChevronLeft className="size-4" />
-            </button>
-            <button
-              type="button"
-              aria-label="Next week"
-              onClick={() => setOffset((o) => o + 1)}
-              className={ICON_BTN}
-            >
-              <ChevronRight className="size-4" />
-            </button>
+    <CockpitPage
+      title="Calendar"
+      description="Your week — book meetings live, or move blocks to free a slot."
+      width="wide"
+    >
+      <Box border="subtle" bg="base" rounded="xl" unsafe_className="overflow-hidden">
+        <Inline
+          justify="between"
+          align="center"
+          px="4"
+          py="3"
+          unsafe_className="border-b border-[color:var(--color-border-subtle)]"
+        >
+          <Inline gap="3" align="center">
+            <Button size="sm" variant="secondary" onClick={() => setOffset(0)}>
+              Today
+            </Button>
+            <Inline gap="0" align="center">
+              <button
+                type="button"
+                aria-label="Previous week"
+                onClick={() => setOffset((o) => o - 1)}
+                className={ICON_BTN}
+              >
+                <ChevronLeft className="size-4" />
+              </button>
+              <button
+                type="button"
+                aria-label="Next week"
+                onClick={() => setOffset((o) => o + 1)}
+                className={ICON_BTN}
+              >
+                <ChevronRight className="size-4" />
+              </button>
+            </Inline>
+            <Text size="display-xs" face="display" color="strong" className="whitespace-nowrap">
+              {weekLabel(weekStart)}
+            </Text>
           </Inline>
-          <Text size="display-xs" face="display" color="strong" className="whitespace-nowrap">
-            {weekLabel(weekStart)}
-          </Text>
+
+          <Inline gap="2" align="center">
+            <button
+              type="button"
+              aria-label="Reset calendar"
+              title="Clear all created meetings and moves"
+              onClick={() => {
+                resetOverlay();
+                pushToast("Calendar reset");
+              }}
+              className={ICON_BTN}
+            >
+              <RotateCcw className="size-4" />
+            </button>
+            <Button
+              size="sm"
+              variant={anonymized ? "primary" : "secondary"}
+              aria-pressed={anonymized}
+              onClick={() => setAnonymized((a) => !a)}
+            >
+              {anonymized ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              {anonymized ? "Anonymized" : "Anonymize"}
+            </Button>
+            <Button size="sm" variant="primary" onClick={openNew}>
+              <CalendarPlus className="size-4" />
+              New
+            </Button>
+          </Inline>
         </Inline>
 
-        <Inline gap="2" align="center">
-          <button
-            type="button"
-            aria-label="Reset calendar"
-            title="Clear all created meetings and moves"
-            onClick={() => {
-              resetOverlay();
-              pushToast("Calendar reset");
-            }}
-            className={ICON_BTN}
-          >
-            <RotateCcw className="size-4" />
-          </button>
-          <Button
-            size="sm"
-            variant={anonymized ? "primary" : "secondary"}
-            aria-pressed={anonymized}
-            onClick={() => setAnonymized((a) => !a)}
-          >
-            {anonymized ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-            {anonymized ? "Anonymized" : "Anonymize"}
-          </Button>
-          <Button size="sm" variant="primary" onClick={openNew}>
-            <CalendarPlus className="size-4" />
-            New
-          </Button>
-        </Inline>
-      </Inline>
-
-      <WeekGrid
-        weekStart={weekStart}
-        events={events}
-        anonymized={anonymized}
-        now={now}
-        onCreate={onCreate}
-        onOpen={onOpen}
-        onMove={onMove}
-      />
+        <div className="flex h-[calc(100dvh-19rem)] min-h-[30rem] flex-col overflow-hidden">
+          <WeekGrid
+            weekStart={weekStart}
+            events={events}
+            anonymized={anonymized}
+            now={now}
+            onCreate={onCreate}
+            onOpen={onOpen}
+            onMove={onMove}
+          />
+        </div>
+      </Box>
 
       {composer ? (
         <EventComposer
@@ -308,6 +317,6 @@ export function CalendarInstrument() {
           </div>
         </div>
       ) : null}
-    </div>
+    </CockpitPage>
   );
 }
