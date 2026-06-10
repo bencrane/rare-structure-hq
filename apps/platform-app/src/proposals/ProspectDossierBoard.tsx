@@ -165,9 +165,9 @@ export function ProspectDossierBoard({ token, seed }: { token: string; seed?: Do
         },
         fieldValues: {},
       });
-      // Land the operator in their cockpit mandate view — the editable draft inside the app
-      // chrome, sidebar rail default-collapsed.
-      navigate(`/app/mandate/${res.ref}`);
+      // Land the operator in their portal mandate page (/app/m/:ref) — a native cockpit page,
+      // sidebar from the app shell. NOT the public client surface (/p/:ref).
+      navigate(`/app/m/${res.ref}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not originate the mandate");
     } finally {

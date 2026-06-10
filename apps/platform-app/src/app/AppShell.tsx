@@ -256,10 +256,10 @@ export function AppShell() {
     if (typeof window === "undefined") return false;
     return window.localStorage.getItem(COLLAPSE_KEY) === "1";
   });
-  // The operator's mandate view (/app/mandate/:ref) shows the rail DEFAULT-COLLAPSED — its own
-  // state so it never disturbs the cockpit's persisted preference. Still toggleable on the page.
+  // The operator's mandate view (/app/m/:ref) shows the rail DEFAULT-COLLAPSED — its own state so
+  // it never disturbs the cockpit's persisted preference. Still toggleable on the page.
   const { pathname } = useLocation();
-  const onMandate = pathname.startsWith("/app/mandate/");
+  const onMandate = pathname.startsWith("/app/m/");
   const [mandateCollapsed, setMandateCollapsed] = useState(true);
 
   useEffect(() => {
