@@ -11,6 +11,7 @@
  * institutional slate-blue accent — the instrument the catalyst terminal wears.
  */
 import {
+  CalendarDays,
   CircleUser,
   ClipboardList,
   Crosshair,
@@ -46,6 +47,7 @@ const OPERATOR_NAV: NavItem[] = [
   { to: "/app/applications", label: "Applications", icon: ClipboardList },
   { to: "/app/dossier", label: "Dossier", icon: ScanSearch },
   { to: "/app/proposals", label: "Proposals", icon: FileSignature },
+  { to: "/app/calendar", label: "Calendar", icon: CalendarDays },
   { to: "/app/settings", label: "Settings", icon: FileCog },
   { to: "/app/account", label: "Account", icon: CircleUser },
 ];
