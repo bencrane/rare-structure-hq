@@ -85,6 +85,26 @@ bookingAdminRoutes.get("/:id", requireUser, async (c) => {
           source: row.profile.source,
         }
       : null,
+    latestSnapshot: row.latest_snapshot
+      ? {
+          id: row.latest_snapshot.id,
+          domain: row.latest_snapshot.domain,
+          company: row.latest_snapshot.company,
+          signerName: row.latest_snapshot.signer_name,
+          title: row.latest_snapshot.title,
+          email: row.latest_snapshot.email,
+          hq: row.latest_snapshot.hq,
+          headcount: row.latest_snapshot.headcount,
+          estRevenueRange: row.latest_snapshot.est_revenue_range,
+          overview: row.latest_snapshot.overview,
+          focus: row.latest_snapshot.focus ?? [],
+          industries: row.latest_snapshot.industries ?? [],
+          geographies: row.latest_snapshot.geographies ?? [],
+          verified: row.latest_snapshot.verified ?? {},
+          savedBy: row.latest_snapshot.saved_by,
+          createdAt: row.latest_snapshot.created_at,
+        }
+      : null,
   };
   return c.json({ data: detail });
 });

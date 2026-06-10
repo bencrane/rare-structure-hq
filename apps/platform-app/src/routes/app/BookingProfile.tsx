@@ -95,23 +95,41 @@ export default function BookingProfile() {
 
   const b = booking;
   const name = fullName(b);
-  // Identity/contact comes from the cal booking; the firmographics + tags come from the company
-  // dossier (`profile`) resolved by domain. This page IS the Dossier.
+  // The operator's LATEST saved snapshot wins when present (a superset — incl. Main Contact + the
+  // Verified map). Otherwise: identity/contact from the cal booking, firmographics + tags from the
+  // company dossier (`profile`) resolved by domain. This page IS the Dossier.
   const p = b.profile;
-  const seed: DossierSeed = {
-    company: b.companyName ?? p?.company ?? "",
-    domain: b.domain ?? "",
-    signerName: name === "—" ? "" : name,
-    title: b.title ?? "",
-    email: b.email ?? "",
-    hq: p?.hq ?? "",
-    headcount: p?.headcount ?? "",
-    revenue: p?.estRevenueRange ?? "",
-    overview: p?.overview ?? "",
-    focus: p?.focus ?? [],
-    industries: p?.industries ?? [],
-    geographies: p?.geographies ?? [],
-  };
+  const s = b.latestSnapshot;
+  const seed: DossierSeed = s
+    ? {
+        company: s.company ?? b.companyName ?? "",
+        domain: s.domain || (b.domain ?? ""),
+        signerName: s.signerName ?? "",
+        title: s.title ?? "",
+        email: s.email ?? "",
+        hq: s.hq ?? "",
+        headcount: s.headcount ?? "",
+        revenue: s.estRevenueRange ?? "",
+        overview: s.overview ?? "",
+        focus: s.focus ?? [],
+        industries: s.industries ?? [],
+        geographies: s.geographies ?? [],
+        verified: s.verified,
+      }
+    : {
+        company: b.companyName ?? p?.company ?? "",
+        domain: b.domain ?? "",
+        signerName: name === "—" ? "" : name,
+        title: b.title ?? "",
+        email: b.email ?? "",
+        hq: p?.hq ?? "",
+        headcount: p?.headcount ?? "",
+        revenue: p?.estRevenueRange ?? "",
+        overview: p?.overview ?? "",
+        focus: p?.focus ?? [],
+        industries: p?.industries ?? [],
+        geographies: p?.geographies ?? [],
+      };
   return (
     <CockpitPage
       title="Dossier"

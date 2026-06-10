@@ -160,6 +160,25 @@ export interface EdgeCompanyProfile {
   source: string | null;
 }
 
+export interface EdgeCompanyProfileSnapshot {
+  id: number;
+  domain: string;
+  company: string | null;
+  signer_name: string | null;
+  title: string | null;
+  email: string | null;
+  hq: string | null;
+  headcount: string | null;
+  est_revenue_range: string | null;
+  overview: string | null;
+  focus: string[];
+  industries: string[];
+  geographies: string[];
+  verified: Record<string, boolean>;
+  saved_by: string | null;
+  created_at: string | null;
+}
+
 export interface EdgeBookingDetail extends EdgeBookingSummary {
   ical_uid: string | null;
   cal_booking_id: number | null;
@@ -168,6 +187,8 @@ export interface EdgeBookingDetail extends EdgeBookingSummary {
   booked_at: string | null;
   updated_at: string | null;
   profile: EdgeCompanyProfile | null;
+  /** The operator's latest saved dossier snapshot for this domain (else null). */
+  latest_snapshot: EdgeCompanyProfileSnapshot | null;
 }
 
 /** One booking by its uuid for the profile page. Returns null on 404. */
@@ -178,6 +199,39 @@ export async function edgeGetBooking(id: string): Promise<EdgeBookingDetail | nu
   if (res.status === 404) return null;
   if (!res.ok) throw new EdgeError(`edge booking get failed: ${res.status}`);
   return (await res.json()) as EdgeBookingDetail;
+}
+
+// ── Company-profile snapshots (the Dossier's "Save Profile") ──────────────────
+// Append-only: POST appends one immutable snapshot for a domain. The BFF brokers the operator
+// session; the service token rides to edge_api. The read (latest snapshot) flows through the
+// booking detail above — no direct DB access on this surface.
+
+export interface EdgeCompanyProfileSnapshotCreate {
+  company?: string | null;
+  signer_name?: string | null;
+  title?: string | null;
+  email?: string | null;
+  hq?: string | null;
+  headcount?: string | null;
+  est_revenue_range?: string | null;
+  overview?: string | null;
+  focus?: string[];
+  industries?: string[];
+  geographies?: string[];
+  verified?: Record<string, boolean>;
+  saved_by?: string | null;
+}
+
+export async function edgeSaveCompanyProfileSnapshot(
+  domain: string,
+  body: EdgeCompanyProfileSnapshotCreate,
+): Promise<EdgeCompanyProfileSnapshot> {
+  const res = await fetch(
+    `${base()}/api/v1/company-profiles/${encodeURIComponent(domain)}/snapshots`,
+    { method: "POST", headers: serviceHeaders(), body: JSON.stringify(body) },
+  );
+  if (!res.ok) throw new EdgeError(`edge snapshot save failed: ${res.status} ${await res.text()}`);
+  return (await res.json()) as EdgeCompanyProfileSnapshot;
 }
 
 // ── Proposal-template authoring (Settings surface) ───────────────────────────

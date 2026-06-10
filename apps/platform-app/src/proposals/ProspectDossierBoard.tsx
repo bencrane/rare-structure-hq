@@ -32,7 +32,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { createProposal, listTemplates } from "./api";
+import { createProposal, listTemplates, saveDossierSnapshot } from "./api";
 
 type SectionKey = "identity" | "signer" | "overview" | "focus" | "industries" | "geographies";
 
@@ -61,6 +61,8 @@ export type DossierSeed = {
   focus?: string[];
   industries?: string[];
   geographies?: string[];
+  /** The per-section verify map restored from the latest saved snapshot. */
+  verified?: Partial<Record<SectionKey, boolean>>;
 };
 
 export function ProspectDossierBoard({ token, seed }: { token: string; seed?: DossierSeed }) {
@@ -81,12 +83,12 @@ export function ProspectDossierBoard({ token, seed }: { token: string; seed?: Do
   const [geographies, setGeographies] = useState<string[]>(seed?.geographies ?? []);
 
   const [verified, setVerified] = useState<Record<SectionKey, boolean>>({
-    identity: false,
-    signer: false,
-    overview: false,
-    focus: false,
-    industries: false,
-    geographies: false,
+    identity: seed?.verified?.identity ?? false,
+    signer: seed?.verified?.signer ?? false,
+    overview: seed?.verified?.overview ?? false,
+    focus: seed?.verified?.focus ?? false,
+    industries: seed?.verified?.industries ?? false,
+    geographies: seed?.verified?.geographies ?? false,
   });
 
   const [templates, setTemplates] = useState<ProposalTemplateMeta[] | null>(null);
@@ -95,6 +97,7 @@ export function ProspectDossierBoard({ token, seed }: { token: string; seed?: Do
   const [error, setError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [justSaved, setJustSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -114,38 +117,40 @@ export function ProspectDossierBoard({ token, seed }: { token: string; seed?: Do
   const toggleVerified = (k: SectionKey) => setVerified((v) => ({ ...v, [k]: !v[k] }));
   const verifiedCount = Object.values(verified).filter(Boolean).length;
 
-  // Persist the verified dossier to localStorage keyed by domain/company so it survives a reload —
-  // the seam where this becomes a real "save prospect" call.
-  function saveProfile() {
-    const slug =
-      (domain.trim() || company.trim() || "untitled")
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-+|-+$/g, "") || "untitled";
-    const profile = {
-      company,
-      domain,
-      signerName,
-      title,
-      email,
-      hq,
-      headcount,
-      revenue,
-      overview,
-      focus,
-      industries,
-      geographies,
-      verified,
-      savedAt: new Date().toISOString(),
-    };
-    try {
-      window.localStorage.setItem(`rs.dossier.${slug}`, JSON.stringify(profile));
-    } catch {
-      // storage unavailable — the save is still acknowledged in-session.
+  // Append the verified dossier as an IMMUTABLE snapshot, keyed by domain (the resolution key).
+  // Each click adds a new timestamped row via the BFF → edge_api; nothing is ever overwritten.
+  // The Dossier reloads the latest snapshot for a domain when one exists, else the seed.
+  async function saveProfile() {
+    const key = domain.trim().toLowerCase();
+    if (!key) {
+      setError("Add a domain before saving the profile — it is the snapshot's key.");
+      return;
     }
-    setSavedAt(profile.savedAt);
-    setJustSaved(true);
-    setTimeout(() => setJustSaved(false), 1800);
+    setSaving(true);
+    setError(null);
+    try {
+      const snap = await saveDossierSnapshot(token, key, {
+        company,
+        signerName,
+        title,
+        email,
+        hq,
+        headcount,
+        estRevenueRange: revenue,
+        overview,
+        focus,
+        industries,
+        geographies,
+        verified,
+      });
+      setSavedAt(snap.createdAt ?? new Date().toISOString());
+      setJustSaved(true);
+      setTimeout(() => setJustSaved(false), 1800);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not save the profile");
+    } finally {
+      setSaving(false);
+    }
   }
 
   const identityName = company.trim() || signerName.trim();
@@ -315,14 +320,15 @@ export function ProspectDossierBoard({ token, seed }: { token: string; seed?: Do
             <button
               type="button"
               onClick={saveProfile}
-              className={`flex shrink-0 items-center justify-center gap-2 border px-6 py-2.5 font-mono text-mono-xs uppercase tracking-[0.14em] transition-colors ${
+              disabled={saving}
+              className={`flex shrink-0 items-center justify-center gap-2 border px-6 py-2.5 font-mono text-mono-xs uppercase tracking-[0.14em] transition-colors disabled:opacity-50 ${
                 justSaved
                   ? "border-[color:var(--color-border-accent)] bg-[color:var(--color-accent-soft)] text-[color:var(--color-text-accent)]"
                   : "border-[color:var(--color-border-default)] text-[color:var(--color-text-muted)] hover:border-[color:var(--color-text-accent)] hover:text-[color:var(--color-text-accent)]"
               }`}
             >
               {justSaved ? <Check className="size-3.5" /> : <Save className="size-3.5" />}
-              {justSaved ? "Saved" : "Save profile"}
+              {justSaved ? "Saved" : saving ? "Saving…" : "Save profile"}
             </button>
           </div>
         </div>
