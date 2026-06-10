@@ -32,6 +32,15 @@ export interface CalEvent {
   capability?: string;
   geo?: string;
   allDay?: boolean;
+  /** Attendee on a booked meeting (the prospect). */
+  attendeeName?: string;
+  attendeeEmail?: string;
+  location?: string;
+  notes?: string;
+  /** A real meeting the operator placed/booked live (vs. a seeded backdrop block). */
+  booked?: boolean;
+  /** Origin in the merged view — seeded backdrop or operator-created. */
+  source?: "seed" | "user";
 }
 
 export interface PositionedEvent extends CalEvent {
@@ -406,6 +415,12 @@ export function positionDay(dayEvents: CalEvent[]): PositionedEvent[] {
  * without exposing a single client name.
  */
 export function eventLabel(ev: CalEvent, anonymized: boolean): { title: string; meta?: string } {
+  if (ev.source === "user" || ev.booked) {
+    if (anonymized) return { title: ev.booked ? "Reserved" : "Hold" };
+    const meta =
+      ev.attendeeName ?? (ev.capability && ev.geo ? `${ev.capability} · ${ev.geo}` : ev.location);
+    return { title: ev.title, meta };
+  }
   if (!anonymized) {
     const meta =
       ev.capability && ev.geo ? `${ev.capability} · ${ev.geo}` : (ev.capability ?? ev.geo);
@@ -505,4 +520,77 @@ export function gmtLabel(d: Date): string {
   const h = Math.floor(Math.abs(offMin) / 60);
   const m = Math.abs(offMin) % 60;
   return m ? `GMT${sign}${h}:${String(m).padStart(2, "0")}` : `GMT${sign}${h}`;
+}
+
+// ─────────────────────────── interactive layer ───────────────────────────
+// The seeded week above is the immutable backdrop. Everything below powers the
+// live, editable calendar: a snap grid, absolute-dated user events the operator
+// creates/books, and patches that move or clear backdrop blocks so a slot can be
+// "found" on a call. Persistence is local (store.ts); the booking side-effect is
+// stubbed (invite.ts) until the cal.com / Google Calendar wiring lands.
+
+export const SNAP_MIN = 15;
+
+/** An event the operator created — anchored to an absolute date, not a week. */
+export interface UserEvent {
+  id: string;
+  date: string; // YYYY-MM-DD (local)
+  start: number;
+  end: number;
+  title: string;
+  category: EventCategory;
+  attendeeName?: string;
+  attendeeEmail?: string;
+  location?: string;
+  notes?: string;
+  booked?: boolean;
+}
+
+/** A move/remove applied to a seeded backdrop block, keyed by its stable id. */
+export type SeedPatch = { deleted: true } | { day: number; start: number; end: number };
+
+export function snapMinutes(min: number): number {
+  return Math.round(min / SNAP_MIN) * SNAP_MIN;
+}
+
+export function clampMinutes(min: number): number {
+  return Math.max(DAY_START_MIN, Math.min(END_HOUR * 60, min));
+}
+
+export function dateKey(d: Date): string {
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${m}-${day}`;
+}
+
+export function parseDateKey(s: string): Date {
+  const [y, m, d] = s.split("-").map(Number);
+  return new Date(y ?? 1970, (m ?? 1) - 1, d ?? 1);
+}
+
+/** Whole-day difference (b − a), both floored to local midnight. */
+export function diffDays(a: Date, b: Date): number {
+  const am = new Date(a.getFullYear(), a.getMonth(), a.getDate()).getTime();
+  const bm = new Date(b.getFullYear(), b.getMonth(), b.getDate()).getTime();
+  return Math.round((bm - am) / 86_400_000);
+}
+
+/** "4:00p" — a single clock time, for composer summaries and toasts. */
+export function ampmLabel(min: number): string {
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  const mer = h < 12 ? "a" : "p";
+  const hh = h % 12 === 0 ? 12 : h % 12;
+  return `${hh}:${String(m).padStart(2, "0")}${mer}`;
+}
+
+/** minutes-from-midnight → "HH:MM" for <input type="time">. */
+export function minutesToClock(min: number): string {
+  return `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`;
+}
+
+/** "HH:MM" → minutes-from-midnight. */
+export function clockToMinutes(clock: string): number {
+  const [h, m] = clock.split(":").map(Number);
+  return (h ?? 0) * 60 + (m ?? 0);
 }
