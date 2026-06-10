@@ -31,6 +31,7 @@ import Applications from "./routes/app/Applications";
 import BookingProfile from "./routes/app/BookingProfile";
 import Calendar from "./routes/app/Calendar";
 import Dossier from "./routes/app/Dossier";
+import Mandate from "./routes/app/Mandate";
 import MapTab from "./routes/app/MapTab";
 import Overview from "./routes/app/Overview";
 import Pipeline from "./routes/app/Pipeline";
@@ -158,14 +159,14 @@ export function App() {
               </RequireOperator>
             }
           />
-          {/* Operator's own view of a minted mandate — the same proposal shell as the public
-              `/p/:ref`, but inside the cockpit chrome (sidebar default-collapsed). Originate
-              lands here; the client-facing link stays the public `/p/:ref`. */}
+          {/* Operator's portal view of a minted mandate — a NATIVE cockpit page (sidebar from the
+              app shell), keyed to the proposal's template + prospect. Originate lands here; the
+              client-facing link stays the public `/p/:ref`. */}
           <Route
-            path="mandate/:ref"
+            path="m/:ref"
             element={
               <RequireOperator>
-                <ProposalShellPage />
+                <Mandate />
               </RequireOperator>
             }
           />
