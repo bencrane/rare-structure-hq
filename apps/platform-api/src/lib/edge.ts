@@ -87,7 +87,10 @@ export interface EdgeProposalPublic {
   client: { name: string; signer_name: string; title: string | null };
   effective_date: string;
   monthly_fee: string;
-  quarterly_total: string;
+  duration_months: number;
+  billing_cadence: string;
+  total: string;
+  quarterly_total: string; // legacy alias of total (kept for back-compat)
   success_fee_tiers: { tier: string; rate: string }[];
   signing_token: string | null;
   signed_pdf_url: string | null;
