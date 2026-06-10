@@ -15,19 +15,21 @@
  * thin CockpitPage composition.
  */
 import type { ProposalTemplateMeta } from "@rare-structure-hq/shared";
+import { cx } from "@rare-structure-hq/ui";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   Banknote,
   Building2,
   Check,
+  ChevronDown,
   MapPin,
   Plus,
   Save,
   ShieldCheck,
-  Sparkles,
   Users,
   X,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { createProposal, listTemplates } from "./api";
@@ -71,7 +73,6 @@ export function ProspectDossierBoard({ token }: { token: string }) {
 
   const [templates, setTemplates] = useState<ProposalTemplateMeta[] | null>(null);
   const [templateId, setTemplateId] = useState("");
-  const [pulled, setPulled] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<string | null>(null);
@@ -95,51 +96,8 @@ export function ProspectDossierBoard({ token }: { token: string }) {
   const toggleVerified = (k: SectionKey) => setVerified((v) => ({ ...v, [k]: !v[k] }));
   const verifiedCount = Object.values(verified).filter(Boolean).length;
 
-  // Enrichment seam — wire Parallel/Exa here. For now it scaffolds an editable DRAFT the operator
-  // verifies on the call; suggestions are generic capital-partner categories, never asserted facts.
-  function pullResearch() {
-    setPulled(true);
-    setVerified({
-      identity: false,
-      signer: false,
-      overview: false,
-      focus: false,
-      industries: false,
-      geographies: false,
-    });
-    setFocus((f) => (f.length ? f : ["Buyout", "Growth equity"]));
-    setIndustries((i) => (i.length ? i : ["Private Equity", "Private Credit"]));
-    setGeographies((g) => (g.length ? g : ["North America"]));
-  }
-
-  const identityName = company.trim() || signerName.trim();
-  const canOriginate = !!identityName && !!templateId && !submitting;
-
-  async function originate() {
-    if (!canOriginate) return;
-    setSubmitting(true);
-    setError(null);
-    try {
-      const res = await createProposal(token, {
-        templateId,
-        client: {
-          name: identityName,
-          email: email.trim() || undefined,
-          title: title.trim() || undefined,
-        },
-        fieldValues: {},
-      });
-      // Land the operator in the proposal — signed in, it opens as their editable draft.
-      navigate(`/p/${res.ref}`);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not originate the mandate");
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  // Save the verified company profile. PROTOTYPE: persists the full dossier to localStorage keyed by
-  // domain/company so it survives a reload — the seam where this becomes a real "save prospect" call.
+  // Persist the verified dossier to localStorage keyed by domain/company so it survives a reload —
+  // the seam where this becomes a real "save prospect" call.
   function saveProfile() {
     const slug =
       (domain.trim() || company.trim() || "untitled")
@@ -172,6 +130,32 @@ export function ProspectDossierBoard({ token }: { token: string }) {
     setTimeout(() => setJustSaved(false), 1800);
   }
 
+  const identityName = company.trim() || signerName.trim();
+  const canOriginate = !!identityName && !!templateId && !submitting;
+
+  async function originate() {
+    if (!canOriginate) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await createProposal(token, {
+        templateId,
+        client: {
+          name: identityName,
+          email: email.trim() || undefined,
+          title: title.trim() || undefined,
+        },
+        fieldValues: {},
+      });
+      // Land the operator in the proposal — signed in, it opens as their editable draft.
+      navigate(`/p/${res.ref}`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not originate the mandate");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   return (
     <div className="pb-16 md:pb-24">
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -184,16 +168,9 @@ export function ProspectDossierBoard({ token }: { token: string }) {
                 <Building2 className="size-3.5" />
                 Prospect Dossier
               </div>
-              <div className="flex items-center gap-2">
-                {pulled && (
-                  <span className="border border-[color:var(--color-border-default)] px-2 py-1 font-mono text-[0.5rem] text-[color:var(--color-text-muted)] uppercase tracking-[0.16em]">
-                    Draft · verify
-                  </span>
-                )}
-                <span className="font-mono text-[0.5rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.16em]">
-                  {verifiedCount}/6 verified
-                </span>
-              </div>
+              <span className="font-mono text-[0.5rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.16em]">
+                {verifiedCount}/6 verified
+              </span>
             </div>
 
             <div className="flex items-center gap-5">
@@ -309,18 +286,13 @@ export function ProspectDossierBoard({ token }: { token: string }) {
             <TagEditor tags={geographies} onChange={setGeographies} placeholder="Add a geography" />
           </SectionCard>
 
-          {/* Save the verified company profile */}
-          <div className="mt-2 flex flex-col gap-4 border-[color:var(--color-border-subtle)] border-t pt-6 sm:flex-row sm:items-center sm:justify-between">
-            <div className="min-w-0">
-              <div className="font-mono text-[0.625rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.2em]">
-                Company profile
-              </div>
-              <p className="mt-1.5 text-[color:var(--color-text-subtle)] text-body-sm">
-                {savedAt
-                  ? `Last saved at ${formatTime(savedAt)}`
-                  : "Save the verified specifications for this prospect."}
-              </p>
-            </div>
+          {/* Save the verified profile to the dossier store */}
+          <div className="mt-2 flex items-center justify-end gap-3 border-[color:var(--color-border-subtle)] border-t pt-6">
+            {savedAt && (
+              <span className="font-mono text-[0.625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.16em]">
+                Saved {formatTime(savedAt)}
+              </span>
+            )}
             <button
               type="button"
               onClick={saveProfile}
@@ -339,57 +311,38 @@ export function ProspectDossierBoard({ token }: { token: string }) {
         {/* ── Origination (right, 1/3) ─────────────────────────────────────── */}
         <aside className="lg:sticky lg:top-6 lg:self-start">
           <div className="border border-[color:var(--color-border-subtle)] bg-[color:var(--color-surface-raised)] p-5">
-            <div className="mb-1 font-mono text-[0.625rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.2em]">
-              Originate
+            {/* Readiness — the gating signal for originating */}
+            <div className="mb-5">
+              <div className="flex items-center justify-between font-mono text-[0.625rem] uppercase tracking-[0.2em]">
+                <span className="flex items-center gap-1.5 text-[color:var(--color-text-accent)]">
+                  <ShieldCheck className="size-3.5" />
+                  Verified
+                </span>
+                <span className="text-[color:var(--color-text-muted)] tabular-nums">
+                  {verifiedCount} / 6
+                </span>
+              </div>
+              <div className="mt-2 h-1 w-full overflow-hidden bg-[color:var(--color-surface-sunken)]">
+                <div
+                  className="h-full bg-[color:var(--color-accent-primary)] transition-[width] duration-300"
+                  style={{ width: `${(verifiedCount / 6) * 100}%` }}
+                />
+              </div>
             </div>
-            <p className="mb-4 text-[color:var(--color-text-muted)] text-body-sm leading-[1.5]">
-              On save the agreement is rendered and the executive summary materializes at its link —
-              no separate "create a proposal" step.
-            </p>
 
-            <button
-              type="button"
-              onClick={pullResearch}
-              className="mb-4 flex w-full items-center justify-center gap-2 border border-[color:var(--color-border-default)] py-2.5 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase tracking-[0.14em] transition-colors hover:border-[color:var(--color-text-accent)] hover:text-[color:var(--color-text-accent)]"
-            >
-              <Sparkles className="size-3.5" />
-              {pulled ? "Re-pull research" : "Pull research"}
-            </button>
-
-            <label className="mb-4 block">
+            {/* Engagement template */}
+            <div className="mb-5">
               <span className="mb-1.5 block font-mono text-[color:var(--color-text-subtle)] text-mono-xs uppercase tracking-[0.14em]">
                 Engagement
               </span>
-              {/* biome-ignore lint/a11y/noLabelWithoutControl: label wraps the select. */}
-              <select
-                value={templateId}
-                onChange={(e) => setTemplateId(e.target.value)}
-                disabled={!templates}
-                className="w-full border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-sunken)] px-3 py-2.5 text-[color:var(--color-text-primary)] text-body-sm outline-none focus:border-[color:var(--color-text-accent)]"
-              >
-                {!templates && <option>Loading…</option>}
-                {templates?.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <div className="mb-4 flex items-center justify-between gap-2 border-[color:var(--color-border-subtle)] border-t border-b py-3 font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
-              <span className="flex items-center gap-1.5">
-                <ShieldCheck className="size-3.5 text-[color:var(--color-text-accent)]" />
-                Verified
-              </span>
-              <span className="text-[color:var(--color-text-muted)]">
-                {verifiedCount} of 6 sections
-              </span>
+              <EngagementSelect templates={templates} value={templateId} onChange={setTemplateId} />
             </div>
 
             {error && (
               <p className="mb-3 text-[color:var(--color-state-warn)] text-mono-xs">{error}</p>
             )}
 
+            {/* Originate */}
             <button
               type="button"
               onClick={originate}
@@ -410,13 +363,117 @@ export function ProspectDossierBoard({ token }: { token: string }) {
   );
 }
 
+// ── Building blocks ──────────────────────────────────────────────────────
+
+// Custom engagement picker — a trigger + an inline drawer that animates open (no native overlay).
+function EngagementSelect({
+  templates,
+  value,
+  onChange,
+}: {
+  templates: ProposalTemplateMeta[] | null;
+  value: string;
+  onChange: (id: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const reduce = useReducedMotion();
+  const ref = useRef<HTMLDivElement>(null);
+  const selected = templates?.find((t) => t.id === value);
+  const ready = !!templates;
+
+  // Close on outside-click / Escape — a real popover, not a native overlay.
+  useEffect(() => {
+    if (!open) return;
+    const onClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        disabled={!ready}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => ready && setOpen((o) => !o)}
+        className="flex w-full items-center justify-between gap-2 border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-sunken)] px-3 py-2.5 text-left text-body-sm transition-colors hover:border-[color:var(--color-border-strong)] disabled:opacity-50"
+      >
+        <span
+          className={cx(
+            "truncate",
+            selected
+              ? "text-[color:var(--color-text-primary)]"
+              : "text-[color:var(--color-text-subtle)]",
+          )}
+        >
+          {selected?.label ?? (ready ? "Select an engagement" : "Loading…")}
+        </span>
+        <ChevronDown
+          className={cx(
+            "size-4 shrink-0 transition-transform duration-200",
+            open
+              ? "rotate-180 text-[color:var(--color-text-accent)]"
+              : "text-[color:var(--color-text-muted)]",
+          )}
+        />
+      </button>
+
+      <AnimatePresence initial={false}>
+        {open && ready && (
+          <motion.div
+            initial={reduce ? { opacity: 0 } : { height: 0, opacity: 0 }}
+            animate={reduce ? { opacity: 1 } : { height: "auto", opacity: 1 }}
+            exit={reduce ? { opacity: 0 } : { height: 0, opacity: 0 }}
+            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+            className="overflow-hidden"
+          >
+            <ul className="border border-[color:var(--color-border-default)] border-t-0 bg-[color:var(--color-surface-sunken)]">
+              {templates.map((t) => {
+                const active = t.id === value;
+                return (
+                  <li key={t.id}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onChange(t.id);
+                        setOpen(false);
+                      }}
+                      className={cx(
+                        "flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left text-body-sm transition-colors",
+                        active
+                          ? "bg-[color:var(--color-accent-soft)] text-[color:var(--color-text-accent)]"
+                          : "text-[color:var(--color-text-muted)] hover:bg-[color:var(--color-surface-raised)] hover:text-[color:var(--color-text-primary)]",
+                      )}
+                    >
+                      <span className="truncate">{t.label}</span>
+                      {active && <Check className="size-3.5 shrink-0" />}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 function formatTime(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
   return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 }
-
-// ── Building blocks ──────────────────────────────────────────────────────
 
 function SectionCard({
   label,
