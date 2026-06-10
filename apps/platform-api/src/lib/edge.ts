@@ -84,6 +84,8 @@ export interface EdgeProposalPublic {
   ref: string;
   status: string;
   template_label: string;
+  /** Engagement-page blurb, resolved by the engine from the proposal's template (read-time). */
+  exec_summary: string;
   client: { name: string; signer_name: string; title: string | null };
   effective_date: string;
   monthly_fee: string;
