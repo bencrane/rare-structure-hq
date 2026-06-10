@@ -14,10 +14,12 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 
 import {
+  type ConfirmProposalResult,
   type ProposalShell,
   type ProposalStatus,
   type ProposalSummary,
   type ProposalTemplateMeta,
+  confirmProposalInputSchema,
   createProposalInputSchema,
 } from "@rare-structure-hq/shared";
 
@@ -25,8 +27,10 @@ import { type AuthVariables, requireUser } from "../auth.ts";
 import { db } from "../lib/db.ts";
 import {
   DOCUMENSO_APP_URL,
+  EdgeAlreadyOriginated,
   EdgeError,
   EdgePaymentNotReady,
+  edgeConfirmProposal,
   edgeCreatePaymentIntent,
   edgeCreateProposal,
   edgeGetPayment,
@@ -109,6 +113,42 @@ proposalAdminRoutes.post("/", requireUser, async (c) => {
   }
 });
 
+// POST /api/v1/proposals/:ref/confirm — operator originates from the mandate editor: STAMP the
+// locked-in structured values onto the instance, then render the PDF + create the signing envelope.
+// Auth-gated. 409 → already originated (the document is frozen).
+proposalAdminRoutes.post("/:ref/confirm", requireUser, async (c) => {
+  const ref = c.req.param("ref");
+  const parsed = confirmProposalInputSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) {
+    throw new HTTPException(400, {
+      message: parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; "),
+    });
+  }
+  const input = parsed.data;
+
+  try {
+    const r = await edgeConfirmProposal(ref, {
+      monthly_fee_cents: input.monthlyFeeCents,
+      duration_months: input.durationMonths,
+      billing_cadence: input.billingCadence,
+      success_fee_schedule: input.successFeeTiers,
+      effective_date: input.effectiveDate,
+    });
+    const result: ConfirmProposalResult = {
+      ref: r.ref,
+      status: mapStatus(r.status),
+      provisioned: r.provisioned,
+      signingToken: r.signing_token ?? undefined,
+      provisionError: r.provision_error,
+    };
+    return c.json({ data: result });
+  } catch (e) {
+    if (e instanceof EdgeAlreadyOriginated) throw new HTTPException(409, { message: e.message });
+    if (e instanceof EdgeError) throw new HTTPException(502, { message: e.message });
+    throw e;
+  }
+});
+
 // GET /api/v1/proposals — operator-facing list (most recent first), for the cockpit Proposals
 // tab. Auth-gated. Delegates to the engine.
 proposalAdminRoutes.get("/", requireUser, async (c) => {
@@ -158,6 +198,13 @@ proposalAdminRoutes.get("/:ref", async (c) => {
     // guard for an older edge_api that doesn't yet return the field.
     execSummary: p.exec_summary || EXEC_SUMMARY,
     headline,
+    // Structured pricing — what the mandate editor seeds its inputs from (headline is its display).
+    pricing: {
+      monthlyFeeCents: p.monthly_fee_cents ?? 0,
+      durationMonths: p.duration_months,
+      billingCadence: p.billing_cadence,
+      successFeeTiers: p.success_fee_tiers ?? [],
+    },
     createdAt: p.created_at ?? new Date().toISOString(),
     signingToken: p.signing_token ?? undefined,
     documensoHost: DOCUMENSO_APP_URL,

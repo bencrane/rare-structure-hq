@@ -45,7 +45,7 @@ export default function Proposals() {
       <Grid cols={1} lgCols={2} gap="4">
         <Section label="New proposal">
           <Panel>
-            <ProposalIntakeForm token={token} onCreated={refresh} />
+            <ProposalIntakeForm token={token} />
           </Panel>
         </Section>
 

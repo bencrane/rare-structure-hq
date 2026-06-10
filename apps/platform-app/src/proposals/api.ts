@@ -8,6 +8,8 @@
  */
 import type {
   CompanyProfileSnapshot,
+  ConfirmProposalInput,
+  ConfirmProposalResult,
   CreateProposalInput,
   CreateProposalResult,
   PaymentInit,
@@ -69,6 +71,35 @@ export async function saveDossierSnapshot(
   );
   if (!res.ok) throw new Error(`save failed: ${res.status} ${await res.text()}`);
   return (await res.json()).data as CompanyProfileSnapshot;
+}
+
+/**
+ * Originate from the mandate editor ("Confirm & originate"): STAMP the locked-in structured values
+ * onto the instance → render the PDF + create the signing envelope. Returns the originate result
+ * (incl. the live signing token). Throws on 409 (already originated) and other failures.
+ */
+/** Thrown when confirm hits 409 — the proposal is already originated (envelope exists, immutable). */
+export class AlreadyOriginatedError extends Error {
+  constructor() {
+    super("This mandate is already originated.");
+    this.name = "AlreadyOriginatedError";
+  }
+}
+
+export async function confirmProposal(
+  token: string,
+  ref: string,
+  input: ConfirmProposalInput,
+): Promise<ConfirmProposalResult> {
+  const res = await fetch(`${API_BASE}/api/v1/proposals/${encodeURIComponent(ref)}/confirm`, {
+    method: "POST",
+    headers: authHeaders(token),
+    body: JSON.stringify(input),
+  });
+  // 409 = already originated — a terminal "ready" state, never a retry-able failure.
+  if (res.status === 409) throw new AlreadyOriginatedError();
+  if (!res.ok) throw new Error(`confirm failed: ${res.status} ${await res.text()}`);
+  return (await res.json()).data as ConfirmProposalResult;
 }
 
 /** Email the shell link to the proposal's client (operator-only). */

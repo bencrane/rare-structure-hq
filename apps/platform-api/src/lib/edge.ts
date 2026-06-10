@@ -63,6 +63,43 @@ export interface EdgeCreateResult {
   provision_error: string | null;
 }
 
+/** Raised on a 409 from confirm — the proposal already has an envelope (already originated). */
+export class EdgeAlreadyOriginated extends EdgeError {}
+
+export interface EdgeConfirmInput {
+  monthly_fee_cents?: number;
+  duration_months?: number;
+  billing_cadence?: string;
+  success_fee_schedule?: { tier: string; rate: string }[];
+  effective_date?: string;
+}
+
+export interface EdgeConfirmResult {
+  ref: string;
+  status: string;
+  provisioned: boolean;
+  provision_error: string | null;
+  signing_token: string | null;
+}
+
+/**
+ * Originate: stamp the operator's locked-in values onto the draft, render the PDF + create the
+ * envelope. 409 → already originated (immutable). Service-token gated.
+ */
+export async function edgeConfirmProposal(
+  ref: string,
+  input: EdgeConfirmInput,
+): Promise<EdgeConfirmResult> {
+  const res = await fetch(`${base()}/api/v1/proposals/${encodeURIComponent(ref)}/confirm`, {
+    method: "POST",
+    headers: serviceHeaders(),
+    body: JSON.stringify(input),
+  });
+  if (res.status === 409) throw new EdgeAlreadyOriginated(`proposal already originated: ${ref}`);
+  if (!res.ok) throw new EdgeError(`edge confirm failed: ${res.status} ${await res.text()}`);
+  return (await res.json()) as EdgeConfirmResult;
+}
+
 export async function edgeCreateProposal(input: EdgeCreateInput): Promise<EdgeCreateResult> {
   const res = await fetch(`${base()}/api/v1/proposals`, {
     method: "POST",
@@ -89,6 +126,7 @@ export interface EdgeProposalPublic {
   client: { name: string; signer_name: string; title: string | null };
   effective_date: string;
   monthly_fee: string;
+  monthly_fee_cents: number;
   duration_months: number;
   billing_cadence: string;
   total: string;
