@@ -154,7 +154,9 @@ proposalAdminRoutes.get("/:ref", async (c) => {
     status: mapStatus(p.status, p.payment_status),
     templateLabel: p.template_label,
     client: { name: p.client.name, title: p.client.title ?? undefined },
-    execSummary: EXEC_SUMMARY,
+    // Per-template, org-keyed blurb resolved by the engine. EXEC_SUMMARY is only a transition
+    // guard for an older edge_api that doesn't yet return the field.
+    execSummary: p.exec_summary || EXEC_SUMMARY,
     headline,
     createdAt: p.created_at ?? new Date().toISOString(),
     signingToken: p.signing_token ?? undefined,
