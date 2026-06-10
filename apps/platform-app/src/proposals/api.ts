@@ -7,6 +7,7 @@
  * public client shell (`/p/:ref`) uses a separate unauthenticated fetch.
  */
 import type {
+  CompanyProfileSnapshot,
   CreateProposalInput,
   CreateProposalResult,
   PaymentInit,
@@ -14,6 +15,7 @@ import type {
   ProposalShell,
   ProposalSummary,
   ProposalTemplateMeta,
+  SaveCompanyProfileSnapshotInput,
 } from "@rare-structure-hq/shared";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "";
@@ -50,6 +52,23 @@ export async function createProposal(
   });
   if (!res.ok) throw new Error(`create failed: ${res.status} ${await res.text()}`);
   return (await res.json()).data as CreateProposalResult;
+}
+
+/**
+ * Append the verified dossier as an immutable snapshot (the Dossier's "Save Profile"). Keyed by
+ * `domain` — each call adds a new timestamped row; nothing is overwritten. Returns the saved row.
+ */
+export async function saveDossierSnapshot(
+  token: string,
+  domain: string,
+  input: SaveCompanyProfileSnapshotInput,
+): Promise<CompanyProfileSnapshot> {
+  const res = await fetch(
+    `${API_BASE}/api/v1/company-profiles/${encodeURIComponent(domain)}/snapshots`,
+    { method: "POST", headers: authHeaders(token), body: JSON.stringify(input) },
+  );
+  if (!res.ok) throw new Error(`save failed: ${res.status} ${await res.text()}`);
+  return (await res.json()).data as CompanyProfileSnapshot;
 }
 
 /** Email the shell link to the proposal's client (operator-only). */
