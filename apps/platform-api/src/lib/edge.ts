@@ -142,6 +142,19 @@ export async function edgeListBookings(): Promise<EdgeBookingSummary[]> {
   return (await res.json()) as EdgeBookingSummary[];
 }
 
+export interface EdgeCompanyProfile {
+  domain: string;
+  company: string | null;
+  hq: string | null;
+  headcount: string | null;
+  est_revenue_range: string | null;
+  overview: string | null;
+  focus: string[];
+  industries: string[];
+  geographies: string[];
+  source: string | null;
+}
+
 export interface EdgeBookingDetail extends EdgeBookingSummary {
   ical_uid: string | null;
   cal_booking_id: number | null;
@@ -149,6 +162,7 @@ export interface EdgeBookingDetail extends EdgeBookingSummary {
   end_time: string | null;
   booked_at: string | null;
   updated_at: string | null;
+  profile: EdgeCompanyProfile | null;
 }
 
 /** One booking by its uuid for the profile page. Returns null on 404. */

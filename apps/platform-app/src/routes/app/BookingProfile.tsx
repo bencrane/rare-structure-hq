@@ -95,14 +95,22 @@ export default function BookingProfile() {
 
   const b = booking;
   const name = fullName(b);
-  // Seed the dossier from the booking intelligence we already have; enrichment (firmographics,
-  // overview, focus/industries/geos) populates the rest out of band. This page IS the Dossier.
+  // Identity/contact comes from the cal booking; the firmographics + tags come from the company
+  // dossier (`profile`) resolved by domain. This page IS the Dossier.
+  const p = b.profile;
   const seed: DossierSeed = {
-    company: b.companyName ?? "",
+    company: b.companyName ?? p?.company ?? "",
     domain: b.domain ?? "",
     signerName: name === "—" ? "" : name,
     title: b.title ?? "",
     email: b.email ?? "",
+    hq: p?.hq ?? "",
+    headcount: p?.headcount ?? "",
+    revenue: p?.estRevenueRange ?? "",
+    overview: p?.overview ?? "",
+    focus: p?.focus ?? [],
+    industries: p?.industries ?? [],
+    geographies: p?.geographies ?? [],
   };
   return (
     <CockpitPage
