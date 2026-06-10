@@ -215,12 +215,6 @@ function ExecutionBlock({
       <div className="mb-3 font-mono text-[0.625rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.2em]">
         Execution
       </div>
-      {!finalized && (
-        <p className="mb-5 text-[0.8125rem] text-[color:var(--color-text-muted)] leading-[1.55]">
-          This is your version of the mandate. Adjust the terms if needed, then sign and confirm.
-        </p>
-      )}
-
       <div className="border border-[color:var(--color-border-subtle)] p-6">
         {/* Capital Partner — awaits the prospect */}
         <div className="mb-2.5 font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.16em]">

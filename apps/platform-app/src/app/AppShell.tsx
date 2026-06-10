@@ -29,7 +29,7 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 
 import { Inline, Stack, Text, cx } from "@rare-structure-hq/ui";
 
@@ -256,18 +256,27 @@ export function AppShell() {
     if (typeof window === "undefined") return false;
     return window.localStorage.getItem(COLLAPSE_KEY) === "1";
   });
+  // The operator's mandate view (/app/mandate/:ref) shows the rail DEFAULT-COLLAPSED — its own
+  // state so it never disturbs the cockpit's persisted preference. Still toggleable on the page.
+  const { pathname } = useLocation();
+  const onMandate = pathname.startsWith("/app/mandate/");
+  const [mandateCollapsed, setMandateCollapsed] = useState(true);
 
   useEffect(() => {
     window.localStorage.setItem(COLLAPSE_KEY, collapsed ? "1" : "0");
   }, [collapsed]);
 
-  const toggleCollapse = () => setCollapsed((c) => !c);
+  const displayCollapsed = onMandate ? mandateCollapsed : collapsed;
+  const toggleCollapse = () =>
+    onMandate ? setMandateCollapsed((c) => !c) : setCollapsed((c) => !c);
 
   return (
     <div
       className={cx(
         "grid min-h-screen grid-cols-1 bg-[color:var(--color-surface-base)] transition-[grid-template-columns] duration-200 ease-out",
-        collapsed ? "md:grid-cols-[4rem_minmax(0,1fr)]" : "md:grid-cols-[16rem_minmax(0,1fr)]",
+        displayCollapsed
+          ? "md:grid-cols-[4rem_minmax(0,1fr)]"
+          : "md:grid-cols-[16rem_minmax(0,1fr)]",
       )}
     >
       <aside
@@ -277,7 +286,7 @@ export function AppShell() {
           "bg-[color:var(--color-surface-sunken)]",
         )}
       >
-        <SidebarContent collapsed={collapsed} onToggleCollapse={toggleCollapse} />
+        <SidebarContent collapsed={displayCollapsed} onToggleCollapse={toggleCollapse} />
       </aside>
 
       <div className="flex min-h-screen flex-col">

@@ -158,6 +158,17 @@ export function App() {
               </RequireOperator>
             }
           />
+          {/* Operator's own view of a minted mandate — the same proposal shell as the public
+              `/p/:ref`, but inside the cockpit chrome (sidebar default-collapsed). Originate
+              lands here; the client-facing link stays the public `/p/:ref`. */}
+          <Route
+            path="mandate/:ref"
+            element={
+              <RequireOperator>
+                <ProposalShellPage />
+              </RequireOperator>
+            }
+          />
           <Route
             path="calendar"
             element={

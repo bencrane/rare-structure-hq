@@ -165,8 +165,9 @@ export function ProspectDossierBoard({ token, seed }: { token: string; seed?: Do
         },
         fieldValues: {},
       });
-      // Land the operator in the proposal — signed in, it opens as their editable draft.
-      navigate(`/p/${res.ref}`);
+      // Land the operator in their cockpit mandate view — the editable draft inside the app
+      // chrome, sidebar rail default-collapsed.
+      navigate(`/app/mandate/${res.ref}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not originate the mandate");
     } finally {
