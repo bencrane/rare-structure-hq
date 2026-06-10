@@ -23,6 +23,7 @@ import { allowedOrigins, env } from "./env.ts";
 import { awardProfileRoutes } from "./routes/award-profile.ts";
 import { bookingAdminRoutes } from "./routes/bookings-admin.ts";
 import { companyProfileRoutes } from "./routes/company-profiles-admin.ts";
+import { federalRoutes } from "./routes/federal.ts";
 import { proposalTemplateEditorRoutes } from "./routes/proposal-templates-admin.ts";
 import { proposalAdminRoutes, proposalTemplateRoutes } from "./routes/proposals-admin.ts";
 
@@ -56,6 +57,9 @@ app.route("/api/v1/proposal-templates", proposalTemplateRoutes);
 app.route("/api/v1/award-profile", awardProfileRoutes);
 app.route("/api/v1/bookings", bookingAdminRoutes);
 app.route("/api/v1/company-profiles", companyProfileRoutes);
+// PUBLIC federal map/chart surface — warm in-memory snapshot, no auth (the cockpit /map
+// route is public). Read-only projections of precomputed public federal-spend data.
+app.route("/api/v1/federal", federalRoutes);
 
 const port = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 8000;
 console.log(`platform-api listening on :${port} [${env.APP_ENV}]`);

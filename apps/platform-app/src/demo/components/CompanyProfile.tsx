@@ -108,10 +108,12 @@ function ProfileBody({ company, reduced }: { company: Company; reduced: boolean 
         <span className="text-[color:var(--color-text-accent)]">
           {industryLabel(company.industry)}
         </span>
-        <span aria-hidden="true">·</span>
-        <span>
-          {company.city}, {company.state}
-        </span>
+        {(company.city || company.state) && (
+          <>
+            <span aria-hidden="true">·</span>
+            <span>{[company.city, company.state].filter(Boolean).join(", ")}</span>
+          </>
+        )}
         {company.activeAward && (
           <span className="border border-[color:var(--color-accent-primary)] px-1.5 py-0.5 text-[color:var(--color-text-accent)] leading-none">
             Active award
@@ -119,11 +121,21 @@ function ProfileBody({ company, reduced }: { company: Company; reduced: boolean 
         )}
       </div>
 
-      {/* Identity facts */}
+      {/* Identity facts — live entities carry NAICS + the obligation rollup; the
+          seed-only narrative fields (founded / employees / NAICS label) render only
+          when present, so the live profile degrades cleanly. */}
       <div className="mt-5 grid grid-cols-2 gap-px border border-[color:var(--color-border-subtle)] bg-[color:var(--color-border-subtle)]">
-        <IdentityFact label="NAICS" value={`${company.naics} · ${company.naicsLabel}`} wide />
-        <IdentityFact label="Founded" value={String(company.founded)} />
-        <IdentityFact label="Employees" value={company.employees} />
+        <IdentityFact
+          label="NAICS"
+          value={
+            company.naicsLabel ? `${company.naics} · ${company.naicsLabel}` : company.naics || "—"
+          }
+          wide
+        />
+        {company.founded != null && (
+          <IdentityFact label="Founded" value={String(company.founded)} />
+        )}
+        {company.employees && <IdentityFact label="Employees" value={company.employees} />}
       </div>
 
       {/* Capital Catalysts */}

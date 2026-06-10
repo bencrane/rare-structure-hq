@@ -71,44 +71,66 @@ export type CapitalCatalyst = {
   tone: "accent" | "info" | "warn";
 };
 
-/** A company — one plotted point on the map, one profile when clicked. */
+/** A company — one plotted point on the map, one profile when clicked.
+ *
+ * Now backed by LIVE federal data (the BFF's warm `entity_profile_gold` slice). Fields
+ * the gold slice does not carry are optional: `x`/`y` (the geographic dot layer's real
+ * lat/long is DEFERRED — no coordinate join / geocode this pass), and the seed-only
+ * narrative fields (`founded`, `employees`, `naicsLabel`, `topAgency`, `latestAwardDate`,
+ * `industry`). The rendering layer treats them as optional and degrades gracefully. */
 export type Company = {
-  /** SAM.gov-style 12-char unique entity identifier. */
+  /** SAM.gov UEI — 12-char unique entity identifier (the live resolution key). */
   id: string;
   name: string;
-  industry: IndustryKey;
+  /** Industry vertical, when the NAICS maps to one of the cockpit's verticals. */
+  industry?: IndustryKey;
   naics: string;
-  naicsLabel: string;
-  city: string;
+  naicsLabel?: string;
+  city?: string;
   /** Two-letter state code. */
-  state: string;
-  /** Pixel coordinates in the `us-geo` 1000x590 viewBox. */
-  x: number;
-  y: number;
-  founded: number;
+  state?: string;
+  /** Pixel coordinates in the `us-geo` 1000x590 viewBox — ABSENT for live entities
+   * until the geographic coordinate layer lands (geo deferred). */
+  x?: number;
+  y?: number;
+  founded?: number;
   /** Employee-count range label, e.g. "200–500". */
-  employees: string;
-  /** Total federal obligation, all-time, USD — the query + aggregate axis. */
+  employees?: string;
+  /** Total federal obligation, lifetime, USD — the query + aggregate axis. */
   totalAwarded: number;
-  contractCount: number;
+  /** Active (open) federal obligation, USD. */
+  activeAwarded?: number;
+  contractCount?: number;
   /** ISO date of the most recent federal award action. */
-  latestAwardDate: string;
-  topAgency: string;
-  /** True when the company has had award activity in the last 90 days. */
+  latestAwardDate?: string;
+  topAgency?: string;
+  /** True when the company has open/active federal obligations. */
   activeAward: boolean;
   /** The structural signals attached to this company (usaspending always first). */
   catalysts: CapitalCatalyst[];
 };
 
-/** A map query — the result is every company in the industry above the floor. */
+/**
+ * A map query — the widened live axis. Carries the NAICS selector (code or prefix), an
+ * optional state, and the lifetime-obligation floor, so richer queries have somewhere to
+ * land. `industry` is the cockpit-vertical convenience key (the canned commands set it);
+ * `naicsPrefix` is what actually drives the live filter. `minAward` is the obligation
+ * floor (kept name-stable for the rendering layer).
+ */
 export type MapQuery = {
-  industry: IndustryKey;
+  /** Cockpit vertical, when the query came from a canned industry command. */
+  industry?: IndustryKey;
+  /** NAICS code or 2–6 digit prefix — the live filter axis. */
+  naicsPrefix?: string;
+  /** 2-letter US state code. */
+  state?: string;
+  /** Lifetime-obligation floor, USD. */
   minAward: number;
 };
 
 /** An aggregate command — collapses the market into one chart. */
 export type AggregateSpec = {
-  groupBy: "industry" | "state";
+  groupBy: "industry" | "state" | "agency";
   title: string;
   unitLabel: string;
 };

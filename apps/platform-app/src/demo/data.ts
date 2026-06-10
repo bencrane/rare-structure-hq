@@ -1,17 +1,27 @@
 /**
- * Fixture data for the Rare Structure cockpit — the single data module.
+ * Data module for the Rare Structure cockpit — the single data seam.
  *
- * Everything the cockpit plots and renders comes from here. It is deliberately
- * hardcoded dummy data: the experience, rhythm, and design get nailed before
- * the platform-api BFF (fronting data-engine-x's Lance layer) is wired in.
- * When real data arrives, this one module is the swap point — nothing else in
- * `src/demo/**` reads data directly.
+ * NOW LIVE. The selectors (`runQuery`, `aggregateBy`, `companyById`) fetch the
+ * platform-api BFF's WARM federal snapshot (charts + the `entity_profile_gold` map/list
+ * slice, precomputed in core-x and served in-memory — no Lance/DuckDB on the request
+ * path). They map the wire shape onto the cockpit's `Company` / `AggregateBar` contract,
+ * so the rendering layer is unchanged. This module remains the only place in
+ * `src/demo/**` that reaches data.
  *
- * The values are fabricated; the *shape* is the contract. A plotted point is a
- * `Company`; its "Capital Catalysts" (a federal-award record, a UCC-1 lien, a
- * BDC loan nearing maturity) are the structural signals shown on its profile.
+ * The `SEEDS` fixtures below are retained ONLY as the canonical example of the `Company`
+ * shape (and its UCC/BDC catalyst variants) — they are no longer rendered. A plotted
+ * point is a `Company`; its "Capital Catalysts" are the structural signals on its profile
+ * (the live path emits the federal-award catalyst; UCC/BDC remain seed-shape references).
  */
 
+import type { FederalEntity } from "@rare-structure-hq/shared";
+import {
+  fetchAgencyChart,
+  fetchEntities,
+  fetchEntityByUei,
+  fetchIndustryChart,
+  fetchStateChart,
+} from "./federalApi";
 import { fmtMonthYear, fmtUsd, fmtUsdFull } from "./format";
 import type {
   AggregateBar,
@@ -49,8 +59,8 @@ const INDUSTRY_BY_KEY: Record<IndustryKey, Industry> = Object.fromEntries(
   INDUSTRIES.map((i) => [i.key, i]),
 ) as Record<IndustryKey, Industry>;
 
-export function industryLabel(key: IndustryKey): string {
-  return INDUSTRY_BY_KEY[key].label;
+export function industryLabel(key: IndustryKey | undefined): string {
+  return key ? (INDUSTRY_BY_KEY[key]?.label ?? key) : "All industries";
 }
 
 // ───────────────────────────────────────────────────────────────────
@@ -1113,8 +1123,68 @@ function buildCompany(seed: CompanySeed): Company {
   };
 }
 
-/** Every plotted company — the cockpit's universe. */
-export const COMPANIES: Company[] = SEEDS.map(buildCompany);
+// ───────────────────────────────────────────────────────────────────
+// LIVE selectors — the cockpit's universe is now the BFF's warm federal
+// snapshot (entity_profile_gold slice), not the SEEDS fixtures. The seed
+// machinery above (SEEDS / buildCompany / the UCC+BDC catalysts) is retained
+// only as the shape reference for the `Company` contract; nothing renders it.
+// `runQuery` / `aggregateBy` / `companyById` below fetch live data and map it
+// onto the SAME `Company` / `AggregateBar` shapes the rendering layer expects.
+// ───────────────────────────────────────────────────────────────────
+
+// Silence "unused" without shipping the fixtures: the seeds remain the canonical
+// example of the Company shape, referenced here so the build keeps them honest.
+void SEEDS;
+void buildCompany;
+
+/** NAICS 6-digit code (or prefix) → the cockpit vertical it belongs to, by 3-digit
+ * prefix. Live entities carry a raw NAICS; this resolves the display vertical when one
+ * of the cockpit's seven verticals matches (else the vertical is left undefined). */
+function industryForNaics(naics: string | null | undefined): IndustryKey | undefined {
+  if (!naics) return undefined;
+  const p3 = naics.slice(0, 3);
+  const hit = INDUSTRIES.find((i) => i.naicsPrefix === p3);
+  return hit?.key;
+}
+
+/** Build the single live `usaspending` Capital Catalyst from a federal entity's
+ * obligation rollup (the live profile drawer's content). */
+function liveCatalyst(e: FederalEntity): CapitalCatalyst {
+  const active = e.totalActiveObligations > 0;
+  return {
+    kind: "usaspending",
+    label: "Federal contract winner",
+    headline: `${fmtUsd(e.totalLifetimeObligations)} in lifetime federal obligations`,
+    summary: `${fmtUsd(e.totalLifetimeObligations)} obligated lifetime${
+      active ? `, ${fmtUsd(e.totalActiveObligations)} still active` : ""
+    } across ${e.activeAwardCount} active award${e.activeAwardCount === 1 ? "" : "s"}.`,
+    facts: [
+      { label: "Lifetime federal obligations", value: fmtUsdFull(e.totalLifetimeObligations) },
+      { label: "Active obligations", value: fmtUsdFull(e.totalActiveObligations) },
+      { label: "Active awards", value: String(e.activeAwardCount) },
+      { label: "Primary NAICS", value: e.naics ?? "—" },
+    ],
+    tone: "accent",
+  };
+}
+
+/** Map a live `FederalEntity` onto the cockpit's `Company` shape. `x`/`y` are omitted
+ * (geo deferred — the dot layer gates on their absence). */
+function entityToCompany(e: FederalEntity): Company {
+  return {
+    id: e.uei,
+    name: e.legalNameBase ?? e.uei,
+    industry: industryForNaics(e.naics),
+    naics: e.naics ?? "",
+    city: e.city ?? undefined,
+    state: e.state ?? undefined,
+    totalAwarded: e.totalLifetimeObligations,
+    activeAwarded: e.totalActiveObligations,
+    contractCount: e.activeAwardCount,
+    activeAward: e.totalActiveObligations > 0,
+    catalysts: [liveCatalyst(e)],
+  };
+}
 
 // ───────────────────────────────────────────────────────────────────
 // The ⌘K command list — the cockpit is extended by adding to this array.
@@ -1183,34 +1253,104 @@ export const COMMANDS: Command[] = [
       unitLabel: "Total obligations",
     },
   },
+  {
+    id: "agg-agency",
+    kind: "aggregate",
+    label: "Aggregate federal contract spend by agency",
+    aggregate: {
+      groupBy: "agency",
+      title: "Federal contract spend by agency",
+      unitLabel: "Total obligations",
+    },
+  },
 ];
 
 // ───────────────────────────────────────────────────────────────────
-// Selectors — the cockpit reads the universe only through these.
+// LIVE selectors — the cockpit reads the universe only through these. They
+// fetch the BFF's warm federal snapshot and map it onto the rendering shapes.
+// Each returns a Promise (the universe is remote now); DemoApp drives the
+// loading/error states. NO silent caps — the entity query is bounded to a sane
+// page and reports the full match `total` for the readout.
 // ───────────────────────────────────────────────────────────────────
 
-/** Companies matching a map query — in the industry, above the award floor. */
-export function runQuery(q: MapQuery): Company[] {
-  return COMPANIES.filter((c) => c.industry === q.industry && c.totalAwarded >= q.minAward);
+/** The map-query result + its provenance + the unfiltered match total (for the readout). */
+export type QueryResult = {
+  companies: Company[];
+  total: number;
+  /** The serving slice's stated lifetime-obligation bound (firms below it are excluded). */
+  minLifetimeBound: number;
+  /** Full has-federal-awards universe size. */
+  fullUniverse: number;
+  materializedAt: string;
+  profileAsOfDate: string | null;
+};
+
+// The map plots query results; a generous page covers the densest vertical without a
+// silent cap — the full match count rides back in `total` for the banner.
+const MAP_PAGE_LIMIT = 2000;
+
+/** Live companies matching a map query — by NAICS (prefix/code) + optional state, above
+ * the lifetime-obligation floor. Fetches the BFF entity slice and maps to `Company`. */
+export async function runQuery(q: MapQuery): Promise<QueryResult> {
+  const naics =
+    q.naicsPrefix ?? (q.industry ? INDUSTRY_BY_KEY[q.industry]?.naicsPrefix : undefined);
+  const res = await fetchEntities({
+    naics,
+    state: q.state,
+    minObligation: q.minAward > 0 ? q.minAward : undefined,
+    limit: MAP_PAGE_LIMIT,
+  });
+  return {
+    companies: res.rows.map(entityToCompany),
+    total: res.total,
+    minLifetimeBound: res.minLifetimeBound,
+    fullUniverse: res.fullUniverse,
+    materializedAt: res.materializedAt,
+    profileAsOfDate: res.profileAsOfDate,
+  };
 }
 
-/** Look up a company by id. */
-export function companyById(id: string): Company | undefined {
-  return COMPANIES.find((c) => c.id === id);
-}
-
-/** Collapse the universe into aggregate bars, sorted by total descending. */
-export function aggregateBy(groupBy: "industry" | "state"): AggregateBar[] {
-  const acc = new Map<string, { label: string; total: number; count: number }>();
-  for (const c of COMPANIES) {
-    const key = groupBy === "industry" ? c.industry : c.state;
-    const label = groupBy === "industry" ? industryLabel(c.industry) : c.state;
-    const cur = acc.get(key) ?? { label, total: 0, count: 0 };
-    cur.total += c.totalAwarded;
-    cur.count += 1;
-    acc.set(key, cur);
+/** Look up one company by UEI — the profile-drawer point lookup (live). */
+export async function companyById(id: string): Promise<Company | undefined> {
+  try {
+    return entityToCompany(await fetchEntityByUei(id));
+  } catch {
+    return undefined;
   }
-  return [...acc.entries()]
-    .map(([key, v]) => ({ key, label: v.label, total: v.total, count: v.count }))
-    .sort((a, b) => b.total - a.total);
+}
+
+/** Live aggregate bars for a chart vantage, sorted by total descending. Industry +
+ * state + agency each hit their own precomputed BFF chart. */
+export async function aggregateBy(
+  groupBy: "industry" | "state" | "agency",
+): Promise<AggregateBar[]> {
+  if (groupBy === "industry") {
+    const chart = await fetchIndustryChart();
+    return chart.rows.map((r) => ({
+      key: r.naics ?? "—",
+      // Prefer the cockpit vertical label when the NAICS maps to one; else show the code.
+      label: (() => {
+        const ind = industryForNaics(r.naics);
+        return ind ? `${industryLabel(ind)} · ${r.naics}` : (r.naics ?? "—");
+      })(),
+      total: r.spend_lifetime,
+      count: r.firms,
+    }));
+  }
+  if (groupBy === "agency") {
+    const chart = await fetchAgencyChart();
+    return chart.rows.map((r) => ({
+      key: r.agency,
+      label: r.agency,
+      total: r.spend,
+      count: r.recipients,
+    }));
+  }
+  const chart = await fetchStateChart();
+  return chart.rows.map((r) => ({
+    key: r.state,
+    label: r.state,
+    total: r.spend_lifetime,
+    count: r.firms,
+  }));
 }
