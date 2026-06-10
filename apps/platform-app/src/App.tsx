@@ -28,6 +28,7 @@ import MapDemo from "./routes/MapDemo";
 import SignIn from "./routes/SignIn";
 import Account from "./routes/app/Account";
 import Applications from "./routes/app/Applications";
+import BookingProfile from "./routes/app/BookingProfile";
 import Calendar from "./routes/app/Calendar";
 import Dossier from "./routes/app/Dossier";
 import MapTab from "./routes/app/MapTab";
@@ -136,14 +137,13 @@ export function App() {
               </RequireOperator>
             }
           />
-          {/* Per-company dossier (keyed by domain — the canonical resolution key).
-              Reached from a Pipeline booking row. Renders the same board until the
-              per-domain dossier read is wired. */}
+          {/* Booking-meeting profile — opened from a Pipeline row. Shows the cal booking
+              now; enrichment populates the full dossier later. */}
           <Route
-            path="dossier/:domain"
+            path="bookings/:bookingId"
             element={
               <RequireOperator>
-                <Dossier />
+                <BookingProfile />
               </RequireOperator>
             }
           />

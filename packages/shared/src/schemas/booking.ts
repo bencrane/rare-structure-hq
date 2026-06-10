@@ -30,3 +30,18 @@ export const bookingSummarySchema = z.object({
   createdAt: isoTimestampSchema,
 });
 export type BookingSummary = z.infer<typeof bookingSummarySchema>;
+
+/**
+ * BFF → operator: the full booking-profile read. The summary plus the cal system identifiers
+ * (stable iCalUID + the live cal booking/event-type ids) and the meeting window — everything
+ * the cal booking gives us. Enrichment fields layer on later.
+ */
+export const bookingDetailSchema = bookingSummarySchema.extend({
+  icalUid: z.string().nullable(),
+  calBookingId: z.number().nullable(),
+  eventTypeId: z.number().nullable(),
+  endTime: isoTimestampSchema.nullable(),
+  bookedAt: isoTimestampSchema.nullable(),
+  updatedAt: isoTimestampSchema.nullable(),
+});
+export type BookingDetail = z.infer<typeof bookingDetailSchema>;

@@ -5,7 +5,7 @@
  * validates it (requireUser) then brokers the read to core-x edge_api
  * (`corex.bookings`). Mirrors the proposals client's auth shape.
  */
-import type { BookingSummary } from "@rare-structure-hq/shared";
+import type { BookingDetail, BookingSummary } from "@rare-structure-hq/shared";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "";
 
@@ -18,4 +18,13 @@ export async function listBookings(token: string): Promise<BookingSummary[]> {
   const res = await fetch(`${API_BASE}/api/v1/bookings`, { headers: authHeaders(token) });
   if (!res.ok) throw new Error(`bookings failed: ${res.status} ${await res.text()}`);
   return (await res.json()).data as BookingSummary[];
+}
+
+/** One booking by id — the booking-profile page's data source. */
+export async function getBooking(token: string, id: string): Promise<BookingDetail> {
+  const res = await fetch(`${API_BASE}/api/v1/bookings/${encodeURIComponent(id)}`, {
+    headers: authHeaders(token),
+  });
+  if (!res.ok) throw new Error(`booking failed: ${res.status} ${await res.text()}`);
+  return (await res.json()).data as BookingDetail;
 }
