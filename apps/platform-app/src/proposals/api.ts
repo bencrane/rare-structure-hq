@@ -9,6 +9,8 @@
 import type {
   CreateProposalInput,
   CreateProposalResult,
+  PaymentInit,
+  PaymentState,
   ProposalShell,
   ProposalSummary,
   ProposalTemplateMeta,
@@ -71,4 +73,41 @@ export async function getProposalShell(ref: string): Promise<ProposalShell | nul
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`shell failed: ${res.status}`);
   return (await res.json()).data as ProposalShell;
+}
+
+/** Status-carrying error so the pay page can distinguish 409 (unsigned) from other failures. */
+export class PaymentError extends Error {
+  readonly status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.status = status;
+    this.name = "PaymentError";
+  }
+}
+
+/**
+ * Mint (or reuse) the ACH PaymentIntent for `/p/:ref/pay`. Returns the client_secret + publishable
+ * key for Stripe Elements. Throws PaymentError(409) until the agreement is signed. The amount is
+ * resolved server-side from the proposal — the browser never sends one.
+ */
+export async function createPaymentIntent(ref: string): Promise<PaymentInit> {
+  const res = await fetch(
+    `${API_BASE}/api/v1/proposals/${encodeURIComponent(ref)}/payment-intent`,
+    {
+      method: "POST",
+    },
+  );
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new PaymentError(res.status, body || res.statusText);
+  }
+  return (await res.json()).data as PaymentInit;
+}
+
+/** Poll the authoritative (webhook-driven) payment state — ACH settles after the browser hands off. */
+export async function getPaymentState(ref: string): Promise<PaymentState | null> {
+  const res = await fetch(`${API_BASE}/api/v1/proposals/${encodeURIComponent(ref)}/payment`);
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`payment state failed: ${res.status}`);
+  return (await res.json()).data as PaymentState;
 }

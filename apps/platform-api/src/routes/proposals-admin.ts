@@ -26,7 +26,10 @@ import { db } from "../lib/db.ts";
 import {
   DOCUMENSO_APP_URL,
   EdgeError,
+  EdgePaymentNotReady,
+  edgeCreatePaymentIntent,
   edgeCreateProposal,
+  edgeGetPayment,
   edgeGetProposal,
   edgeListProposals,
   edgeTemplateList,
@@ -39,7 +42,8 @@ export const proposalAdminRoutes = new Hono<{ Variables: AuthVariables }>();
 
 // edge_api lifecycle (draft|sent|opened|signed|completed|rejected|voided) → the shell's
 // enum (created|sent|signed|paid). "paid" stays reserved for an actual payment event.
-function mapStatus(s: string): ProposalStatus {
+function mapStatus(s: string, paymentStatus?: string): ProposalStatus {
+  if (paymentStatus === "succeeded") return "paid"; // a settled ACH debit is the only "paid" trigger
   switch (s) {
     case "draft":
       return "created";
@@ -132,7 +136,7 @@ proposalAdminRoutes.get("/:ref", async (c) => {
   ];
   const shell: ProposalShell = {
     ref: p.ref,
-    status: mapStatus(p.status),
+    status: mapStatus(p.status, p.payment_status),
     templateLabel: p.template_label,
     client: { name: p.client.name, title: p.client.title ?? undefined },
     execSummary: EXEC_SUMMARY,
@@ -179,6 +183,51 @@ proposalAdminRoutes.post("/:ref/send", requireUser, async (c) => {
   if (upErr) throw new HTTPException(500, { message: `persist failed: ${upErr.message}` });
 
   return c.json({ data: { sent: true, id: result.id } });
+});
+
+// POST /api/v1/proposals/:ref/payment-intent — PUBLIC (the ref is the capability). Mints/reuses the
+// ACH PaymentIntent in edge_api (amount resolved server-side from the proposal) and returns the
+// client_secret + publishable key the pay page needs for Stripe Elements. No card — ACH only.
+proposalAdminRoutes.post("/:ref/payment-intent", async (c) => {
+  const ref = c.req.param("ref");
+  try {
+    const p = await edgeCreatePaymentIntent(ref);
+    return c.json({
+      data: {
+        clientSecret: p.client_secret,
+        publishableKey: p.publishable_key,
+        amountCents: p.amount_cents,
+        currency: p.currency,
+        paymentStatus: p.payment_status,
+      },
+    });
+  } catch (e) {
+    if (e instanceof EdgePaymentNotReady) throw new HTTPException(409, { message: e.message });
+    if (e instanceof EdgeError) throw new HTTPException(502, { message: e.message });
+    throw e;
+  }
+});
+
+// GET /api/v1/proposals/:ref/payment — PUBLIC; the authoritative (webhook-driven) payment state the
+// pay page polls after confirm (ACH settles 1-3 business days after the browser hands off).
+proposalAdminRoutes.get("/:ref/payment", async (c) => {
+  const ref = c.req.param("ref");
+  let s: Awaited<ReturnType<typeof edgeGetPayment>>;
+  try {
+    s = await edgeGetPayment(ref);
+  } catch (e) {
+    if (e instanceof EdgeError) throw new HTTPException(502, { message: e.message });
+    throw e;
+  }
+  if (!s) throw new HTTPException(404, { message: "proposal not found" });
+  return c.json({
+    data: {
+      paymentStatus: s.payment_status,
+      amountCents: s.amount_cents,
+      currency: s.currency,
+      paidAt: s.paid_at,
+    },
+  });
 });
 
 // GET /api/v1/proposal-templates — the operator's posture picker for the Proposals intake form.

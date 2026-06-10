@@ -39,6 +39,7 @@ import Proposals from "./routes/app/Proposals";
 import Settings from "./routes/app/Settings";
 import TemplateEditor from "./routes/app/TemplateEditor";
 import TemplatesTable from "./routes/app/TemplatesTable";
+import PayPage from "./routes/p/PayPage";
 import ProposalShellPage from "./routes/p/ProposalShell";
 import SignPage from "./routes/p/SignPage";
 
@@ -83,6 +84,8 @@ export function App() {
         <Route path="/p/:ref" element={<ProposalShellPage />} />
         {/* Full-page signing view — Documenso two-column embed, on our domain. */}
         <Route path="/p/:ref/sign" element={<SignPage />} />
+        {/* ACH payment view — Stripe Elements, on our domain, after signing. */}
+        <Route path="/p/:ref/pay" element={<PayPage />} />
 
         {/* Email + password gate. */}
         <Route path="/signin" element={<SignIn />} />
