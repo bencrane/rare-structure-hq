@@ -9,10 +9,10 @@
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 
-import type { BookingSummary } from "@rare-structure-hq/shared";
+import type { BookingDetail, BookingSummary } from "@rare-structure-hq/shared";
 
 import { type AuthVariables, requireUser } from "../auth.ts";
-import { EdgeError, edgeListBookings } from "../lib/edge.ts";
+import { EdgeError, edgeGetBooking, edgeListBookings } from "../lib/edge.ts";
 
 export const bookingAdminRoutes = new Hono<{ Variables: AuthVariables }>();
 
@@ -39,4 +39,38 @@ bookingAdminRoutes.get("/", requireUser, async (c) => {
     if (e instanceof EdgeError) throw new HTTPException(502, { message: e.message });
     throw e;
   }
+});
+
+// GET /api/v1/bookings/:id — one booking for the profile page. Auth-gated. Delegates to
+// edge_api (corex.bookings), mapping the snake_case row onto the camelCase contract.
+bookingAdminRoutes.get("/:id", requireUser, async (c) => {
+  const id = c.req.param("id");
+  let row: Awaited<ReturnType<typeof edgeGetBooking>>;
+  try {
+    row = await edgeGetBooking(id);
+  } catch (e) {
+    if (e instanceof EdgeError) throw new HTTPException(502, { message: e.message });
+    throw e;
+  }
+  if (!row) throw new HTTPException(404, { message: "booking not found" });
+  const detail: BookingDetail = {
+    bookingId: row.booking_id,
+    icalUid: row.ical_uid,
+    calEventUid: row.cal_event_uid,
+    calBookingId: row.cal_booking_id,
+    eventTypeId: row.event_type_id,
+    firstName: row.first_name,
+    lastName: row.last_name,
+    email: row.email,
+    companyName: row.company_name,
+    domain: row.domain,
+    title: row.title,
+    status: row.status,
+    startTime: row.start_time,
+    endTime: row.end_time,
+    bookedAt: row.booked_at,
+    createdAt: row.created_at ?? new Date().toISOString(),
+    updatedAt: row.updated_at,
+  };
+  return c.json({ data: detail });
 });

@@ -140,6 +140,25 @@ export async function edgeListBookings(): Promise<EdgeBookingSummary[]> {
   return (await res.json()) as EdgeBookingSummary[];
 }
 
+export interface EdgeBookingDetail extends EdgeBookingSummary {
+  ical_uid: string | null;
+  cal_booking_id: number | null;
+  event_type_id: number | null;
+  end_time: string | null;
+  booked_at: string | null;
+  updated_at: string | null;
+}
+
+/** One booking by its uuid for the profile page. Returns null on 404. */
+export async function edgeGetBooking(id: string): Promise<EdgeBookingDetail | null> {
+  const res = await fetch(`${base()}/api/v1/bookings/${encodeURIComponent(id)}`, {
+    headers: serviceHeaders(false),
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new EdgeError(`edge booking get failed: ${res.status}`);
+  return (await res.json()) as EdgeBookingDetail;
+}
+
 // ── Proposal-template authoring (Settings surface) ───────────────────────────
 // Thin passthrough to edge_api's /api/v1/proposal-templates/* — the engine owns markdown→HTML,
 // DocRaptor preview (→ R2 presigned link), and the publish registry. The BFF only brokers the

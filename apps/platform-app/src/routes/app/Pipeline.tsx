@@ -55,10 +55,9 @@ export default function Pipeline() {
     refresh();
   }, [refresh]);
 
-  // The dossier is the COMPANY's profile, keyed by domain (the canonical resolution
-  // key). Fall back to the booking id when a row has no domain resolved yet.
+  // Open this booking's profile page (keyed by booking id — one row, one booking).
   const openRow = (b: BookingSummary) =>
-    navigate(`/app/dossier/${encodeURIComponent(b.domain ?? b.bookingId)}`);
+    navigate(`/app/bookings/${encodeURIComponent(b.bookingId)}`);
 
   return (
     <CockpitPage title="Pipeline" description="Deals advancing from catalyst signal to engagement.">
