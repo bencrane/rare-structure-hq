@@ -39,6 +39,20 @@ import { sendProposalLink } from "../lib/email.ts";
 
 export const proposalAdminRoutes = new Hono<{ Variables: AuthVariables }>();
 
+// Billing-cadence enum → operator-/client-facing label for the headline.
+function cadenceLabel(cadence: string): string {
+  switch (cadence) {
+    case "upfront_in_full":
+      return "Upfront, in full";
+    case "monthly":
+      return "Monthly";
+    case "quarterly":
+      return "Quarterly";
+    default:
+      return cadence;
+  }
+}
+
 // edge_api lifecycle (draft|sent|opened|signed|completed|rejected|voided) → the shell's
 // enum (created|sent|signed|paid). "paid" stays reserved for an actual payment event.
 function mapStatus(s: string, paymentStatus?: string): ProposalStatus {
@@ -130,7 +144,9 @@ proposalAdminRoutes.get("/:ref", async (c) => {
 
   const headline = [
     { label: "Infrastructure Fee", value: `${p.monthly_fee} / month` },
-    { label: "Quarterly · 3 mo. advance", value: p.quarterly_total },
+    { label: "Term", value: `${p.duration_months} months` },
+    { label: "Billing", value: cadenceLabel(p.billing_cadence) },
+    { label: "Total", value: p.total },
     ...p.success_fee_tiers.map((t) => ({ label: t.tier, value: t.rate })),
   ];
   const shell: ProposalShell = {
