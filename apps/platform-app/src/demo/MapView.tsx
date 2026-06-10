@@ -37,9 +37,17 @@ const INSET_TRANSFORM: Record<string, string> = {
 const CONTINENTAL = STATE_PATHS.filter((s) => !INSET_IDS.has(s.id));
 const INSETS = STATE_PATHS.filter((s) => INSET_IDS.has(s.id));
 
+// A company that carries map coordinates — the only kind the dot/callout layer plots.
+// (Live federal entities have no x/y until the geo layer lands; they are filtered out.)
+type PlottedCompany = Company & { x: number; y: number };
+
 export function MapView({
   query,
   results,
+  loading = false,
+  error = null,
+  total,
+  profileAsOfDate = null,
   selectedId,
   onSelectCompany,
   onInvokeCommand,
@@ -47,6 +55,10 @@ export function MapView({
 }: {
   query: MapQuery | null;
   results: Company[];
+  loading?: boolean;
+  error?: string | null;
+  total?: number;
+  profileAsOfDate?: string | null;
   selectedId: string | null;
   onSelectCompany: (company: Company) => void;
   onInvokeCommand: () => void;
@@ -55,7 +67,18 @@ export function MapView({
   const reduced = !!useReducedMotion();
   const [hovered, setHovered] = useState<string | null>(null);
   const [callouts, setCallouts] = useState<ReadonlySet<string>>(() => new Set());
-  const queryKey = query ? `${query.industry}:${query.minAward}` : "none";
+  const queryKey = query
+    ? `${query.industry ?? query.naicsPrefix ?? "all"}:${query.minAward}`
+    : "none";
+
+  // GEO DEFERRED. Live federal entities carry no x/y (the real lat/long coordinate layer
+  // is a later pass — no geocode this cycle). Only plot dots for results that DO carry
+  // coordinates; everything else is served through the result banner + list, never as a
+  // crashing dot. Today the live universe has no coords, so this is empty and the dot
+  // layer is dormant — but the moment coordinates land, the same code lights them up.
+  const plottable = results.filter(
+    (c): c is Company & { x: number; y: number } => c.x != null && c.y != null,
+  );
 
   // A new query resets the open callouts — the prior result set is gone.
   // biome-ignore lint/correctness/useExhaustiveDependencies: keyed on queryKey, not the setter.
@@ -199,9 +222,12 @@ export function MapView({
           ))}
 
           {/* ── The query result: companies light up the map ────────── */}
-          {query && !reduced && <ScanSweep key={`sweep-${queryKey}`} />}
+          {/* Only PLOTTABLE results (those carrying x/y) render as dots. Live federal
+              entities have no coordinates yet (geo deferred), so this layer stays dormant
+              for them and the result banner carries the readout instead. */}
+          {query && !reduced && plottable.length > 0 && <ScanSweep key={`sweep-${queryKey}`} />}
           <g key={`dots-${queryKey}`}>
-            {results.map((company) => (
+            {plottable.map((company) => (
               <CompanyDot
                 key={company.id}
                 company={company}
@@ -219,7 +245,19 @@ export function MapView({
           </g>
         </svg>
 
-        {query && <ResultBanner query={query} results={results} reduced={reduced} />}
+        {query && (
+          <ResultBanner
+            query={query}
+            results={results}
+            total={total ?? results.length}
+            loading={loading}
+            error={error}
+            plottedCount={plottable.length}
+            profileAsOfDate={profileAsOfDate}
+            onSelectCompany={onSelectCompany}
+            reduced={reduced}
+          />
+        )}
       </div>
 
       <CommandPill reduced={reduced} idle={!query} onClick={onInvokeCommand} />
@@ -299,26 +337,111 @@ function ScanSweep() {
 function ResultBanner({
   query,
   results,
+  total,
+  loading,
+  error,
+  plottedCount,
+  profileAsOfDate,
+  onSelectCompany,
   reduced,
 }: {
   query: MapQuery;
   results: Company[];
+  total: number;
+  loading: boolean;
+  error: string | null;
+  plottedCount: number;
+  profileAsOfDate: string | null;
+  onSelectCompany: (company: Company) => void;
   reduced: boolean;
 }) {
-  const total = results.reduce((sum, c) => sum + c.totalAwarded, 0);
+  const awards = results.reduce((sum, c) => sum + c.totalAwarded, 0);
+  // Geo is deferred, so nothing plots as a dot — surface the live result set as a
+  // compact ranked list under the banner so the operator can still read + open them.
+  const geoPending = plottedCount === 0 && results.length > 0;
+
   return (
     <motion.div
-      className="-translate-x-1/2 absolute top-2 left-1/2 z-10"
+      className="-translate-x-1/2 absolute top-2 left-1/2 z-10 flex flex-col items-center gap-1.5"
       initial={reduced ? { opacity: 0 } : { opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: reduced ? 0 : 0.2 }}
     >
       <div className="flex items-stretch border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-raised)] shadow-lg shadow-black/40">
         <BannerCell label="Vertical" value={industryLabel(query.industry)} accent />
-        <BannerCell label="Companies" value={String(results.length)} />
-        <BannerCell label="Federal awards" value={fmtUsd(total)} />
+        <BannerCell
+          label="Companies"
+          value={loading ? "…" : error ? "—" : total.toLocaleString("en-US")}
+        />
+        <BannerCell label="Federal awards" value={loading ? "…" : error ? "—" : fmtUsd(awards)} />
+        {profileAsOfDate && <BannerCell label="Data as of" value={profileAsOfDate} />}
       </div>
+
+      {error && (
+        <div className="border border-[color:var(--color-status-danger,var(--color-border-strong))] bg-[color:var(--color-surface-raised)] px-3 py-1.5 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase">
+          Live federal feed unavailable
+        </div>
+      )}
+
+      {geoPending && <GeoPendingList results={results} onSelectCompany={onSelectCompany} />}
     </motion.div>
+  );
+}
+
+// ───────────────────────────────────────────────────────────────────
+// Geo-pending list — until the coordinate layer lands, the live result set
+// has no map dots, so the top matches surface as a compact, openable ranked
+// list. This is the documented "geo pending" state, NOT state-centroid plotting.
+// ───────────────────────────────────────────────────────────────────
+
+const GEO_LIST_MAX = 12;
+
+function GeoPendingList({
+  results,
+  onSelectCompany,
+}: {
+  results: Company[];
+  onSelectCompany: (company: Company) => void;
+}) {
+  const top = results.slice(0, GEO_LIST_MAX);
+  return (
+    <div className="max-h-[58vh] w-[min(92vw,560px)] overflow-y-auto border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-raised)] shadow-lg shadow-black/40">
+      <div className="flex items-center justify-between border-[color:var(--color-border-subtle)] border-b px-3 py-1.5">
+        <span className="font-mono text-[color:var(--color-text-accent)] text-mono-xs uppercase tracking-[0.16em]">
+          Top matches
+        </span>
+        <span className="font-mono text-[color:var(--color-text-subtle)] text-mono-xs uppercase">
+          map pins pending geo-resolution
+        </span>
+      </div>
+      <ul>
+        {top.map((c, i) => (
+          <li key={c.id}>
+            <button
+              type="button"
+              onClick={() => onSelectCompany(c)}
+              className="flex w-full items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-[color:var(--color-surface-base)]"
+            >
+              <span className="w-5 shrink-0 text-right font-mono text-[color:var(--color-text-subtle)] text-mono-xs tabular-nums">
+                {i + 1}
+              </span>
+              <span className="flex-1 truncate text-[color:var(--color-text-primary)] text-body-sm">
+                {c.name}
+                {c.state ? (
+                  <span className="ml-2 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase">
+                    {c.city ? `${c.city}, ` : ""}
+                    {c.state}
+                  </span>
+                ) : null}
+              </span>
+              <span className="shrink-0 font-display font-semibold text-[color:var(--color-text-accent)] text-body-sm tabular-nums">
+                {fmtUsd(c.totalAwarded)}
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -364,7 +487,7 @@ function CompanyDot({
   onToggleCallout,
   onOpenProfile,
 }: {
-  company: Company;
+  company: PlottedCompany;
   reduced: boolean;
   lit: boolean;
   calloutOpen: boolean;
@@ -473,7 +596,7 @@ function CompanyCallout({
   reduced,
   onOpen,
 }: {
-  company: Company;
+  company: PlottedCompany;
   reduced: boolean;
   onOpen: () => void;
 }) {

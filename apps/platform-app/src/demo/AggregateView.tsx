@@ -9,6 +9,7 @@
  */
 
 import { motion, useReducedMotion } from "framer-motion";
+import { useEffect, useState } from "react";
 import { CommandPill, TerminalHeader } from "./components/TerminalChrome";
 import { aggregateBy } from "./data";
 import { fmtUsd } from "./format";
@@ -24,7 +25,33 @@ export function AggregateView({
   embedded?: boolean;
 }) {
   const reduced = !!useReducedMotion();
-  const bars = aggregateBy(spec.groupBy);
+
+  // The bars are LIVE — fetched from the BFF's precomputed chart endpoints. 3-state load
+  // (loading / error / data), re-fetched when the grouping changes. Guarded against an
+  // out-of-order resolve clobbering a newer grouping.
+  const [bars, setBars] = useState<AggregateBar[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    aggregateBy(spec.groupBy)
+      .then((b) => {
+        if (!cancelled) setBars(b);
+      })
+      .catch((e) => {
+        if (!cancelled) setError(e instanceof Error ? e.message : "chart failed");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [spec.groupBy]);
+
   const max = Math.max(...bars.map((b) => b.total), 1);
   const total = bars.reduce((sum, b) => sum + b.total, 0);
   const dense = bars.length > 10;
@@ -47,9 +74,21 @@ export function AggregateView({
           className="flex min-h-0 flex-1 flex-col justify-center overflow-y-auto py-5"
           style={{ gap: dense ? 4 : 12 }}
         >
-          {bars.map((bar, i) => (
-            <BarRow key={bar.key} bar={bar} max={max} index={i} dense={dense} reduced={reduced} />
-          ))}
+          {loading && (
+            <div className="text-center font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase tracking-[0.18em]">
+              Loading live federal data…
+            </div>
+          )}
+          {error && !loading && (
+            <div className="text-center font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase tracking-[0.18em]">
+              Live federal feed unavailable
+            </div>
+          )}
+          {!loading &&
+            !error &&
+            bars.map((bar, i) => (
+              <BarRow key={bar.key} bar={bar} max={max} index={i} dense={dense} reduced={reduced} />
+            ))}
         </div>
       </div>
 

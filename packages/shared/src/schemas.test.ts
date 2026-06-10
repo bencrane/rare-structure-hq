@@ -5,6 +5,11 @@ import {
   catalystEventSchema,
   catalystKindSchema,
   catalystSeveritySchema,
+  federalEntityListSchema,
+  federalEntityQuerySchema,
+  federalEntitySchema,
+  federalIndustryChartSchema,
+  federalStateChartSchema,
 } from "./index";
 
 describe("@rare-structure-hq/shared — catalyst-event schema", () => {
@@ -60,5 +65,86 @@ describe("@rare-structure-hq/shared — catalyst-event schema", () => {
     expect(() =>
       catalystEventSchema.parse({ ...wellFormed, location: { lon: 0, lat: 0, region: "" } }),
     ).toThrow();
+  });
+});
+
+describe("@rare-structure-hq/shared — federal schema", () => {
+  const provenance = {
+    materializedAt: "2026-06-10T21:46:44.142828+00:00",
+    profileAsOfDate: "2026-06-10",
+  };
+
+  it("validates an industry chart envelope", () => {
+    const parsed = federalIndustryChartSchema.parse({
+      ...provenance,
+      groupCount: 1146,
+      rows: [
+        {
+          naics: "923120",
+          spend_lifetime: 2486548847867.98,
+          spend_active: 365408987411.71,
+          firms: 719,
+        },
+      ],
+    });
+    expect(parsed.groupCount).toBe(1146);
+    expect(parsed.rows[0].naics).toBe("923120");
+  });
+
+  it("allows a null profileAsOfDate", () => {
+    const parsed = federalStateChartSchema.parse({
+      materializedAt: provenance.materializedAt,
+      profileAsOfDate: null,
+      groupCount: 1,
+      rows: [{ state: "CA", spend_lifetime: 1, spend_active: 0, firms: 1 }],
+    });
+    expect(parsed.profileAsOfDate).toBeNull();
+  });
+
+  it("validates an entity row and a paginated list envelope", () => {
+    const entity = federalEntitySchema.parse({
+      uei: "GRC4XK29M7PT",
+      legalNameBase: "GRANITE RIDGE CONSTRUCTORS",
+      city: "DENVER",
+      state: "CO",
+      naics: "237310",
+      totalLifetimeObligations: 184000000,
+      totalActiveObligations: 12000000,
+      activeAwardCount: 3,
+      hasFederalAwards: true,
+    });
+    expect(entity.uei).toBe("GRC4XK29M7PT");
+
+    const list = federalEntityListSchema.parse({
+      ...provenance,
+      total: 1,
+      returned: 1,
+      offset: 0,
+      limit: 500,
+      truncated: false,
+      minLifetimeBound: 1000000,
+      fullUniverse: 354543,
+      rows: [entity],
+    });
+    expect(list.fullUniverse).toBe(354543);
+    expect(list.truncated).toBe(false);
+  });
+
+  it("coerces query params from URL strings", () => {
+    const q = federalEntityQuerySchema.parse({
+      naics: "336",
+      minObligation: "5000000",
+      state: "tx",
+      activeOnly: "true",
+      limit: "100",
+      offset: "0",
+    });
+    expect(q.minObligation).toBe(5000000);
+    expect(q.activeOnly).toBe(true);
+    expect(q.limit).toBe(100);
+  });
+
+  it("rejects a limit above the 2000 cap", () => {
+    expect(() => federalEntityQuerySchema.parse({ limit: "5000" })).toThrow();
   });
 });

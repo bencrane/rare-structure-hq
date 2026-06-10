@@ -22,7 +22,7 @@ import { AggregateView } from "./AggregateView";
 import { MapView } from "./MapView";
 import { CommandPalette } from "./components/CommandPalette";
 import { CompanyProfile } from "./components/CompanyProfile";
-import { runQuery } from "./data";
+import { type QueryResult, runQuery } from "./data";
 import type { AggregateSpec, Command, Company, MapQuery } from "./types";
 
 export function DemoApp({ embedded = false }: { embedded?: boolean }) {
@@ -30,6 +30,13 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
   const [query, setQuery] = useState<MapQuery | null>(null);
   const [aggregate, setAggregate] = useState<AggregateSpec | null>(null);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+
+  // The map-query result set is now REMOTE (the BFF's warm federal snapshot), so it is a
+  // 3-state async load: loading / error / data. The chart surface (AggregateView) owns
+  // its own async load against the precomputed chart endpoints.
+  const [result, setResult] = useState<QueryResult | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // ⌘K toggles the palette from anywhere; Esc backs out one layer at a time.
   useEffect(() => {
@@ -66,7 +73,34 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
     }
   }, []);
 
-  const results = query ? runQuery(query) : [];
+  // Fetch the live result set whenever the map-query changes. Guarded against a stale
+  // resolve clobbering a newer query (the classic out-of-order fetch race).
+  useEffect(() => {
+    if (!query) {
+      setResult(null);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    runQuery(query)
+      .then((r) => {
+        if (!cancelled) setResult(r);
+      })
+      .catch((e) => {
+        if (!cancelled) setError(e instanceof Error ? e.message : "query failed");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [query]);
+
+  const results = result?.companies ?? [];
 
   return (
     <div
@@ -86,6 +120,10 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
             key="map"
             query={query}
             results={results}
+            loading={loading}
+            error={error}
+            total={result?.total ?? results.length}
+            profileAsOfDate={result?.profileAsOfDate ?? null}
             selectedId={selectedCompany?.id ?? null}
             onSelectCompany={(company) => setSelectedCompany(company)}
             onInvokeCommand={() => setCommandOpen(true)}
