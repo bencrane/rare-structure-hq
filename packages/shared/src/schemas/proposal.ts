@@ -71,6 +71,53 @@ export const createProposalResultSchema = z.object({
 });
 export type CreateProposalResult = z.infer<typeof createProposalResultSchema>;
 
+/** How the infrastructure fee is invoiced (mirrors edge_api). */
+export const billingCadenceSchema = z.enum(["upfront_in_full", "monthly", "quarterly"]);
+export type BillingCadence = z.infer<typeof billingCadenceSchema>;
+
+/** One success-fee tier — label + display rate (e.g. "5.0%"). */
+export const successFeeTierSchema = z.object({ tier: z.string(), rate: z.string() });
+export type SuccessFeeTier = z.infer<typeof successFeeTierSchema>;
+
+/**
+ * The STRUCTURED pricing the mandate editor binds to: seeded from the shell, edited (or not), and
+ * sent back on Confirm. `billingCadence` is permissive on read (never breaks the shell parse).
+ */
+export const proposalPricingSchema = z.object({
+  monthlyFeeCents: z.number().int().nonnegative(),
+  durationMonths: z.number().int().positive(),
+  billingCadence: z.string(),
+  successFeeTiers: z.array(successFeeTierSchema),
+});
+export type ProposalPricing = z.infer<typeof proposalPricingSchema>;
+
+/**
+ * Operator → BFF: the values LOCKED IN on the mandate editor ("Confirm & originate"). Every field
+ * optional — an omitted value keeps the draft's current actual, so a zero-edit Confirm re-stamps
+ * the seed defaults. Confirm stamps these onto the proposal instance, then renders the PDF + creates
+ * the signing envelope.
+ */
+export const confirmProposalInputSchema = z.object({
+  monthlyFeeCents: z.number().int().positive().optional(),
+  durationMonths: z.number().int().positive().optional(),
+  // Permissive (string, not the enum) to match the read side — the engine normalizes cadence, and a
+  // template seeded with a non-enum cadence must still be confirmable rather than 400-ing.
+  billingCadence: z.string().optional(),
+  successFeeTiers: z.array(successFeeTierSchema).optional(),
+  effectiveDate: z.string().optional(),
+});
+export type ConfirmProposalInput = z.infer<typeof confirmProposalInputSchema>;
+
+/** BFF → operator: the originate result. `signingToken` present once the envelope is created. */
+export const confirmProposalResultSchema = z.object({
+  ref: z.string(),
+  status: proposalStatusSchema,
+  provisioned: z.boolean(),
+  signingToken: z.string().optional(),
+  provisionError: z.string().nullable().optional(),
+});
+export type ConfirmProposalResult = z.infer<typeof confirmProposalResultSchema>;
+
 /** One grok-at-a-glance term row shown on the shell. */
 export const headlineRowSchema = z.object({ label: z.string(), value: z.string() });
 export type HeadlineRow = z.infer<typeof headlineRowSchema>;
@@ -86,6 +133,11 @@ export const proposalShellSchema = z.object({
   client: z.object({ name: z.string(), title: z.string().optional() }),
   execSummary: z.string(),
   headline: z.array(headlineRowSchema),
+  /**
+   * Structured pricing — what the operator's mandate editor binds its inputs to (the headline rows
+   * are the derived display of these). Operator-only in practice; the prospect `Shell` ignores it.
+   */
+  pricing: proposalPricingSchema.optional(),
   createdAt: isoTimestampSchema,
   /**
    * Documenso recipient signing token (the engine's `signing_token`). Drives the

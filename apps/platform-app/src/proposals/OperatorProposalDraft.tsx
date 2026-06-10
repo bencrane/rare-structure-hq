@@ -1,24 +1,48 @@
 /**
- * OperatorProposalDraft — the operator's view of the proposal at `/p/:ref` (signed in to their own
- * account). The prospect sees the final, read-only summary; the operator sees THIS — the same page,
- * but it's "their version," quietly editable.
+ * OperatorProposalDraft — the operator's mandate-generator/editor at `/app/m/:ref`.
  *
- * It does not look like a draft. By default everything renders final. Only when the operator clicks
- * the lock in the header do the term values (fee, quarterly, success tiers) become editable. At the
- * execution block the operator signs in the moment (draws a signature) rather than showing a
- * pre-typed mark, then Confirms — which (eventually) renders via DocRaptor → Documenso and, when the
- * sealed PDF is ready, flips a subtle indicator so the link can be shared on the call.
+ * By default everything renders final. Clicking the header lock makes the STRUCTURED terms editable
+ * (monthly fee, term, billing cadence, success-fee tiers — see `PricingEditor`). At the execution
+ * block the operator signs in the moment (a cosmetic on-page gate — it binds nothing; the real
+ * originator counter-signature is Documenso's), which unlocks "Confirm & originate".
  *
- * PROTOTYPE: edits + signature + lifecycle are local (see useProposalDraft); nothing is pushed to
- * the backend or auto-sent. Confirm simulates the render round-trip.
+ * Confirm is the REAL originate (see useProposalDraft.submit → confirmProposal): it STAMPS the
+ * locked-in values onto the proposal instance (BFF → edge_api), which renders the PDF from them +
+ * creates the Documenso envelope, then reveals the share link (`ReadyBar` → `/p/:ref`). "Ready" is
+ * driven by the actual provisioning result, so the prospect's "Proceed to Proposal" goes live with
+ * it. Edits + signature survive a reload via localStorage; the lifecycle is re-derived from the shell.
  */
-import type { ProposalShell } from "@rare-structure-hq/shared";
+import type { BillingCadence, ProposalPricing, ProposalShell } from "@rare-structure-hq/shared";
 import { Check, Copy, ExternalLink, Lock, LockOpen, PenLine } from "lucide-react";
 import { useState } from "react";
 
+import { useAuth } from "@/lib/auth";
 import { ProposalViewerShell } from "@/proposals/ProposalViewerShell";
 import { SignatureOverlay } from "@/proposals/SignaturePad";
 import { type DraftStatus, useProposalDraft } from "@/proposals/useProposalDraft";
+
+// Defensive only — the BFF shell always carries `pricing` now; this keeps types total if an older
+// engine response omits it (the editor then just seeds zeros, never crashes).
+const FALLBACK_PRICING: ProposalPricing = {
+  monthlyFeeCents: 0,
+  durationMonths: 6,
+  billingCadence: "upfront_in_full",
+  successFeeTiers: [],
+};
+
+const CADENCE_OPTIONS: { value: BillingCadence; label: string }[] = [
+  { value: "upfront_in_full", label: "Upfront, in full" },
+  { value: "monthly", label: "Monthly" },
+  { value: "quarterly", label: "Quarterly" },
+];
+
+function formatUsd(cents: number): string {
+  return `$${Math.round(cents / 100).toLocaleString("en-US")}`;
+}
+
+function cadenceLabel(c: string): string {
+  return CADENCE_OPTIONS.find((o) => o.value === c)?.label ?? c;
+}
 
 export function OperatorProposalDraft({
   shell,
@@ -30,12 +54,20 @@ export function OperatorProposalDraft({
   /** Forwarded to ProposalViewerShell. `"cockpit"` only when mounted in the Mandate page. */
   housing?: "standalone" | "cockpit";
 }) {
-  const { draft, setOverride, setSignature, clearSignature, submit } =
-    useProposalDraft(proposalRef);
+  const { session } = useAuth();
+  const token = session?.access_token ?? "";
+  const { draft, setPricing, setSignature, clearSignature, submit } = useProposalDraft(
+    proposalRef,
+    {
+      pricing: shell.pricing ?? FALLBACK_PRICING,
+      // Already-originated proposals (an envelope exists) open terminal — no re-edit / re-confirm.
+      originated: shell.status !== "created",
+    },
+  );
   const [editing, setEditing] = useState(false);
   const [signing, setSigning] = useState(false);
 
-  const finalized = draft.status !== "draft"; // submitted / ready → locked in
+  const finalized = draft.status === "submitting" || draft.status === "ready"; // locked in
   const signed = !!draft.signature;
   // Terms are only editable before signing — a signature binds the terms shown (re-sign to edit).
   const canEditValues = !finalized && editing && !signed;
@@ -75,35 +107,14 @@ export function OperatorProposalDraft({
           {shell.execSummary}
         </p>
 
-        {/* Headline terms — editable when unlocked */}
-        <div className="mb-10">
-          <div className="mb-3 font-mono text-[0.625rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.2em]">
-            {shell.templateLabel}
-          </div>
-          <div>
-            {shell.headline.map((row) => (
-              <div
-                key={row.label}
-                className="flex items-baseline justify-between gap-4 border-[color:var(--color-border-subtle)] border-b py-3"
-              >
-                <span className="font-mono text-[0.6875rem] text-[color:var(--color-text-muted)] uppercase tracking-[0.12em]">
-                  {row.label}
-                </span>
-                {canEditValues ? (
-                  <input
-                    value={draft.overrides[row.label] ?? row.value}
-                    onChange={(e) => setOverride(row.label, e.target.value)}
-                    className="w-[12rem] border-[color:var(--color-border-default)] border-b bg-transparent py-0.5 text-right text-[0.9375rem] text-[color:var(--color-text-primary)] tabular-nums outline-none focus:border-[color:var(--color-text-accent)]"
-                  />
-                ) : (
-                  <span className="text-[0.9375rem] text-[color:var(--color-text-primary)] tabular-nums">
-                    {draft.overrides[row.label] ?? row.value}
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
+        {/* Headline terms — STRUCTURED, editable when unlocked. These are the dynamic values that
+            get stamped onto the instance + rendered into the PDF on Confirm. */}
+        <PricingEditor
+          label={shell.templateLabel}
+          pricing={draft.pricing}
+          editable={canEditValues}
+          onChange={setPricing}
+        />
 
         {/* Execution — capital partner placeholder + the operator's live signature */}
         <ExecutionBlock
@@ -115,12 +126,14 @@ export function OperatorProposalDraft({
           onClearSignature={clearSignature}
         />
 
-        {/* Action — confirm → render → ready */}
+        {/* Action — confirm → stamp + render → ready. Gated on the on-page signature (cosmetic, but
+            the operator signs every time). */}
         <DraftActionBar
           status={draft.status}
           hasSignature={!!draft.signature}
+          error={draft.error}
           proposalRef={proposalRef}
-          onSubmit={submit}
+          onSubmit={() => void submit(token)}
         />
 
         <div className="mt-10 text-center font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
@@ -154,7 +167,8 @@ function DraftControls({
   signed: boolean;
   onToggle: () => void;
 }) {
-  if (status !== "draft") return <LifecycleIndicator status={status} />;
+  // Mid-originate / originated → lifecycle pill. Draft + error keep the editable lock (retry-able).
+  if (status === "submitting" || status === "ready") return <LifecycleIndicator status={status} />;
   // Once signed, the terms are locked to what was signed — re-sign (in the execution block) to edit.
   if (signed)
     return (
@@ -286,45 +300,201 @@ function ExecutionBlock({
 function DraftActionBar({
   status,
   hasSignature,
+  error,
   proposalRef,
   onSubmit,
 }: {
   status: DraftStatus;
   hasSignature: boolean;
+  error: string | null;
   proposalRef: string;
   onSubmit: () => void;
 }) {
-  if (status === "draft") {
-    return (
-      <div className="mt-8">
-        <button
-          type="button"
-          onClick={onSubmit}
-          disabled={!hasSignature}
-          className="w-full border border-[color:var(--color-accent-primary)] bg-[color:var(--color-accent-soft)] py-3 text-center font-mono text-[0.8125rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.18em] transition-colors hover:bg-[color:var(--color-accent-primary)] hover:text-[color:var(--color-text-onAccent)] disabled:opacity-40"
-        >
-          Confirm &amp; originate
-        </button>
-        {hasSignature && (
-          <p className="mt-2 text-center font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
-            Locks the terms + signature and renders the agreement. You share the link yourself.
-          </p>
-        )}
-      </div>
-    );
-  }
+  if (status === "ready") return <ReadyBar proposalRef={proposalRef} />;
 
-  if (status === "submitted") {
+  if (status === "submitting") {
     return (
       <div className="mt-8 flex items-center justify-center gap-2 border border-[color:var(--color-border-subtle)] bg-[color:var(--color-surface-raised)] py-4 font-mono text-[0.6875rem] text-[color:var(--color-text-muted)] uppercase tracking-[0.14em]">
         <span className="size-1.5 animate-pulse rounded-full bg-[color:var(--color-text-subtle)]" />
-        Rendering the agreement…
+        Originating — stamping terms &amp; rendering the agreement…
       </div>
     );
   }
 
-  return <ReadyBar proposalRef={proposalRef} />;
+  // draft | error — the signature gate stays: Confirm unlocks only after the operator signs.
+  return (
+    <div className="mt-8">
+      <button
+        type="button"
+        onClick={onSubmit}
+        disabled={!hasSignature}
+        className="w-full border border-[color:var(--color-accent-primary)] bg-[color:var(--color-accent-soft)] py-3 text-center font-mono text-[0.8125rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.18em] transition-colors hover:bg-[color:var(--color-accent-primary)] hover:text-[color:var(--color-text-onAccent)] disabled:opacity-40"
+      >
+        {status === "error" ? "Retry — confirm & originate" : "Confirm & originate"}
+      </button>
+      {error ? (
+        <p className="mt-2 text-center font-mono text-[0.5625rem] text-[color:var(--color-state-warn)] uppercase tracking-[0.14em]">
+          {error}
+        </p>
+      ) : hasSignature ? (
+        <p className="mt-2 text-center font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
+          Stamps the terms + renders the agreement. You share the link yourself.
+        </p>
+      ) : null}
+    </div>
+  );
 }
+
+// Structured headline-terms editor — the dynamic values stamped onto the instance + rendered into
+// the PDF on Confirm. Display mirrors the prospect shell's headline rows; inputs appear when unlocked.
+function PricingEditor({
+  label,
+  pricing,
+  editable,
+  onChange,
+}: {
+  label: string;
+  pricing: ProposalPricing;
+  editable: boolean;
+  onChange: (next: (p: ProposalPricing) => ProposalPricing) => void;
+}) {
+  const total = pricing.monthlyFeeCents * pricing.durationMonths;
+  return (
+    <div className="mb-10">
+      <div className="mb-3 font-mono text-[0.625rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.2em]">
+        {label}
+      </div>
+      <div>
+        <TermRow label="Infrastructure Fee">
+          {editable ? (
+            <MoneyInput
+              cents={pricing.monthlyFeeCents}
+              onChange={(cents) => onChange((p) => ({ ...p, monthlyFeeCents: cents }))}
+              suffix="/ month"
+            />
+          ) : (
+            <TermVal>{formatUsd(pricing.monthlyFeeCents)} / month</TermVal>
+          )}
+        </TermRow>
+        <TermRow label="Term">
+          {editable ? (
+            <span className="flex items-center justify-end gap-1.5">
+              <input
+                type="number"
+                min={1}
+                value={pricing.durationMonths}
+                onChange={(e) =>
+                  onChange((p) => ({
+                    ...p,
+                    durationMonths: Math.max(1, Number.parseInt(e.target.value, 10) || 1),
+                  }))
+                }
+                className={NUM_CLS}
+              />
+              <span className="text-[0.9375rem] text-[color:var(--color-text-muted)]">months</span>
+            </span>
+          ) : (
+            <TermVal>{pricing.durationMonths} months</TermVal>
+          )}
+        </TermRow>
+        <TermRow label="Billing">
+          {editable ? (
+            <select
+              value={pricing.billingCadence}
+              onChange={(e) => onChange((p) => ({ ...p, billingCadence: e.target.value }))}
+              className={SELECT_CLS}
+            >
+              {CADENCE_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <TermVal>{cadenceLabel(pricing.billingCadence)}</TermVal>
+          )}
+        </TermRow>
+        <TermRow label="Total">
+          <TermVal>{formatUsd(total)}</TermVal>
+        </TermRow>
+        {pricing.successFeeTiers.map((tier, i) => (
+          <TermRow key={tier.tier} label={tier.tier}>
+            {editable ? (
+              <input
+                value={tier.rate}
+                onChange={(e) =>
+                  onChange((p) => ({
+                    ...p,
+                    successFeeTiers: p.successFeeTiers.map((t, j) =>
+                      j === i ? { ...t, rate: e.target.value } : t,
+                    ),
+                  }))
+                }
+                className={RATE_CLS}
+              />
+            ) : (
+              <TermVal>{tier.rate}</TermVal>
+            )}
+          </TermRow>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function TermRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-baseline justify-between gap-4 border-[color:var(--color-border-subtle)] border-b py-3">
+      <span className="font-mono text-[0.6875rem] text-[color:var(--color-text-muted)] uppercase tracking-[0.12em]">
+        {label}
+      </span>
+      {children}
+    </div>
+  );
+}
+
+function TermVal({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="text-[0.9375rem] text-[color:var(--color-text-primary)] tabular-nums">
+      {children}
+    </span>
+  );
+}
+
+function MoneyInput({
+  cents,
+  onChange,
+  suffix,
+}: {
+  cents: number;
+  onChange: (cents: number) => void;
+  suffix?: string;
+}) {
+  const dollars = Math.round(cents / 100);
+  return (
+    <span className="flex items-center justify-end gap-1.5">
+      <span className="text-[0.9375rem] text-[color:var(--color-text-muted)]">$</span>
+      <input
+        inputMode="numeric"
+        value={dollars.toLocaleString("en-US")}
+        onChange={(e) =>
+          onChange((Number.parseInt(e.target.value.replace(/[^0-9]/g, ""), 10) || 0) * 100)
+        }
+        className={NUM_CLS}
+      />
+      {suffix && (
+        <span className="text-[0.9375rem] text-[color:var(--color-text-muted)]">{suffix}</span>
+      )}
+    </span>
+  );
+}
+
+const NUM_CLS =
+  "w-[7rem] border-[color:var(--color-border-default)] border-b bg-transparent py-0.5 text-right text-[0.9375rem] text-[color:var(--color-text-primary)] tabular-nums outline-none focus:border-[color:var(--color-text-accent)]";
+const SELECT_CLS =
+  "border-[color:var(--color-border-default)] border-b bg-[color:var(--color-surface-sunken)] py-0.5 text-right text-[0.9375rem] text-[color:var(--color-text-primary)] outline-none focus:border-[color:var(--color-text-accent)]";
+const RATE_CLS =
+  "w-[5.5rem] border-[color:var(--color-border-default)] border-b bg-transparent py-0.5 text-right text-[0.9375rem] text-[color:var(--color-text-primary)] tabular-nums outline-none focus:border-[color:var(--color-text-accent)]";
 
 function ReadyBar({ proposalRef }: { proposalRef: string }) {
   const url = `${window.location.origin}/p/${proposalRef}`;
