@@ -234,8 +234,14 @@ export function edgeTemplateCreate(body: {
   });
 }
 
-export async function edgeTemplateList(publishedOnly = false): Promise<EdgeTemplateSummary[]> {
-  const qs = publishedOnly ? "?published=true" : "";
+export async function edgeTemplateList(
+  publishedOnly = false,
+  orgDomain?: string,
+): Promise<EdgeTemplateSummary[]> {
+  const params = new URLSearchParams();
+  if (publishedOnly) params.set("published", "true");
+  if (orgDomain) params.set("org_domain", orgDomain);
+  const qs = params.toString() ? `?${params}` : "";
   const res = await fetch(`${base()}${TEMPLATES}${qs}`, { headers: serviceHeaders(false) });
   if (!res.ok) throw new EdgeError(`edge template list: ${res.status}`);
   return (await res.json()) as EdgeTemplateSummary[];
