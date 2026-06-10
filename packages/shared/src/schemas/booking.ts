@@ -32,9 +32,28 @@ export const bookingSummarySchema = z.object({
 export type BookingSummary = z.infer<typeof bookingSummarySchema>;
 
 /**
+ * The domain-keyed company dossier (`business.company_profiles`) — the firmographics + enrichment
+ * the profile page renders, resolved by the booking's `domain`. Null until the company is enriched;
+ * hand-seeded today, refreshed by a parallel.ai/cal projection later.
+ */
+export const companyProfileSchema = z.object({
+  domain: z.string(),
+  company: z.string().nullable(),
+  hq: z.string().nullable(),
+  headcount: z.string().nullable(),
+  estRevenueRange: z.string().nullable(),
+  overview: z.string().nullable(),
+  focus: z.array(z.string()),
+  industries: z.array(z.string()),
+  geographies: z.array(z.string()),
+  source: z.string().nullable(),
+});
+export type CompanyProfile = z.infer<typeof companyProfileSchema>;
+
+/**
  * BFF → operator: the full booking-profile read. The summary plus the cal system identifiers
- * (stable iCalUID + the live cal booking/event-type ids) and the meeting window — everything
- * the cal booking gives us. Enrichment fields layer on later.
+ * (stable iCalUID + the live cal booking/event-type ids), the meeting window, and the company
+ * dossier (`profile`) resolved by domain. `profile` is null until the company is enriched.
  */
 export const bookingDetailSchema = bookingSummarySchema.extend({
   icalUid: z.string().nullable(),
@@ -43,5 +62,6 @@ export const bookingDetailSchema = bookingSummarySchema.extend({
   endTime: isoTimestampSchema.nullable(),
   bookedAt: isoTimestampSchema.nullable(),
   updatedAt: isoTimestampSchema.nullable(),
+  profile: companyProfileSchema.nullable(),
 });
 export type BookingDetail = z.infer<typeof bookingDetailSchema>;
