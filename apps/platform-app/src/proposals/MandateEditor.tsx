@@ -116,9 +116,8 @@ export function MandateEditor({
           onChange={setPricing}
         />
 
-        {/* Execution — capital partner placeholder + the operator's live signature */}
+        {/* Execution — the operator's live signature */}
         <ExecutionBlock
-          shell={shell}
           signature={draft.signature}
           signedAt={draft.signedAt}
           finalized={finalized}
@@ -135,10 +134,6 @@ export function MandateEditor({
           proposalRef={proposalRef}
           onSubmit={() => void submit(token)}
         />
-
-        <div className="mt-10 text-center font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
-          {proposalRef} · Confidential · Originated by Rare Structure LLC
-        </div>
       </div>
 
       {signing && (
@@ -214,14 +209,12 @@ function LifecycleIndicator({ status }: { status: DraftStatus }) {
 }
 
 function ExecutionBlock({
-  shell,
   signature,
   signedAt,
   finalized,
   onSign,
   onClearSignature,
 }: {
-  shell: ProposalShell;
   signature: string | null;
   signedAt: string | null;
   finalized: boolean;
@@ -234,24 +227,6 @@ function ExecutionBlock({
         Execution
       </div>
       <div className="border border-[color:var(--color-border-subtle)] p-6">
-        {/* Capital Partner — awaits the prospect */}
-        <div className="mb-2.5 font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.16em]">
-          Signature
-        </div>
-        <div className="flex h-[84px] items-center justify-center border border-[color:var(--color-border-default)] font-mono text-[0.625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.16em]">
-          Pending
-        </div>
-        <div className="mt-3 text-[0.875rem] text-[color:var(--color-text-primary)]">
-          {shell.client.name}
-        </div>
-        {shell.client.title && (
-          <div className="text-[0.75rem] text-[color:var(--color-text-muted)]">
-            {shell.client.title}
-          </div>
-        )}
-
-        <div className="my-6 border-[color:var(--color-border-subtle)] border-t" />
-
         {/* Originator — the operator signs in the moment */}
         <div className="mb-2.5 flex items-center justify-between">
           <span className="font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.16em]">
