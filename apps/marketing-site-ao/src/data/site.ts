@@ -4,11 +4,15 @@
  * `uppercase` where the design calls for caps.
  */
 
+/** Threat tier — drives the left status rail color on each feed row. */
+export type Severity = "critical" | "elevated" | "standard";
+
 export interface FeedEvent {
   id: string;
   title: string;
   agency: string;
   location: string;
+  severity: Severity;
   ageSeconds: number;
 }
 
@@ -21,20 +25,23 @@ export const feedSeed: FeedEvent[] = [
     title: "Surface Equipment Impoundment",
     agency: "MSHA District 4",
     location: "Beckley, WV",
+    severity: "standard",
     ageSeconds: 0,
   },
   {
     id: "seed-2",
-    title: "Surface Equipment Impoundment",
-    agency: "MSHA District 4",
-    location: "Beckley, WV",
+    title: "Surety Bond Revocation",
+    agency: "SBA Region 4",
+    location: "Atlanta, GA",
+    severity: "elevated",
     ageSeconds: 60,
   },
   {
     id: "seed-3",
-    title: "Surety Bond Revocation",
-    agency: "SBA Region 4",
-    location: "Atlanta, GA",
+    title: "Surface Equipment Impoundment",
+    agency: "MSHA District 4",
+    location: "Beckley, WV",
+    severity: "standard",
     ageSeconds: 300,
   },
   {
@@ -42,6 +49,7 @@ export const feedSeed: FeedEvent[] = [
     title: "Subterranean Closure Action",
     agency: "MSHA District 8",
     location: "Vincennes, IN",
+    severity: "critical",
     ageSeconds: 780,
   },
   {
@@ -49,22 +57,73 @@ export const feedSeed: FeedEvent[] = [
     title: "Critical Hazard Citation",
     agency: "OSHA Region 2",
     location: "Newark, NJ",
+    severity: "critical",
     ageSeconds: 1740,
   },
 ];
 
 /** Pool the live feed draws from to synthesize new intercepts over time. */
 export const feedPool: FeedTemplate[] = [
-  { title: "Surface Equipment Impoundment", agency: "MSHA District 4", location: "Beckley, WV" },
-  { title: "Subterranean Closure Action", agency: "MSHA District 8", location: "Vincennes, IN" },
-  { title: "Surety Bond Revocation", agency: "SBA Region 4", location: "Atlanta, GA" },
-  { title: "Critical Hazard Citation", agency: "OSHA Region 2", location: "Newark, NJ" },
-  { title: "Stop-Work Order Issued", agency: "OSHA Region 3", location: "Pittsburgh, PA" },
-  { title: "Clean Water Act Violation", agency: "EPA Region 5", location: "Gary, IN" },
-  { title: "Prime Contract Default Notice", agency: "USACE", location: "New Orleans, LA" },
-  { title: "Surety Credit Constraint", agency: "SBA Region 6", location: "Dallas, TX" },
-  { title: "Imminent Danger Order", agency: "MSHA District 2", location: "Charleston, WV" },
-  { title: "Remediation Mandate Issued", agency: "EPA Region 2", location: "Newark, NJ" },
+  {
+    title: "Surface Equipment Impoundment",
+    agency: "MSHA District 4",
+    location: "Beckley, WV",
+    severity: "standard",
+  },
+  {
+    title: "Subterranean Closure Action",
+    agency: "MSHA District 8",
+    location: "Vincennes, IN",
+    severity: "critical",
+  },
+  {
+    title: "Surety Bond Revocation",
+    agency: "SBA Region 4",
+    location: "Atlanta, GA",
+    severity: "elevated",
+  },
+  {
+    title: "Critical Hazard Citation",
+    agency: "OSHA Region 2",
+    location: "Newark, NJ",
+    severity: "critical",
+  },
+  {
+    title: "Stop-Work Order Issued",
+    agency: "OSHA Region 3",
+    location: "Pittsburgh, PA",
+    severity: "critical",
+  },
+  {
+    title: "Clean Water Act Violation",
+    agency: "EPA Region 5",
+    location: "Gary, IN",
+    severity: "elevated",
+  },
+  {
+    title: "Prime Contract Default Notice",
+    agency: "USACE",
+    location: "New Orleans, LA",
+    severity: "elevated",
+  },
+  {
+    title: "Surety Credit Constraint",
+    agency: "SBA Region 6",
+    location: "Dallas, TX",
+    severity: "elevated",
+  },
+  {
+    title: "Imminent Danger Order",
+    agency: "MSHA District 2",
+    location: "Charleston, WV",
+    severity: "critical",
+  },
+  {
+    title: "Remediation Mandate Issued",
+    agency: "EPA Region 2",
+    location: "Newark, NJ",
+    severity: "standard",
+  },
 ];
 
 export interface HeroStat {
