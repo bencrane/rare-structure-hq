@@ -5,6 +5,7 @@
  * - Validate rare-structure-hq Supabase JWTs (ES256 + JWKS)
  * - /health (unauthenticated) for liveness probes
  * - /api/v1/me (auth-required) resolved identity: validated user + org affiliation
+ * - /api/v1/settings (auth-required) operator settings (originate render_mode toggle)
  * - /api/v1/proposals (auth) instantiate; /api/v1/proposals/:ref (public) shell read
  * - /api/v1/proposal-templates (auth) the non-revealing posture catalog
  * - /api/v1/award-profile/:domain (auth-required) brokers to core-x catalyst_api
@@ -29,6 +30,7 @@ import { companyProfileRoutes } from "./routes/company-profiles-admin.ts";
 import { federalRoutes } from "./routes/federal.ts";
 import { proposalTemplateEditorRoutes } from "./routes/proposal-templates-admin.ts";
 import { proposalAdminRoutes, proposalTemplateRoutes } from "./routes/proposals-admin.ts";
+import { settingsRoutes } from "./routes/settings.ts";
 
 const app = new Hono<{ Variables: AuthVariables & { requestId: string } }>();
 
@@ -98,6 +100,7 @@ app.get("/api/v1/me", requireUser, async (c) => {
   return c.json(me);
 });
 
+app.route("/api/v1/settings", settingsRoutes);
 app.route("/api/v1/proposals", proposalAdminRoutes);
 // Authoring surface mounts BEFORE the bare picker so the more specific prefix wins.
 app.route("/api/v1/proposal-templates/manage", proposalTemplateEditorRoutes);

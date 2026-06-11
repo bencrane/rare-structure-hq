@@ -15,6 +15,7 @@ import { HTTPException } from "hono/http-exception";
 
 import {
   type ConfirmProposalResult,
+  DEFAULT_RENDER_MODE,
   type ProposalShell,
   type ProposalStatus,
   type ProposalSummary,
@@ -126,6 +127,15 @@ proposalAdminRoutes.post("/:ref/confirm", requireUser, async (c) => {
   }
   const input = parsed.data;
 
+  // Resolve the operator's originate pathway server-side (the setting is authoritative; the client
+  // never supplies it at confirm). Absent row → the default (through-docraptor).
+  const { data: settingRow } = await db()
+    .from("operator_settings")
+    .select("render_mode")
+    .eq("auth_user_id", c.get("user").user_id)
+    .maybeSingle();
+  const renderMode = (settingRow?.render_mode as string | undefined) ?? DEFAULT_RENDER_MODE;
+
   try {
     const r = await edgeConfirmProposal(ref, {
       monthly_fee_cents: input.monthlyFeeCents,
@@ -133,6 +143,7 @@ proposalAdminRoutes.post("/:ref/confirm", requireUser, async (c) => {
       billing_cadence: input.billingCadence,
       success_fee_schedule: input.successFeeTiers,
       effective_date: input.effectiveDate,
+      render_mode: renderMode,
     });
     const result: ConfirmProposalResult = {
       ref: r.ref,

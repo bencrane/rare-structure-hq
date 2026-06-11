@@ -72,6 +72,8 @@ export interface EdgeConfirmInput {
   billing_cadence?: string;
   success_fee_schedule?: { tier: string; rate: string }[];
   effective_date?: string;
+  /** Originate pathway, resolved by the BFF from the operator's settings. edge_api branches on it. */
+  render_mode?: string;
 }
 
 export interface EdgeConfirmResult {
