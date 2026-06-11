@@ -63,7 +63,7 @@ export function LiveFeed() {
           Live Enforcement Intercept
         </span>
         <span className="flex items-center gap-2 font-mono text-[0.6875rem] uppercase tracking-[0.16em] text-[color:var(--color-text-muted)]">
-          <StatusDot tone="success" pulse />
+          <StatusDot tone="success" />
           Live
         </span>
       </div>
@@ -122,10 +122,7 @@ export function LiveFeed() {
       </ul>
 
       <div className="flex flex-1 items-center justify-center px-5 py-6">
-        <span className="flex items-center gap-2 font-mono text-[0.5625rem] uppercase tracking-[0.2em] text-[color:var(--color-text-subtle)]">
-          <span className="ao-caret text-[color:var(--color-text-accent)]" aria-hidden="true">
-            ▌
-          </span>
+        <span className="font-mono text-[0.5625rem] uppercase tracking-[0.2em] text-[color:var(--color-text-subtle)]">
           Monitoring 8 Districts · 5 Agencies
         </span>
       </div>

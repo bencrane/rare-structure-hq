@@ -13,7 +13,7 @@ export function SiteHeader() {
       </div>
       <div className="sm:text-right">
         <p className="flex items-center gap-2 font-mono text-[0.625rem] uppercase tracking-[0.18em] text-[color:var(--color-text-muted)] sm:justify-end">
-          <StatusDot tone="success" pulse />
+          <StatusDot tone="success" />
           System Active
         </p>
         <p className="mt-1.5 font-mono text-[0.625rem] uppercase tracking-[0.18em] text-[color:var(--color-text-subtle)]">
