@@ -70,7 +70,7 @@ export function CompanyProfile({
             }
           >
             <ProfileHeader company={company} onClose={onClose} />
-            <ProfileBody company={company} reduced={reduced} />
+            <ProfileBody company={company} />
           </motion.aside>
         </motion.div>
       )}
@@ -97,7 +97,7 @@ function ProfileHeader({ company, onClose }: { company: Company; onClose: () => 
   );
 }
 
-function ProfileBody({ company, reduced }: { company: Company; reduced: boolean }) {
+function ProfileBody({ company }: { company: Company }) {
   return (
     <div className="flex-1 overflow-y-auto px-6 py-6">
       {/* Identity */}
@@ -148,8 +148,8 @@ function ProfileBody({ company, reduced }: { company: Company; reduced: boolean 
         </span>
       </div>
       <div className="flex flex-col gap-3">
-        {company.catalysts.map((catalyst, i) => (
-          <CatalystCard key={catalyst.kind} catalyst={catalyst} index={i} reduced={reduced} />
+        {company.catalysts.map((catalyst) => (
+          <CatalystCard key={catalyst.kind} catalyst={catalyst} />
         ))}
       </div>
     </div>
@@ -177,15 +177,7 @@ function IdentityFact({
   );
 }
 
-function CatalystCard({
-  catalyst,
-  index,
-  reduced,
-}: {
-  catalyst: CapitalCatalyst;
-  index: number;
-  reduced: boolean;
-}) {
+function CatalystCard({ catalyst }: { catalyst: CapitalCatalyst }) {
   const Icon = CATALYST_ICON[catalyst.kind];
   const tone = TONE_COLOR[catalyst.tone];
 
@@ -193,9 +185,9 @@ function CatalystCard({
     <motion.div
       className="border-[color:var(--color-border-subtle)] border-y border-r bg-[color:var(--color-surface-base)]"
       style={{ borderLeft: `3px solid ${tone}` }}
-      initial={reduced ? false : { opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: reduced ? 0 : 0.1 + index * 0.08, ease: "easeOut" }}
+      // The card renders in its final position immediately — no entrance drift. The drawer
+      // itself still slides in (motion.aside); only this inner stagger/slide is removed.
+      initial={false}
     >
       <div className="px-4 py-4">
         {/* Card header */}

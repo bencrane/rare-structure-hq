@@ -53,12 +53,14 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
           setSelectedCompany(null);
         } else if (aggregate) {
           setAggregate(null);
+        } else if (query) {
+          setQuery(null);
         }
       }
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [commandOpen, selectedCompany, aggregate]);
+  }, [commandOpen, selectedCompany, aggregate, query]);
 
   // Running any command closes the palette and the open profile; a map-query
   // lights up the map, an aggregate swaps the map for the chart.
@@ -127,6 +129,7 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
             selectedId={selectedCompany?.id ?? null}
             onSelectCompany={(company) => setSelectedCompany(company)}
             onInvokeCommand={() => setCommandOpen(true)}
+            onDismiss={() => setQuery(null)}
             embedded={embedded}
           />
         )}
