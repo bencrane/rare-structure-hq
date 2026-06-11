@@ -56,20 +56,6 @@ body {
   background-position: center top;
 }
 
-/* LIVE indicator pulse. */
-@keyframes ao-pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.3;
-  }
-}
-.ao-live-dot {
-  animation: ao-pulse 1.6s var(--motion-easing-inOut, ease-in-out) infinite;
-}
-
 /* Live-feed row enter (CSS-only — the top row animates in on prepend). */
 @keyframes ao-feed-enter {
   from {
@@ -85,24 +71,8 @@ body {
   animation: ao-feed-enter 0.42s var(--motion-easing-out, cubic-bezier(0.22, 1, 0.36, 1)) both;
 }
 
-/* Terminal caret for the feed monitoring strip. */
-@keyframes ao-blink {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0;
-  }
-}
-.ao-caret {
-  animation: ao-blink 1.1s step-end infinite;
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .ao-live-dot,
-  .ao-feed-enter,
-  .ao-caret {
+  .ao-feed-enter {
     animation: none;
   }
 }
