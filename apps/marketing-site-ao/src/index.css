@@ -50,9 +50,9 @@ body {
  * surface above it, so the grid reads as the surrounding casing.
  */
 .ao-grid {
-  background-color: var(--color-surface-base);
-  background-image: radial-gradient(var(--color-border-default) 1px, transparent 1.5px);
-  background-size: 26px 26px;
+  background-color: var(--color-surface-sunken);
+  background-image: radial-gradient(var(--color-border-strong) 1.1px, transparent 1.6px);
+  background-size: 22px 22px;
   background-position: center top;
 }
 
