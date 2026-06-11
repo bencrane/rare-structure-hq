@@ -5,8 +5,66 @@
  */
 
 import { motion } from "framer-motion";
-import { Crosshair } from "lucide-react";
+import { Crosshair, type LucideIcon, Map as MapIcon, Table2 as TableIcon } from "lucide-react";
 import { TRACKED_ENTITIES } from "../data";
+
+/** The result-view selector — flips a map-query result between the geographic dot map and the
+ * full results table. Lives in the result banner so it travels with the summary, in both views. */
+export type ResultView = "map" | "table";
+
+export function ViewToggle({
+  view,
+  onChange,
+}: {
+  view: ResultView;
+  onChange: (v: ResultView) => void;
+}) {
+  return (
+    <div className="flex items-stretch border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-raised)]">
+      <ViewToggleButton
+        active={view === "map"}
+        onClick={() => onChange("map")}
+        label="Map"
+        Icon={MapIcon}
+      />
+      <span className="w-px self-stretch bg-[color:var(--color-border-subtle)]" />
+      <ViewToggleButton
+        active={view === "table"}
+        onClick={() => onChange("table")}
+        label="Table"
+        Icon={TableIcon}
+      />
+    </div>
+  );
+}
+
+function ViewToggleButton({
+  active,
+  onClick,
+  label,
+  Icon,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  Icon: LucideIcon;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`flex items-center gap-1.5 px-3.5 py-2.5 font-mono text-mono-xs uppercase tracking-[0.12em] transition-colors ${
+        active
+          ? "bg-[color:var(--color-accent-soft)] text-[color:var(--color-text-accent)]"
+          : "text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text-primary)]"
+      }`}
+    >
+      <Icon className="size-3.5" />
+      {label}
+    </button>
+  );
+}
 
 /** The fixed terminal header — wordmark, terminal name, live entity count. */
 export function TerminalHeader({

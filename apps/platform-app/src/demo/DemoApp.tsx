@@ -20,8 +20,10 @@ import { AnimatePresence } from "framer-motion";
 import { useCallback, useEffect, useState } from "react";
 import { AggregateView } from "./AggregateView";
 import { MapView } from "./MapView";
+import { ResultsTable } from "./ResultsTable";
 import { CommandPalette } from "./components/CommandPalette";
 import { CompanyProfile } from "./components/CompanyProfile";
+import type { ResultView } from "./components/TerminalChrome";
 import { type QueryResult, runQuery } from "./data";
 import type { AggregateSpec, Command, Company, MapQuery } from "./types";
 
@@ -30,6 +32,9 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
   const [query, setQuery] = useState<MapQuery | null>(null);
   const [aggregate, setAggregate] = useState<AggregateSpec | null>(null);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+  // Map (geographic dots) vs Table (full results page). Defaults to Table: live entities have no
+  // coordinates yet (geo deferred), so the table is the useful rendering until the dot layer lands.
+  const [resultView, setResultView] = useState<ResultView>("table");
 
   // The map-query result set is now REMOTE (the BFF's warm federal snapshot), so it is a
   // 3-state async load: loading / error / data. The chart surface (AggregateView) owns
@@ -116,6 +121,22 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
             spec={aggregate}
             onInvokeCommand={() => setCommandOpen(true)}
           />
+        ) : query && resultView === "table" ? (
+          <ResultsTable
+            key="table"
+            query={query}
+            results={results}
+            loading={loading}
+            error={error}
+            total={result?.total ?? results.length}
+            selectedId={selectedCompany?.id ?? null}
+            onSelectCompany={(company) => setSelectedCompany(company)}
+            onInvokeCommand={() => setCommandOpen(true)}
+            onDismiss={() => setQuery(null)}
+            embedded={embedded}
+            resultView={resultView}
+            onResultView={setResultView}
+          />
         ) : (
           <MapView
             key="map"
@@ -130,6 +151,8 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
             onInvokeCommand={() => setCommandOpen(true)}
             onDismiss={() => setQuery(null)}
             embedded={embedded}
+            resultView={resultView}
+            onResultView={setResultView}
           />
         )}
       </AnimatePresence>

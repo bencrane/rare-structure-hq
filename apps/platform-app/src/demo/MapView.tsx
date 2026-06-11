@@ -16,7 +16,12 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
-import { CommandPill, TerminalHeader } from "./components/TerminalChrome";
+import {
+  CommandPill,
+  type ResultView,
+  TerminalHeader,
+  ViewToggle,
+} from "./components/TerminalChrome";
 import { industryLabel } from "./data";
 import { fmtUsd } from "./format";
 import type { Company, MapQuery } from "./types";
@@ -53,6 +58,8 @@ export function MapView({
   onInvokeCommand,
   onDismiss,
   embedded = false,
+  resultView,
+  onResultView,
 }: {
   query: MapQuery | null;
   results: Company[];
@@ -65,6 +72,8 @@ export function MapView({
   onInvokeCommand: () => void;
   onDismiss?: () => void;
   embedded?: boolean;
+  resultView: ResultView;
+  onResultView: (v: ResultView) => void;
 }) {
   const reduced = !!useReducedMotion();
   const [hovered, setHovered] = useState<string | null>(null);
@@ -268,8 +277,9 @@ export function MapView({
             error={error}
             plottedCount={plottable.length}
             profileAsOfDate={profileAsOfDate}
-            onSelectCompany={onSelectCompany}
             reduced={reduced}
+            resultView={resultView}
+            onResultView={onResultView}
           />
         )}
       </div>
@@ -356,8 +366,9 @@ function ResultBanner({
   error,
   plottedCount,
   profileAsOfDate,
-  onSelectCompany,
   reduced,
+  resultView,
+  onResultView,
 }: {
   query: MapQuery;
   results: Company[];
@@ -366,13 +377,14 @@ function ResultBanner({
   error: string | null;
   plottedCount: number;
   profileAsOfDate: string | null;
-  onSelectCompany: (company: Company) => void;
   reduced: boolean;
+  resultView: ResultView;
+  onResultView: (v: ResultView) => void;
 }) {
   const awards = results.reduce((sum, c) => sum + c.totalAwarded, 0);
-  // Geo is deferred, so nothing plots as a dot — surface the live result set as a
-  // compact ranked list under the banner so the operator can still read + open them.
-  const geoPending = plottedCount === 0 && results.length > 0;
+  // Map mode with nothing plotted (live entities have no coords yet — geo deferred): rather than
+  // an overlay list, nudge to the Table view, which owns the full result rendering now.
+  const geoPending = plottedCount === 0 && results.length > 0 && !loading && !error;
 
   return (
     <motion.div
@@ -381,14 +393,17 @@ function ResultBanner({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: reduced ? 0 : 0.2 }}
     >
-      <div className="flex items-stretch border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-raised)] shadow-lg shadow-black/40">
-        <BannerCell label="Vertical" value={industryLabel(query.industry)} accent />
-        <BannerCell
-          label="Companies"
-          value={loading ? "…" : error ? "—" : total.toLocaleString("en-US")}
-        />
-        <BannerCell label="Federal awards" value={loading ? "…" : error ? "—" : fmtUsd(awards)} />
-        {profileAsOfDate && <BannerCell label="Data as of" value={profileAsOfDate} />}
+      <div className="flex items-center gap-3">
+        <div className="flex items-stretch border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-raised)] shadow-lg shadow-black/40">
+          <BannerCell label="Vertical" value={industryLabel(query.industry)} accent />
+          <BannerCell
+            label="Companies"
+            value={loading ? "…" : error ? "—" : total.toLocaleString("en-US")}
+          />
+          <BannerCell label="Federal awards" value={loading ? "…" : error ? "—" : fmtUsd(awards)} />
+          {profileAsOfDate && <BannerCell label="Data as of" value={profileAsOfDate} />}
+        </div>
+        <ViewToggle view={resultView} onChange={onResultView} />
       </div>
 
       {error && (
@@ -397,65 +412,16 @@ function ResultBanner({
         </div>
       )}
 
-      {geoPending && <GeoPendingList results={results} onSelectCompany={onSelectCompany} />}
+      {geoPending && (
+        <button
+          type="button"
+          onClick={() => onResultView("table")}
+          className="border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-raised)] px-3 py-1.5 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase shadow-lg shadow-black/40 transition-colors hover:text-[color:var(--color-text-accent)]"
+        >
+          {total.toLocaleString("en-US")} matches · map pins pending geo-resolution — view as Table
+        </button>
+      )}
     </motion.div>
-  );
-}
-
-// ───────────────────────────────────────────────────────────────────
-// Geo-pending list — until the coordinate layer lands, the live result set
-// has no map dots, so the top matches surface as a compact, openable ranked
-// list. This is the documented "geo pending" state, NOT state-centroid plotting.
-// ───────────────────────────────────────────────────────────────────
-
-const GEO_LIST_MAX = 12;
-
-function GeoPendingList({
-  results,
-  onSelectCompany,
-}: {
-  results: Company[];
-  onSelectCompany: (company: Company) => void;
-}) {
-  const top = results.slice(0, GEO_LIST_MAX);
-  return (
-    <div className="max-h-[58vh] w-[min(92vw,560px)] overflow-y-auto border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-raised)] shadow-lg shadow-black/40">
-      <div className="flex items-center justify-between border-[color:var(--color-border-subtle)] border-b px-3 py-1.5">
-        <span className="font-mono text-[color:var(--color-text-accent)] text-mono-xs uppercase tracking-[0.16em]">
-          Top matches
-        </span>
-        <span className="font-mono text-[color:var(--color-text-subtle)] text-mono-xs uppercase">
-          map pins pending geo-resolution
-        </span>
-      </div>
-      <ul>
-        {top.map((c, i) => (
-          <li key={c.id}>
-            <button
-              type="button"
-              onClick={() => onSelectCompany(c)}
-              className="flex w-full items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-[color:var(--color-surface-base)]"
-            >
-              <span className="w-5 shrink-0 text-right font-mono text-[color:var(--color-text-subtle)] text-mono-xs tabular-nums">
-                {i + 1}
-              </span>
-              <span className="flex-1 truncate text-[color:var(--color-text-primary)] text-body-sm">
-                {c.name}
-                {c.state ? (
-                  <span className="ml-2 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase">
-                    {c.city ? `${c.city}, ` : ""}
-                    {c.state}
-                  </span>
-                ) : null}
-              </span>
-              <span className="shrink-0 font-display font-semibold text-[color:var(--color-text-accent)] text-body-sm tabular-nums">
-                {fmtUsd(c.totalAwarded)}
-              </span>
-            </button>
-          </li>
-        ))}
-      </ul>
-    </div>
   );
 }
 

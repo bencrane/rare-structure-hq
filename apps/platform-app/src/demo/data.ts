@@ -1259,18 +1259,45 @@ function askRowToCompany(r: AskMarketRow): Company {
   };
 }
 
+/**
+ * Collapse same-name legal entities into one row. A holding company often holds several SAM
+ * registrations (one UEI per subsidiary), so the raw result lists "Bristol Bay Construction
+ * Holdings Llc" three times — which reads as a bug even though each is a distinct UEI. We group
+ * by normalized name: `totalAwarded` becomes the group sum, the row keeps the largest single
+ * entity's identity (its profile opens on click), and `relatedEntities` records the count.
+ */
+function dedupeByName(list: Company[]): Company[] {
+  const groups = new Map<string, Company[]>();
+  for (const c of list) {
+    const key = c.name.trim().toLowerCase().replace(/\s+/g, " ");
+    const g = groups.get(key);
+    if (g) g.push(c);
+    else groups.set(key, [c]);
+  }
+  const out: Company[] = [];
+  for (const group of groups.values()) {
+    const rep = group.reduce((a, b) => (b.totalAwarded > a.totalAwarded ? b : a));
+    const sum = group.reduce((s, c) => s + c.totalAwarded, 0);
+    out.push({ ...rep, totalAwarded: sum, relatedEntities: group.length });
+  }
+  return out.sort((a, b) => b.totalAwarded - a.totalAwarded);
+}
+
 /** Run a free-typed natural-language market query through edge_api `/ask`. Returns the SAME
- * `QueryResult` shape the canned filter path produces. */
+ * `QueryResult` shape the canned filter path produces (same-name entities collapsed). */
 export async function runAsk(
   nl: string,
   dataset: "company" | "winners" = "company",
 ): Promise<QueryResult> {
   const res = await askMap(nl, dataset);
+  const companies = dedupeByName(res.rows.map(askRowToCompany));
   return {
-    companies: res.rows.map(askRowToCompany),
-    total: res.total,
+    companies,
+    // The headline count is distinct companies (post-collapse); the raw UEI match rides in
+    // `fullUniverse` for anyone who needs it.
+    total: companies.length,
     minLifetimeBound: 0,
-    fullUniverse: 0,
+    fullUniverse: res.total,
     materializedAt: "",
     profileAsOfDate: null,
   };
