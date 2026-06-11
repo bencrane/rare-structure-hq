@@ -13,7 +13,7 @@ import { Check, ChevronLeft, ExternalLink, Send } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
-import { Badge, Grid, Text } from "@rare-structure-hq/ui";
+import { Badge, Grid } from "@rare-structure-hq/ui";
 
 import { CockpitPage, Panel } from "@/app/cockpit";
 import { useAuth } from "@/lib/auth";
@@ -46,7 +46,6 @@ export default function TemplateEditor() {
   const [id, setId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [markdown, setMarkdown] = useState(routeId ? "" : STARTER_MD);
-  const [applyBrand, setApplyBrand] = useState(true);
   const [tokens, setTokens] = useState<string[]>([]);
   const [tokenValues, setTokenValues] = useState<Record<string, string>>({});
   const [previewHtml, setPreviewHtml] = useState("");
@@ -63,7 +62,6 @@ export default function TemplateEditor() {
       setId(null);
       setName("");
       setMarkdown(STARTER_MD);
-      setApplyBrand(true);
       setStatus(null);
       setPdfUrl(null);
       setError(null);
@@ -78,7 +76,6 @@ export default function TemplateEditor() {
         setId(row.id);
         setName(row.name ?? "");
         setMarkdown(row.markdown);
-        setApplyBrand(row.apply_brand);
         setStatus(row.status);
         setPdfUrl(null);
       })
@@ -93,7 +90,7 @@ export default function TemplateEditor() {
     if (!token) return;
     const t = setTimeout(() => {
       api
-        .convertTemplate(token, { markdown, apply_brand: applyBrand })
+        .convertTemplate(token, { markdown })
         .then((r) => {
           setPreviewHtml(r.html);
           setTokens(r.detected_tokens);
@@ -106,7 +103,7 @@ export default function TemplateEditor() {
         .catch(() => {});
     }, 450);
     return () => clearTimeout(t);
-  }, [token, markdown, applyBrand]);
+  }, [token, markdown]);
 
   async function save(): Promise<string | null> {
     setBusy("saving");
@@ -115,12 +112,10 @@ export default function TemplateEditor() {
       const row = id
         ? await api.updateTemplate(token, id, {
             markdown,
-            apply_brand: applyBrand,
             name: name || null,
           })
         : await api.createTemplate(token, {
             markdown,
-            apply_brand: applyBrand,
             name: name || null,
           });
       setId(row.id);
@@ -141,7 +136,6 @@ export default function TemplateEditor() {
     try {
       const r = await api.previewTemplate(token, {
         markdown,
-        apply_brand: applyBrand,
         token_values: tokenValues,
       });
       setPdfUrl(r.pdf_url);
@@ -188,7 +182,7 @@ export default function TemplateEditor() {
       </Link>
 
       <Panel>
-        {/* Meta row: name · brand toggle · status */}
+        {/* Meta row: name · status */}
         <div className="mb-4 flex flex-wrap items-end gap-3">
           <label className="min-w-[14rem] flex-1">
             <span className="mb-1.5 block font-mono text-[color:var(--color-text-subtle)] text-mono-xs uppercase tracking-[0.14em]">
@@ -200,17 +194,6 @@ export default function TemplateEditor() {
               placeholder="Standard Engagement"
               className={inputCls}
             />
-          </label>
-          <label className="flex cursor-pointer items-center gap-2 py-2.5">
-            <input
-              type="checkbox"
-              checked={applyBrand}
-              onChange={(e) => setApplyBrand(e.target.checked)}
-              className="size-4 accent-[color:var(--color-accent-primary)]"
-            />
-            <Text size="mono-xs" mono color="muted" className="uppercase tracking-[0.12em]">
-              Rare Structure brand
-            </Text>
           </label>
           {status && <Badge tone={status === "published" ? "success" : "default"}>{status}</Badge>}
         </div>

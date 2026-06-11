@@ -47,7 +47,6 @@ proposalTemplateEditorRoutes.post("/convert", async (c) => {
     return c.json({
       data: await edgeTemplateConvert({
         markdown: body.markdown ?? "",
-        apply_brand: body.apply_brand ?? true,
       }),
     });
   } catch (e) {
@@ -61,7 +60,6 @@ proposalTemplateEditorRoutes.post("/preview", async (c) => {
     return c.json({
       data: await edgeTemplatePreview({
         markdown: body.markdown ?? "",
-        apply_brand: body.apply_brand ?? true,
         token_values: body.token_values ?? {},
       }),
     });
@@ -76,7 +74,6 @@ proposalTemplateEditorRoutes.post("/", async (c) => {
   try {
     const row = await edgeTemplateCreate({
       markdown: body.markdown ?? "",
-      apply_brand: body.apply_brand ?? true,
       name: body.name ?? null,
       created_by: user.user_id,
     });
@@ -109,7 +106,6 @@ proposalTemplateEditorRoutes.put("/:id", async (c) => {
     return c.json({
       data: await edgeTemplateUpdate(c.req.param("id"), {
         markdown: body.markdown,
-        apply_brand: body.apply_brand,
         name: body.name,
       }),
     });

@@ -34,7 +34,6 @@ export interface TemplateSummary {
 
 export interface TemplateRow extends TemplateSummary {
   markdown: string;
-  apply_brand: boolean;
   token_manifest: string[];
   created_by: string | null;
   created_at: string | null;
@@ -64,7 +63,7 @@ export async function getTemplate(token: string, id: string): Promise<TemplateRo
 
 export async function createTemplate(
   token: string,
-  body: { markdown: string; apply_brand: boolean; name?: string | null },
+  body: { markdown: string; name?: string | null },
 ): Promise<TemplateRow> {
   return unwrap<TemplateRow>(
     await fetch(MANAGE, {
@@ -78,7 +77,7 @@ export async function createTemplate(
 export async function updateTemplate(
   token: string,
   id: string,
-  body: { markdown?: string; apply_brand?: boolean; name?: string | null },
+  body: { markdown?: string; name?: string | null },
 ): Promise<TemplateRow> {
   return unwrap<TemplateRow>(
     await fetch(`${MANAGE}/${encodeURIComponent(id)}`, {
@@ -91,7 +90,7 @@ export async function updateTemplate(
 
 export async function convertTemplate(
   token: string,
-  body: { markdown: string; apply_brand: boolean },
+  body: { markdown: string },
 ): Promise<ConvertResult> {
   return unwrap<ConvertResult>(
     await fetch(`${MANAGE}/convert`, {
@@ -104,7 +103,7 @@ export async function convertTemplate(
 
 export async function previewTemplate(
   token: string,
-  body: { markdown: string; apply_brand: boolean; token_values: Record<string, string> },
+  body: { markdown: string; token_values: Record<string, string> },
 ): Promise<PreviewResult> {
   return unwrap<PreviewResult>(
     await fetch(`${MANAGE}/preview`, {
