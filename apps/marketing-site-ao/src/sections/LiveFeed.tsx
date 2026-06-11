@@ -1,16 +1,23 @@
 import { useEffect, useRef, useState } from "react";
 import { StatusDot } from "../components/StatusDot";
 import { BoltIcon } from "../components/icons";
-import { type FeedEvent, feedPool, feedSeed, heroStats } from "../data/site";
+import { type FeedEvent, type Severity, feedPool, feedSeed, heroStats } from "../data/site";
 import { cx } from "../lib/cx";
 
 const TICK_MS = 5000;
 // Hold the row count fixed at the seed length so the list never grows/shrinks
 // (no layout shift); each tick only ages rows and swaps the top one.
 const MAX_ROWS = feedSeed.length;
+const FRESH_S = 45;
+
+const railTone: Record<Severity, string> = {
+  critical: "bg-[color:var(--color-state-error)]",
+  elevated: "bg-[color:var(--color-state-warn)]",
+  standard: "bg-[color:var(--color-border-strong)]",
+};
 
 function formatAge(seconds: number): string {
-  if (seconds < 45) return "Just Now";
+  if (seconds < FRESH_S) return "Just Now";
   const minutes = Math.round(seconds / 60);
   if (minutes < 60) return `${minutes}M Ago`;
   return `${Math.round(minutes / 60)}H Ago`;
@@ -20,7 +27,8 @@ function formatAge(seconds: number): string {
  * Live Enforcement Intercept panel. Seeds with `feedSeed`, then on each tick
  * ages every row and (most ticks) prepends a fresh intercept drawn from
  * `feedPool`, trimming back to MAX_ROWS. Only the new top row animates in (CSS).
- * Pauses work while the tab is hidden. The churning list is decorative
+ * Each row carries a severity status rail; fresh rows read brighter than aged
+ * ones. Pauses work while the tab is hidden. The churning list is decorative
  * (aria-hidden); the panel heading and stat summary stay accessible.
  */
 export function LiveFeed() {
@@ -60,31 +68,67 @@ export function LiveFeed() {
         </span>
       </div>
 
-      <ul aria-hidden="true" className="flex-1">
-        {events.map((event, i) => (
-          <li
-            key={event.id}
-            className={cx(
-              "border-b border-[color:var(--color-border-subtle)]",
-              i === 0 && "ao-feed-enter",
-            )}
-          >
-            <div className="flex items-start justify-between gap-4 px-5 py-4">
-              <div>
-                <p className="text-[0.9375rem] font-semibold leading-tight text-[color:var(--color-text-strong)]">
-                  {event.title}
-                </p>
-                <p className="mt-1.5 font-mono text-[0.625rem] uppercase tracking-[0.1em] text-[color:var(--color-text-muted)]">
-                  {event.agency} · {event.location}
-                </p>
+      <ul aria-hidden="true">
+        {events.map((event, i) => {
+          const fresh = event.ageSeconds < FRESH_S;
+          return (
+            <li
+              key={event.id}
+              className={cx(
+                "border-b border-[color:var(--color-border-subtle)] transition-colors hover:bg-[color:var(--color-surface-raised)]",
+                i === 0 && "ao-feed-enter",
+              )}
+            >
+              <div className="flex items-stretch gap-3.5 px-5 py-3.5">
+                <span
+                  className={cx("w-[2px] shrink-0 self-stretch", railTone[event.severity])}
+                  aria-hidden="true"
+                />
+                <div className="flex flex-1 items-start justify-between gap-4">
+                  <div>
+                    <p
+                      className={cx(
+                        "text-[0.9375rem] font-semibold leading-tight",
+                        fresh
+                          ? "text-[color:var(--color-text-primary)]"
+                          : "text-[color:var(--color-text-strong)]",
+                      )}
+                    >
+                      {event.title}
+                    </p>
+                    <p className="mt-1.5 font-mono text-[0.625rem] uppercase tracking-[0.1em]">
+                      <span className="text-[color:var(--color-text-muted)]">{event.agency}</span>
+                      <span className="text-[color:var(--color-text-subtle)]">
+                        {" · "}
+                        {event.location}
+                      </span>
+                    </p>
+                  </div>
+                  <span
+                    className={cx(
+                      "shrink-0 whitespace-nowrap font-mono text-[0.5625rem] uppercase tracking-[0.1em]",
+                      fresh
+                        ? "text-[color:var(--color-text-muted)]"
+                        : "text-[color:var(--color-text-subtle)]",
+                    )}
+                  >
+                    {formatAge(event.ageSeconds)}
+                  </span>
+                </div>
               </div>
-              <span className="shrink-0 whitespace-nowrap font-mono text-[0.5625rem] uppercase tracking-[0.1em] text-[color:var(--color-text-subtle)]">
-                {formatAge(event.ageSeconds)}
-              </span>
-            </div>
-          </li>
-        ))}
+            </li>
+          );
+        })}
       </ul>
+
+      <div className="flex flex-1 items-center justify-center px-5 py-6">
+        <span className="flex items-center gap-2 font-mono text-[0.5625rem] uppercase tracking-[0.2em] text-[color:var(--color-text-subtle)]">
+          <span className="ao-caret text-[color:var(--color-text-accent)]" aria-hidden="true">
+            ▌
+          </span>
+          Monitoring 8 Districts · 5 Agencies
+        </span>
+      </div>
 
       <div className="grid grid-cols-3 border-t border-[color:var(--color-border-default)]">
         {heroStats.map((stat, i) => (
