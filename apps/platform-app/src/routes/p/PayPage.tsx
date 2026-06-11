@@ -85,41 +85,25 @@ export default function PayPage() {
     [],
   );
 
-  let body: React.ReactNode;
+  // Non-form states render a centered note; `form` carries the ready-state data so the
+  // payment body renders inline under <ProposalViewerShell> — which owns the route
+  // geometry — instead of as top-level route JSX (no-route-geometry lint).
+  let note: React.ReactNode = null;
+  let form: { init: PaymentInit; ref: string; clientName: string } | null = null;
   if (shellState === "loading" || pay.kind === "loading") {
-    body = <Note>Preparing payment…</Note>;
+    note = <Note>Preparing payment…</Note>;
   } else if (shellState === "notfound" || !shell || !ref) {
-    body = <Note>This payment link is invalid or has expired.</Note>;
+    note = <Note>This payment link is invalid or has expired.</Note>;
   } else if (pay.kind === "paid") {
-    body = <Note>Payment received — this engagement is active.</Note>;
+    note = <Note>Payment received — this engagement is active.</Note>;
   } else if (pay.kind === "unsigned") {
-    body = (
+    note = (
       <Note>Sign the engagement agreement before payment. Return to the proposal to continue.</Note>
     );
   } else if (pay.kind === "unavailable") {
-    body = <Note>Payment is temporarily unavailable. Please try again shortly.</Note>;
+    note = <Note>Payment is temporarily unavailable. Please try again shortly.</Note>;
   } else {
-    body = (
-      <div className="px-6 pt-10 pb-14 md:px-10 md:pt-12 md:pb-16">
-        <div className="mb-8 border-[color:var(--color-border-subtle)] border-b pb-5">
-          <div className="mb-1 font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.16em]">
-            Amount due · quarterly, in advance
-          </div>
-          <div className="text-[1.75rem] text-[color:var(--color-text-primary)] tabular-nums">
-            {formatUsdCents(pay.init.amountCents, pay.init.currency)}
-          </div>
-          <div className="mt-1 text-[0.8125rem] text-[color:var(--color-text-muted)]">
-            {shell.client.name}
-          </div>
-        </div>
-        <StripePaymentSection
-          init={pay.init}
-          proposalRef={ref}
-          clientName={shell.client.name}
-          onSettledPoll={startPolling}
-        />
-      </div>
-    );
+    form = { init: pay.init, ref, clientName: shell.client.name };
   }
 
   return (
@@ -129,7 +113,29 @@ export default function PayPage() {
       backHref={ref ? `/p/${ref}` : "/"}
       maxWidthClass="max-w-[768px]"
     >
-      {body}
+      {form ? (
+        <div className="px-6 pt-10 pb-14 md:px-10 md:pt-12 md:pb-16">
+          <div className="mb-8 border-[color:var(--color-border-subtle)] border-b pb-5">
+            <div className="mb-1 font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.16em]">
+              Amount due · quarterly, in advance
+            </div>
+            <div className="text-[1.75rem] text-[color:var(--color-text-primary)] tabular-nums">
+              {formatUsdCents(form.init.amountCents, form.init.currency)}
+            </div>
+            <div className="mt-1 text-[0.8125rem] text-[color:var(--color-text-muted)]">
+              {form.clientName}
+            </div>
+          </div>
+          <StripePaymentSection
+            init={form.init}
+            proposalRef={form.ref}
+            clientName={form.clientName}
+            onSettledPoll={startPolling}
+          />
+        </div>
+      ) : (
+        note
+      )}
     </ProposalViewerShell>
   );
 }
