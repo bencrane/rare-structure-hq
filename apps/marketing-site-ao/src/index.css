@@ -1,0 +1,30 @@
+@import "tailwindcss";
+@import "@rare-structure-hq/tokens/css";
+
+/*
+ * The full design-token @theme block (color / spacing / type scale / radius /
+ * breakpoints) is carried by the `@rare-structure-hq/tokens/css` import above.
+ * Anything that should be a token belongs in `packages/tokens/src/tokens.ts`.
+ * Fonts are inline — they reference fontsource packages the tokens package
+ * does not own.
+ */
+@theme {
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Helvetica,
+    Arial, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas,
+    monospace;
+  --font-display: "Geist Mono Variable", ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas,
+    monospace;
+}
+
+html,
+body {
+  margin: 0;
+  background-color: var(--color-surface-base);
+  color: var(--color-text-strong);
+  font-family: var(--font-sans);
+}
+
+#root {
+  min-height: 100vh;
+}

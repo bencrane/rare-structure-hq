@@ -49,6 +49,27 @@
         "vite": "6.0.3",
       },
     },
+    "apps/marketing-site-ao": {
+      "name": "marketing-site-ao",
+      "version": "0.1.0",
+      "dependencies": {
+        "@fontsource-variable/geist": "5.1.0",
+        "@fontsource-variable/geist-mono": "5.1.0",
+        "@rare-structure-hq/tokens": "workspace:*",
+        "react": "19.0.0",
+        "react-dom": "19.0.0",
+      },
+      "devDependencies": {
+        "@tailwindcss/vite": "4.0.0-beta.7",
+        "@types/node": "22.10.0",
+        "@types/react": "19.0.2",
+        "@types/react-dom": "19.0.2",
+        "@vitejs/plugin-react": "4.3.4",
+        "tailwindcss": "4.0.0-beta.7",
+        "typescript": "5.7.2",
+        "vite": "6.0.3",
+      },
+    },
     "apps/platform-api": {
       "name": "platform-api",
       "version": "0.0.1",
@@ -893,6 +914,8 @@
     "map-or-similar": ["map-or-similar@1.5.0", "", {}, "sha512-0aF7ZmVon1igznGI4VS30yugpduQW3y3GkcgGJOp7d8x8QrizhigUxjI/m2UojsXXto+jLAH3KSz+xOJTiORjg=="],
 
     "marketing-site": ["marketing-site@workspace:apps/marketing-site"],
+
+    "marketing-site-ao": ["marketing-site-ao@workspace:apps/marketing-site-ao"],
 
     "math-intrinsics": ["math-intrinsics@1.1.0", "", {}, "sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g=="],
 
