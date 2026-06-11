@@ -53,6 +53,7 @@
       "name": "marketing-site-ao",
       "version": "0.1.0",
       "dependencies": {
+        "@fontsource-variable/fraunces": "5.2.9",
         "@fontsource-variable/geist": "5.1.0",
         "@fontsource-variable/geist-mono": "5.1.0",
         "@rare-structure-hq/tokens": "workspace:*",
@@ -308,6 +309,8 @@
     "@eslint/object-schema": ["@eslint/object-schema@2.1.7", "", {}, "sha512-VtAOaymWVfZcmZbp6E2mympDIHvyjXs/12LqWYjVw6qjrfF+VK+fyG33kChz3nnK+SU5/NeHOqrTEHS8sXO3OA=="],
 
     "@eslint/plugin-kit": ["@eslint/plugin-kit@0.2.8", "", { "dependencies": { "@eslint/core": "^0.13.0", "levn": "^0.4.1" } }, "sha512-ZAoA40rNMPwSm+AeHpCq8STiNAwzWLJuP8Xv4CHIc9wv/PSuExjMrmjfYNj682vW0OOiZ1HKxzvjQr9XZIisQA=="],
+
+    "@fontsource-variable/fraunces": ["@fontsource-variable/fraunces@5.2.9", "", {}, "sha512-Y6IjunlN9Ni723np+GIgAaKzCDBrPRrqNi01TZxHs5wtHYROWFM9W6yiT+/gGwSjWIRD18oX17kD/BRWekc/Lw=="],
 
     "@fontsource-variable/geist": ["@fontsource-variable/geist@5.1.0", "", {}, "sha512-toLlH0s/mzypMKPR8gUZW2cNTJ77/oVFTcz3fGZ149acC2LkNpa78Vn8qATqeXH2Rwl5zuCc425X/vzFlnz3VA=="],
 
