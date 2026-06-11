@@ -1,7 +1,7 @@
 /**
- * ProposalShell — the client-facing executive summary at `/p/:ref`.
+ * SummaryPage — the client-facing executive summary at `/p/:ref`.
  *
- * A lean conversion surface housed in the shared `ProposalViewerShell` so it reads as one
+ * A lean conversion surface housed in the shared `DocumentFrame` so it reads as one
  * continuous experience with the signing view (`/p/:ref/sign`): same utility bar, framed card,
  * letterhead header, and trust-strip footer. The body carries the exec summary, headline terms,
  * and a native EXECUTION panel — the pre-signed Rare Structure originator block beside a "PROCEED
@@ -12,11 +12,11 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 
-import { ProposalViewerShell } from "@/proposals/ProposalViewerShell";
+import { DocumentFrame } from "@/proposals/DocumentFrame";
 import { getProposalShell } from "@/proposals/api";
 import { useProposalShell } from "@/proposals/useProposalShell";
 
-export default function ProposalShellPage() {
+export default function SummaryPage() {
   const { ref } = useParams<{ ref: string }>();
   const location = useLocation();
   const justSigned = (location.state as { justSigned?: boolean } | null)?.justSigned === true;
@@ -27,10 +27,10 @@ export default function ProposalShellPage() {
   // `/p/:ref` is the PROSPECT exec-summary front page — ALWAYS, operator included. The operator's
   // editable mandate generator is a separate cockpit surface (`/app/m/:ref`); opening the shared
   // link just previews exactly what the prospect sees (no operator chrome).
-  return <Shell shell={shell} proposalRef={ref} initialSigned={justSigned} />;
+  return <SummaryBody shell={shell} proposalRef={ref} initialSigned={justSigned} />;
 }
 
-function Shell({
+function SummaryBody({
   shell,
   proposalRef,
   initialSigned,
@@ -51,11 +51,7 @@ function Shell({
         };
 
   return (
-    <ProposalViewerShell
-      title="Engagement Proposal"
-      status={shell.status}
-      maxWidthClass="max-w-[820px]"
-    >
+    <DocumentFrame title="Engagement Proposal" status={shell.status} maxWidthClass="max-w-[820px]">
       <div className="px-6 pt-10 pb-14 md:px-10 md:pt-12 md:pb-16">
         {/* Prepared for */}
         <motion.div
@@ -116,7 +112,7 @@ function Shell({
           )}
         </AnimatePresence>
       </div>
-    </ProposalViewerShell>
+    </DocumentFrame>
   );
 }
 

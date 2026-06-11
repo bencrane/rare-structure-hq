@@ -1,7 +1,7 @@
 /**
- * PayPage — the ACH payment view at `/p/:ref/pay`.
+ * PaymentPage — the ACH payment view at `/p/:ref/pay`.
  *
- * The step after signing: housed in the shared `ProposalViewerShell` so it reads as a continuation
+ * The step after signing: housed in the shared `DocumentFrame` so it reads as a continuation
  * of the summary (`/p/:ref`) and signing (`/p/:ref/sign`) surfaces. It mints the ACH PaymentIntent
  * via the BFF (amount resolved server-side from the proposal — never hardcoded) and mounts Stripe
  * Elements. `paid` is authoritative only via the webhook; this page polls for the settled state.
@@ -10,7 +10,7 @@ import type { PaymentInit } from "@rare-structure-hq/shared";
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 
-import { ProposalViewerShell } from "@/proposals/ProposalViewerShell";
+import { DocumentFrame } from "@/proposals/DocumentFrame";
 import { StripePaymentSection } from "@/proposals/StripePaymentSection";
 import {
   PaymentError,
@@ -35,7 +35,7 @@ function formatUsdCents(cents: number, currency = "usd"): string {
   }).format(cents / 100);
 }
 
-export default function PayPage() {
+export default function PaymentPage() {
   const { ref } = useParams<{ ref: string }>();
   const { shell, state: shellState } = useProposalShell(ref, getProposalShell);
   const [pay, setPay] = useState<PayState>({ kind: "loading" });
@@ -86,7 +86,7 @@ export default function PayPage() {
   );
 
   // Non-form states render a centered note; `form` carries the ready-state data so the
-  // payment body renders inline under <ProposalViewerShell> — which owns the route
+  // payment body renders inline under <DocumentFrame> — which owns the route
   // geometry — instead of as top-level route JSX (no-route-geometry lint).
   let note: React.ReactNode = null;
   let form: { init: PaymentInit; ref: string; clientName: string } | null = null;
@@ -107,7 +107,7 @@ export default function PayPage() {
   }
 
   return (
-    <ProposalViewerShell
+    <DocumentFrame
       title="Engagement Payment"
       status={shell?.status}
       backHref={ref ? `/p/${ref}` : "/"}
@@ -136,7 +136,7 @@ export default function PayPage() {
       ) : (
         note
       )}
-    </ProposalViewerShell>
+    </DocumentFrame>
   );
 }
 

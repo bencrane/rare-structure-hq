@@ -1,5 +1,5 @@
 /**
- * OperatorProposalDraft — the operator's mandate-generator/editor at `/app/m/:ref`.
+ * MandateEditor — the operator's mandate-generator/editor at `/app/m/:ref`.
  *
  * By default everything renders final. Clicking the header lock makes the STRUCTURED terms editable
  * (monthly fee, term, billing cadence, success-fee tiers — see `PricingEditor`). At the execution
@@ -17,7 +17,7 @@ import { Check, Copy, ExternalLink, Lock, LockOpen, PenLine } from "lucide-react
 import { useState } from "react";
 
 import { useAuth } from "@/lib/auth";
-import { ProposalViewerShell } from "@/proposals/ProposalViewerShell";
+import { DocumentFrame } from "@/proposals/DocumentFrame";
 import { SignatureOverlay } from "@/proposals/SignaturePad";
 import { type DraftStatus, useProposalDraft } from "@/proposals/useProposalDraft";
 
@@ -44,14 +44,14 @@ function cadenceLabel(c: string): string {
   return CADENCE_OPTIONS.find((o) => o.value === c)?.label ?? c;
 }
 
-export function OperatorProposalDraft({
+export function MandateEditor({
   shell,
   proposalRef,
   housing = "standalone",
 }: {
   shell: ProposalShell;
   proposalRef: string;
-  /** Forwarded to ProposalViewerShell. `"cockpit"` only when mounted in the Mandate page. */
+  /** Forwarded to DocumentFrame. `"cockpit"` only when mounted in the Mandate page. */
   housing?: "standalone" | "cockpit";
 }) {
   const { session } = useAuth();
@@ -73,7 +73,7 @@ export function OperatorProposalDraft({
   const canEditValues = !finalized && editing && !signed;
 
   return (
-    <ProposalViewerShell
+    <DocumentFrame
       title="Engagement Proposal"
       maxWidthClass="max-w-[820px]"
       housing={housing}
@@ -150,7 +150,7 @@ export function OperatorProposalDraft({
           onCancel={() => setSigning(false)}
         />
       )}
-    </ProposalViewerShell>
+    </DocumentFrame>
   );
 }
 
