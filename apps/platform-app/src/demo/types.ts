@@ -126,6 +126,14 @@ export type MapQuery = {
   state?: string;
   /** Lifetime-obligation floor, USD. */
   minAward: number;
+  /**
+   * Free-typed natural-language sentence. When present, the query is routed through the
+   * edge_api `/ask` compiler (NL → forced-tool filter → catalyst_api Lance scan → GeoJSON)
+   * instead of the canned filter axis above. The canned commands never set this.
+   */
+  nl?: string;
+  /** Serving table the NL query targets. Defaults to "company". */
+  dataset?: "company" | "winners";
 };
 
 /** An aggregate command — collapses the market into one chart. */

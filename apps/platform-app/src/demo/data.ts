@@ -16,6 +16,8 @@
 
 import type { FederalEntity } from "@rare-structure-hq/shared";
 import {
+  type AskMarketRow,
+  askMap,
   fetchAgencyChart,
   fetchEntities,
   fetchEntityByUei,
@@ -1186,6 +1188,94 @@ function entityToCompany(e: FederalEntity): Company {
   };
 }
 
+// ── Natural-language query path (edge_api /ask → GeoJSON → Company) ──────────
+// A free-typed sentence is compiled by edge_api (forced-tool Anthropic call) into a constrained
+// filter, executed on catalyst_api over the geocoded serving tables, and returned as GeoJSON.
+// Each feature's flattened properties map onto the SAME `Company` shape the canned path emits,
+// so the rendering layer is unchanged. `x`/`y` stay omitted (the dot layer still gates on their
+// absence — geo deferred); the real lat/lon rides on the row for the future geo pass.
+
+function askRowStr(v: unknown): string | undefined {
+  return typeof v === "string" && v.length > 0 ? v : undefined;
+}
+
+function askRowNum(v: unknown): number {
+  const x = typeof v === "number" ? v : Number(v);
+  return Number.isFinite(x) ? x : 0;
+}
+
+/** The single `usaspending` Capital Catalyst for an /ask row's obligation rollup. */
+function askCatalyst(
+  totalAwarded: number,
+  contractCount: number,
+  naics: string,
+  hasFed: boolean,
+): CapitalCatalyst {
+  return {
+    kind: "usaspending",
+    label: "Federal contract winner",
+    headline: `${fmtUsd(totalAwarded)} in federal obligations`,
+    summary: `${fmtUsd(totalAwarded)} obligated across ${contractCount} federal award${
+      contractCount === 1 ? "" : "s"
+    }.${hasFed ? " Holds active federal awards." : ""}`,
+    facts: [
+      { label: "Federal obligations", value: fmtUsdFull(totalAwarded) },
+      { label: "Awards", value: String(contractCount) },
+      { label: "Primary NAICS", value: naics || "—" },
+      { label: "Federal awards", value: hasFed ? "Active" : "—" },
+    ],
+    tone: "accent",
+  };
+}
+
+/** Map one flattened edge `/ask` row onto the cockpit's `Company` shape. Handles BOTH the
+ * `company` and `winners` serving tables (their property names differ; both are resolved). */
+function askRowToCompany(r: AskMarketRow): Company {
+  const naics = askRowStr(r.primary_naics) ?? askRowStr(r.naics_code) ?? askRowStr(r.naics2) ?? "";
+  const name =
+    askRowStr(r.company_name) ??
+    askRowStr(r.winner_name) ??
+    askRowStr(r.uei) ??
+    askRowStr(r.winner_uei) ??
+    "Unknown";
+  const id = askRowStr(r.uei) ?? askRowStr(r.winner_uei) ?? name;
+  const totalAwarded = askRowNum(r.total_active_obligations ?? r.total_obligation);
+  const contractCount = askRowNum(r.award_count);
+  const hasFed =
+    r.has_federal_awards === true || askRowNum(r.total_obligation) > 0 || totalAwarded > 0;
+  return {
+    id,
+    name,
+    industry: industryForNaics(naics),
+    naics,
+    naicsLabel: askRowStr(r.industry),
+    city: askRowStr(r.hq_city) ?? askRowStr(r.city),
+    state: askRowStr(r.hq_state) ?? askRowStr(r.state),
+    totalAwarded,
+    activeAwarded: totalAwarded,
+    contractCount,
+    activeAward: hasFed,
+    catalysts: [askCatalyst(totalAwarded, contractCount, naics, hasFed)],
+  };
+}
+
+/** Run a free-typed natural-language market query through edge_api `/ask`. Returns the SAME
+ * `QueryResult` shape the canned filter path produces. */
+export async function runAsk(
+  nl: string,
+  dataset: "company" | "winners" = "company",
+): Promise<QueryResult> {
+  const res = await askMap(nl, dataset);
+  return {
+    companies: res.rows.map(askRowToCompany),
+    total: res.total,
+    minLifetimeBound: 0,
+    fullUniverse: 0,
+    materializedAt: "",
+    profileAsOfDate: null,
+  };
+}
+
 // ───────────────────────────────────────────────────────────────────
 // The ⌘K command list — the cockpit is extended by adding to this array.
 // ───────────────────────────────────────────────────────────────────
@@ -1292,6 +1382,8 @@ const MAP_PAGE_LIMIT = 2000;
 /** Live companies matching a map query — by NAICS (prefix/code) + optional state, above
  * the lifetime-obligation floor. Fetches the BFF entity slice and maps to `Company`. */
 export async function runQuery(q: MapQuery): Promise<QueryResult> {
+  // Free-typed NL query → the edge_api /ask compiler; the canned filter axis is bypassed.
+  if (q.nl?.trim()) return runAsk(q.nl.trim(), q.dataset ?? "company");
   const naics =
     q.naicsPrefix ?? (q.industry ? INDUSTRY_BY_KEY[q.industry]?.naicsPrefix : undefined);
   const res = await fetchEntities({
