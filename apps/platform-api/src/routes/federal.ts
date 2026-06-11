@@ -28,6 +28,7 @@ import { HTTPException } from "hono/http-exception";
 
 import { federalEntityQuerySchema } from "@rare-structure-hq/shared";
 
+import { type AskMarketDataset, askMarket } from "../lib/edge.ts";
 import {
   agencyChart,
   entityByUei,
@@ -57,4 +58,21 @@ federalRoutes.get("/entity/:uei", (c) => {
   const entity = entityByUei(uei);
   if (!entity) throw new HTTPException(404, { message: "entity not found" });
   return c.json({ data: entity });
+});
+
+// Natural-language market query. UNLIKE the warm endpoints above, this one round-trips to
+// core-x edge_api (one forced-tool Anthropic call → catalyst_api Lance scan → GeoJSON), so it
+// is the only federal route that is not purely in-memory. Public posture (the cockpit is
+// public); each call costs one LLM round-trip — add rate-limiting here if abuse shows.
+federalRoutes.get("/ask", async (c) => {
+  const q = (c.req.query("q") ?? "").trim();
+  if (!q) throw new HTTPException(400, { message: "q (natural-language query) is required" });
+  const dataset: AskMarketDataset = c.req.query("dataset") === "winners" ? "winners" : "company";
+  try {
+    return c.json({ data: await askMarket(dataset, q) });
+  } catch (err) {
+    throw new HTTPException(502, {
+      message: err instanceof Error ? err.message : "market ask failed",
+    });
+  }
 });

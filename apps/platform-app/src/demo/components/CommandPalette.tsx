@@ -13,7 +13,7 @@
  */
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { BarChart3, CornerDownLeft, MapPin, Search } from "lucide-react";
+import { BarChart3, CornerDownLeft, MapPin, Search, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { COMMANDS } from "../data";
 import type { Command } from "../types";
@@ -50,21 +50,36 @@ export function CommandPalette({
     });
   }, [queryText]);
 
-  // Keep the selection in range as the filter narrows.
+  // The free-typed sentence becomes the top "Ask the market" action — running it routes through
+  // the edge_api /ask compiler (NL → forced-tool filter → catalyst Lance scan → companies). The
+  // canned commands (pre-existing, deterministic) filter below it, unchanged.
+  const rows = useMemo<Command[]>(() => {
+    const trimmed = queryText.trim();
+    if (!trimmed) return filtered;
+    const ask: Command = {
+      id: "__ask__",
+      kind: "map-query",
+      label: trimmed,
+      query: { nl: trimmed, minAward: 0, dataset: "company" },
+    };
+    return [ask, ...filtered];
+  }, [queryText, filtered]);
+
+  // Keep the selection in range as the list narrows.
   useEffect(() => {
-    setSelected((s) => Math.min(s, Math.max(0, filtered.length - 1)));
-  }, [filtered.length]);
+    setSelected((s) => Math.min(s, Math.max(0, rows.length - 1)));
+  }, [rows.length]);
 
   function onInputKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setSelected((s) => Math.min(s + 1, filtered.length - 1));
+      setSelected((s) => Math.min(s + 1, rows.length - 1));
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setSelected((s) => Math.max(s - 1, 0));
     } else if (e.key === "Enter") {
       e.preventDefault();
-      const cmd = filtered[selected];
+      const cmd = rows[selected];
       if (cmd) onRun(cmd);
     }
   }
@@ -116,12 +131,12 @@ export function CommandPalette({
 
             {/* Command list */}
             <ul className="max-h-[52vh] overflow-y-auto py-1.5">
-              {filtered.length === 0 && (
+              {rows.length === 0 && (
                 <li className="px-5 py-6 text-center font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase">
                   No commands match
                 </li>
               )}
-              {filtered.map((cmd, i) => (
+              {rows.map((cmd, i) => (
                 <CommandRow
                   key={cmd.id}
                   command={cmd}
@@ -156,8 +171,10 @@ function CommandRow({
   onHover: () => void;
   onRun: () => void;
 }) {
-  const Icon = command.kind === "aggregate" ? BarChart3 : MapPin;
-  const kindLabel = command.kind === "aggregate" ? "Chart" : "Map";
+  // The free-typed "Ask the market" row routes through the NL compiler; canned rows are Map/Chart.
+  const isAsk = command.kind === "map-query" && !!command.query.nl;
+  const Icon = isAsk ? Sparkles : command.kind === "aggregate" ? BarChart3 : MapPin;
+  const kindLabel = isAsk ? "Ask" : command.kind === "aggregate" ? "Chart" : "Map";
 
   return (
     <li>

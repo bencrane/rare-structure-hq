@@ -70,3 +70,28 @@ export function fetchEntities(filters: FederalEntityFilters): Promise<FederalEnt
 export function fetchEntityByUei(uei: string): Promise<FederalEntity> {
   return getJson<FederalEntity>(`/api/v1/federal/entity/${encodeURIComponent(uei)}`);
 }
+
+/** A flattened edge `/ask` GeoJSON row — the serving-table properties + real coordinates. */
+export type AskMarketRow = Record<string, unknown> & { lat?: number; lon?: number };
+
+/** The NL market-query result: matched rows, the full match total, and the interpreted filter. */
+export type AskMarketResult = {
+  rows: AskMarketRow[];
+  total: number;
+  capped: boolean;
+  query: { title?: string; filters: { field: string; op: string; value: unknown }[] } | null;
+  dataset: string;
+};
+
+/**
+ * Natural-language market query. UNLIKE the warm endpoints above, this hits the BFF's `/ask`
+ * proxy → core-x edge_api (one forced-tool Anthropic call → catalyst_api Lance scan), so it is
+ * a real (sub-few-second) round-trip, not an in-memory snapshot read.
+ */
+export function askMap(
+  q: string,
+  dataset: "company" | "winners" = "company",
+): Promise<AskMarketResult> {
+  const qs = new URLSearchParams({ q, dataset });
+  return getJson<AskMarketResult>(`/api/v1/federal/ask?${qs.toString()}`);
+}

@@ -37,6 +37,64 @@ function serviceHeaders(json = true): Record<string, string> {
   return h;
 }
 
+// ── Map /ask — the natural-language market query ─────────────────────────────
+// edge_api owns the single forced-tool Anthropic call (NL → constrained filter) and the
+// catalyst_api EXECUTE that runs it; this BFF is a thin service-token proxy. The /map cockpit
+// is public, so the route is unauthenticated — but each call triggers one LLM round-trip, so
+// this is the natural seam to add rate-limiting if abuse shows.
+export type AskMarketDataset = "company" | "winners";
+
+export interface AskMarketRow {
+  [key: string]: unknown;
+  /** Real WGS84 coordinates from geocode_xwalk (carried for the deferred geo-dot layer). */
+  lat?: number;
+  lon?: number;
+}
+
+export interface AskMarketResult {
+  rows: AskMarketRow[];
+  total: number;
+  capped: boolean;
+  /** The interpreted filter the model produced — for the UI to echo "interpreted as…". */
+  query: { title?: string; filters: { field: string; op: string; value: unknown }[] } | null;
+  dataset: AskMarketDataset;
+}
+
+interface GeoFeature {
+  geometry?: { coordinates?: [number, number] };
+  properties?: Record<string, unknown>;
+}
+
+/** NL market query → edge_api `/api/v1/map/{dataset}/ask` → flattened rows (+ coords). */
+export async function askMarket(dataset: AskMarketDataset, q: string): Promise<AskMarketResult> {
+  const res = await fetch(`${base()}/api/v1/map/${dataset}/ask`, {
+    method: "POST",
+    headers: serviceHeaders(),
+    body: JSON.stringify({ q }),
+  });
+  if (!res.ok) {
+    throw new EdgeError(`edge_api /ask failed: ${res.status} ${await res.text()}`);
+  }
+  const env = (await res.json()) as {
+    data?: { features?: GeoFeature[] };
+    meta?: { returned?: number; capped?: boolean };
+    query?: AskMarketResult["query"];
+  };
+  const features = env.data?.features ?? [];
+  const rows: AskMarketRow[] = features.map((f) => ({
+    ...(f.properties ?? {}),
+    lon: f.geometry?.coordinates?.[0],
+    lat: f.geometry?.coordinates?.[1],
+  }));
+  return {
+    rows,
+    total: env.meta?.returned ?? rows.length,
+    capped: env.meta?.capped ?? false,
+    query: env.query ?? null,
+    dataset,
+  };
+}
+
 /**
  * Posture → fixed monthly infrastructure fee (cents). The success-fee schedule is baked into
  * the agreement body; only the Infrastructure Fee varies, and it is hardcoded per posture.
