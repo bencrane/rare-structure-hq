@@ -44,6 +44,18 @@ body {
   );
 }
 
+/*
+ * Technical dot-grid "shell" — a faint blueprint backdrop the framed page is
+ * mounted in. Applied to the page root; the content column sits on a solid
+ * surface above it, so the grid reads as the surrounding casing.
+ */
+.ao-grid {
+  background-color: var(--color-surface-base);
+  background-image: radial-gradient(var(--color-border-default) 1px, transparent 1.5px);
+  background-size: 26px 26px;
+  background-position: center top;
+}
+
 /* LIVE indicator pulse. */
 @keyframes ao-pulse {
   0%,
