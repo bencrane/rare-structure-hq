@@ -64,9 +64,7 @@ export function ProposalViewerShell({
           </span>
         )}
         <div className="font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
-          {housing === "cockpit"
-            ? "Strategic Origination Mandate"
-            : "Rare Structure · Strategic Origination Mandate"}
+          Strategic Origination Mandate
         </div>
       </div>
 
