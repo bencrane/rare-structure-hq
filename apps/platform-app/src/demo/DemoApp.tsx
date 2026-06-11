@@ -115,7 +115,6 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
             key="aggregate"
             spec={aggregate}
             onInvokeCommand={() => setCommandOpen(true)}
-            embedded={embedded}
           />
         ) : (
           <MapView

@@ -10,7 +10,7 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { CommandPill, TerminalHeader } from "./components/TerminalChrome";
+import { CommandPill } from "./components/TerminalChrome";
 import { aggregateBy } from "./data";
 import { fmtUsd } from "./format";
 import type { AggregateBar, AggregateSpec } from "./types";
@@ -18,11 +18,9 @@ import type { AggregateBar, AggregateSpec } from "./types";
 export function AggregateView({
   spec,
   onInvokeCommand,
-  embedded = false,
 }: {
   spec: AggregateSpec;
   onInvokeCommand: () => void;
-  embedded?: boolean;
 }) {
   const reduced = !!useReducedMotion();
 
@@ -66,13 +64,13 @@ export function AggregateView({
     >
       <div className="rs-scanlines pointer-events-none absolute inset-0 opacity-60" />
 
-      <TerminalHeader reduced={reduced} showBrand={!embedded} />
-
-      <div className="relative flex min-h-0 flex-1 flex-col px-6 pt-2 pb-2 sm:px-10">
+      {/* No TerminalHeader here: the LIVE / entities-tracked badge belongs to the live
+          map only. Dropping it also lifts the chart heading to the top of the page. */}
+      <div className="relative flex min-h-0 flex-1 flex-col px-6 pt-8 pb-2 sm:px-10 sm:pt-10">
         <ChartHeader spec={spec} total={total} groups={bars.length} reduced={reduced} />
         <div
           className="flex min-h-0 flex-1 flex-col justify-center overflow-y-auto py-5"
-          style={{ gap: dense ? 4 : 12 }}
+          style={{ gap: dense ? 6 : 12 }}
         >
           {loading && (
             <div className="text-center font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase tracking-[0.18em]">
@@ -149,13 +147,13 @@ function BarRow({
   reduced: boolean;
 }) {
   const pct = Math.max((bar.total / max) * 100, 1.5);
-  const rowH = dense ? 20 : 44;
+  const rowH = dense ? 26 : 44;
 
   return (
     <div className="flex items-center gap-4">
       <div
         className={`shrink-0 truncate text-right font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase ${
-          dense ? "w-12" : "w-72"
+          dense ? "w-56" : "w-72"
         }`}
       >
         {bar.label}
