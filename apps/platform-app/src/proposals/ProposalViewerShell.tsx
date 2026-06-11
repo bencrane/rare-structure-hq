@@ -41,11 +41,13 @@ export function ProposalViewerShell({
 }) {
   return (
     <div className="flex min-h-screen flex-col bg-[color:var(--color-surface-base)]">
-      {/* Utility bar — persistent app chrome. Standalone (public `/p/:ref`) keeps its own `py-4`
-          band; in the cockpit it adopts the sidebar header's fixed `min-h-16` band so the bottom
-          border lands on the same horizontal plane as the sidebar divider (`/app/m/:ref`). */}
+      {/* Utility bar — persistent app chrome, PINNED to the top so it never scrolls away (the bare
+          band that left behind looked broken). Opaque surface + z-index so the card scrolls cleanly
+          beneath it. Standalone (public `/p/:ref`) keeps its own `py-4` band; in the cockpit it
+          adopts the sidebar header's fixed `min-h-16` band so the bottom border lands on the same
+          horizontal plane as the sidebar divider (`/app/m/:ref`). */}
       <div
-        className={`flex items-center justify-between border-[color:var(--color-border-subtle)] border-b px-6 ${
+        className={`sticky top-0 z-30 flex items-center justify-between border-[color:var(--color-border-subtle)] border-b bg-[color:var(--color-surface-base)] px-6 ${
           housing === "cockpit" ? "min-h-16" : "py-4"
         }`}
       >
