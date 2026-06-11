@@ -2,29 +2,80 @@
 @import "@rare-structure-hq/tokens/css";
 
 /*
- * The full design-token @theme block (color / spacing / type scale / radius /
- * breakpoints) is carried by the `@rare-structure-hq/tokens/css` import above.
- * Anything that should be a token belongs in `packages/tokens/src/tokens.ts`.
- * Fonts are inline — they reference fontsource packages the tokens package
- * does not own.
+ * Active Operators marketing identity.
+ *
+ * Inherits the full Rare Structure design-token @theme (color / spacing / type
+ * scale / radius / breakpoints) from `@rare-structure-hq/tokens/css`. AO's only
+ * divergence from the house style is the DISPLAY face: where the platform uses
+ * Geist Mono for display, AO uses a high-contrast institutional serif
+ * (Fraunces) for headlines and wordmarks. Mono labels (Geist Mono) and body
+ * sans (Geist) are unchanged.
  */
 @theme {
   --font-sans: "Geist Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Helvetica,
     Arial, sans-serif;
   --font-mono: "Geist Mono Variable", ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas,
     monospace;
-  --font-display: "Geist Mono Variable", ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas,
-    monospace;
+  --font-display: "Fraunces Variable", Georgia, "Times New Roman", serif;
 }
 
 html,
 body {
   margin: 0;
   background-color: var(--color-surface-base);
-  color: var(--color-text-strong);
+  color: var(--color-text-default);
   font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  font-optical-sizing: auto;
 }
 
 #root {
   min-height: 100vh;
+}
+
+/* Hairline scanline texture (house-style cue, reused on dark panels). */
+.ao-scanlines {
+  background: repeating-linear-gradient(
+    0deg,
+    var(--color-surface-sunken) 0px,
+    var(--color-surface-sunken) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
+/* LIVE indicator pulse. */
+@keyframes ao-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+.ao-live-dot {
+  animation: ao-pulse 1.6s var(--motion-easing-inOut, ease-in-out) infinite;
+}
+
+/* Live-feed row enter (CSS-only — the top row animates in on prepend). */
+@keyframes ao-feed-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.ao-feed-enter {
+  animation: ao-feed-enter 0.42s var(--motion-easing-out, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ao-live-dot,
+  .ao-feed-enter {
+    animation: none;
+  }
 }
