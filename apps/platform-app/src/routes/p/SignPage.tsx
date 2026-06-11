@@ -1,7 +1,7 @@
 /**
  * SignPage — the signing view at `/p/:ref/sign`.
  *
- * Houses the Documenso embed in the shared `ProposalViewerShell`, so the signing surface reads as
+ * Houses the Documenso embed in the shared `DocumentFrame`, so the signing surface reads as
  * a seamless continuation of the executive summary (`/p/:ref`) — same utility bar, framed card,
  * letterhead header, and trust-strip footer. The embed (Platform-themed via `cssVars`/`css`) is the
  * two-column signing surface; on completion we route back to the summary, which shows the executed
@@ -10,7 +10,7 @@
 import { EmbedSignDocument } from "@documenso/embed-react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { ProposalViewerShell } from "@/proposals/ProposalViewerShell";
+import { DocumentFrame } from "@/proposals/DocumentFrame";
 import { getProposalShell } from "@/proposals/api";
 import {
   DOCUMENSO_CSS_VARS,
@@ -47,14 +47,14 @@ export default function SignPage() {
   }
 
   return (
-    <ProposalViewerShell
+    <DocumentFrame
       title="Engagement Agreement"
       status={shell?.status}
       backHref={ref ? `/p/${ref}` : "/"}
       maxWidthClass="max-w-[1152px]"
     >
       {body}
-    </ProposalViewerShell>
+    </DocumentFrame>
   );
 }
 

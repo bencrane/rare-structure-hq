@@ -1,18 +1,21 @@
 /**
- * ProposalViewerShell — the framed "proposal viewer" chrome shared by the executive summary
- * (`/p/:ref`) and the signing view (`/p/:ref/sign`), so the two read as one continuous surface.
+ * DocumentFrame — the shared letterhead chrome every mandate surface renders inside, so the
+ * operator editor (`/app/m/:ref`), the prospect summary (`/p/:ref`), the signing view
+ * (`/p/:ref/sign`), and the payment view (`/p/:ref/pay`) all read as one continuous document.
  *
- * Structure (identical on both pages — only the body and a few props change):
+ * Content-agnostic — it owns page geometry only (identical everywhere; only the body + a few
+ * props change):
  *   utility bar (app chrome)  →  framed card { letterhead-grade header · body · trust-strip footer }
+ * Each surface drops its own body into `children` and sets a few props (title · width · backHref).
  *
  * Lives in `proposals/` (not `routes/`) deliberately: it owns page geometry on behalf of the
  * route components, which keeps the `no-route-geometry` lint where it belongs (the routes stay
- * content-only and just drop their body into this shell).
+ * content-only and just drop their body into this frame).
  */
 import type { ProposalShell } from "@rare-structure-hq/shared";
 import { Link } from "react-router-dom";
 
-export function ProposalViewerShell({
+export function DocumentFrame({
   title,
   status,
   backHref,
@@ -31,7 +34,7 @@ export function ProposalViewerShell({
   /** Top-right header slot. Replaces the default StatusPill (e.g. the operator's draft controls). */
   headerAccessory?: React.ReactNode;
   /**
-   * Where the shell is mounted. `"standalone"` (default) is the public proposal surface
+   * Where the frame is mounted. `"standalone"` (default) is the public proposal surface
    * (`/p/:ref` and its sign/pay steps) — the utility bar keeps its own `py-4` band. `"cockpit"`
    * is the operator's Mandate page (`/app/m/:ref`), housed inside AppShell: the utility bar
    * adopts the sidebar header's fixed `min-h-16` band so the two dividers sit on one plane.
@@ -68,7 +71,7 @@ export function ProposalViewerShell({
         </div>
       </div>
 
-      {/* Framed viewer — same border / surface / shadow on both pages. */}
+      {/* Framed document — same border / surface / shadow on every surface. */}
       <div className="flex flex-1 items-start justify-center px-4 py-6 md:px-8 md:py-10">
         <div
           className={`flex w-full ${maxWidthClass} flex-col overflow-hidden border border-[color:var(--color-border-subtle)] bg-[color:var(--color-surface-sunken)] shadow-[0_24px_64px_-32px_rgba(0,0,0,0.8)]`}
@@ -99,7 +102,7 @@ export function ProposalViewerShell({
   );
 }
 
-// Small mono status chip — mirrors the proposal lifecycle on the viewer header.
+// Small mono status chip — mirrors the proposal lifecycle on the frame header.
 function StatusPill({ status }: { status?: ProposalShell["status"] }) {
   const executed = status === "signed" || status === "paid";
   const label =

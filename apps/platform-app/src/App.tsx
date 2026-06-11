@@ -4,7 +4,7 @@
  * Public surfaces (anonymous):
  *   `/`                  → redirects to `/signin` (the gate is the front door).
  *   `/map`               → catalyst map demo.
- *   `/p/:ref`            → engagement proposal shell (the ref is its own credential).
+ *   `/p/:ref`            → engagement proposal summary (the ref is its own credential).
  *   `/p/:ref/sign`       → full-page Documenso signing view.
  *
  * Auth + cockpit:
@@ -40,9 +40,9 @@ import Proposals from "./routes/app/Proposals";
 import Settings from "./routes/app/Settings";
 import TemplateEditor from "./routes/app/TemplateEditor";
 import TemplatesTable from "./routes/app/TemplatesTable";
-import PayPage from "./routes/p/PayPage";
-import ProposalShellPage from "./routes/p/ProposalShell";
+import PaymentPage from "./routes/p/PaymentPage";
 import SignPage from "./routes/p/SignPage";
+import SummaryPage from "./routes/p/SummaryPage";
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const { session, loading } = useAuth();
@@ -81,12 +81,12 @@ export function App() {
             its own path. */}
         <Route path="/" element={<Navigate to="/signin" replace />} />
         <Route path="/map" element={<MapDemo />} />
-        {/* Engagement proposal shell — the ref is its own credential. */}
-        <Route path="/p/:ref" element={<ProposalShellPage />} />
+        {/* Engagement proposal summary — the ref is its own credential. */}
+        <Route path="/p/:ref" element={<SummaryPage />} />
         {/* Full-page signing view — Documenso two-column embed, on our domain. */}
         <Route path="/p/:ref/sign" element={<SignPage />} />
         {/* ACH payment view — Stripe Elements, on our domain, after signing. */}
-        <Route path="/p/:ref/pay" element={<PayPage />} />
+        <Route path="/p/:ref/pay" element={<PaymentPage />} />
 
         {/* Email + password gate. */}
         <Route path="/signin" element={<SignIn />} />

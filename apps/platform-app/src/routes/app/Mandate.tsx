@@ -3,7 +3,7 @@
  *
  * Reached from "Originate Mandate". A NATIVE cockpit page: it renders inside the portal shell
  * (the sidebar comes from AppShell, like Dossier/Pipeline), loads the proposal by `ref`, and shows
- * the operator's editable mandate UI (`OperatorProposalDraft`) keyed to that proposal's template +
+ * the operator's editable mandate UI (`MandateEditor`) keyed to that proposal's template +
  * prospect. The pricing config the operator selected (monthly · duration · billing cadence ·
  * success-fee schedule) surfaces through the proposal's headline terms.
  *
@@ -12,7 +12,7 @@
 import type { ReactNode } from "react";
 import { useParams } from "react-router-dom";
 
-import { OperatorProposalDraft } from "@/proposals/OperatorProposalDraft";
+import { MandateEditor } from "@/proposals/MandateEditor";
 import { getProposalShell } from "@/proposals/api";
 import { useProposalShell } from "@/proposals/useProposalShell";
 
@@ -25,7 +25,7 @@ export default function Mandate() {
 
   // `key={ref}` forces a fresh draft when moving between mandates without leaving the portal.
   // `housing="cockpit"` aligns the viewer's utility bar to the AppShell sidebar header band.
-  return <OperatorProposalDraft key={ref} shell={shell} proposalRef={ref} housing="cockpit" />;
+  return <MandateEditor key={ref} shell={shell} proposalRef={ref} housing="cockpit" />;
 }
 
 function Note({ children }: { children: ReactNode }) {
