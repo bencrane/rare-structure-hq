@@ -51,6 +51,7 @@ export function MapView({
   selectedId,
   onSelectCompany,
   onInvokeCommand,
+  onDismiss,
   embedded = false,
 }: {
   query: MapQuery | null;
@@ -62,6 +63,7 @@ export function MapView({
   selectedId: string | null;
   onSelectCompany: (company: Company) => void;
   onInvokeCommand: () => void;
+  onDismiss?: () => void;
   embedded?: boolean;
 }) {
   const reduced = !!useReducedMotion();
@@ -116,6 +118,18 @@ export function MapView({
       <TerminalHeader reduced={reduced} showBrand={!embedded} />
 
       <div className="relative flex min-h-0 flex-1 items-center justify-center px-6">
+        {/* Off-panel click dismisses the result overlay (map only). The dot layer is
+            dormant while geo is deferred, so a full-area backdrop is safe; when real
+            coordinates land and dots return, move dismissal to the SVG background +
+            stopPropagation on the dots. The result panel sits above this at z-10. */}
+        {query && onDismiss ? (
+          <button
+            type="button"
+            aria-label="Dismiss results"
+            onClick={onDismiss}
+            className="absolute inset-0 z-0 cursor-default"
+          />
+        ) : null}
         <svg
           viewBox={`0 0 ${GEO_VIEW.w} ${GEO_VIEW.h}`}
           preserveAspectRatio="xMidYMid meet"
