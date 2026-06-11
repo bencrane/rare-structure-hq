@@ -29,7 +29,7 @@ export function DeploymentProtocol() {
         <div>
           <h2
             id="deployment-protocol-heading"
-            className="font-display text-[2rem] font-semibold uppercase leading-[1.05] tracking-[-0.01em] text-[color:var(--color-text-primary)] sm:text-[2.5rem]"
+            className="font-display text-[1.75rem] font-semibold uppercase leading-[1.05] tracking-[-0.01em] text-[color:var(--color-text-primary)] sm:text-[2.25rem]"
           >
             Network Allocation
           </h2>

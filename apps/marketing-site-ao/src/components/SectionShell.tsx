@@ -31,7 +31,7 @@ export function SectionShell({ id, index, heading, children, className }: Sectio
       <SectionLabel index={index} />
       <h2
         id={headingId}
-        className="mt-8 font-display text-[2rem] font-semibold uppercase leading-[1.05] tracking-[-0.01em] text-[color:var(--color-text-primary)] sm:text-[2.5rem]"
+        className="mt-8 font-display text-[1.75rem] font-semibold uppercase leading-[1.05] tracking-[-0.01em] text-[color:var(--color-text-primary)] sm:text-[2.25rem]"
       >
         {heading}
       </h2>

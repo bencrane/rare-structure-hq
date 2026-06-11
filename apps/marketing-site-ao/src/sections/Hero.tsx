@@ -17,7 +17,7 @@ export function Hero() {
     <section className="grid gap-12 px-6 py-16 sm:px-12 sm:py-20 lg:grid-cols-[1.08fr_0.92fr] lg:gap-16">
       <div className="flex min-w-0 flex-col">
         <Eyebrow label="Institutional Standard" tone="accent" />
-        <h1 className="mt-8 break-words font-display text-[2.5rem] font-semibold uppercase leading-[0.95] tracking-[-0.02em] text-[color:var(--color-text-primary)] sm:text-[3.75rem] lg:text-[4.75rem]">
+        <h1 className="mt-8 break-words font-display text-[2.25rem] font-semibold uppercase leading-[0.96] tracking-[-0.02em] text-[color:var(--color-text-primary)] sm:text-[3.25rem] lg:text-[4rem]">
           Precision Remediation. Immediate Deployment.
         </h1>
         <p className="mt-8 max-w-[34rem] text-[1.0625rem] leading-[1.6] text-[color:var(--color-text-muted)]">
