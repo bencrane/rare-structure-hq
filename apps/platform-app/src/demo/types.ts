@@ -106,6 +106,12 @@ export type Company = {
   topAgency?: string;
   /** True when the company has open/active federal obligations. */
   activeAward: boolean;
+  /**
+   * When >1, this row collapses multiple same-name legal entities (e.g. a holding company
+   * with several SAM-registered subsidiaries, each its own UEI). `totalAwarded` is the group
+   * sum and the row represents the largest single entity. Absent/1 = a single entity.
+   */
+  relatedEntities?: number;
   /** The structural signals attached to this company (usaspending always first). */
   catalysts: CapitalCatalyst[];
 };
