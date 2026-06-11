@@ -1,0 +1,22 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "composite": false,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "types": ["vite/client", "node"],
+    "baseUrl": ".",
+    "paths": {
+      "@rare-structure-hq/tokens": ["../../packages/tokens/src/index.ts"],
+      "@/*": ["src/*"]
+    },
+    "skipLibCheck": true
+  },
+  "include": [
+    "src/**/*",
+    "vite.config.ts",
+    "../../packages/tokens/src/**/*"
+  ]
+}
