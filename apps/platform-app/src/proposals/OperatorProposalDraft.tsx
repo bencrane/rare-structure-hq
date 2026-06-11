@@ -332,13 +332,12 @@ function DraftActionBar({
       >
         {status === "error" ? "Retry — confirm & originate" : "Confirm & originate"}
       </button>
+      {/* Operator-facing instructional copy intentionally omitted — the mandate page is screenshared
+          to the prospect on the call, so "you share the link yourself" must not appear. Only the
+          (transient) error surfaces. */}
       {error ? (
         <p className="mt-2 text-center font-mono text-[0.5625rem] text-[color:var(--color-state-warn)] uppercase tracking-[0.14em]">
           {error}
-        </p>
-      ) : hasSignature ? (
-        <p className="mt-2 text-center font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
-          Stamps the terms + renders the agreement. You share the link yourself.
         </p>
       ) : null}
     </div>
