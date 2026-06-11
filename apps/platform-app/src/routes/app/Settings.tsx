@@ -9,9 +9,11 @@
 import { ChevronRight, FileCog, FilePlus2, type LucideIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
+import type { RenderMode } from "@rare-structure-hq/shared";
 import { Card, Grid, Inline, Stack, Text, cx } from "@rare-structure-hq/ui";
 
 import { CockpitPage, Section, Tile } from "@/app/cockpit";
+import { useOriginationMode } from "@/settings/originationMode";
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -40,7 +42,91 @@ export default function Settings() {
           />
         </Grid>
       </Section>
+
+      <Section label="Origination">
+        <OriginationModeCard />
+      </Section>
     </CockpitPage>
+  );
+}
+
+const ORIGINATION_OPTIONS: { value: RenderMode; label: string; hint: string }[] = [
+  {
+    value: "through-docraptor",
+    label: "Through DocRaptor",
+    hint: "Render the agreement PDF, then create the Documenso envelope. Current behavior.",
+  },
+  {
+    value: "direct-to-documenso",
+    label: "Direct to Documenso",
+    hint: "Skip DocRaptor — go straight to Documenso. Prototype pathway (not yet wired).",
+  },
+];
+
+// Originate-pathway toggle — selects what "Confirm & Originate" does. Persisted per operator via
+// the BFF (`/api/v1/settings` → public.operator_settings); edge_api branches on it at originate.
+function OriginationModeCard() {
+  const { renderMode, saving, error, choose } = useOriginationMode();
+  return (
+    <Card className="p-5">
+      <Stack gap="4">
+        <Stack gap="2">
+          <Text size="body-md" color="strong">
+            Originate pathway
+          </Text>
+          <Text size="body-sm" color="muted">
+            How “Confirm &amp; Originate” provisions the agreement. Applies to your account only.
+          </Text>
+        </Stack>
+
+        <Inline gap="3">
+          {ORIGINATION_OPTIONS.map((opt) => {
+            const active = renderMode === opt.value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                disabled={saving || renderMode === null}
+                aria-pressed={active}
+                onClick={() => choose(opt.value)}
+                className={cx(
+                  "flex-1 cursor-pointer border p-4 text-left outline-none transition-colors disabled:cursor-not-allowed disabled:opacity-50",
+                  active
+                    ? "border-[color:var(--color-border-accent)] bg-[color:var(--color-accent-soft)]"
+                    : "border-[color:var(--color-border-default)] hover:border-[color:var(--color-text-accent)]",
+                )}
+              >
+                <Stack gap="1">
+                  <Inline gap="2" align="center" justify="between">
+                    <Text size="mono-xs" mono color="strong">
+                      {opt.label}
+                    </Text>
+                    {active ? (
+                      <Text size="mono-xs" mono color="accent">
+                        ●
+                      </Text>
+                    ) : null}
+                  </Inline>
+                  <Text size="body-sm" color="muted">
+                    {opt.hint}
+                  </Text>
+                </Stack>
+              </button>
+            );
+          })}
+        </Inline>
+
+        <Text size="mono-xs" mono color="muted">
+          {renderMode === null
+            ? "Loading…"
+            : saving
+              ? "Saving…"
+              : error
+                ? error
+                : `Enabled: ${renderMode}`}
+        </Text>
+      </Stack>
+    </Card>
   );
 }
 

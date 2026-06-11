@@ -4,3 +4,4 @@ export * from "./catalyst-event";
 export * from "./federal";
 export * from "./identity";
 export * from "./proposal";
+export * from "./settings";
