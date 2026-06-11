@@ -290,7 +290,6 @@ export interface EdgeTemplateSummary {
 
 export interface EdgeTemplateRow extends EdgeTemplateSummary {
   markdown: string;
-  apply_brand: boolean;
   token_manifest: string[];
   created_by: string | null;
   created_at: string | null;
@@ -317,7 +316,7 @@ async function edgeTemplateJson<T>(path: string, init: RequestInit): Promise<T> 
   return (await res.json()) as T;
 }
 
-export function edgeTemplateConvert(body: { markdown: string; apply_brand: boolean }) {
+export function edgeTemplateConvert(body: { markdown: string }) {
   return edgeTemplateJson<EdgeTemplateConvertResult>(`${TEMPLATES}/convert`, {
     method: "POST",
     body: JSON.stringify(body),
@@ -326,7 +325,6 @@ export function edgeTemplateConvert(body: { markdown: string; apply_brand: boole
 
 export function edgeTemplatePreview(body: {
   markdown: string;
-  apply_brand: boolean;
   token_values: Record<string, string>;
 }) {
   return edgeTemplateJson<EdgeTemplatePreviewResult>(`${TEMPLATES}/preview`, {
@@ -337,7 +335,6 @@ export function edgeTemplatePreview(body: {
 
 export function edgeTemplateCreate(body: {
   markdown?: string;
-  apply_brand?: boolean;
   name?: string | null;
   created_by?: string | null;
 }) {
@@ -366,10 +363,7 @@ export function edgeTemplateGet(id: string) {
   });
 }
 
-export function edgeTemplateUpdate(
-  id: string,
-  body: { markdown?: string; apply_brand?: boolean; name?: string | null },
-) {
+export function edgeTemplateUpdate(id: string, body: { markdown?: string; name?: string | null }) {
   return edgeTemplateJson<EdgeTemplateRow>(`${TEMPLATES}/${encodeURIComponent(id)}`, {
     method: "PUT",
     body: JSON.stringify(body),
