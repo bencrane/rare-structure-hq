@@ -2,9 +2,11 @@ import { Grid, Stack, Text } from "@rare-structure-hq/ui";
 
 import { CockpitPage, DataRow, Panel } from "@/app/cockpit";
 import { useAuth } from "@/lib/auth";
+import { useMe } from "@/lib/useMe";
 
 export default function Account() {
   const { user, isOperator } = useAuth();
+  const { me } = useMe();
   return (
     <CockpitPage title="Account" description="Your profile and billing.">
       <Grid cols={1} mdCols={2} gap="4">
@@ -15,7 +17,10 @@ export default function Account() {
             </Text>
             <div>
               <DataRow label="Email" value={user?.email ?? "—"} />
-              <DataRow label="Organization" value={isOperator ? "Rare Structure LLC" : "—"} />
+              <DataRow
+                label="Organization"
+                value={me?.org?.name ?? (isOperator ? "Rare Structure" : "—")}
+              />
               <DataRow label="Role" value={isOperator ? "Operator" : "Client"} />
             </div>
           </Stack>

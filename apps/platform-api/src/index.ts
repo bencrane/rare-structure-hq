@@ -4,7 +4,7 @@
  * Responsibilities:
  * - Validate rare-structure-hq Supabase JWTs (ES256 + JWKS)
  * - /health (unauthenticated) for liveness probes
- * - /api/v1/me (auth-required) echoes the validated user
+ * - /api/v1/me (auth-required) resolved identity: validated user + org affiliation
  * - /api/v1/proposals (auth) instantiate; /api/v1/proposals/:ref (public) shell read
  * - /api/v1/proposal-templates (auth) the non-revealing posture catalog
  * - /api/v1/award-profile/:domain (auth-required) brokers to core-x catalyst_api
@@ -18,8 +18,11 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { requestId } from "hono/request-id";
 
+import type { Me } from "@rare-structure-hq/shared";
+
 import { type AuthVariables, requireUser } from "./auth.ts";
 import { allowedOrigins, env } from "./env.ts";
+import { db } from "./lib/db.ts";
 import { awardProfileRoutes } from "./routes/award-profile.ts";
 import { bookingAdminRoutes } from "./routes/bookings-admin.ts";
 import { companyProfileRoutes } from "./routes/company-profiles-admin.ts";
@@ -45,9 +48,54 @@ app.get("/health", (c) =>
   c.json({ status: "ok", app_env: env.APP_ENV, ts: new Date().toISOString() }),
 );
 
-app.get("/api/v1/me", requireUser, (c) => {
+// `/api/v1/me` — the resolved identity for the signed-in user. The client reads coarse
+// persona (operator vs client) from the JWT (`app_metadata.role`); this payload carries the
+// ORG affiliation, resolved through the `business.*` tables via the read-only SECURITY
+// DEFINER `resolve_org_identity` (business.* is not PostgREST-exposed, so the BFF reaches it
+// through a public function on its service-role client). Degrades to `org: null` on failure —
+// the portal then falls back to the house brand rather than erroring.
+type IdentityRow = {
+  org_id: string;
+  org_name: string;
+  org_slug: string | null;
+  org_domain: string | null;
+  org_role: string | null;
+  platform_role: string | null;
+};
+
+app.get("/api/v1/me", requireUser, async (c) => {
   const user = c.get("user");
-  return c.json({ user_id: user.user_id, email: user.email, app_env: env.APP_ENV });
+
+  let org: Me["org"] = null;
+  let platformRole: string | null = null;
+
+  const { data, error } = await db().rpc("resolve_org_identity", {
+    p_auth_user_id: user.user_id,
+  });
+  if (error) {
+    console.error(`[me] resolve_org_identity failed for ${user.user_id}: ${error.message}`);
+  } else {
+    const row = (Array.isArray(data) ? data[0] : null) as IdentityRow | null;
+    if (row) {
+      platformRole = row.platform_role ?? null;
+      org = {
+        id: row.org_id,
+        name: row.org_name,
+        slug: row.org_slug ?? null,
+        domain: row.org_domain ?? null,
+        role: row.org_role ?? null,
+      };
+    }
+  }
+
+  const me: Me = {
+    userId: user.user_id,
+    email: user.email,
+    appEnv: env.APP_ENV,
+    platformRole,
+    org,
+  };
+  return c.json(me);
 });
 
 app.route("/api/v1/proposals", proposalAdminRoutes);
