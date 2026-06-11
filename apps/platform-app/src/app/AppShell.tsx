@@ -34,6 +34,7 @@ import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { Inline, Stack, Text, cx } from "@rare-structure-hq/ui";
 
 import { useAuth } from "@/lib/auth";
+import { useMe } from "@/lib/useMe";
 
 type NavItem = { to: string; label: string; icon: LucideIcon };
 
@@ -123,10 +124,13 @@ function SidebarContent({
   collapsed,
   onToggleCollapse,
   onNavigate,
+  orgName,
 }: {
   collapsed: boolean;
   onToggleCollapse?: () => void;
   onNavigate?: () => void;
+  /** Org brand shown in the rail header — resolved from `/me`, house brand as fallback. */
+  orgName: string;
 }) {
   const { user, signOut, isOperator } = useAuth();
   const email = user?.email ?? "—";
@@ -159,7 +163,7 @@ function SidebarContent({
                 color="primary"
                 className="whitespace-nowrap font-semibold uppercase tracking-[0.16em]"
               >
-                Rare Structure
+                {orgName}
               </Text>
             </Inline>
             {onToggleCollapse ? (
@@ -270,6 +274,11 @@ export function AppShell() {
   const toggleCollapse = () =>
     onMandate ? setMandateCollapsed((c) => !c) : setCollapsed((c) => !c);
 
+  // Brand reflects the signed-in operator's org (Active Operators / Rare Structure / …),
+  // resolved from `/me`. House brand until it resolves (and for the DEV mock session).
+  const { me } = useMe();
+  const orgName = me?.org?.name ?? "Rare Structure";
+
   return (
     <div
       className={cx(
@@ -286,7 +295,11 @@ export function AppShell() {
           "bg-[color:var(--color-surface-sunken)]",
         )}
       >
-        <SidebarContent collapsed={displayCollapsed} onToggleCollapse={toggleCollapse} />
+        <SidebarContent
+          collapsed={displayCollapsed}
+          onToggleCollapse={toggleCollapse}
+          orgName={orgName}
+        />
       </aside>
 
       <div className="flex min-h-screen flex-col">
@@ -307,7 +320,7 @@ export function AppShell() {
               color="primary"
               className="font-semibold uppercase tracking-[0.16em]"
             >
-              Rare Structure
+              {orgName}
             </Text>
           </Inline>
           <button
@@ -350,7 +363,11 @@ export function AppShell() {
               </button>
             </Inline>
             <div className="min-h-0 flex-1">
-              <SidebarContent collapsed={false} onNavigate={() => setMobileOpen(false)} />
+              <SidebarContent
+                collapsed={false}
+                onNavigate={() => setMobileOpen(false)}
+                orgName={orgName}
+              />
             </div>
           </aside>
         </div>
