@@ -1326,16 +1326,24 @@ export async function aggregateBy(
 ): Promise<AggregateBar[]> {
   if (groupBy === "industry") {
     const chart = await fetchIndustryChart();
-    return chart.rows.map((r) => ({
-      key: r.naics ?? "—",
-      // Prefer the cockpit vertical label when the NAICS maps to one; else show the code.
-      label: (() => {
-        const ind = industryForNaics(r.naics);
-        return ind ? `${industryLabel(ind)} · ${r.naics}` : (r.naics ?? "—");
-      })(),
-      total: r.spend_lifetime,
-      count: r.firms,
-    }));
+    return (
+      chart.rows
+        // Public Administration (NAICS sector 92) is the government itself — intra-
+        // government / pass-through obligations (Medicaid admin, etc.), not an addressable
+        // contracting opportunity. Its multi-trillion totals also dwarf every real vertical
+        // and flatten the bar scale. Drop it so the chart reads as actual opportunity.
+        .filter((r) => !(r.naics ?? "").startsWith("92"))
+        .map((r) => ({
+          key: r.naics ?? "—",
+          // Prefer the cockpit vertical label when the NAICS maps to one; else show the code.
+          label: (() => {
+            const ind = industryForNaics(r.naics);
+            return ind ? `${industryLabel(ind)} · ${r.naics}` : (r.naics ?? "—");
+          })(),
+          total: r.spend_lifetime,
+          count: r.firms,
+        }))
+    );
   }
   if (groupBy === "agency") {
     const chart = await fetchAgencyChart();
