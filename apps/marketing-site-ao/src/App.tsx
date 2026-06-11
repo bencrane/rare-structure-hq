@@ -8,8 +8,8 @@ import { SiteHeader } from "./sections/SiteHeader";
 
 export function App() {
   return (
-    <div className="ao-grid min-h-screen">
-      <div className="mx-auto flex min-h-screen max-w-[1560px] flex-col border-[color:var(--color-border-subtle)] bg-[color:var(--color-surface-base)] sm:border-x">
+    <div className="ao-grid min-h-screen sm:p-6 lg:p-10">
+      <div className="mx-auto flex min-h-[calc(100vh-5rem)] max-w-[1560px] flex-col border-[color:var(--color-border-default)] bg-[color:var(--color-surface-base)] sm:border">
         <SiteHeader />
         <main>
           <Hero />
