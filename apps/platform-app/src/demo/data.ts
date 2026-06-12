@@ -1315,6 +1315,9 @@ export async function runAsk(
     fullUniverse: res.total,
     materializedAt: "",
     profileAsOfDate: null,
+    // The honesty contract: constraints the compiler could not express. The banner
+    // renders them as "not applied" — the demo never implies a filter it didn't run.
+    notApplied: res.unmapped ?? [],
   };
 }
 
@@ -1415,6 +1418,9 @@ export type QueryResult = {
   fullUniverse: number;
   materializedAt: string;
   profileAsOfDate: string | null;
+  /** NL-query constraints the compiler could NOT express ("not applied" banner signal).
+   * Absent/empty on the canned filter path — every canned constraint always runs. */
+  notApplied?: string[];
 };
 
 // The map plots query results; a generous page covers the densest vertical without a

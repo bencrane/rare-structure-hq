@@ -32,6 +32,7 @@ export function ResultsTable({
   loading = false,
   error = null,
   total,
+  notApplied = [],
   selectedId,
   onSelectCompany,
   onInvokeCommand,
@@ -45,6 +46,8 @@ export function ResultsTable({
   loading?: boolean;
   error?: string | null;
   total?: number;
+  /** NL-query constraints the compiler could not express — rendered as "not applied". */
+  notApplied?: string[];
   selectedId: string | null;
   onSelectCompany: (company: Company) => void;
   onInvokeCommand: () => void;
@@ -97,18 +100,26 @@ export function ResultsTable({
       <div className="relative flex min-h-0 flex-1 flex-col items-center px-6 pt-2 pb-4">
         {/* Summary + the Map/Table toggle — the result banner, shared shape with MapView. */}
         <div className="flex w-full max-w-[1180px] items-center justify-between gap-3 pb-3">
-          <div className="flex items-stretch border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-raised)] shadow-lg shadow-black/40">
-            <BannerCell label="Vertical" value={industryLabel(query?.industry)} accent />
-            <BannerCell
-              label="Companies"
-              value={
-                loading ? "…" : error ? "—" : (total ?? results.length).toLocaleString("en-US")
-              }
-            />
-            <BannerCell
-              label="Federal awards"
-              value={loading ? "…" : error ? "—" : fmtUsd(awards)}
-            />
+          <div className="flex items-center gap-2">
+            <div className="flex items-stretch border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-raised)] shadow-lg shadow-black/40">
+              <BannerCell label="Vertical" value={industryLabel(query?.industry)} accent />
+              <BannerCell
+                label="Companies"
+                value={
+                  loading ? "…" : error ? "—" : (total ?? results.length).toLocaleString("en-US")
+                }
+              />
+              <BannerCell
+                label="Federal awards"
+                value={loading ? "…" : error ? "—" : fmtUsd(awards)}
+              />
+            </div>
+            {/* The honesty signal: a query constraint the compiler could not run. */}
+            {!loading && !error && notApplied.length > 0 && (
+              <div className="border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-raised)] px-3 py-1.5 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase shadow-lg shadow-black/40">
+                Not applied: {notApplied.join(" · ")}
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-3">
             <ViewToggle view={resultView} onChange={onResultView} />
