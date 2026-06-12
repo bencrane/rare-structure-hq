@@ -71,6 +71,69 @@ export function fetchEntityByUei(uei: string): Promise<FederalEntity> {
   return getJson<FederalEntity>(`/api/v1/federal/entity/${encodeURIComponent(uei)}`);
 }
 
+// ── Entity dossier (the side-panel read) ─────────────────────────────────────
+// Mirrors catalyst_api EntityDossierResponse (camelCase wire via the BFF pass-through).
+// POCs carry name/title/geo only — the SAM source has no email/phone columns.
+
+export type DossierAddress = {
+  street: string | null;
+  city: string | null;
+  state: string | null;
+  zip: string | null;
+};
+
+export type EntityDossier = {
+  identity: {
+    uei: string | null;
+    cageCode: string | null;
+    legalBusinessName: string | null;
+    dbaName: string | null;
+    isActive: boolean | null;
+    primaryNaics: string | null;
+    address: DossierAddress | null;
+  };
+  posture: {
+    totalLifetimeObligations: number | null;
+    totalActiveObligations: number | null;
+    awardCount: number | null;
+    activeAwardCount: number | null;
+    hasFederalAwards: boolean | null;
+    latestActionDate: string | null;
+    daysSinceLastAction: number | null;
+    topAgencies: { name: string; dollars: number }[];
+    profileAsOfDate: string | null;
+  };
+  recentActivity: {
+    windowDays: number;
+    actions: {
+      awardId: string | null;
+      actionDate: string | null;
+      amount: number | null;
+      awardingAgency: string | null;
+      awardingSubAgency: string | null;
+      winnerType: string | null;
+      popState: string | null;
+      popCity: string | null;
+      setAside: string | null;
+      naicsCode: string | null;
+    }[];
+  };
+  pocs: {
+    type: string | null;
+    pocSlotNo: number | null;
+    fullName: string | null;
+    title: string | null;
+    city: string | null;
+    state: string | null;
+  }[];
+};
+
+/** Fetch the entity dossier for the side panel — a request-time composed read (NOT the
+ * warm snapshot): catalyst gold identity/rollups/POCs ⊕ recency ⊕ rolling-90d actions. */
+export function fetchEntityDossier(uei: string): Promise<EntityDossier> {
+  return getJson<EntityDossier>(`/api/v1/federal/entity/${encodeURIComponent(uei)}/dossier`);
+}
+
 /** A flattened edge `/ask` GeoJSON row — the serving-table properties + real coordinates. */
 export type AskMarketRow = Record<string, unknown> & { lat?: number; lon?: number };
 
