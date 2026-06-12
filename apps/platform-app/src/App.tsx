@@ -3,7 +3,9 @@
  *
  * Public surfaces (anonymous):
  *   `/`                  → redirects to `/signin` (the gate is the front door).
- *   `/map`               → catalyst map demo.
+ *   `/map`               → un-hosted; redirects to `/signin`. The catalyst map
+ *                          demo component is kept at routes/MapDemo.tsx for
+ *                          re-enable (not deleted).
  *   `/p/:ref`            → engagement proposal summary (the ref is its own credential).
  *   `/p/:ref/sign`       → full-page Documenso signing view.
  *
@@ -24,7 +26,9 @@ import { Navigate, Route, Routes } from "react-router-dom";
 
 import { AppShell } from "./app/AppShell";
 import { AuthProvider, useAuth } from "./lib/auth";
-import MapDemo from "./routes/MapDemo";
+// `/map` is un-hosted (see route below). MapDemo is kept on disk for quick
+// re-enable; do not delete. Restore this import to bring the route back.
+// import MapDemo from "./routes/MapDemo";
 import SignIn from "./routes/SignIn";
 import Account from "./routes/app/Account";
 import Applications from "./routes/app/Applications";
@@ -80,7 +84,9 @@ export function App() {
         {/* Public surfaces. The root lands on the sign-in gate; the map keeps
             its own path. */}
         <Route path="/" element={<Navigate to="/signin" replace />} />
-        <Route path="/map" element={<MapDemo />} />
+        {/* `/map` is un-hosted. Restore the MapDemo import above and swap the
+            element back to `<MapDemo />` to re-enable. */}
+        <Route path="/map" element={<Navigate to="/signin" replace />} />
         {/* Engagement proposal summary — the ref is its own credential. */}
         <Route path="/p/:ref" element={<SummaryPage />} />
         {/* Full-page signing view — Documenso two-column embed, on our domain. */}
