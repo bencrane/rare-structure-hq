@@ -5,16 +5,18 @@
  * It renders the SAME engagement-proposal STRUCTURE as the through-docraptor `MandateEditor` — the
  * shared `DocumentFrame` chrome (utility bar · "Engagement Proposal" letterhead · trust-strip
  * footer) plus the section scaffold (Prepared for · the mandate terms · Execution · the originate
- * action) — but every data slot is intentionally blank and the actions are inert. The draft's
- * concrete values and its sign/confirm wiring are a separate step; until then this gives the
- * operator the full structural shell instead of the previously-blank page.
+ * action). The headline-term values are intentionally blank pending the draft wiring.
  *
- * Static + dataless on purpose: it takes no `shell` and fetches nothing, so it can never 404 or
- * flash. Lives in `proposals/` (not `routes/`) so it may own page geometry like its siblings.
+ * Execution is LIVE: the operator can sign (the same performative, cosmetic gate as the editor — it
+ * binds nothing; the real originator counter-signature is Documenso's), reusing `SignatureOverlay`.
+ * The signature is in-session only (not persisted). "Confirm & originate" stays inert until the
+ * draft's direct-to-documenso originate path is defined.
  */
 import { PenLine } from "lucide-react";
+import { useState } from "react";
 
 import { DocumentFrame } from "@/proposals/DocumentFrame";
+import { SignatureOverlay } from "@/proposals/SignaturePad";
 
 export function MandateDraftShell({
   housing = "standalone",
@@ -22,6 +24,10 @@ export function MandateDraftShell({
   /** Forwarded to DocumentFrame. `"cockpit"` only when mounted in the Mandate page. */
   housing?: "standalone" | "cockpit";
 }) {
+  const [signature, setSignature] = useState<string | null>(null);
+  const [signedAt, setSignedAt] = useState<string | null>(null);
+  const [signing, setSigning] = useState(false);
+
   return (
     <DocumentFrame title="Engagement Proposal" maxWidthClass="max-w-[820px]" housing={housing}>
       <div className="px-6 pt-10 pb-14 md:px-10 md:pt-12 md:pb-16">
@@ -46,25 +52,52 @@ export function MandateDraftShell({
           <TermRow label="Total" />
         </div>
 
-        {/* Execution — the structural signature block; signing is wired with the draft path. */}
+        {/* Execution — the operator signs in the moment (performative, like the editor). */}
         <div>
           <div className="mb-3 font-mono text-[0.625rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.2em]">
             Execution
           </div>
           <div className="border border-[color:var(--color-border-subtle)] p-6">
-            <div className="mb-2.5 font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.16em]">
-              Signature
+            <div className="mb-2.5 flex items-center justify-between">
+              <span className="font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.16em]">
+                Signature
+              </span>
+              {signature && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSignature(null);
+                    setSignedAt(null);
+                  }}
+                  className="font-mono text-[0.5rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em] transition-colors hover:text-[color:var(--color-text-accent)]"
+                >
+                  Re-sign
+                </button>
+              )}
             </div>
-            <button
-              type="button"
-              disabled
-              className="flex h-[84px] w-full items-center justify-center gap-2 border border-[color:var(--color-accent-primary)] bg-[color:var(--color-accent-soft)] font-mono text-[0.75rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.18em] disabled:opacity-40"
-            >
-              <PenLine className="size-4" />
-              Sign the mandate
-            </button>
-            <div className="mt-3 text-[0.875rem] text-[color:var(--color-text-primary)]">
-              Rare Structure LLC
+            {signature ? (
+              <div className="flex h-[84px] items-center justify-center border border-[color:var(--color-border-subtle)] bg-[color:var(--color-surface-sunken)]">
+                <img src={signature} alt="Originator signature" className="max-h-[72px] w-auto" />
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setSigning(true)}
+                className="flex h-[84px] w-full items-center justify-center gap-2 border border-[color:var(--color-accent-primary)] bg-[color:var(--color-accent-soft)] font-mono text-[0.75rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.18em] transition-colors hover:bg-[color:var(--color-accent-primary)] hover:text-[color:var(--color-text-onAccent)]"
+              >
+                <PenLine className="size-4" />
+                Sign the mandate
+              </button>
+            )}
+            <div className="mt-3 flex items-baseline justify-between gap-4">
+              <span className="text-[0.875rem] text-[color:var(--color-text-primary)]">
+                Rare Structure LLC
+              </span>
+              {signedAt && (
+                <span className="text-[0.75rem] text-[color:var(--color-text-muted)] tabular-nums">
+                  {formatDate(signedAt)}
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -80,6 +113,17 @@ export function MandateDraftShell({
           </button>
         </div>
       </div>
+
+      {signing && (
+        <SignatureOverlay
+          onApply={(dataUrl) => {
+            setSignature(dataUrl);
+            setSignedAt(new Date().toISOString());
+            setSigning(false);
+          }}
+          onCancel={() => setSigning(false)}
+        />
+      )}
     </DocumentFrame>
   );
 }
@@ -98,4 +142,10 @@ function TermRow({ label }: { label: string }) {
       <span className="text-[0.9375rem] text-[color:var(--color-text-subtle)] tabular-nums">—</span>
     </div>
   );
+}
+
+function formatDate(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 }
