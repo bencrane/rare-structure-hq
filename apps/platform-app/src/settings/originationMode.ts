@@ -32,29 +32,43 @@ async function putRenderMode(token: string, renderMode: RenderMode): Promise<Ope
 }
 
 export interface OriginationModeState {
-  /** Current mode, or `null` until loaded (and under the DEV mock session). */
+  /** Persisted mode (server truth), or `null` until loaded (and under the DEV mock session). */
   renderMode: RenderMode | null;
+  /** The staged selection — mirrors `renderMode` until the operator picks a different card. */
+  selected: RenderMode | null;
+  /** `selected` differs from the persisted `renderMode` → there is an unsaved change. */
+  dirty: boolean;
   saving: boolean;
+  /** True after a successful save until the next selection — drives the "Saved" confirmation. */
+  saved: boolean;
   error: string | null;
-  choose: (mode: RenderMode) => void;
+  /** Stage a selection locally (no network). */
+  select: (mode: RenderMode) => void;
+  /** Persist the staged selection to `public.operator_settings` via the BFF. */
+  save: () => void;
 }
 
 export function useOriginationMode(): OriginationModeState {
   const { session } = useAuth();
   const token = session?.access_token ?? null;
   const [renderMode, setRenderMode] = useState<RenderMode | null>(null);
+  const [selected, setSelected] = useState<RenderMode | null>(null);
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!token || token === "dev") {
       setRenderMode(null);
+      setSelected(null);
       return;
     }
     let active = true;
     getSettings(token)
       .then((s) => {
-        if (active) setRenderMode(s.renderMode);
+        if (!active) return;
+        setRenderMode(s.renderMode);
+        setSelected(s.renderMode);
       })
       .catch(() => {
         if (active) setError("Could not load the setting.");
@@ -64,23 +78,30 @@ export function useOriginationMode(): OriginationModeState {
     };
   }, [token]);
 
-  const choose = useCallback(
-    (mode: RenderMode) => {
-      if (!token || token === "dev" || saving || mode === renderMode) return;
-      setSaving(true);
-      setError(null);
-      const prev = renderMode;
-      setRenderMode(mode); // optimistic
-      putRenderMode(token, mode)
-        .then((s) => setRenderMode(s.renderMode))
-        .catch(() => {
-          setRenderMode(prev);
-          setError("Could not save the change.");
-        })
-        .finally(() => setSaving(false));
-    },
-    [token, saving, renderMode],
-  );
+  // Stage a choice — local only, no write. Clears any prior save/error state.
+  const select = useCallback((mode: RenderMode) => {
+    setSelected(mode);
+    setSaved(false);
+    setError(null);
+  }, []);
 
-  return { renderMode, saving, error, choose };
+  // Commit the staged selection. No-op when there is nothing to save or a write is in flight.
+  const save = useCallback(() => {
+    if (!token || token === "dev" || saving || selected === null || selected === renderMode) return;
+    setSaving(true);
+    setError(null);
+    setSaved(false);
+    putRenderMode(token, selected)
+      .then((s) => {
+        setRenderMode(s.renderMode);
+        setSelected(s.renderMode);
+        setSaved(true);
+      })
+      .catch(() => setError("Could not save the change."))
+      .finally(() => setSaving(false));
+  }, [token, saving, selected, renderMode]);
+
+  const dirty = selected !== null && selected !== renderMode;
+
+  return { renderMode, selected, dirty, saving, saved, error, select, save };
 }

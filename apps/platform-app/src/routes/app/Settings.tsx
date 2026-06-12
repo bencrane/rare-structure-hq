@@ -63,10 +63,12 @@ const ORIGINATION_OPTIONS: { value: RenderMode; label: string; hint: string }[] 
   },
 ];
 
-// Originate-pathway toggle — selects what "Confirm & Originate" does. Persisted per operator via
-// the BFF (`/api/v1/settings` → public.operator_settings); edge_api branches on it at originate.
+// Originate-pathway toggle — selects what "Confirm & Originate" does. Picking a card stages the
+// choice locally; the Save button persists it per operator via the BFF (`/api/v1/settings` →
+// public.operator_settings), where edge_api reads it at originate.
 function OriginationModeCard() {
-  const { renderMode, saving, error, choose } = useOriginationMode();
+  const { renderMode, selected, dirty, saving, saved, error, select, save } = useOriginationMode();
+  const loading = renderMode === null;
   return (
     <Card className="p-5">
       <Stack gap="4">
@@ -81,14 +83,14 @@ function OriginationModeCard() {
 
         <Inline gap="3">
           {ORIGINATION_OPTIONS.map((opt) => {
-            const active = renderMode === opt.value;
+            const active = selected === opt.value;
             return (
               <button
                 key={opt.value}
                 type="button"
-                disabled={saving || renderMode === null}
+                disabled={saving || loading}
                 aria-pressed={active}
-                onClick={() => choose(opt.value)}
+                onClick={() => select(opt.value)}
                 className={cx(
                   "flex-1 cursor-pointer border p-4 text-left outline-none transition-colors disabled:cursor-not-allowed disabled:opacity-50",
                   active
@@ -116,15 +118,35 @@ function OriginationModeCard() {
           })}
         </Inline>
 
-        <Text size="mono-xs" mono color="muted">
-          {renderMode === null
-            ? "Loading…"
-            : saving
-              ? "Saving…"
-              : error
-                ? error
-                : `Enabled: ${renderMode}`}
-        </Text>
+        <Inline gap="3" align="center" justify="between">
+          <Text size="mono-xs" mono color="muted">
+            {loading
+              ? "Loading…"
+              : saving
+                ? "Saving…"
+                : error
+                  ? error
+                  : dirty
+                    ? "Unsaved change"
+                    : saved
+                      ? "Saved"
+                      : `Enabled: ${renderMode}`}
+          </Text>
+
+          <button
+            type="button"
+            disabled={!dirty || saving || loading}
+            onClick={save}
+            className={cx(
+              "cursor-pointer border px-4 py-2 outline-none transition-colors disabled:cursor-not-allowed disabled:opacity-50",
+              "border-[color:var(--color-border-accent)] bg-[color:var(--color-accent-soft)]",
+            )}
+          >
+            <Text size="mono-xs" mono color="accent">
+              {saving ? "Saving…" : "Save"}
+            </Text>
+          </button>
+        </Inline>
       </Stack>
     </Card>
   );
