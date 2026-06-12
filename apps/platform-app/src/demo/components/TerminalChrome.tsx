@@ -172,10 +172,7 @@ export function TerminalHeader({
           {(TRACKED_ENTITIES / 1_000_000).toFixed(2)}M entities tracked
         </div>
         {defaultView && onDefaultView && (
-          <div className="mt-3 flex flex-col items-end gap-1.5">
-            <span className="font-mono text-[color:var(--color-text-subtle)] text-mono-xs uppercase tracking-[0.14em]">
-              Default view
-            </span>
+          <div className="mt-3 flex justify-end">
             <DefaultViewToggle view={defaultView} onChange={onDefaultView} />
           </div>
         )}
