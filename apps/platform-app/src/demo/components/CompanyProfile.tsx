@@ -18,7 +18,8 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Building2, CalendarClock, Landmark, Receipt, X } from "lucide-react";
 import { type ComponentType, useEffect, useState } from "react";
 import { industryLabel } from "../data";
-import { type EntityDossier, fetchEntityDossier } from "../federalApi";
+import { getDossier, peekDossier } from "../dossierCache";
+import type { EntityDossier } from "../federalApi";
 import { fmtDate, fmtUsd, fmtUsdFull } from "../format";
 import type { CapitalCatalyst, CatalystKind, Company } from "../types";
 
@@ -106,21 +107,26 @@ function ProfileHeader({ company, onClose }: { company: Company; onClose: () => 
 }
 
 function ProfileBody({ company }: { company: Company }) {
-  // Fetch the composed dossier on open. Failure (or a non-UEI id) degrades to the
-  // row-mapped view below — the drawer never renders emptier than it did before.
-  const [dossier, setDossier] = useState<EntityDossier | null>(null);
+  // The dossier is EAGERLY prefetched when the query result lands (dossierCache), so
+  // the normal open is a SYNCHRONOUS cache hit — content renders in the same frame as
+  // the drawer, no effect round-trip. A true miss (prefetch not landed yet / evicted /
+  // non-UEI id) falls back to the deduped single fetch with the loading marker; any
+  // failure degrades to the row-mapped view — never emptier than before.
+  const isUei = UEI_RE.test(company.id);
+  const peeked = isUei ? peekDossier(company.id) : undefined;
+  const hasSyncHit = peeked !== undefined;
+  const [fetched, setFetched] = useState<{
+    id: string;
+    dossier: EntityDossier | null;
+  } | null>(null);
   const [loading, setLoading] = useState(false);
   useEffect(() => {
-    setDossier(null);
-    if (!UEI_RE.test(company.id)) return;
+    if (!isUei || hasSyncHit) return; // sync hit (or non-UEI): nothing to fetch
     let cancelled = false;
     setLoading(true);
-    fetchEntityDossier(company.id)
+    getDossier(company.id)
       .then((d) => {
-        if (!cancelled) setDossier(d);
-      })
-      .catch(() => {
-        /* graceful degrade: keep the row-mapped view */
+        if (!cancelled) setFetched({ id: company.id, dossier: d });
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -128,7 +134,12 @@ function ProfileBody({ company }: { company: Company }) {
     return () => {
       cancelled = true;
     };
-  }, [company.id]);
+  }, [company.id, isUei, hasSyncHit]);
+  const dossier = hasSyncHit
+    ? peeked
+    : fetched && fetched.id === company.id
+      ? fetched.dossier
+      : null;
 
   const identity = dossier?.identity;
   const posture = dossier?.posture;

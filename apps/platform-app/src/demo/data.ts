@@ -15,6 +15,7 @@
  */
 
 import type { FederalEntity } from "@rare-structure-hq/shared";
+import { startDossierPrefetch } from "./dossierCache";
 import {
   type AskMarketRow,
   askMap,
@@ -1353,6 +1354,9 @@ export async function runAsk(
   const res = await askMap(nl, dataset);
   const baseRows = res.dataset === "awards" ? collapseAwardActions(res.rows) : res.rows;
   const companies = dedupeByName(baseRows.map(askRowToCompany));
+  // Eager dossier prefetch for the ENTIRE result set, in ranked order — fire and
+  // forget: the drawer must open warm, and this must never delay the result render.
+  startDossierPrefetch(companies.map((c) => c.id));
   return {
     companies,
     // The headline count is distinct companies (post-collapse); the raw UEI match rides in
@@ -1487,8 +1491,10 @@ export async function runQuery(q: MapQuery): Promise<QueryResult> {
     minObligation: q.minAward > 0 ? q.minAward : undefined,
     limit: MAP_PAGE_LIMIT,
   });
+  const companies = res.rows.map(entityToCompany);
+  startDossierPrefetch(companies.map((c) => c.id)); // eager dossier warm (canned path)
   return {
-    companies: res.rows.map(entityToCompany),
+    companies,
     total: res.total,
     minLifetimeBound: res.minLifetimeBound,
     fullUniverse: res.fullUniverse,
