@@ -25,6 +25,7 @@ import {
   fetchStateChart,
 } from "./federalApi";
 import { fmtMonthYear, fmtUsd, fmtUsdFull } from "./format";
+import { projectLonLat } from "./projection";
 import type {
   AggregateBar,
   CapitalCatalyst,
@@ -1192,8 +1193,9 @@ function entityToCompany(e: FederalEntity): Company {
 // A free-typed sentence is compiled by edge_api (forced-tool Anthropic call) into a constrained
 // filter, executed on catalyst_api over the geocoded serving tables, and returned as GeoJSON.
 // Each feature's flattened properties map onto the SAME `Company` shape the canned path emits,
-// so the rendering layer is unchanged. `x`/`y` stay omitted (the dot layer still gates on their
-// absence — geo deferred); the real lat/lon rides on the row for the future geo pass.
+// so the rendering layer is unchanged. The row's real lat/lon is projected through the recovered
+// Albers-USA composite (see ./projection) onto the us-geo 1000x590 viewBox and set on `x`/`y`,
+// lighting up the dot layer for live geocoded entities.
 
 function askRowStr(v: unknown): string | undefined {
   return typeof v === "string" && v.length > 0 ? v : undefined;
@@ -1243,6 +1245,13 @@ function askRowToCompany(r: AskMarketRow): Company {
   const contractCount = askRowNum(r.award_count);
   const hasFed =
     r.has_federal_awards === true || askRowNum(r.total_obligation) > 0 || totalAwarded > 0;
+  // Project the row's real lat/lon onto the us-geo 1000x590 viewBox so the dot layer can plot it.
+  // askRowNum coerces missing to 0, so guard the (0,0) null-island explicitly; projectLonLat
+  // returns null off the US composite (PR/GU/etc.) — those rows simply carry no x/y.
+  const hasLatLon = r.lat != null && r.lon != null;
+  const lat = askRowNum(r.lat);
+  const lon = askRowNum(r.lon);
+  const geo = hasLatLon && (lat !== 0 || lon !== 0) ? projectLonLat(lon, lat) : null;
   return {
     id,
     name,
@@ -1255,6 +1264,7 @@ function askRowToCompany(r: AskMarketRow): Company {
     activeAwarded: totalAwarded,
     contractCount,
     activeAward: hasFed,
+    ...(geo ? { x: geo.x, y: geo.y } : {}),
     catalysts: [askCatalyst(totalAwarded, contractCount, naics, hasFed)],
   };
 }
