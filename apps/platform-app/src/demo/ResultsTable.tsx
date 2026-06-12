@@ -11,6 +11,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { useMemo, useState } from "react";
 import { CommandPill, type ResultView, TerminalHeader } from "./components/TerminalChrome";
 import { industryLabel } from "./data";
+import { promoteDossier } from "./dossierCache";
 import { fmtUsd } from "./format";
 import type { Company, MapQuery } from "./types";
 
@@ -168,6 +169,7 @@ export function ResultsTable({
                     <tr
                       key={c.id}
                       tabIndex={0}
+                      onMouseEnter={() => promoteDossier(c.id)}
                       onClick={() => onSelectCompany(c)}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {

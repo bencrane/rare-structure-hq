@@ -88,6 +88,39 @@ federalRoutes.get("/entity/:uei/dossier", async (c) => {
   });
 });
 
+// Batch dossier — the cockpit's eager-prefetch read. Verbatim pass-through broker to
+// catalyst's POST /api/v1/entities/dossiers (≤100 UEIs, partial success: unknown UEIs
+// map to null). Body is validated/bounded HERE so a malformed prefetch burst dies at
+// the BFF; same PUBLIC posture + rationale as the single dossier route above it.
+federalRoutes.post("/entity/dossiers", async (c) => {
+  let body: unknown;
+  try {
+    body = await c.req.json();
+  } catch {
+    throw new HTTPException(400, { message: "json body required" });
+  }
+  const ueis = (body as { ueis?: unknown })?.ueis;
+  if (!Array.isArray(ueis) || ueis.length === 0 || ueis.length > 100) {
+    throw new HTTPException(400, { message: "ueis must be an array of 1..100 entries" });
+  }
+  if (!ueis.every((u) => typeof u === "string" && /^[A-Za-z0-9]{12}$/.test(u.trim()))) {
+    throw new HTTPException(400, { message: "every uei must be 12 alphanumerics" });
+  }
+  const res = await fetch(`${env.COREX_API_URL}/api/v1/entities/dossiers`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${env.COREX_SERVICE_TOKEN}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({ ueis: ueis.map((u) => (u as string).trim()) }),
+  });
+  const text = await res.text();
+  return new Response(text, {
+    status: res.status,
+    headers: { "content-type": res.headers.get("content-type") ?? "application/json" },
+  });
+});
+
 // Natural-language market query. UNLIKE the warm endpoints above, this one round-trips to
 // core-x edge_api (one forced-tool Anthropic call → catalyst_api Lance scan → GeoJSON), so it
 // is the only federal route that is not purely in-memory. Public posture (the cockpit is

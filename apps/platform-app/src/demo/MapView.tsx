@@ -15,6 +15,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { useState } from "react";
 import { CommandPill, type ResultView, TerminalHeader } from "./components/TerminalChrome";
 import { industryLabel } from "./data";
+import { promoteDossier } from "./dossierCache";
 import { fmtUsd } from "./format";
 import type { Company, MapQuery } from "./types";
 import { GEO_SCATTER_BANDS, GEO_VIEW, STATE_PATHS } from "./us-geo";
@@ -238,7 +239,10 @@ export function MapView({
                 company={company}
                 reduced={reduced}
                 lit={company.id === hovered || company.id === selectedId}
-                onHover={() => setHovered(company.id)}
+                onHover={() => {
+                  setHovered(company.id);
+                  promoteDossier(company.id); // warm the drawer before the click lands
+                }}
                 onLeave={() => setHovered((h) => (h === company.id ? null : h))}
                 onOpenProfile={() => onSelectCompany(company)}
               />

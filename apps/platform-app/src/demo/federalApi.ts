@@ -134,6 +134,20 @@ export function fetchEntityDossier(uei: string): Promise<EntityDossier> {
   return getJson<EntityDossier>(`/api/v1/federal/entity/${encodeURIComponent(uei)}/dossier`);
 }
 
+/** Batch dossier read (≤100 UEIs) — the eager-prefetch path. PARTIAL SUCCESS: the map
+ * carries `null` for unknown UEIs; known ones land as full EntityDossier objects. */
+export async function fetchEntityDossiers(
+  ueis: string[],
+): Promise<Record<string, EntityDossier | null>> {
+  const res = await fetch(`${API_BASE}/api/v1/federal/entity/dossiers`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ueis }),
+  });
+  if (!res.ok) throw new Error(`federal dossiers batch failed: ${res.status}`);
+  return (await res.json()).data as Record<string, EntityDossier | null>;
+}
+
 /** A flattened edge `/ask` GeoJSON row — the serving-table properties + real coordinates. */
 export type AskMarketRow = Record<string, unknown> & { lat?: number; lon?: number };
 
