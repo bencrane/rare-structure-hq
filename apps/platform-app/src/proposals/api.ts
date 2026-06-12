@@ -42,6 +42,31 @@ export async function listTemplates(token: string): Promise<ProposalTemplateMeta
   return (await res.json()).data as ProposalTemplateMeta[];
 }
 
+/** The operator's prospect-facing engagement options — VISIBLE mappings scoped to the operator's
+ * org domain (`business.engagement_documenso_template_mappings`). The Dossier picker's source. */
+export async function listEngagementMappings(token: string): Promise<ProposalTemplateMeta[]> {
+  const res = await fetch(`${API_BASE}/api/v1/engagement-mappings`, {
+    headers: authHeaders(token),
+  });
+  if (!res.ok) throw new Error(`engagement mappings failed: ${res.status} ${await res.text()}`);
+  return (await res.json()).data as ProposalTemplateMeta[];
+}
+
+/** Direct-to-documenso Originate: stamp (opportunity, documenso template) into
+ * `business.engagement_mandate_draft_content`. Returns the new draft id. */
+export async function createMandateDraft(
+  token: string,
+  input: { opportunityId: string; documensoTemplateId: string },
+): Promise<{ id: string }> {
+  const res = await fetch(`${API_BASE}/api/v1/engagement-mandate-drafts`, {
+    method: "POST",
+    headers: authHeaders(token),
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) throw new Error(`mandate draft failed: ${res.status} ${await res.text()}`);
+  return (await res.json()).data as { id: string };
+}
+
 /** Instantiate a proposal record → its capability ref + shell path. */
 export async function createProposal(
   token: string,

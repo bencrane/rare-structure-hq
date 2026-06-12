@@ -32,7 +32,14 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { createProposal, listTemplates, saveDossierSnapshot } from "./api";
+import { useOriginationMode } from "@/settings/originationMode";
+
+import {
+  createMandateDraft,
+  createProposal,
+  listEngagementMappings,
+  saveDossierSnapshot,
+} from "./api";
 
 type SectionKey = "identity" | "signer" | "overview" | "focus" | "industries" | "geographies";
 
@@ -65,7 +72,11 @@ export type DossierSeed = {
   verified?: Partial<Record<SectionKey, boolean>>;
 };
 
-export function ProspectDossierBoard({ token, seed }: { token: string; seed?: DossierSeed }) {
+export function ProspectDossierBoard({
+  token,
+  seed,
+  opportunityId,
+}: { token: string; seed?: DossierSeed; opportunityId?: string | null }) {
   // Identity + the only fields that drive the create.
   const [company, setCompany] = useState(seed?.company ?? "");
   const [domain, setDomain] = useState(seed?.domain ?? "");
@@ -94,6 +105,8 @@ export function ProspectDossierBoard({ token, seed }: { token: string; seed?: Do
   const [templates, setTemplates] = useState<ProposalTemplateMeta[] | null>(null);
   const [templateId, setTemplateId] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [stampedId, setStampedId] = useState<string | null>(null);
+  const { renderMode } = useOriginationMode();
   const [error, setError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [justSaved, setJustSaved] = useState(false);
@@ -102,7 +115,7 @@ export function ProspectDossierBoard({ token, seed }: { token: string; seed?: Do
 
   useEffect(() => {
     let active = true;
-    listTemplates(token)
+    listEngagementMappings(token)
       .then((t) => {
         if (!active) return;
         setTemplates(t);
@@ -154,13 +167,28 @@ export function ProspectDossierBoard({ token, seed }: { token: string; seed?: Do
   }
 
   const identityName = company.trim() || signerName.trim();
-  const canOriginate = !!identityName && !!templateId && !submitting;
+  const canOriginate =
+    !stampedId &&
+    !!templateId &&
+    !submitting &&
+    (renderMode === "direct-to-documenso" ? !!opportunityId : !!identityName);
 
   async function originate() {
     if (!canOriginate) return;
     setSubmitting(true);
     setError(null);
     try {
+      if (renderMode === "direct-to-documenso") {
+        // Direct-to-documenso: stamp (opportunity, documenso template) into the mandate draft
+        // table — no proposal row, no DocRaptor. `templateId` IS the documenso_template_id here.
+        if (!opportunityId) throw new Error("No opportunity for this prospect");
+        const res = await createMandateDraft(token, {
+          opportunityId,
+          documensoTemplateId: templateId,
+        });
+        setStampedId(res.id);
+        return;
+      }
       const res = await createProposal(token, {
         templateId,
         client: {
@@ -374,7 +402,7 @@ export function ProspectDossierBoard({ token, seed }: { token: string; seed?: Do
               disabled={!canOriginate}
               className="flex w-full items-center justify-center gap-2 border border-[color:var(--color-accent-primary)] bg-[color:var(--color-accent-soft)] py-3 font-mono text-[color:var(--color-text-accent)] text-mono-xs uppercase tracking-[0.16em] transition-colors hover:bg-[color:var(--color-accent-primary)] hover:text-[color:var(--color-text-onAccent)] disabled:opacity-40"
             >
-              {submitting ? "Originating…" : "Originate Mandate →"}
+              {submitting ? "Originating…" : stampedId ? "Stamped ✓" : "Originate Mandate →"}
             </button>
             {!identityName && (
               <p className="mt-2 text-center font-mono text-[0.5rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
