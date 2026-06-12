@@ -5,7 +5,7 @@
  */
 
 import { motion } from "framer-motion";
-import { Crosshair, type LucideIcon, Map as MapIcon, Table2 as TableIcon } from "lucide-react";
+import { Crosshair, type LucideIcon, Map as MapIcon, Table2 as TableIcon, X } from "lucide-react";
 import { TRACKED_ENTITIES } from "../data";
 
 /** The result-view selector — flips a map-query result between the geographic dot map and the
@@ -132,6 +132,7 @@ export function TerminalHeader({
   showBrand = true,
   defaultView,
   onDefaultView,
+  onClear,
 }: {
   reduced: boolean;
   /** Hide the wordmark + terminal name when the map is embedded in the
@@ -142,6 +143,9 @@ export function TerminalHeader({
    * post-query banner ViewToggle stays the sole control once a query is running. */
   defaultView?: ResultView;
   onDefaultView?: (v: ResultView) => void;
+  /** When provided (caller passes it post-query), render a Clear button in the top-right
+   * that clears the active result set. */
+  onClear?: () => void;
 }) {
   return (
     <motion.header
@@ -174,6 +178,18 @@ export function TerminalHeader({
         {defaultView && onDefaultView && (
           <div className="mt-3 flex justify-end">
             <DefaultViewToggle view={defaultView} onChange={onDefaultView} />
+          </div>
+        )}
+        {onClear && (
+          <div className="mt-3 flex justify-end">
+            <button
+              type="button"
+              onClick={onClear}
+              className="flex items-center gap-1.5 border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-raised)] px-3 py-1.5 font-mono text-mono-xs uppercase tracking-[0.12em] text-[color:var(--color-text-muted)] transition-colors hover:text-[color:var(--color-text-accent)]"
+            >
+              <X className="size-3.5" />
+              Clear
+            </button>
           </div>
         )}
       </div>
