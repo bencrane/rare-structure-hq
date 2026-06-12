@@ -264,6 +264,26 @@ export async function edgeListBookings(): Promise<EdgeBookingSummary[]> {
   return (await res.json()) as EdgeBookingSummary[];
 }
 
+export interface EdgeOpportunitySummary {
+  opportunity_id: string;
+  status: string;
+  created_at: string | null;
+  company_name: string | null;
+  domain: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  email: string | null;
+  title: string | null;
+  source_booking_id: string | null;
+  booked_at: string | null;
+}
+
+export async function edgeListOpportunities(): Promise<EdgeOpportunitySummary[]> {
+  const res = await fetch(`${base()}/api/v1/opportunities`, { headers: serviceHeaders(false) });
+  if (!res.ok) throw new EdgeError(`edge opportunities list failed: ${res.status}`);
+  return (await res.json()) as EdgeOpportunitySummary[];
+}
+
 export interface EdgeCompanyProfile {
   domain: string;
   company: string | null;

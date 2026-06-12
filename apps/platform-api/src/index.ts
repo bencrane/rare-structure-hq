@@ -28,6 +28,7 @@ import { awardProfileRoutes } from "./routes/award-profile.ts";
 import { bookingAdminRoutes } from "./routes/bookings-admin.ts";
 import { companyProfileRoutes } from "./routes/company-profiles-admin.ts";
 import { federalRoutes } from "./routes/federal.ts";
+import { opportunityAdminRoutes } from "./routes/opportunities-admin.ts";
 import { proposalTemplateEditorRoutes } from "./routes/proposal-templates-admin.ts";
 import { proposalAdminRoutes, proposalTemplateRoutes } from "./routes/proposals-admin.ts";
 import { settingsRoutes } from "./routes/settings.ts";
@@ -107,6 +108,7 @@ app.route("/api/v1/proposal-templates/manage", proposalTemplateEditorRoutes);
 app.route("/api/v1/proposal-templates", proposalTemplateRoutes);
 app.route("/api/v1/award-profile", awardProfileRoutes);
 app.route("/api/v1/bookings", bookingAdminRoutes);
+app.route("/api/v1/opportunities", opportunityAdminRoutes);
 app.route("/api/v1/company-profiles", companyProfileRoutes);
 // PUBLIC federal map/chart surface — warm in-memory snapshot, no auth (the cockpit /map
 // route is public). Read-only projections of precomputed public federal-spend data.
