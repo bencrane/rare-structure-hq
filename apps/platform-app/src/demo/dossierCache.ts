@@ -119,7 +119,11 @@ export function createDossierCache(fetchers: DossierFetchers, cacheMax = CACHE_M
   }
 
   /** Stream batched prefetches for a (ranked) result set. Supersedes any previous
-   * prefetch run; never blocks the caller — fire and forget. */
+   * prefetch run; never blocks the caller — fire and forget.
+   *
+   * PRIORITY FIRST WAVE: batch #1 (the visible table page) runs ALONE so it owns the
+   * server's whole lookup pool and lands sub-second; the remaining batches then fan
+   * out across the bounded lanes. */
   function startPrefetch(ueis: string[]): void {
     generation += 1;
     const mine = generation;
@@ -130,7 +134,8 @@ export function createDossierCache(fetchers: DossierFetchers, cacheMax = CACHE_M
     for (let i = 0; i < queue.length; i += BATCH_SIZE) {
       batches.push(queue.slice(i, i + BATCH_SIZE));
     }
-    let next = 0;
+    if (batches.length === 0) return;
+    let next = 1; // lanes start AFTER the priority batch
     const lane = async (): Promise<void> => {
       while (next < batches.length && generation === mine) {
         const batch = batches[next];
@@ -140,9 +145,12 @@ export function createDossierCache(fetchers: DossierFetchers, cacheMax = CACHE_M
         if (pending.length > 0) await runBatch(pending);
       }
     };
-    for (let i = 0; i < MAX_IN_FLIGHT; i += 1) {
-      void lane();
-    }
+    void runBatch(batches[0].filter((u) => !cache.has(u))).then(() => {
+      if (generation !== mine) return; // superseded while the priority wave ran
+      for (let i = 0; i < MAX_IN_FLIGHT; i += 1) {
+        void lane();
+      }
+    });
   }
 
   /** Test/inspection hooks — not for app code. */
