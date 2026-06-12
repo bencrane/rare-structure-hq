@@ -21,7 +21,12 @@ import { useOriginationMode } from "@/settings/originationMode";
 export default function Mandate() {
   const { ref } = useParams<{ ref: string }>();
   const { renderMode } = useOriginationMode();
-  const { shell, state } = useProposalShell(ref, getProposalShell);
+  // In direct-to-documenso mode `ref` is an engagement_mandate_draft id — there is NO proposal row,
+  // so loading the proposal shell would fire a guaranteed-404 `GET /api/v1/proposals/:ref` on every
+  // mount (the result is discarded too, since `MandateDraftShell` renders). Gate the fetch off by
+  // withholding `ref` until we know we're on the through-docraptor path.
+  const proposalRef = renderMode === "direct-to-documenso" ? undefined : ref;
+  const { shell, state } = useProposalShell(proposalRef, getProposalShell);
 
   // Direct-to-documenso: `ref` is an engagement_mandate_draft_content id, not a proposal. Render the
   // engagement-proposal STRUCTURE (the shared DocumentFrame chrome + section scaffold) with the data
