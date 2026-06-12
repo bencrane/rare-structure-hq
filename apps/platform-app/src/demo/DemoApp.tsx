@@ -26,15 +26,21 @@ import { CompanyProfile } from "./components/CompanyProfile";
 import type { ResultView } from "./components/TerminalChrome";
 import { type QueryResult, runQuery } from "./data";
 import type { AggregateSpec, Command, Company, MapQuery } from "./types";
+import { useDefaultResultView } from "./useDefaultResultView";
 
 export function DemoApp({ embedded = false }: { embedded?: boolean }) {
   const [commandOpen, setCommandOpen] = useState(false);
   const [query, setQuery] = useState<MapQuery | null>(null);
   const [aggregate, setAggregate] = useState<AggregateSpec | null>(null);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
-  // Map (geographic dots) vs Table (full results page). Defaults to Table: live entities have no
-  // coordinates yet (geo deferred), so the table is the useful rendering until the dot layer lands.
-  const [resultView, setResultView] = useState<ResultView>("table");
+  // The operator's GLOBAL default surface for a fresh map-query — persisted (localStorage),
+  // synced across tabs, set ONLY via the pre-query header toggle. Seeds to Table: live entities
+  // have no coordinates yet (geo deferred), so the table is the useful rendering until dots land.
+  const [defaultView, setDefaultView] = useDefaultResultView("table");
+  // The ACTIVE view for the current result. Seeds from the global default and is reset to it on
+  // every new query; the post-query banner toggle flips THIS only — a per-query local override
+  // that never rewrites the global default.
+  const [resultView, setResultView] = useState<ResultView>(defaultView);
 
   // The map-query result set is now REMOTE (the BFF's warm federal snapshot), so it is a
   // 3-state async load: loading / error / data. The chart surface (AggregateView) owns
@@ -69,16 +75,20 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
 
   // Running any command closes the palette and the open profile; a map-query
   // lights up the map, an aggregate swaps the map for the chart.
-  const handleRun = useCallback((command: Command) => {
-    setCommandOpen(false);
-    setSelectedCompany(null);
-    if (command.kind === "map-query") {
-      setAggregate(null);
-      setQuery(command.query);
-    } else {
-      setAggregate(command.aggregate);
-    }
-  }, []);
+  const handleRun = useCallback(
+    (command: Command) => {
+      setCommandOpen(false);
+      setSelectedCompany(null);
+      if (command.kind === "map-query") {
+        setAggregate(null);
+        setResultView(defaultView); // each new query starts from the global default
+        setQuery(command.query);
+      } else {
+        setAggregate(command.aggregate);
+      }
+    },
+    [defaultView],
+  );
 
   // Fetch the live result set whenever the map-query changes. Guarded against a stale
   // resolve clobbering a newer query (the classic out-of-order fetch race).
@@ -153,6 +163,8 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
             embedded={embedded}
             resultView={resultView}
             onResultView={setResultView}
+            defaultView={defaultView}
+            onDefaultView={setDefaultView}
           />
         )}
       </AnimatePresence>

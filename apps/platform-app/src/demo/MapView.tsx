@@ -60,6 +60,8 @@ export function MapView({
   embedded = false,
   resultView,
   onResultView,
+  defaultView,
+  onDefaultView,
 }: {
   query: MapQuery | null;
   results: Company[];
@@ -74,6 +76,10 @@ export function MapView({
   embedded?: boolean;
   resultView: ResultView;
   onResultView: (v: ResultView) => void;
+  /** The persisted GLOBAL default view + its setter. Surfaced as the header toggle
+   * pre-query; once a query is running the banner ViewToggle takes over. */
+  defaultView: ResultView;
+  onDefaultView: (v: ResultView) => void;
 }) {
   const reduced = !!useReducedMotion();
   const [hovered, setHovered] = useState<string | null>(null);
@@ -124,7 +130,12 @@ export function MapView({
       />
       <div className="rs-scanlines pointer-events-none absolute inset-0 opacity-60" />
 
-      <TerminalHeader reduced={reduced} showBrand={!embedded} />
+      <TerminalHeader
+        reduced={reduced}
+        showBrand={!embedded}
+        defaultView={query ? undefined : defaultView}
+        onDefaultView={query ? undefined : onDefaultView}
+      />
 
       <div className="relative flex min-h-0 flex-1 items-center justify-center px-6">
         {/* Off-panel click dismisses the result overlay (map only). The dot layer is
