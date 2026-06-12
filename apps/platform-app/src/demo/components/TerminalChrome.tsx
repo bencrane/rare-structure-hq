@@ -8,112 +8,64 @@ import { motion } from "framer-motion";
 import { Crosshair, type LucideIcon, Map as MapIcon, Table2 as TableIcon, X } from "lucide-react";
 import { TRACKED_ENTITIES } from "../data";
 
-/** The result-view selector — flips a map-query result between the geographic dot map and the
- * full results table. Lives in the result banner so it travels with the summary, in both views. */
+/** The result-view selector value — flips a map-query result between the geographic dot map
+ * and the full results table. The control lives in the terminal header's top-right corner. */
 export type ResultView = "map" | "table";
 
-export function ViewToggle({
+/** The compact, icon-only Map/Table selector for the terminal header's top-right. Used both
+ * pre-query (`kind="default"` — sets the persisted global default surface) and post-query
+ * (`kind="active"` — switches the current result's view); `kind` only changes the a11y label. */
+export function CompactViewToggle({
   view,
   onChange,
+  kind,
 }: {
   view: ResultView;
   onChange: (v: ResultView) => void;
+  kind: "default" | "active";
 }) {
   return (
     <div className="flex items-stretch border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-raised)]">
-      <ViewToggleButton
+      <CompactViewToggleButton
         active={view === "map"}
         onClick={() => onChange("map")}
         label="Map"
         Icon={MapIcon}
+        kind={kind}
       />
       <span className="w-px self-stretch bg-[color:var(--color-border-subtle)]" />
-      <ViewToggleButton
+      <CompactViewToggleButton
         active={view === "table"}
         onClick={() => onChange("table")}
         label="Table"
         Icon={TableIcon}
+        kind={kind}
       />
     </div>
   );
 }
 
-function ViewToggleButton({
+function CompactViewToggleButton({
   active,
   onClick,
   label,
   Icon,
+  kind,
 }: {
   active: boolean;
   onClick: () => void;
   label: string;
   Icon: LucideIcon;
+  kind: "default" | "active";
 }) {
+  const desc = kind === "default" ? `Set ${label} as the default view` : `Show ${label} view`;
   return (
     <button
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`flex items-center gap-1.5 px-3.5 py-2.5 font-mono text-mono-xs uppercase tracking-[0.12em] transition-colors ${
-        active
-          ? "bg-[color:var(--color-accent-soft)] text-[color:var(--color-text-accent)]"
-          : "text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text-primary)]"
-      }`}
-    >
-      <Icon className="size-3.5" />
-      {label}
-    </button>
-  );
-}
-
-/** The compact, icon-only result-view selector that lives in the terminal header,
- * pre-query. Sets the operator's GLOBAL default (persisted) for which surface a
- * fresh map-query renders — distinct from the post-query banner ViewToggle above,
- * which is a per-query local override. */
-export function DefaultViewToggle({
-  view,
-  onChange,
-}: {
-  view: ResultView;
-  onChange: (v: ResultView) => void;
-}) {
-  return (
-    <div className="flex items-stretch border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-raised)]">
-      <DefaultViewToggleButton
-        active={view === "map"}
-        onClick={() => onChange("map")}
-        label="Map"
-        Icon={MapIcon}
-      />
-      <span className="w-px self-stretch bg-[color:var(--color-border-subtle)]" />
-      <DefaultViewToggleButton
-        active={view === "table"}
-        onClick={() => onChange("table")}
-        label="Table"
-        Icon={TableIcon}
-      />
-    </div>
-  );
-}
-
-function DefaultViewToggleButton({
-  active,
-  onClick,
-  label,
-  Icon,
-}: {
-  active: boolean;
-  onClick: () => void;
-  label: string;
-  Icon: LucideIcon;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      aria-label={`Set ${label} as the default view`}
-      title={`Set ${label} as the default view`}
+      aria-label={desc}
+      title={desc}
       className={`flex items-center justify-center px-2 py-1.5 transition-colors ${
         active
           ? "bg-[color:var(--color-accent-soft)] text-[color:var(--color-text-accent)]"
@@ -132,19 +84,25 @@ export function TerminalHeader({
   showBrand = true,
   defaultView,
   onDefaultView,
+  view,
+  onView,
   onClear,
 }: {
   reduced: boolean;
   /** Hide the wordmark + terminal name when the map is embedded in the
    * authenticated cockpit — the sidebar already carries the brand there. */
   showBrand?: boolean;
-  /** When both are provided, render the compact default-view toggle in the
-   * top-right. The caller passes these ONLY pre-query (no active result), so the
-   * post-query banner ViewToggle stays the sole control once a query is running. */
+  /** PRE-QUERY default-view toggle (sets the persisted global default). Caller passes
+   * these only when no result is active. */
   defaultView?: ResultView;
   onDefaultView?: (v: ResultView) => void;
-  /** When provided (caller passes it post-query), render a Clear button in the top-right
-   * that clears the active result set. */
+  /** POST-QUERY active-view toggle (switches the current result between map and table).
+   * Caller passes these only while a result is active; renders in the same top-right slot
+   * as the pre-query toggle, with the Clear (✕) button to its right. */
+  view?: ResultView;
+  onView?: (v: ResultView) => void;
+  /** Clears the active result set — rendered as a compact ✕ to the right of the active
+   * toggle (post-query only). */
   onClear?: () => void;
 }) {
   return (
@@ -175,21 +133,27 @@ export function TerminalHeader({
         <div className="mt-1.5 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase tabular-nums">
           {(TRACKED_ENTITIES / 1_000_000).toFixed(2)}M entities tracked
         </div>
+        {/* Pre-query: the global default-view toggle. */}
         {defaultView && onDefaultView && (
           <div className="mt-3 flex justify-end">
-            <DefaultViewToggle view={defaultView} onChange={onDefaultView} />
+            <CompactViewToggle view={defaultView} onChange={onDefaultView} kind="default" />
           </div>
         )}
-        {onClear && (
-          <div className="mt-3 flex justify-end">
-            <button
-              type="button"
-              onClick={onClear}
-              className="flex items-center gap-1.5 border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-raised)] px-3 py-1.5 font-mono text-mono-xs uppercase tracking-[0.12em] text-[color:var(--color-text-muted)] transition-colors hover:text-[color:var(--color-text-accent)]"
-            >
-              <X className="size-3.5" />
-              Clear
-            </button>
+        {/* Post-query: the active Map/Table toggle + a ✕ clear to its right — same slot. */}
+        {view && onView && (
+          <div className="mt-3 flex items-center justify-end gap-2">
+            <CompactViewToggle view={view} onChange={onView} kind="active" />
+            {onClear && (
+              <button
+                type="button"
+                onClick={onClear}
+                aria-label="Clear results"
+                title="Clear results"
+                className="flex items-center justify-center border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-raised)] px-2 py-1.5 text-[color:var(--color-text-muted)] transition-colors hover:text-[color:var(--color-text-accent)]"
+              >
+                <X className="size-3.5" />
+              </button>
+            )}
           </div>
         )}
       </div>

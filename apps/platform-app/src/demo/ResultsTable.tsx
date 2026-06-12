@@ -9,12 +9,7 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import { useMemo, useState } from "react";
-import {
-  CommandPill,
-  type ResultView,
-  TerminalHeader,
-  ViewToggle,
-} from "./components/TerminalChrome";
+import { CommandPill, type ResultView, TerminalHeader } from "./components/TerminalChrome";
 import { industryLabel } from "./data";
 import { fmtUsd } from "./format";
 import type { Company, MapQuery } from "./types";
@@ -95,44 +90,36 @@ export function ResultsTable({
     >
       <div className="rs-scanlines pointer-events-none absolute inset-0 opacity-50" />
 
-      <TerminalHeader reduced={reduced} showBrand={!embedded} />
+      <TerminalHeader
+        reduced={reduced}
+        showBrand={!embedded}
+        view={resultView}
+        onView={onResultView}
+        onClear={onDismiss}
+      />
 
       <div className="relative flex min-h-0 flex-1 flex-col items-center px-6 pt-2 pb-4">
-        {/* Summary + the Map/Table toggle — the result banner, shared shape with MapView. */}
-        <div className="flex w-full max-w-[1180px] items-center justify-between gap-3 pb-3">
-          <div className="flex items-center gap-2">
-            <div className="flex items-stretch border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-raised)] shadow-lg shadow-black/40">
-              <BannerCell label="Vertical" value={industryLabel(query?.industry)} accent />
-              <BannerCell
-                label="Companies"
-                value={
-                  loading ? "…" : error ? "—" : (total ?? results.length).toLocaleString("en-US")
-                }
-              />
-              <BannerCell
-                label="Federal awards"
-                value={loading ? "…" : error ? "—" : fmtUsd(awards)}
-              />
+        {/* Summary banner — the Map/Table toggle + Clear live in the terminal header (top-right). */}
+        <div className="flex w-full max-w-[1180px] items-center gap-2 pb-3">
+          <div className="flex items-stretch border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-raised)] shadow-lg shadow-black/40">
+            <BannerCell label="Vertical" value={industryLabel(query?.industry)} accent />
+            <BannerCell
+              label="Companies"
+              value={
+                loading ? "…" : error ? "—" : (total ?? results.length).toLocaleString("en-US")
+              }
+            />
+            <BannerCell
+              label="Federal awards"
+              value={loading ? "…" : error ? "—" : fmtUsd(awards)}
+            />
+          </div>
+          {/* The honesty signal: a query constraint the compiler could not run. */}
+          {!loading && !error && notApplied.length > 0 && (
+            <div className="border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-raised)] px-3 py-1.5 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase shadow-lg shadow-black/40">
+              Not applied: {notApplied.join(" · ")}
             </div>
-            {/* The honesty signal: a query constraint the compiler could not run. */}
-            {!loading && !error && notApplied.length > 0 && (
-              <div className="border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-raised)] px-3 py-1.5 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase shadow-lg shadow-black/40">
-                Not applied: {notApplied.join(" · ")}
-              </div>
-            )}
-          </div>
-          <div className="flex items-center gap-3">
-            <ViewToggle view={resultView} onChange={onResultView} />
-            {onDismiss && (
-              <button
-                type="button"
-                onClick={onDismiss}
-                className="border border-[color:var(--color-border-default)] px-3 py-2.5 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase transition-colors hover:text-[color:var(--color-text-primary)]"
-              >
-                Clear
-              </button>
-            )}
-          </div>
+          )}
         </div>
 
         {/* The table surface. */}
