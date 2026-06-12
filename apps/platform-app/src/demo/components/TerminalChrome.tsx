@@ -66,15 +66,82 @@ function ViewToggleButton({
   );
 }
 
-/** The fixed terminal header — wordmark, terminal name, live entity count. */
+/** The compact, icon-only result-view selector that lives in the terminal header,
+ * pre-query. Sets the operator's GLOBAL default (persisted) for which surface a
+ * fresh map-query renders — distinct from the post-query banner ViewToggle above,
+ * which is a per-query local override. */
+export function DefaultViewToggle({
+  view,
+  onChange,
+}: {
+  view: ResultView;
+  onChange: (v: ResultView) => void;
+}) {
+  return (
+    <div className="flex items-stretch border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-raised)]">
+      <DefaultViewToggleButton
+        active={view === "map"}
+        onClick={() => onChange("map")}
+        label="Map"
+        Icon={MapIcon}
+      />
+      <span className="w-px self-stretch bg-[color:var(--color-border-subtle)]" />
+      <DefaultViewToggleButton
+        active={view === "table"}
+        onClick={() => onChange("table")}
+        label="Table"
+        Icon={TableIcon}
+      />
+    </div>
+  );
+}
+
+function DefaultViewToggleButton({
+  active,
+  onClick,
+  label,
+  Icon,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  Icon: LucideIcon;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      aria-label={`Set ${label} as the default view`}
+      title={`Set ${label} as the default view`}
+      className={`flex items-center justify-center px-2 py-1.5 transition-colors ${
+        active
+          ? "bg-[color:var(--color-accent-soft)] text-[color:var(--color-text-accent)]"
+          : "text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text-primary)]"
+      }`}
+    >
+      <Icon className="size-3.5" />
+    </button>
+  );
+}
+
+/** The fixed terminal header — wordmark, terminal name, live entity count, and
+ * (pre-query only) the persisted default-view selector. */
 export function TerminalHeader({
   reduced,
   showBrand = true,
+  defaultView,
+  onDefaultView,
 }: {
   reduced: boolean;
   /** Hide the wordmark + terminal name when the map is embedded in the
    * authenticated cockpit — the sidebar already carries the brand there. */
   showBrand?: boolean;
+  /** When both are provided, render the compact default-view toggle in the
+   * top-right. The caller passes these ONLY pre-query (no active result), so the
+   * post-query banner ViewToggle stays the sole control once a query is running. */
+  defaultView?: ResultView;
+  onDefaultView?: (v: ResultView) => void;
 }) {
   return (
     <motion.header
@@ -104,6 +171,14 @@ export function TerminalHeader({
         <div className="mt-1.5 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase tabular-nums">
           {(TRACKED_ENTITIES / 1_000_000).toFixed(2)}M entities tracked
         </div>
+        {defaultView && onDefaultView && (
+          <div className="mt-3 flex flex-col items-end gap-1.5">
+            <span className="font-mono text-[color:var(--color-text-subtle)] text-mono-xs uppercase tracking-[0.14em]">
+              Default view
+            </span>
+            <DefaultViewToggle view={defaultView} onChange={onDefaultView} />
+          </div>
+        )}
       </div>
     </motion.header>
   );

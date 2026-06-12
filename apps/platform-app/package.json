@@ -9,7 +9,7 @@
     "preview": "vite preview --host 0.0.0.0 --port 5173",
     "start": "node ./serve.js",
     "typecheck": "tsc -b --noEmit",
-    "test": "bun test src/demo/projection.test.ts"
+    "test": "bun test src/demo"
   },
   "dependencies": {
     "@documenso/embed-react": "^0.6.1",
