@@ -171,7 +171,7 @@ function SidebarContent({
                 type="button"
                 onClick={onToggleCollapse}
                 title="Collapse sidebar"
-                className="hidden shrink-0 text-[color:var(--color-text-subtle)] transition-colors hover:text-[color:var(--color-text-default)] md:block"
+                className="hidden shrink-0 items-center justify-center text-[color:var(--color-text-subtle)] transition-colors hover:text-[color:var(--color-text-default)] md:inline-flex"
               >
                 <PanelLeftClose className="size-4" />
               </button>
