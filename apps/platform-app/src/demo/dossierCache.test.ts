@@ -128,19 +128,31 @@ describe("dossierCache", () => {
     expect(h.cache._internal.has(uei(4))).toBe(true);
   });
 
+  test("priority first wave: batch #1 runs ALONE, lanes start after it lands", async () => {
+    const h = harness({ manual: true });
+    // 250 UEIs = 5 batches of 50: priority batch first, then 3 lanes over the rest.
+    h.cache.startPrefetch(Array.from({ length: 250 }, (_, i) => uei(i + 100)));
+    await tick();
+    expect(h.batchCalls.length).toBe(1); // ONLY the priority batch is in flight
+    expect(h.batchCalls[0].length).toBe(50);
+    h.flushBatches(); // priority lands…
+    await tick();
+    expect(h.batchCalls.length).toBe(4); // …then 3 lanes issue batches 2–4
+  });
+
   test("a new query supersedes the previous prefetch (later waves stop)", async () => {
     const h = harness({ manual: true });
-    // 3 lanes × 50/batch: 200 UEIs = 4 batches → 3 issue immediately, 1 queued.
-    h.cache.startPrefetch(Array.from({ length: 200 }, (_, i) => uei(i + 100)));
+    h.cache.startPrefetch(Array.from({ length: 250 }, (_, i) => uei(i + 100)));
     await tick();
-    expect(h.batchCalls.length).toBe(3);
-    h.cache.startPrefetch([uei(999)]); // SUPERSEDE before wave 2
-    h.flushBatches(); // old in-flight batches resolve…
+    h.cache.startPrefetch([uei(999)]); // SUPERSEDE while the priority wave is in flight
+    await tick();
+    expect(h.batchCalls.length).toBe(2); // old priority + new priority
+    expect(h.batchCalls[1]).toEqual([uei(999)]);
+    h.flushBatches(); // both priority batches resolve…
     await tick();
     await tick();
-    // …but the old generation's 4th batch never issues; only the new query's batch does.
-    expect(h.batchCalls.length).toBe(4);
-    expect(h.batchCalls[3]).toEqual([uei(999)]);
+    // …and the OLD generation never opens its lanes: no batches beyond the two.
+    expect(h.batchCalls.length).toBe(2);
   });
 
   test("batch failure unmarks members so the single-fetch fallback can retry", async () => {
