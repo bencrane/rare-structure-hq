@@ -138,8 +138,8 @@ export type MapQuery = {
    * instead of the canned filter axis above. The canned commands never set this.
    */
   nl?: string;
-  /** Serving table the NL query targets. Defaults to "company". */
-  dataset?: "company" | "winners";
+  /** Serving table the NL query targets. Defaults to "auto" (sentence-routed). */
+  dataset?: "company" | "winners" | "awards" | "auto";
 };
 
 /** An aggregate command — collapses the market into one chart. */

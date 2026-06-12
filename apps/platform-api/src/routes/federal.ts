@@ -67,7 +67,14 @@ federalRoutes.get("/entity/:uei", (c) => {
 federalRoutes.get("/ask", async (c) => {
   const q = (c.req.query("q") ?? "").trim();
   if (!q) throw new HTTPException(400, { message: "q (natural-language query) is required" });
-  const dataset: AskMarketDataset = c.req.query("dataset") === "winners" ? "winners" : "company";
+  // Explicit dataset pins stay supported; the default is "auto" — edge_api's router
+  // picks the serving table from the sentence ("won an award…" → awards; lifetime-
+  // obligation / firmographic phrasing → company).
+  const requested = c.req.query("dataset");
+  const dataset: AskMarketDataset =
+    requested === "winners" || requested === "company" || requested === "awards"
+      ? requested
+      : "auto";
   try {
     return c.json({ data: await askMarket(dataset, q) });
   } catch (err) {

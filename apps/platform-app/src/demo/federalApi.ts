@@ -87,6 +87,7 @@ export type AskMarketResult = {
   /** Constraints the compiler could NOT express (the honesty contract) — rendered as
    * "not applied" so the result never implies a filter it didn't run. */
   unmapped: string[];
+  /** The dataset that executed (router-resolved when "auto" was requested). */
   dataset: string;
 };
 
@@ -97,7 +98,7 @@ export type AskMarketResult = {
  */
 export function askMap(
   q: string,
-  dataset: "company" | "winners" = "company",
+  dataset: "company" | "winners" | "awards" | "auto" = "auto",
 ): Promise<AskMarketResult> {
   const qs = new URLSearchParams({ q, dataset });
   return getJson<AskMarketResult>(`/api/v1/federal/ask?${qs.toString()}`);

@@ -60,7 +60,7 @@ export function CommandPalette({
       id: "__ask__",
       kind: "map-query",
       label: trimmed,
-      query: { nl: trimmed, minAward: 0, dataset: "company" },
+      query: { nl: trimmed, minAward: 0 },
     };
     return [ask, ...filtered];
   }, [queryText, filtered]);

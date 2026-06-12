@@ -1246,10 +1246,16 @@ function askRowToCompany(r: AskMarketRow): Company {
     askRowStr(r.winner_uei) ??
     "Unknown";
   const id = askRowStr(r.uei) ?? askRowStr(r.winner_uei) ?? name;
-  const totalAwarded = askRowNum(r.total_active_obligations ?? r.total_obligation);
+  // company rows: lifetime active obligations; winners/awards rows: window/action dollars.
+  const totalAwarded = askRowNum(
+    r.total_active_obligations ?? r.total_obligation ?? r.award_amount,
+  );
   const contractCount = askRowNum(r.award_count);
   const hasFed =
-    r.has_federal_awards === true || askRowNum(r.total_obligation) > 0 || totalAwarded > 0;
+    r.has_federal_awards === true ||
+    askRowNum(r.total_obligation) > 0 ||
+    askRowNum(r.award_amount) > 0 ||
+    totalAwarded > 0;
   // Project the row's real lat/lon onto the us-geo 1000x590 viewBox so the dot layer can plot it.
   // askRowNum coerces missing to 0, so guard the (0,0) null-island explicitly; projectLonLat
   // returns null off the US composite (PR/GU/etc.) — those rows simply carry no x/y.
@@ -1268,6 +1274,7 @@ function askRowToCompany(r: AskMarketRow): Company {
     totalAwarded,
     activeAwarded: totalAwarded,
     contractCount,
+    latestAwardDate: askRowStr(r.action_date) ?? askRowStr(r.last_action_date) ?? undefined,
     activeAward: hasFed,
     ...(geo ? { x: geo.x, y: geo.y } : {}),
     catalysts: [askCatalyst(totalAwarded, contractCount, naics, hasFed)],
@@ -1298,14 +1305,54 @@ function dedupeByName(list: Company[]): Company[] {
   return out.sort((a, b) => b.totalAwarded - a.totalAwarded);
 }
 
+/**
+ * Collapse award-ACTION rows (the `awards` dataset is 1 row per contract action) to ONE row
+ * per winner: the demo reads COMPANIES that won qualifying awards, not per-action duplicates.
+ * `total_obligation` becomes the winner's QUALIFYING-window sum, `award_count` the number of
+ * qualifying actions, `action_date` the most recent one. The representative row is the largest
+ * single action; coordinates borrow from any geocoded action so the dot still plots when the
+ * top action's address didn't resolve.
+ */
+function collapseAwardActions(rows: AskMarketRow[]): AskMarketRow[] {
+  const byWinner = new Map<string, AskMarketRow[]>();
+  for (const r of rows) {
+    const key = askRowStr(r.winner_uei) ?? askRowStr(r.winner_name) ?? "unknown";
+    const g = byWinner.get(key);
+    if (g) g.push(r);
+    else byWinner.set(key, [r]);
+  }
+  const out: AskMarketRow[] = [];
+  for (const group of byWinner.values()) {
+    const rep = group.reduce((a, b) =>
+      askRowNum(b.award_amount) > askRowNum(a.award_amount) ? b : a,
+    );
+    const sum = group.reduce((acc, r) => acc + askRowNum(r.award_amount), 0);
+    const latest = group.reduce<string | undefined>((acc, r) => {
+      const d = askRowStr(r.action_date);
+      return d && (!acc || d > acc) ? d : acc;
+    }, undefined);
+    const geocoded = group.find((r) => r.lat != null && r.lon != null);
+    out.push({
+      ...rep,
+      total_obligation: sum,
+      award_count: group.length,
+      action_date: latest,
+      lat: rep.lat ?? geocoded?.lat,
+      lon: rep.lon ?? geocoded?.lon,
+    });
+  }
+  return out;
+}
+
 /** Run a free-typed natural-language market query through edge_api `/ask`. Returns the SAME
  * `QueryResult` shape the canned filter path produces (same-name entities collapsed). */
 export async function runAsk(
   nl: string,
-  dataset: "company" | "winners" = "company",
+  dataset: "company" | "winners" | "awards" | "auto" = "auto",
 ): Promise<QueryResult> {
   const res = await askMap(nl, dataset);
-  const companies = dedupeByName(res.rows.map(askRowToCompany));
+  const baseRows = res.dataset === "awards" ? collapseAwardActions(res.rows) : res.rows;
+  const companies = dedupeByName(baseRows.map(askRowToCompany));
   return {
     companies,
     // The headline count is distinct companies (post-collapse); the raw UEI match rides in
@@ -1431,7 +1478,7 @@ const MAP_PAGE_LIMIT = 2000;
  * the lifetime-obligation floor. Fetches the BFF entity slice and maps to `Company`. */
 export async function runQuery(q: MapQuery): Promise<QueryResult> {
   // Free-typed NL query → the edge_api /ask compiler; the canned filter axis is bypassed.
-  if (q.nl?.trim()) return runAsk(q.nl.trim(), q.dataset ?? "company");
+  if (q.nl?.trim()) return runAsk(q.nl.trim(), q.dataset ?? "auto");
   const naics =
     q.naicsPrefix ?? (q.industry ? INDUSTRY_BY_KEY[q.industry]?.naicsPrefix : undefined);
   const res = await fetchEntities({

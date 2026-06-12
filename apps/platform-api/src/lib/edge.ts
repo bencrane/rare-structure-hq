@@ -42,7 +42,12 @@ function serviceHeaders(json = true): Record<string, string> {
 // catalyst_api EXECUTE that runs it; this BFF is a thin service-token proxy. The /map cockpit
 // is public, so the route is unauthenticated — but each call triggers one LLM round-trip, so
 // this is the natural seam to add rate-limiting if abuse shows.
-export type AskMarketDataset = "company" | "winners";
+/** Requestable dataset: a concrete serving table, or "auto" — edge_api's router picks
+ * the table from the sentence ("won an award over $X" → awards; lifetime-obligation /
+ * firmographic phrasing → company). */
+export type AskMarketDataset = "company" | "winners" | "awards" | "auto";
+/** The dataset that actually EXECUTED (echoed back by catalyst; never "auto"). */
+export type AskMarketExecutedDataset = "company" | "winners" | "awards";
 
 export interface AskMarketRow {
   [key: string]: unknown;
@@ -64,11 +69,13 @@ export interface AskMarketResult {
   /** Constraints the compiler could NOT express (the honesty contract) — the cockpit
    * renders these as "not applied" so the result never implies a filter it didn't run. */
   unmapped: string[];
-  dataset: AskMarketDataset;
+  /** The dataset that executed (router-resolved when "auto" was requested). */
+  dataset: AskMarketExecutedDataset;
 }
 
 interface GeoFeature {
-  geometry?: { coordinates?: [number, number] };
+  /** null geometry = a qualifying row whose address did not geocode (table-only row). */
+  geometry?: { coordinates?: [number, number] } | null;
   properties?: Record<string, unknown>;
 }
 
@@ -84,8 +91,8 @@ export async function askMarket(dataset: AskMarketDataset, q: string): Promise<A
   }
   const env = (await res.json()) as {
     data?: { features?: GeoFeature[] };
-    meta?: { returned?: number; total?: number; capped?: boolean };
-    query?: AskMarketResult["query"];
+    meta?: { returned?: number; total?: number; capped?: boolean; dataset?: string };
+    query?: AskMarketResult["query"] & { dataset?: string };
   };
   const features = env.data?.features ?? [];
   const rows: AskMarketRow[] = features.map((f) => ({
@@ -93,6 +100,9 @@ export async function askMarket(dataset: AskMarketDataset, q: string): Promise<A
     lon: f.geometry?.coordinates?.[0],
     lat: f.geometry?.coordinates?.[1],
   }));
+  const executed = (env.meta?.dataset ?? env.query?.dataset) as
+    | AskMarketExecutedDataset
+    | undefined;
   return {
     rows,
     // meta.total is the EXACT match count (pre-cap); `returned` is the served slice.
@@ -100,7 +110,7 @@ export async function askMarket(dataset: AskMarketDataset, q: string): Promise<A
     capped: env.meta?.capped ?? false,
     query: env.query ?? null,
     unmapped: env.query?.unmapped ?? [],
-    dataset,
+    dataset: executed ?? (dataset === "auto" ? "company" : dataset),
   };
 }
 
