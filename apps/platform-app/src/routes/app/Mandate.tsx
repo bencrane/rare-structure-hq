@@ -12,6 +12,7 @@
 import type { ReactNode } from "react";
 import { useParams } from "react-router-dom";
 
+import { MandateDraftShell } from "@/proposals/MandateDraftShell";
 import { MandateEditor } from "@/proposals/MandateEditor";
 import { getProposalShell } from "@/proposals/api";
 import { useProposalShell } from "@/proposals/useProposalShell";
@@ -22,10 +23,12 @@ export default function Mandate() {
   const { renderMode } = useOriginationMode();
   const { shell, state } = useProposalShell(ref, getProposalShell);
 
-  // Direct-to-documenso: `ref` is an engagement_mandate_draft_content id, not a proposal. Render a
-  // BARE content area — never the proposal pricing nor the "not found" error. What the draft
-  // displays is TBD; until that is defined, the page body is intentionally empty.
-  if (renderMode === "direct-to-documenso") return <div aria-hidden className="min-h-[60vh]" />;
+  // Direct-to-documenso: `ref` is an engagement_mandate_draft_content id, not a proposal. Render the
+  // engagement-proposal STRUCTURE (the shared DocumentFrame chrome + section scaffold) with the data
+  // slots blank — never the proposal pricing nor the "not found" error. The draft's concrete values
+  // and its sign/confirm wiring land separately; this replaces the previously-blank page so the
+  // shell never vanishes.
+  if (renderMode === "direct-to-documenso") return <MandateDraftShell housing="cockpit" />;
 
   if (state === "loading") return <Note>Loading mandate…</Note>;
   // Hold "not found" until the originate mode resolves — a draft ref must never flash it.
