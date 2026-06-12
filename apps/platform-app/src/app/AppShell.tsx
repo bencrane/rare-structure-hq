@@ -142,7 +142,7 @@ function SidebarContent({
       {/* Header — brand + collapse toggle. Fixed band height (min-h-16) keeps
           the two collapse states from shifting the rows below. */}
       <Inline
-        gap="0"
+        gap="2"
         align="center"
         justify={collapsed ? "center" : "between"}
         px="4"
@@ -154,14 +154,14 @@ function SidebarContent({
           </button>
         ) : (
           <>
-            <Inline gap="3" align="center" unsafe_className="shrink-0">
+            <Inline gap="3" align="center" unsafe_className="min-w-0">
               <BrandMark />
               <Text
                 as="span"
                 size="body-sm"
                 face="display"
                 color="primary"
-                className="whitespace-nowrap font-semibold uppercase tracking-[0.16em]"
+                className="min-w-0 truncate font-semibold uppercase tracking-[0.08em]"
               >
                 {orgName}
               </Text>
@@ -171,7 +171,7 @@ function SidebarContent({
                 type="button"
                 onClick={onToggleCollapse}
                 title="Collapse sidebar"
-                className="hidden text-[color:var(--color-text-subtle)] transition-colors hover:text-[color:var(--color-text-default)] md:block"
+                className="hidden shrink-0 text-[color:var(--color-text-subtle)] transition-colors hover:text-[color:var(--color-text-default)] md:block"
               >
                 <PanelLeftClose className="size-4" />
               </button>
@@ -318,7 +318,7 @@ export function AppShell() {
               size="body-sm"
               face="display"
               color="primary"
-              className="font-semibold uppercase tracking-[0.16em]"
+              className="font-semibold uppercase tracking-[0.08em]"
             >
               {orgName}
             </Text>
