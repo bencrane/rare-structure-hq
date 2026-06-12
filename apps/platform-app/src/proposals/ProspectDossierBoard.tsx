@@ -105,7 +105,6 @@ export function ProspectDossierBoard({
   const [templates, setTemplates] = useState<ProposalTemplateMeta[] | null>(null);
   const [templateId, setTemplateId] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [stampedId, setStampedId] = useState<string | null>(null);
   const { renderMode } = useOriginationMode();
   const [error, setError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<string | null>(null);
@@ -168,7 +167,6 @@ export function ProspectDossierBoard({
 
   const identityName = company.trim() || signerName.trim();
   const canOriginate =
-    !stampedId &&
     !!templateId &&
     !submitting &&
     (renderMode === "direct-to-documenso" ? !!opportunityId : !!identityName);
@@ -186,7 +184,8 @@ export function ProspectDossierBoard({
           opportunityId,
           documensoTemplateId: templateId,
         });
-        setStampedId(res.id);
+        // Land on the mandate page keyed by the first 8 chars of the new draft id.
+        navigate(`/app/m/${res.id.slice(0, 8)}`);
         return;
       }
       const res = await createProposal(token, {
@@ -402,7 +401,7 @@ export function ProspectDossierBoard({
               disabled={!canOriginate}
               className="flex w-full items-center justify-center gap-2 border border-[color:var(--color-accent-primary)] bg-[color:var(--color-accent-soft)] py-3 font-mono text-[color:var(--color-text-accent)] text-mono-xs uppercase tracking-[0.16em] transition-colors hover:bg-[color:var(--color-accent-primary)] hover:text-[color:var(--color-text-onAccent)] disabled:opacity-40"
             >
-              {submitting ? "Originating…" : stampedId ? "Stamped ✓" : "Originate Mandate →"}
+              {submitting ? "Originating…" : "Originate Mandate →"}
             </button>
             {!identityName && (
               <p className="mt-2 text-center font-mono text-[0.5rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
