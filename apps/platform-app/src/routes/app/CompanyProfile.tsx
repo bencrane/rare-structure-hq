@@ -147,7 +147,7 @@ export default function CompanyProfile() {
     >
       {back}
       {/* key=bookingId remounts the board so it re-seeds when navigating between bookings. */}
-      <ProspectDossierBoard key={bookingId} token={token} seed={seed} />
+      <ProspectDossierBoard key={bookingId} token={token} seed={seed} opportunityId={oppId} />
     </CockpitPage>
   );
 }

@@ -284,6 +284,39 @@ export async function edgeListOpportunities(): Promise<EdgeOpportunitySummary[]>
   return (await res.json()) as EdgeOpportunitySummary[];
 }
 
+export interface EdgeEngagementMappingOption {
+  id: string;
+  label: string;
+}
+
+export async function edgeListEngagementMappings(
+  orgDomain: string,
+): Promise<EdgeEngagementMappingOption[]> {
+  const qs = new URLSearchParams({ org_domain: orgDomain }).toString();
+  const res = await fetch(`${base()}/api/v1/engagement-mappings?${qs}`, {
+    headers: serviceHeaders(false),
+  });
+  if (!res.ok) throw new EdgeError(`edge engagement-mappings list failed: ${res.status}`);
+  return (await res.json()) as EdgeEngagementMappingOption[];
+}
+
+export interface EdgeMandateDraftCreated {
+  id: string;
+}
+
+export async function edgeCreateMandateDraft(input: {
+  opportunity_id: string;
+  documenso_template_id: string;
+}): Promise<EdgeMandateDraftCreated> {
+  const res = await fetch(`${base()}/api/v1/engagement-mandate-drafts`, {
+    method: "POST",
+    headers: serviceHeaders(),
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) throw new EdgeError(`edge mandate-draft create failed: ${res.status}`);
+  return (await res.json()) as EdgeMandateDraftCreated;
+}
+
 export interface EdgeCompanyProfile {
   domain: string;
   company: string | null;
