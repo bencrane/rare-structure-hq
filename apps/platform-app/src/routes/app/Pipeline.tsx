@@ -1,20 +1,20 @@
 /**
- * Pipeline — the operator cockpit tab. Lists cal.com bookings advancing from
- * catalyst signal toward an engagement. Each row is a booked prospect; opening
- * one routes to that company's dossier (keyed by `domain` — the canonical
- * resolution key). Loads the live list from the BFF (/api/v1/bookings →
- * edge_api → corex.bookings). Authors no geometry — composes CockpitPage.
+ * Pipeline — the operator cockpit tab. Lists pipeline OPPORTUNITIES advancing from
+ * catalyst signal toward an engagement. Each row is an opportunity (materialized on a
+ * booking, the first-class object that gets associated with a Deal); opening one routes
+ * to that company's dossier via its source booking. Loads the live list from the BFF
+ * (/api/v1/opportunities → edge_api → business.opportunities). Composes CockpitPage.
  */
 import { ChevronRight, Workflow } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import type { BookingSummary } from "@rare-structure-hq/shared";
+import type { OpportunitySummary } from "@rare-structure-hq/shared";
 import { Badge, Text } from "@rare-structure-hq/ui";
 
 import { CockpitPage, EmptyState, Panel, Section } from "@/app/cockpit";
 import { useAuth } from "@/lib/auth";
-import { listBookings } from "@/pipeline/api";
+import { listOpportunities } from "@/pipeline/api";
 
 const DATE = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" });
 
@@ -24,14 +24,15 @@ function formatDate(iso: string | null): string {
   return Number.isNaN(d.getTime()) ? "—" : DATE.format(d);
 }
 
-function fullName(b: BookingSummary): string {
-  const n = [b.firstName, b.lastName].filter(Boolean).join(" ").trim();
+function fullName(o: OpportunitySummary): string {
+  const n = [o.firstName, o.lastName].filter(Boolean).join(" ").trim();
   return n || "—";
 }
 
 function statusTone(status: string): "info" | "warn" | "success" {
-  if (/cancel/i.test(status)) return "warn";
-  return status === "booked" ? "info" : "success";
+  if (/cancel|lost/i.test(status)) return "warn";
+  if (/open|booked/i.test(status)) return "info";
+  return "success";
 }
 
 export default function Pipeline() {
@@ -39,34 +40,35 @@ export default function Pipeline() {
   const { session } = useAuth();
   const token = session?.access_token ?? "";
 
-  const [list, setList] = useState<BookingSummary[] | null>(null);
+  const [list, setList] = useState<OpportunitySummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(() => {
     if (!token) return;
     setError(null);
     setList(null);
-    listBookings(token)
+    listOpportunities(token)
       .then(setList)
-      .catch((e) => setError(e instanceof Error ? e.message : "Failed to load bookings"));
+      .catch((e) => setError(e instanceof Error ? e.message : "Failed to load opportunities"));
   }, [token]);
 
   useEffect(() => {
     refresh();
   }, [refresh]);
 
-  // Open this booking's profile page (keyed by booking id — one row, one booking).
-  const openRow = (b: BookingSummary) =>
-    navigate(`/app/bookings/${encodeURIComponent(b.bookingId)}`);
+  // Open this opportunity's company dossier via its source booking (keyed by booking id).
+  const openRow = (o: OpportunitySummary) => {
+    if (o.sourceBookingId) navigate(`/app/bookings/${encodeURIComponent(o.sourceBookingId)}`);
+  };
 
   return (
     <CockpitPage title="Pipeline" description="Deals advancing from catalyst signal to engagement.">
-      <Section label="Bookings">
+      <Section label="Opportunities">
         <Panel padded={false}>
           {error ? (
             <div className="flex flex-col items-center gap-3 px-5 py-16 text-center">
               <Text size="body-sm" color="default">
-                Couldn’t load bookings
+                Couldn’t load opportunities
               </Text>
               <Text size="mono-xs" mono color="subtle" className="max-w-md break-words">
                 {error}
@@ -82,20 +84,21 @@ export default function Pipeline() {
           ) : list.length === 0 ? (
             <EmptyState
               icon={Workflow}
-              title="No deals in pipeline"
-              description="Catalyst signals you advance from the map will stage here as deals move toward an engagement."
+              title="No opportunities in pipeline"
+              description="Bookings you advance materialize here as opportunities moving toward an engagement."
             />
           ) : (
             <>
               <div className="border-[color:var(--color-border-subtle)] border-b px-4 py-2.5">
                 <Text size="mono-xs" mono color="subtle">
-                  {list.length} booking{list.length === 1 ? "" : "s"}
+                  {list.length} opportunit{list.length === 1 ? "y" : "ies"}
                 </Text>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse text-left">
                   <thead>
                     <tr className="border-[color:var(--color-border-subtle)] border-b">
+                      <Th>Opportunity ID</Th>
                       <Th>Prospect</Th>
                       <Th>Company</Th>
                       <Th>Title</Th>
@@ -105,51 +108,62 @@ export default function Pipeline() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[color:var(--color-border-subtle)]">
-                    {list.map((b) => (
+                    {list.map((o) => (
                       <tr
-                        key={b.bookingId}
-                        onClick={() => openRow(b)}
+                        key={o.opportunityId}
+                        onClick={() => openRow(o)}
                         onKeyDown={(e) => {
                           if (e.key === "Enter" || e.key === " ") {
                             e.preventDefault();
-                            openRow(b);
+                            openRow(o);
                           }
                         }}
                         tabIndex={0}
-                        aria-label={`Open dossier for ${b.companyName ?? fullName(b)}`}
+                        aria-label={`Open dossier for ${o.companyName ?? fullName(o)}`}
                         className="group cursor-pointer outline-none transition-colors hover:bg-[color:var(--color-surface-raised)] focus-visible:bg-[color:var(--color-surface-raised)]"
                       >
                         <td className="px-4 py-3">
+                          <Text
+                            size="mono-xs"
+                            mono
+                            color="subtle"
+                            className="block max-w-[18ch] truncate"
+                            title={o.opportunityId}
+                          >
+                            {o.opportunityId}
+                          </Text>
+                        </td>
+                        <td className="px-4 py-3">
                           <div className="min-w-0">
                             <Text size="body-sm" color="primary" className="block truncate">
-                              {fullName(b)}
+                              {fullName(o)}
                             </Text>
                             <Text size="mono-xs" mono color="subtle" className="block truncate">
-                              {b.email ?? "—"}
+                              {o.email ?? "—"}
                             </Text>
                           </div>
                         </td>
                         <td className="px-4 py-3">
                           <div className="min-w-0">
                             <Text size="body-sm" color="default" className="block truncate">
-                              {b.companyName ?? "—"}
+                              {o.companyName ?? "—"}
                             </Text>
                             <Text size="mono-xs" mono color="subtle" className="block truncate">
-                              {b.domain ?? "—"}
+                              {o.domain ?? "—"}
                             </Text>
                           </div>
                         </td>
                         <td className="px-4 py-3">
                           <Text size="body-sm" color="muted" className="block truncate">
-                            {b.title ?? "—"}
+                            {o.title ?? "—"}
                           </Text>
                         </td>
                         <td className="px-4 py-3">
-                          <Badge tone={statusTone(b.status)}>{b.status}</Badge>
+                          <Badge tone={statusTone(o.status)}>{o.status}</Badge>
                         </td>
                         <td className="px-4 py-3">
                           <Text size="mono-xs" mono color="subtle">
-                            {formatDate(b.createdAt)}
+                            {formatDate(o.bookedAt ?? o.createdAt)}
                           </Text>
                         </td>
                         <td className="px-4 py-3 text-right">
