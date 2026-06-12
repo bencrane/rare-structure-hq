@@ -44,6 +44,7 @@ import Proposals from "./routes/app/Proposals";
 import Settings from "./routes/app/Settings";
 import TemplateEditor from "./routes/app/TemplateEditor";
 import TemplatesTable from "./routes/app/TemplatesTable";
+import MandateSignPage from "./routes/p/MandateSignPage";
 import PaymentPage from "./routes/p/PaymentPage";
 import SignPage from "./routes/p/SignPage";
 import SummaryPage from "./routes/p/SummaryPage";
@@ -89,6 +90,9 @@ export function App() {
         <Route path="/map" element={<Navigate to="/signin" replace />} />
         {/* Engagement proposal summary — the ref is its own credential. */}
         <Route path="/p/:ref" element={<SummaryPage />} />
+        {/* Direct-to-documenso prospect signing — the envelope id is its own credential. The static
+            `/p/m/` segment ranks above the dynamic `/p/:ref`, so there is no collision. */}
+        <Route path="/p/m/:envelopeId" element={<MandateSignPage />} />
         {/* Full-page signing view — Documenso two-column embed, on our domain. */}
         <Route path="/p/:ref/sign" element={<SignPage />} />
         {/* ACH payment view — Stripe Elements, on our domain, after signing. */}
