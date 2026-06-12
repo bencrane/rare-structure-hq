@@ -1171,9 +1171,13 @@ function liveCatalyst(e: FederalEntity): CapitalCatalyst {
   };
 }
 
-/** Map a live `FederalEntity` onto the cockpit's `Company` shape. `x`/`y` are omitted
- * (geo deferred — the dot layer gates on their absence). */
+/** Map a live `FederalEntity` onto the cockpit's `Company` shape. The entity's real lat/lon
+ * (from the serving snapshot's geocode join) is projected through the recovered Albers-USA
+ * composite (see ./projection) onto the us-geo 1000x590 viewBox and set on `x`/`y`, lighting
+ * up the dot layer. Entities with no geocode hit (null lat/lon, or a point off the US
+ * composite) simply carry no x/y and the map omits their dot. */
 function entityToCompany(e: FederalEntity): Company {
+  const geo = e.lat != null && e.lon != null ? projectLonLat(e.lon, e.lat) : null;
   return {
     id: e.uei,
     name: e.legalNameBase ?? e.uei,
@@ -1185,6 +1189,7 @@ function entityToCompany(e: FederalEntity): Company {
     activeAwarded: e.totalActiveObligations,
     contractCount: e.activeAwardCount,
     activeAward: e.totalActiveObligations > 0,
+    ...(geo ? { x: geo.x, y: geo.y } : {}),
     catalysts: [liveCatalyst(e)],
   };
 }

@@ -112,8 +112,11 @@ describe("@rare-structure-hq/shared — federal schema", () => {
       totalActiveObligations: 12000000,
       activeAwardCount: 3,
       hasFederalAwards: true,
+      lat: 39.7392,
+      lon: -104.9903,
     });
     expect(entity.uei).toBe("GRC4XK29M7PT");
+    expect(entity.lat).toBe(39.7392);
 
     const list = federalEntityListSchema.parse({
       ...provenance,
