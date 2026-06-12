@@ -15,12 +15,21 @@ import { useParams } from "react-router-dom";
 import { MandateEditor } from "@/proposals/MandateEditor";
 import { getProposalShell } from "@/proposals/api";
 import { useProposalShell } from "@/proposals/useProposalShell";
+import { useOriginationMode } from "@/settings/originationMode";
 
 export default function Mandate() {
   const { ref } = useParams<{ ref: string }>();
+  const { renderMode } = useOriginationMode();
   const { shell, state } = useProposalShell(ref, getProposalShell);
 
+  // Direct-to-documenso: `ref` is an engagement_mandate_draft_content id, not a proposal. Render a
+  // BARE content area — never the proposal pricing nor the "not found" error. What the draft
+  // displays is TBD; until that is defined, the page body is intentionally empty.
+  if (renderMode === "direct-to-documenso") return <div aria-hidden className="min-h-[60vh]" />;
+
   if (state === "loading") return <Note>Loading mandate…</Note>;
+  // Hold "not found" until the originate mode resolves — a draft ref must never flash it.
+  if (state === "notfound" && renderMode === null) return <Note>Loading mandate…</Note>;
   if (state === "notfound" || !shell || !ref) return <Note>This mandate could not be found.</Note>;
 
   // `key={ref}` forces a fresh draft when moving between mandates without leaving the portal.
