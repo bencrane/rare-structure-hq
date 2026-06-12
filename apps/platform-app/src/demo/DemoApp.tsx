@@ -22,7 +22,7 @@ import { AggregateView } from "./AggregateView";
 import { MapView } from "./MapView";
 import { ResultsTable } from "./ResultsTable";
 import { CommandPalette } from "./components/CommandPalette";
-import { CompanyProfile } from "./components/CompanyProfile";
+import { EntityProfile } from "./components/EntityProfile";
 import type { ResultView } from "./components/TerminalChrome";
 import { type QueryResult, runQuery } from "./data";
 import type { AggregateSpec, Command, Company, MapQuery } from "./types";
@@ -172,7 +172,7 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
       </AnimatePresence>
 
       <CommandPalette open={commandOpen} onClose={() => setCommandOpen(false)} onRun={handleRun} />
-      <CompanyProfile company={selectedCompany} onClose={() => setSelectedCompany(null)} />
+      <EntityProfile company={selectedCompany} onClose={() => setSelectedCompany(null)} />
     </div>
   );
 }

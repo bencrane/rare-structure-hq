@@ -1,6 +1,8 @@
 /**
- * CompanyProfile — the right-side drawer that opens when a company dot on the
+ * EntityProfile — the right-side drawer that opens when a company dot on the
  * map is clicked. It is the "click a dot, it opens up to the company" moment.
+ * (Named EntityProfile: `CompanyProfile` is the portal's Pipeline dossier page
+ * at routes/app/CompanyProfile.tsx — a different surface.)
  *
  * The drawer is an intelligence dossier, not an echo of the query row: on open it
  * FETCHES the entity's composed dossier by UEI (BFF `/federal/entity/:uei/dossier`
@@ -39,7 +41,7 @@ const TONE_COLOR: Record<CapitalCatalyst["tone"], string> = {
   info: "var(--color-state-info)",
 };
 
-export function CompanyProfile({
+export function EntityProfile({
   company,
   onClose,
 }: {
