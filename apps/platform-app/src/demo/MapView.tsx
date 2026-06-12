@@ -4,18 +4,15 @@
  * The base layer is a real cartographic US (state geometry from `us-geo.ts`)
  * with a faint graticule and a scatter field — the ambient firehose of the
  * market. When the operator runs a map-query command, the matching companies
- * light up the map as clickable dots, swept in west-to-east.
- *
- * A single click on a company dot opens an on-map callout (a compact intel
- * card); a double click — or a click on the callout — opens the full profile
- * drawer.
+ * light up the map as fine clickable dots, swept in west-to-east. Clicking a
+ * dot opens that company's profile side panel.
  *
  * Token CSS variables fill every SVG stroke/fill — utility classes do not
  * reach into SVG.
  */
 
 import { motion, useReducedMotion } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import {
   CommandPill,
   type ResultView,
@@ -42,8 +39,8 @@ const INSET_TRANSFORM: Record<string, string> = {
 const CONTINENTAL = STATE_PATHS.filter((s) => !INSET_IDS.has(s.id));
 const INSETS = STATE_PATHS.filter((s) => INSET_IDS.has(s.id));
 
-// A company that carries map coordinates — the only kind the dot/callout layer plots.
-// (Live federal entities have no x/y until the geo layer lands; they are filtered out.)
+// A company that carries map coordinates — the only kind the dot layer plots.
+// (Entities whose address did not geocode have no x/y; they are filtered out.)
 type PlottedCompany = Company & { x: number; y: number };
 
 export function MapView({
@@ -83,34 +80,16 @@ export function MapView({
 }) {
   const reduced = !!useReducedMotion();
   const [hovered, setHovered] = useState<string | null>(null);
-  const [callouts, setCallouts] = useState<ReadonlySet<string>>(() => new Set());
   const queryKey = query
     ? `${query.industry ?? query.naicsPrefix ?? "all"}:${query.minAward}`
     : "none";
 
-  // GEO DEFERRED. Live federal entities carry no x/y (the real lat/long coordinate layer
-  // is a later pass — no geocode this cycle). Only plot dots for results that DO carry
-  // coordinates; everything else is served through the result banner + list, never as a
-  // crashing dot. Today the live universe has no coords, so this is empty and the dot
-  // layer is dormant — but the moment coordinates land, the same code lights them up.
+  // Only plot results that carry coordinates. ~85% of the live federal universe geocodes
+  // (serving snapshot ⋈ geocode_xwalk); the rest carry no x/y and are served through the
+  // result banner + table, never as a dot at a bogus position.
   const plottable = results.filter(
     (c): c is Company & { x: number; y: number } => c.x != null && c.y != null,
   );
-
-  // A new query resets the open callouts — the prior result set is gone.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: keyed on queryKey, not the setter.
-  useEffect(() => {
-    setCallouts(new Set());
-  }, [queryKey]);
-
-  function toggleCallout(id: string) {
-    setCallouts((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
 
   return (
     <motion.div
@@ -135,21 +114,13 @@ export function MapView({
         showBrand={!embedded}
         defaultView={query ? undefined : defaultView}
         onDefaultView={query ? undefined : onDefaultView}
+        onClear={query && onDismiss ? onDismiss : undefined}
       />
 
       <div className="relative flex min-h-0 flex-1 items-center justify-center px-6">
-        {/* Off-panel click dismisses the result overlay (map only). The dot layer is
-            dormant while geo is deferred, so a full-area backdrop is safe; when real
-            coordinates land and dots return, move dismissal to the SVG background +
-            stopPropagation on the dots. The result panel sits above this at z-10. */}
-        {query && onDismiss ? (
-          <button
-            type="button"
-            aria-label="Dismiss results"
-            onClick={onDismiss}
-            className="absolute inset-0 z-0 cursor-default"
-          />
-        ) : null}
+        {/* No off-panel dismiss: with live geo-dots the map area is interactive (clicking a
+            dot opens its profile), so a full-area backdrop would swallow dot clicks and clear
+            the query. The result set is cleared only via the header Clear button (and Esc). */}
         <svg
           viewBox={`0 0 ${GEO_VIEW.w} ${GEO_VIEW.h}`}
           preserveAspectRatio="xMidYMid meet"
@@ -266,13 +237,9 @@ export function MapView({
                 key={company.id}
                 company={company}
                 reduced={reduced}
-                lit={
-                  company.id === hovered || callouts.has(company.id) || company.id === selectedId
-                }
-                calloutOpen={callouts.has(company.id)}
+                lit={company.id === hovered || company.id === selectedId}
                 onHover={() => setHovered(company.id)}
                 onLeave={() => setHovered((h) => (h === company.id ? null : h))}
-                onToggleCallout={() => toggleCallout(company.id)}
                 onOpenProfile={() => onSelectCompany(company)}
               />
             ))}
@@ -464,70 +431,43 @@ function BannerCell({
 }
 
 // ───────────────────────────────────────────────────────────────────
-// Company dot — a clickable plotted company. Single click toggles the
-// on-map callout; double click opens the full profile drawer.
+// Company dot — a fine plotted point. A click (or Enter) opens the
+// company's profile side panel. No pulse; no on-map callout.
 // ───────────────────────────────────────────────────────────────────
 
 function CompanyDot({
   company,
   reduced,
   lit,
-  calloutOpen,
   onHover,
   onLeave,
-  onToggleCallout,
   onOpenProfile,
 }: {
   company: PlottedCompany;
   reduced: boolean;
   lit: boolean;
-  calloutOpen: boolean;
   onHover: () => void;
   onLeave: () => void;
-  onToggleCallout: () => void;
   onOpenProfile: () => void;
 }) {
   const { x, y } = company;
   const enterDelay = reduced ? 0 : (x / GEO_VIEW.w) * 0.5;
-
-  // Single click toggles the callout; a double click opens the profile. A
-  // short timer disambiguates the two — the second click cancels the timer.
-  const clickTimer = useRef<number | null>(null);
-  useEffect(
-    () => () => {
-      if (clickTimer.current !== null) window.clearTimeout(clickTimer.current);
-    },
-    [],
-  );
-
-  function handleClick() {
-    if (clickTimer.current !== null) {
-      window.clearTimeout(clickTimer.current);
-      clickTimer.current = null;
-      onOpenProfile();
-      return;
-    }
-    clickTimer.current = window.setTimeout(() => {
-      clickTimer.current = null;
-      onToggleCallout();
-    }, 220);
-  }
 
   return (
     // biome-ignore lint/a11y/useSemanticElements: this is an SVG <g>, not HTML — it cannot be a <button>; role="button" + tabIndex + onKeyDown is the keyboard-accessible pattern for an interactive SVG group.
     <motion.g
       role="button"
       tabIndex={0}
-      aria-label={`Company — ${company.name}`}
+      aria-label={`Open profile — ${company.name}`}
       initial={reduced ? false : { opacity: 0, scale: 0 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.3, delay: enterDelay, ease: "easeOut" }}
       style={{ cursor: "pointer", transformOrigin: `${x}px ${y}px` }}
-      onClick={handleClick}
+      onClick={onOpenProfile}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
-          onToggleCallout();
+          onOpenProfile();
         }
       }}
       onMouseEnter={onHover}
@@ -535,155 +475,18 @@ function CompanyDot({
       onFocus={onHover}
       onBlur={onLeave}
     >
-      {/* Pulse ring — signals "clickable / live". */}
-      {!reduced && (
-        <motion.circle
-          cx={x}
-          cy={y}
-          r={5}
-          fill="none"
-          stroke="var(--color-accent-primary)"
-          strokeWidth={1.2}
-          initial={{ opacity: 0, scale: 1 }}
-          animate={{ opacity: [0.5, 0, 0.5], scale: [1, 2.8, 1] }}
-          transition={{
-            duration: 3,
-            repeat: Number.POSITIVE_INFINITY,
-            ease: "easeOut",
-            delay: enterDelay + 0.3,
-          }}
-          style={{ transformOrigin: `${x}px ${y}px` }}
-        />
-      )}
-
+      {/* A fine point — grows a touch and glows on hover/selection. */}
       <circle
         cx={x}
         cy={y}
-        r={lit ? 7 : 5}
+        r={lit ? 3 : 2}
         fill={lit ? "var(--color-accent-primaryHover)" : "var(--color-accent-primary)"}
         filter={lit ? "url(#rs-map-hotglow)" : undefined}
         style={{ transition: "r 0.18s ease" }}
       />
 
-      {/* Invisible larger hit target. */}
-      <circle cx={x} cy={y} r={16} fill="transparent" />
-
-      {calloutOpen && <CompanyCallout company={company} reduced={reduced} onOpen={onOpenProfile} />}
+      {/* Invisible larger hit target — keeps the fine dot easy to click. */}
+      <circle cx={x} cy={y} r={10} fill="transparent" />
     </motion.g>
-  );
-}
-
-// ───────────────────────────────────────────────────────────────────
-// Company callout — connector line + compact intel card, shown when a
-// company dot is single-clicked. Clicking the card opens the full profile.
-// ───────────────────────────────────────────────────────────────────
-
-const CALLOUT_CONNECTOR = 38;
-const CALLOUT_W = 300;
-const CALLOUT_H = 78;
-
-function CompanyCallout({
-  company,
-  reduced,
-  onOpen,
-}: {
-  company: PlottedCompany;
-  reduced: boolean;
-  onOpen: () => void;
-}) {
-  // Extend the card toward map center so it stays on-canvas.
-  const right = company.x < GEO_VIEW.w / 2;
-  const connectorEndX = right ? company.x + CALLOUT_CONNECTOR : company.x - CALLOUT_CONNECTOR;
-  const cardX = right ? connectorEndX : connectorEndX - CALLOUT_W;
-  const cardY = company.y - CALLOUT_H / 2;
-  const textX = cardX + 15;
-
-  // Clicking the callout opens the full profile. stopPropagation keeps the
-  // click off the dot's toggle handler underneath.
-  return (
-    // biome-ignore lint/a11y/useSemanticElements: this is an SVG <g>, not HTML — it cannot be a <button>; role="button" + tabIndex + onKeyDown is the keyboard-accessible pattern for an interactive SVG group.
-    <g
-      role="button"
-      tabIndex={0}
-      aria-label={`Open profile — ${company.name}`}
-      style={{ cursor: "pointer" }}
-      onClick={(e) => {
-        e.stopPropagation();
-        onOpen();
-      }}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          e.stopPropagation();
-          onOpen();
-        }
-      }}
-    >
-      <motion.line
-        x1={company.x}
-        y1={company.y}
-        x2={connectorEndX}
-        y2={company.y}
-        stroke="var(--color-accent-primary)"
-        strokeWidth={1.2}
-        initial={reduced ? false : { pathLength: 0 }}
-        animate={{ pathLength: 1 }}
-        transition={{ duration: 0.22, ease: "easeOut" }}
-      />
-      <circle cx={connectorEndX} cy={company.y} r={2.5} fill="var(--color-accent-primary)" />
-
-      <motion.g
-        initial={reduced ? false : { opacity: 0, x: right ? -8 : 8 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.25, delay: 0.14, ease: "easeOut" }}
-      >
-        <rect
-          x={cardX}
-          y={cardY}
-          width={CALLOUT_W}
-          height={CALLOUT_H}
-          fill="var(--color-surface-raised)"
-          stroke="var(--color-accent-primary)"
-          strokeWidth={1}
-        />
-        <rect x={cardX} y={cardY} width={3} height={CALLOUT_H} fill="var(--color-accent-primary)" />
-        <text
-          x={textX}
-          y={cardY + 22}
-          style={{
-            fontSize: 9.5,
-            fill: "var(--color-text-accent)",
-            letterSpacing: "0.14em",
-            fontFamily: "var(--font-mono)",
-            textTransform: "uppercase",
-          }}
-        >
-          {company.city}, {company.state} · {industryLabel(company.industry)}
-        </text>
-        <text
-          x={textX}
-          y={cardY + 45}
-          style={{
-            fontSize: 14,
-            fontWeight: 600,
-            fill: "var(--color-text-primary)",
-            fontFamily: "var(--font-display)",
-          }}
-        >
-          {company.name}
-        </text>
-        <text
-          x={textX}
-          y={cardY + 63}
-          style={{
-            fontSize: 10.5,
-            fill: "var(--color-text-muted)",
-            fontFamily: "var(--font-sans)",
-          }}
-        >
-          {fmtUsd(company.totalAwarded)} in federal awards · double-click for profile
-        </text>
-      </motion.g>
-    </g>
   );
 }
