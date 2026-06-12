@@ -1,5 +1,5 @@
 /**
- * BookingProfile — the booking-meeting-profile page. Opened from a Pipeline row; shows the
+ * CompanyProfile — the company dossier page. Opened from a Pipeline row; shows the
  * cal.com-derived booking we have today (prospect, company, meeting window, status). The
  * richer dossier intelligence + originate land once enrichment is wired — this page is the
  * surface that will populate. Authors no geometry — composes CockpitPage.
@@ -13,7 +13,7 @@ import { Badge, Text } from "@rare-structure-hq/ui";
 
 import { CockpitPage, Panel } from "@/app/cockpit";
 import { useAuth } from "@/lib/auth";
-import { getBooking } from "@/pipeline/api";
+import { getBooking, listOpportunities } from "@/pipeline/api";
 import { type DossierSeed, ProspectDossierBoard } from "@/proposals/ProspectDossierBoard";
 
 function fullName(b: BookingDetail): string {
@@ -26,7 +26,7 @@ function statusTone(status: string): "info" | "warn" | "success" {
   return status === "booked" ? "info" : "success";
 }
 
-export default function BookingProfile() {
+export default function CompanyProfile() {
   const { bookingId = "" } = useParams();
   const { session } = useAuth();
   const token = session?.access_token ?? "";
@@ -34,11 +34,19 @@ export default function BookingProfile() {
   const [booking, setBooking] = useState<BookingDetail | null>(null);
   const [phase, setPhase] = useState<"loading" | "ready" | "notfound" | "error">("loading");
   const [error, setError] = useState<string | null>(null);
+  // The opportunity for this booking (1:1 via source_booking_id) — its id is stamped on the page.
+  const [oppId, setOppId] = useState<string | null>(null);
 
   const refresh = useCallback(() => {
     if (!token || !bookingId) return;
     setPhase("loading");
     setError(null);
+    setOppId(null);
+    listOpportunities(token)
+      .then((opps) =>
+        setOppId(opps.find((o) => o.sourceBookingId === bookingId)?.opportunityId ?? null),
+      )
+      .catch(() => setOppId(null));
     getBooking(token, bookingId)
       .then((data) => {
         setBooking(data);
@@ -133,7 +141,7 @@ export default function BookingProfile() {
   return (
     <CockpitPage
       title="Dossier"
-      description="Pull the prospect, verify the intelligence on the call, then originate — the agreement materializes on save."
+      description={oppId ? oppId.slice(0, 8) : "—"}
       width="wide"
       actions={<Badge tone={statusTone(b.status)}>{b.status}</Badge>}
     >

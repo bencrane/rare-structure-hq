@@ -32,8 +32,8 @@ import { AuthProvider, useAuth } from "./lib/auth";
 import SignIn from "./routes/SignIn";
 import Account from "./routes/app/Account";
 import Applications from "./routes/app/Applications";
-import BookingProfile from "./routes/app/BookingProfile";
 import Calendar from "./routes/app/Calendar";
+import CompanyProfile from "./routes/app/CompanyProfile";
 import Dossier from "./routes/app/Dossier";
 import Mandate from "./routes/app/Mandate";
 import MapTab from "./routes/app/MapTab";
@@ -153,7 +153,7 @@ export function App() {
             path="bookings/:bookingId"
             element={
               <RequireOperator>
-                <BookingProfile />
+                <CompanyProfile />
               </RequireOperator>
             }
           />
