@@ -56,7 +56,14 @@ export interface AskMarketResult {
   total: number;
   capped: boolean;
   /** The interpreted filter the model produced — for the UI to echo "interpreted as…". */
-  query: { title?: string; filters: { field: string; op: string; value: unknown }[] } | null;
+  query: {
+    title?: string;
+    filters: { field: string; op: string; value: unknown }[];
+    unmapped?: string[];
+  } | null;
+  /** Constraints the compiler could NOT express (the honesty contract) — the cockpit
+   * renders these as "not applied" so the result never implies a filter it didn't run. */
+  unmapped: string[];
   dataset: AskMarketDataset;
 }
 
@@ -77,7 +84,7 @@ export async function askMarket(dataset: AskMarketDataset, q: string): Promise<A
   }
   const env = (await res.json()) as {
     data?: { features?: GeoFeature[] };
-    meta?: { returned?: number; capped?: boolean };
+    meta?: { returned?: number; total?: number; capped?: boolean };
     query?: AskMarketResult["query"];
   };
   const features = env.data?.features ?? [];
@@ -88,9 +95,11 @@ export async function askMarket(dataset: AskMarketDataset, q: string): Promise<A
   }));
   return {
     rows,
-    total: env.meta?.returned ?? rows.length,
+    // meta.total is the EXACT match count (pre-cap); `returned` is the served slice.
+    total: env.meta?.total ?? env.meta?.returned ?? rows.length,
     capped: env.meta?.capped ?? false,
     query: env.query ?? null,
+    unmapped: env.query?.unmapped ?? [],
     dataset,
   };
 }

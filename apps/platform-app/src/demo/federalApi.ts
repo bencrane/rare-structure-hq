@@ -79,7 +79,14 @@ export type AskMarketResult = {
   rows: AskMarketRow[];
   total: number;
   capped: boolean;
-  query: { title?: string; filters: { field: string; op: string; value: unknown }[] } | null;
+  query: {
+    title?: string;
+    filters: { field: string; op: string; value: unknown }[];
+    unmapped?: string[];
+  } | null;
+  /** Constraints the compiler could NOT express (the honesty contract) — rendered as
+   * "not applied" so the result never implies a filter it didn't run. */
+  unmapped: string[];
   dataset: string;
 };
 

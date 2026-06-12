@@ -49,6 +49,7 @@ export function MapView({
   loading = false,
   error = null,
   total,
+  notApplied = [],
   profileAsOfDate = null,
   selectedId,
   onSelectCompany,
@@ -65,6 +66,8 @@ export function MapView({
   loading?: boolean;
   error?: string | null;
   total?: number;
+  /** NL-query constraints the compiler could not express — rendered as "not applied". */
+  notApplied?: string[];
   profileAsOfDate?: string | null;
   selectedId: string | null;
   onSelectCompany: (company: Company) => void;
@@ -253,6 +256,7 @@ export function MapView({
             total={total ?? results.length}
             loading={loading}
             error={error}
+            notApplied={notApplied}
             plottedCount={plottable.length}
             profileAsOfDate={profileAsOfDate}
             reduced={reduced}
@@ -342,6 +346,7 @@ function ResultBanner({
   total,
   loading,
   error,
+  notApplied,
   plottedCount,
   profileAsOfDate,
   reduced,
@@ -353,6 +358,7 @@ function ResultBanner({
   total: number;
   loading: boolean;
   error: string | null;
+  notApplied: string[];
   plottedCount: number;
   profileAsOfDate: string | null;
   reduced: boolean;
@@ -387,6 +393,13 @@ function ResultBanner({
       {error && (
         <div className="border border-[color:var(--color-status-danger,var(--color-border-strong))] bg-[color:var(--color-surface-raised)] px-3 py-1.5 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase">
           Live federal feed unavailable
+        </div>
+      )}
+
+      {/* The honesty signal: a query constraint the compiler could not run. */}
+      {!loading && !error && notApplied.length > 0 && (
+        <div className="border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-raised)] px-3 py-1.5 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase shadow-lg shadow-black/40">
+          Not applied: {notApplied.join(" · ")}
         </div>
       )}
 

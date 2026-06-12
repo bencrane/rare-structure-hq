@@ -139,6 +139,7 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
             loading={loading}
             error={error}
             total={result?.total ?? results.length}
+            notApplied={result?.notApplied ?? []}
             selectedId={selectedCompany?.id ?? null}
             onSelectCompany={(company) => setSelectedCompany(company)}
             onInvokeCommand={() => setCommandOpen(true)}
@@ -155,6 +156,7 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
             loading={loading}
             error={error}
             total={result?.total ?? results.length}
+            notApplied={result?.notApplied ?? []}
             profileAsOfDate={result?.profileAsOfDate ?? null}
             selectedId={selectedCompany?.id ?? null}
             onSelectCompany={(company) => setSelectedCompany(company)}
