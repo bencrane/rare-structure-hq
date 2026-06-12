@@ -13,12 +13,7 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import { useState } from "react";
-import {
-  CommandPill,
-  type ResultView,
-  TerminalHeader,
-  ViewToggle,
-} from "./components/TerminalChrome";
+import { CommandPill, type ResultView, TerminalHeader } from "./components/TerminalChrome";
 import { industryLabel } from "./data";
 import { fmtUsd } from "./format";
 import type { Company, MapQuery } from "./types";
@@ -77,7 +72,7 @@ export function MapView({
   resultView: ResultView;
   onResultView: (v: ResultView) => void;
   /** The persisted GLOBAL default view + its setter. Surfaced as the header toggle
-   * pre-query; once a query is running the banner ViewToggle takes over. */
+   * pre-query; post-query the same header slot shows the active-view toggle (resultView). */
   defaultView: ResultView;
   onDefaultView: (v: ResultView) => void;
 }) {
@@ -117,6 +112,8 @@ export function MapView({
         showBrand={!embedded}
         defaultView={query ? undefined : defaultView}
         onDefaultView={query ? undefined : onDefaultView}
+        view={query ? resultView : undefined}
+        onView={query ? onResultView : undefined}
         onClear={query && onDismiss ? onDismiss : undefined}
       />
 
@@ -260,7 +257,6 @@ export function MapView({
             plottedCount={plottable.length}
             profileAsOfDate={profileAsOfDate}
             reduced={reduced}
-            resultView={resultView}
             onResultView={onResultView}
           />
         )}
@@ -350,7 +346,6 @@ function ResultBanner({
   plottedCount,
   profileAsOfDate,
   reduced,
-  resultView,
   onResultView,
 }: {
   query: MapQuery;
@@ -362,7 +357,6 @@ function ResultBanner({
   plottedCount: number;
   profileAsOfDate: string | null;
   reduced: boolean;
-  resultView: ResultView;
   onResultView: (v: ResultView) => void;
 }) {
   const awards = results.reduce((sum, c) => sum + c.totalAwarded, 0);
@@ -377,17 +371,14 @@ function ResultBanner({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: reduced ? 0 : 0.2 }}
     >
-      <div className="flex items-center gap-3">
-        <div className="flex items-stretch border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-raised)] shadow-lg shadow-black/40">
-          <BannerCell label="Vertical" value={industryLabel(query.industry)} accent />
-          <BannerCell
-            label="Companies"
-            value={loading ? "…" : error ? "—" : total.toLocaleString("en-US")}
-          />
-          <BannerCell label="Federal awards" value={loading ? "…" : error ? "—" : fmtUsd(awards)} />
-          {profileAsOfDate && <BannerCell label="Data as of" value={profileAsOfDate} />}
-        </div>
-        <ViewToggle view={resultView} onChange={onResultView} />
+      <div className="flex items-stretch border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-raised)] shadow-lg shadow-black/40">
+        <BannerCell label="Vertical" value={industryLabel(query.industry)} accent />
+        <BannerCell
+          label="Companies"
+          value={loading ? "…" : error ? "—" : total.toLocaleString("en-US")}
+        />
+        <BannerCell label="Federal awards" value={loading ? "…" : error ? "—" : fmtUsd(awards)} />
+        {profileAsOfDate && <BannerCell label="Data as of" value={profileAsOfDate} />}
       </div>
 
       {error && (
