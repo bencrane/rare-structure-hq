@@ -74,9 +74,11 @@ export type FederalAgencyChart = z.infer<typeof federalAgencyChartSchema>;
 
 /**
  * One entity row in the map/list slice — the live replacement for the cockpit's mock
- * `COMPANIES`. Projected to the 9 list columns the serving snapshot carries. No `x`/`y`
- * geo coordinates: the geographic dot layer's real lat/long is DEFERRED (no coordinate
- * join / geocode this pass), so the map gates its dot layer behind a "geo pending" state.
+ * `COMPANIES`. Projected to the 9 list columns the serving snapshot carries, plus real
+ * geographic coordinates (`lat`/`lon`, WGS-84). The serving precompute LEFT JOINs the
+ * `geocode_xwalk` crosswalk on the canonical address hash, so an entity whose physical
+ * address geocoded carries a dot; entities with no geocode hit carry `null` coordinates and
+ * the map omits their dot (~85% of the federal universe resolves today).
  */
 export const federalEntitySchema = z.object({
   uei: z.string(),
@@ -88,6 +90,9 @@ export const federalEntitySchema = z.object({
   totalActiveObligations: z.number(),
   activeAwardCount: z.number(),
   hasFederalAwards: z.boolean(),
+  /** WGS-84 lat/lon from the geocode crosswalk; `null` when the address did not geocode. */
+  lat: z.number().nullable(),
+  lon: z.number().nullable(),
 });
 export type FederalEntity = z.infer<typeof federalEntitySchema>;
 

@@ -10,19 +10,22 @@
  * round-trip on the request path.
  *
  * DELIVERY. The artifacts are bundled as static assets under `src/data/federal/`
- * (charts.json ~15KB; entities.json.gz ~3.6MB, 116,780 rows columnar+gzipped). They are
- * git-committed and copied into the runtime image, so the BFF needs NO R2 credentials and
- * NO new runtime dependency (zlib is built in). A refresh = re-run the core-x precompute,
- * re-export the assets, redeploy. The data is slow-changing; there is no cron.
+ * (charts.json ~15KB; entities.json.gz ~5.1MB, 116,780 rows columnar+gzipped, carrying
+ * real lat/lon for the map dots). They are git-committed and copied into the runtime image,
+ * so the BFF needs NO R2 credentials and NO new runtime dependency (zlib is built in). A
+ * refresh = re-run the core-x precompute with `--bundle-out` pointed at this dir, redeploy:
+ *   doppler run -p core-x -c prd -- python3 -m pipelines.serving.materialize_federal_charts \
+ *     --dry-run --bundle-out <repo>/apps/platform-api/src/data/federal
+ * The data is slow-changing; there is no cron.
  *
  * PROVENANCE. `materializedAt` + `profileAsOfDate` ride on every response so the cockpit
  * shows "data as of X" honestly.
  */
 
-import { gunzipSync } from "node:zlib";
 import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { gunzipSync } from "node:zlib";
 
 import type {
   FederalAgencyChart,
@@ -71,6 +74,8 @@ type RawEntities = {
     total_active_obligations: number[];
     active_award_count: number[];
     has_federal_awards: boolean[];
+    latitude: (number | null)[];
+    longitude: (number | null)[];
   };
 };
 
@@ -101,6 +106,8 @@ const ENTITIES: FederalEntity[] = (() => {
       totalActiveObligations: c.total_active_obligations[i] ?? 0,
       activeAwardCount: c.active_award_count[i] ?? 0,
       hasFederalAwards: c.has_federal_awards[i] ?? false,
+      lat: c.latitude[i] ?? null,
+      lon: c.longitude[i] ?? null,
     };
   }
   return out;
@@ -122,7 +129,11 @@ export function industryChart(): FederalIndustryChart {
 }
 
 export function stateChart(): FederalStateChart {
-  return { ...provenance, groupCount: rawCharts.spend_by_state.group_count, rows: rawCharts.spend_by_state.rows };
+  return {
+    ...provenance,
+    groupCount: rawCharts.spend_by_state.group_count,
+    rows: rawCharts.spend_by_state.rows,
+  };
 }
 
 export function agencyChart(): FederalAgencyChart {
@@ -182,5 +193,9 @@ export function entityByUei(uei: string): FederalEntity | null {
 }
 
 export function snapshotProvenance() {
-  return { ...provenance, entityCount: ENTITIES.length, fullUniverse: rawEntities.full_has_awards_universe };
+  return {
+    ...provenance,
+    entityCount: ENTITIES.length,
+    fullUniverse: rawEntities.full_has_awards_universe,
+  };
 }
