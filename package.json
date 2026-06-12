@@ -7,7 +7,7 @@
     "build": "bun run --filter @rare-structure-hq/tokens build && bun run --filter @rare-structure-hq/ui build && bun run --filter marketing-site build && bun run --filter marketing-site-ao build && bun run --filter platform-app build",
     "typecheck": "tsc -p packages/tokens --noEmit && tsc -p packages/shared --noEmit && tsc -p packages/ui --noEmit && tsc -p packages/eslint-plugin-rare-structure-hq --noEmit && tsc -b apps/marketing-site --noEmit && tsc -b apps/marketing-site-ao --noEmit && tsc -b apps/platform-app --noEmit",
     "lint": "bun run --filter eslint-plugin-rare-structure-hq build && biome check packages/tokens packages/ui packages/shared packages/eslint-plugin-rare-structure-hq apps/marketing-site/src apps/marketing-site-ao/src apps/platform-app/src eslint.config.mjs && bun x eslint apps/*/src/routes/**/*.tsx",
-    "test": "bun run --filter @rare-structure-hq/shared test && bun run --filter @rare-structure-hq/tokens test && bun run --filter eslint-plugin-rare-structure-hq test && bun run --filter @rare-structure-hq/ui test",
+    "test": "bun run --filter @rare-structure-hq/shared test && bun run --filter @rare-structure-hq/tokens test && bun run --filter eslint-plugin-rare-structure-hq test && bun run --filter @rare-structure-hq/ui test && bun run --filter platform-app test",
     "test:e2e": "playwright test --config=e2e/playwright.config.ts",
     "storybook": "bun run --filter @rare-structure-hq/ui storybook",
     "storybook:build": "bun run --filter @rare-structure-hq/ui storybook:build"
