@@ -184,8 +184,9 @@ export function ProspectDossierBoard({
           opportunityId,
           documensoTemplateId: templateId,
         });
-        // Land on the mandate page keyed by the first 8 chars of the new draft id.
-        navigate(`/app/m/${res.id.slice(0, 8)}`);
+        // Land on the mandate page keyed by the FULL draft id — "Confirm & originate" posts it back
+        // to /engagement-mandate-drafts/:id/confirm, so the page needs the whole id, not a prefix.
+        navigate(`/app/m/${res.id}`);
         return;
       }
       const res = await createProposal(token, {

@@ -28,7 +28,8 @@ export default function Mandate() {
   // slots blank — never the proposal pricing nor the "not found" error. The draft's concrete values
   // and its sign/confirm wiring land separately; this replaces the previously-blank page so the
   // shell never vanishes.
-  if (renderMode === "direct-to-documenso") return <MandateDraftShell housing="cockpit" />;
+  if (renderMode === "direct-to-documenso")
+    return <MandateDraftShell draftId={ref} housing="cockpit" />;
 
   if (state === "loading") return <Note>Loading mandate…</Note>;
   // Hold "not found" until the originate mode resolves — a draft ref must never flash it.

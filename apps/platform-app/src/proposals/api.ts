@@ -67,6 +67,45 @@ export async function createMandateDraft(
   return (await res.json()).data as { id: string };
 }
 
+export interface MandateDraftConfirmed {
+  envelopeId: string;
+  signingToken: string | null;
+  documensoHost: string;
+}
+
+/** Direct-to-documenso "Confirm & originate": instantiate a Documenso document from the draft's
+ * template and get back the prospect signer token + envelope id (the prospect-link capability). */
+export async function confirmMandateDraft(
+  token: string,
+  id: string,
+): Promise<MandateDraftConfirmed> {
+  const res = await fetch(
+    `${API_BASE}/api/v1/engagement-mandate-drafts/${encodeURIComponent(id)}/confirm`,
+    { method: "POST", headers: authHeaders(token) },
+  );
+  if (!res.ok) throw new Error(`confirm mandate failed: ${res.status} ${await res.text()}`);
+  return (await res.json()).data as MandateDraftConfirmed;
+}
+
+export interface MandateDraftDocument {
+  signingToken: string | null;
+  documensoHost: string;
+  status: string | null;
+}
+
+/** PUBLIC prospect read for `/p/m/:envelopeId` — the signer token + host that drive the embed.
+ * The envelope id is the capability (no auth). Returns null on 404. */
+export async function getMandateDraftDocument(
+  envelopeId: string,
+): Promise<MandateDraftDocument | null> {
+  const res = await fetch(
+    `${API_BASE}/api/v1/engagement-mandate-drafts/document/${encodeURIComponent(envelopeId)}`,
+  );
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`mandate document failed: ${res.status}`);
+  return (await res.json()).data as MandateDraftDocument;
+}
+
 /** Instantiate a proposal record → its capability ref + shell path. */
 export async function createProposal(
   token: string,

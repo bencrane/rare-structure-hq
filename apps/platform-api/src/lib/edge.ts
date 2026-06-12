@@ -317,6 +317,50 @@ export async function edgeCreateMandateDraft(input: {
   return (await res.json()) as EdgeMandateDraftCreated;
 }
 
+export interface EdgeMandateDraftConfirmed {
+  envelope_id: string;
+  signing_token: string | null;
+  documenso_host: string;
+}
+
+/**
+ * Direct-to-documenso "Confirm & originate": instantiate a signable Documenso document FROM the
+ * draft's template (edge_api resolves the template → envelope id, calls /envelope/use, distributes
+ * NONE) and return the envelope id (the prospect-link capability) + the signer token. Service-token
+ * gated. Stateless — re-confirm mints a fresh document.
+ */
+export async function edgeConfirmMandateDraft(id: string): Promise<EdgeMandateDraftConfirmed> {
+  const res = await fetch(
+    `${base()}/api/v1/engagement-mandate-drafts/${encodeURIComponent(id)}/confirm`,
+    { method: "POST", headers: serviceHeaders() },
+  );
+  if (!res.ok)
+    throw new EdgeError(`edge mandate-draft confirm failed: ${res.status} ${await res.text()}`);
+  return (await res.json()) as EdgeMandateDraftConfirmed;
+}
+
+export interface EdgeMandateDraftDocument {
+  signing_token: string | null;
+  documenso_host: string;
+  status: string | null;
+}
+
+/**
+ * PUBLIC prospect read for `/p/m/:envelopeId` — the envelope id is the capability (no service
+ * token). edge_api re-reads the live Documenso envelope for the signer token + status the embed
+ * needs. Returns null on 404 (unknown / expired envelope).
+ */
+export async function edgeGetMandateDraftDocument(
+  envelopeId: string,
+): Promise<EdgeMandateDraftDocument | null> {
+  const res = await fetch(
+    `${base()}/api/v1/engagement-mandate-drafts/document/${encodeURIComponent(envelopeId)}`,
+  );
+  if (res.status === 404) return null;
+  if (!res.ok) throw new EdgeError(`edge mandate-draft document failed: ${res.status}`);
+  return (await res.json()) as EdgeMandateDraftDocument;
+}
+
 export interface EdgeCompanyProfile {
   domain: string;
   company: string | null;
