@@ -165,7 +165,7 @@ export function TerminalHeader({
       )}
       <div className="text-right">
         <div className="flex items-center justify-end gap-2 font-mono text-[color:var(--color-text-accent)] text-mono-xs uppercase">
-          <span className="size-1.5 animate-pulse bg-[color:var(--color-accent-primary)]" />
+          <span className="size-1.5 bg-[color:var(--color-accent-primary)]" />
           Live
         </div>
         <div className="mt-1.5 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase tabular-nums">
