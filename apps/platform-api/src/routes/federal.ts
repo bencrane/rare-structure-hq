@@ -28,6 +28,7 @@ import { HTTPException } from "hono/http-exception";
 
 import { federalEntityQuerySchema } from "@rare-structure-hq/shared";
 
+import { env } from "../env.ts";
 import { type AskMarketDataset, askMarket } from "../lib/edge.ts";
 import {
   agencyChart,
@@ -58,6 +59,33 @@ federalRoutes.get("/entity/:uei", (c) => {
   const entity = entityByUei(uei);
   if (!entity) throw new HTTPException(404, { message: "entity not found" });
   return c.json({ data: entity });
+});
+
+// Entity dossier — the side-panel read. UNLIKE the warm endpoints above, this proxies the
+// core-x catalyst_api dossier endpoint at request time (three BTREE point-lookups: gold
+// identity/rollups/POCs ⊕ award-summary recency/top-agencies ⊕ rolling-90d award actions).
+// The BFF stays Lance-free: it brokers the INTERNAL operator token (COREX_SERVICE_TOKEN);
+// status + `{data}` envelope pass through verbatim.
+//
+// AUTH POSTURE — PUBLIC, deliberately: the cockpit /map is public and the payload is
+// exclusively public-record SAM/USAspending data. POCs carry name/title/city/state ONLY —
+// the SAM source has no email/phone columns, so no contact channel exists to leak. If a
+// richer contact dataset ever lands in gold, this route must move behind requireUser.
+federalRoutes.get("/entity/:uei/dossier", async (c) => {
+  const uei = c.req.param("uei");
+  if (!/^[A-Za-z0-9]{12}$/.test(uei)) {
+    throw new HTTPException(400, { message: "invalid uei" });
+  }
+  const actions = c.req.query("actions");
+  const qs = actions ? `?actions=${encodeURIComponent(actions)}` : "";
+  const res = await fetch(`${env.COREX_API_URL}/api/v1/entities/${uei}/dossier${qs}`, {
+    headers: { Authorization: `Bearer ${env.COREX_SERVICE_TOKEN}` },
+  });
+  const body = await res.text();
+  return new Response(body, {
+    status: res.status,
+    headers: { "content-type": res.headers.get("content-type") ?? "application/json" },
+  });
 });
 
 // Natural-language market query. UNLIKE the warm endpoints above, this one round-trips to

@@ -2,11 +2,13 @@
  * CompanyProfile — the right-side drawer that opens when a company dot on the
  * map is clicked. It is the "click a dot, it opens up to the company" moment.
  *
- * The profile shows the company's identity and its Capital Catalysts — the
- * structural signals attached to it. Every plotted company carries the
- * federal-award catalyst (the query axis); a UCC-1 secured-debt catalyst and
- * a BDC loan-maturity catalyst appear when the company has them. New catalyst
- * kinds slot into the same card with no layout change.
+ * The drawer is an intelligence dossier, not an echo of the query row: on open it
+ * FETCHES the entity's composed dossier by UEI (BFF `/federal/entity/:uei/dossier`
+ * → catalyst point-lookups over gold + award-summary + the rolling-90d award feed)
+ * and renders Identity, Federal posture, Recent award activity and Points of
+ * contact on top of the existing Capital Catalysts. If the fetch fails the drawer
+ * gracefully degrades to exactly the row-mapped view it rendered before — never
+ * emptier than today.
  *
  * Styled on the `@rare-structure-hq` design system. Closes on X / backdrop
  * (Esc is handled globally by `DemoApp`).
@@ -14,9 +16,15 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Building2, CalendarClock, Landmark, Receipt, X } from "lucide-react";
-import type { ComponentType } from "react";
+import { type ComponentType, useEffect, useState } from "react";
 import { industryLabel } from "../data";
+import { type EntityDossier, fetchEntityDossier } from "../federalApi";
+import { fmtDate, fmtUsd, fmtUsdFull } from "../format";
 import type { CapitalCatalyst, CatalystKind, Company } from "../types";
+
+// A 12-char SAM UEI — the only ids the dossier fetch fires for (seed/demo rows
+// whose id is a name fall through to the row-mapped view).
+const UEI_RE = /^[A-Z0-9]{12}$/i;
 
 const CATALYST_ICON: Record<CatalystKind, ComponentType<{ className?: string }>> = {
   usaspending: Landmark,
@@ -98,11 +106,43 @@ function ProfileHeader({ company, onClose }: { company: Company; onClose: () => 
 }
 
 function ProfileBody({ company }: { company: Company }) {
+  // Fetch the composed dossier on open. Failure (or a non-UEI id) degrades to the
+  // row-mapped view below — the drawer never renders emptier than it did before.
+  const [dossier, setDossier] = useState<EntityDossier | null>(null);
+  const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    setDossier(null);
+    if (!UEI_RE.test(company.id)) return;
+    let cancelled = false;
+    setLoading(true);
+    fetchEntityDossier(company.id)
+      .then((d) => {
+        if (!cancelled) setDossier(d);
+      })
+      .catch(() => {
+        /* graceful degrade: keep the row-mapped view */
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [company.id]);
+
+  const identity = dossier?.identity;
+  const posture = dossier?.posture;
+  const address = identity?.address;
+  const addressLine = address
+    ? [address.street, address.city, address.state, address.zip].filter(Boolean).join(", ")
+    : null;
+  const isActive = identity ? identity.isActive : company.activeAward;
+
   return (
     <div className="flex-1 overflow-y-auto px-6 py-6">
       {/* Identity */}
       <h2 className="font-display font-semibold text-[color:var(--color-text-primary)] text-display-sm uppercase leading-tight tracking-tight">
-        {company.name}
+        {identity?.legalBusinessName ?? company.name}
       </h2>
       <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase">
         <span className="text-[color:var(--color-text-accent)]">
@@ -114,29 +154,163 @@ function ProfileBody({ company }: { company: Company }) {
             <span>{[company.city, company.state].filter(Boolean).join(", ")}</span>
           </>
         )}
-        {company.activeAward && (
+        {isActive && (
           <span className="border border-[color:var(--color-accent-primary)] px-1.5 py-0.5 text-[color:var(--color-text-accent)] leading-none">
-            Active award
+            {identity ? "Active registration" : "Active award"}
           </span>
         )}
+        {loading && <span className="text-[color:var(--color-text-subtle)]">Loading dossier…</span>}
       </div>
 
-      {/* Identity facts — live entities carry NAICS + the obligation rollup; the
-          seed-only narrative fields (founded / employees / NAICS label) render only
-          when present, so the live profile degrades cleanly. */}
+      {/* Identity facts — the dossier adds DBA / CAGE / full HQ address; live entities
+          without a dossier (fetch failed, non-UEI id) keep the row-mapped facts. */}
       <div className="mt-5 grid grid-cols-2 gap-px border border-[color:var(--color-border-subtle)] bg-[color:var(--color-border-subtle)]">
         <IdentityFact
           label="NAICS"
           value={
-            company.naicsLabel ? `${company.naics} · ${company.naicsLabel}` : company.naics || "—"
+            company.naicsLabel
+              ? `${company.naics} · ${company.naicsLabel}`
+              : (identity?.primaryNaics ?? company.naics) || "—"
           }
-          wide
+          wide={!identity?.cageCode}
         />
+        {identity?.cageCode && <IdentityFact label="CAGE" value={identity.cageCode} />}
+        {identity?.dbaName && <IdentityFact label="DBA" value={identity.dbaName} wide />}
+        {addressLine && <IdentityFact label="HQ address" value={addressLine} wide />}
         {company.founded != null && (
           <IdentityFact label="Founded" value={String(company.founded)} />
         )}
         {company.employees && <IdentityFact label="Employees" value={company.employees} />}
       </div>
+
+      {/* Federal posture — the dossier's lifetime/active split + recency + top agency. */}
+      {posture && (
+        <>
+          <SectionHeader title="Federal posture" />
+          <div className="grid grid-cols-2 gap-px border border-[color:var(--color-border-subtle)] bg-[color:var(--color-border-subtle)]">
+            <IdentityFact
+              label="Lifetime obligations"
+              value={
+                posture.totalLifetimeObligations != null
+                  ? fmtUsdFull(posture.totalLifetimeObligations)
+                  : "—"
+              }
+            />
+            <IdentityFact
+              label="Active obligations"
+              value={
+                posture.totalActiveObligations != null
+                  ? fmtUsdFull(posture.totalActiveObligations)
+                  : "—"
+              }
+            />
+            <IdentityFact
+              label="Awards"
+              value={
+                posture.awardCount != null
+                  ? `${posture.awardCount} lifetime · ${posture.activeAwardCount ?? 0} active`
+                  : "—"
+              }
+            />
+            <IdentityFact
+              label="Last award action"
+              value={
+                posture.latestActionDate
+                  ? `${fmtDate(posture.latestActionDate)}${
+                      posture.daysSinceLastAction != null
+                        ? ` · ${posture.daysSinceLastAction}d ago`
+                        : ""
+                    }`
+                  : "—"
+              }
+            />
+            {posture.topAgencies.length > 0 && (
+              <IdentityFact
+                label="Top agency"
+                value={`${posture.topAgencies[0].name} · ${fmtUsd(posture.topAgencies[0].dollars)}`}
+                wide
+              />
+            )}
+          </div>
+        </>
+      )}
+
+      {/* Recent award activity — per-action feed; the window label keeps it honest. */}
+      {dossier && (
+        <>
+          <SectionHeader
+            title="Recent award activity"
+            right={`rolling ${dossier.recentActivity.windowDays}d`}
+          />
+          {dossier.recentActivity.actions.length === 0 ? (
+            <div className="border border-[color:var(--color-border-subtle)] px-4 py-3 font-mono text-[color:var(--color-text-subtle)] text-mono-xs uppercase">
+              No award actions in the rolling {dossier.recentActivity.windowDays}-day window
+            </div>
+          ) : (
+            <div className="flex flex-col gap-px border border-[color:var(--color-border-subtle)] bg-[color:var(--color-border-subtle)]">
+              {dossier.recentActivity.actions.map((a) => (
+                <div
+                  key={a.awardId ?? `${a.actionDate}-${a.amount}`}
+                  className="bg-[color:var(--color-surface-raised)] px-4 py-3"
+                >
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span className="font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase">
+                      {a.actionDate ? fmtDate(a.actionDate) : "—"}
+                    </span>
+                    <span className="font-display font-semibold text-[color:var(--color-text-accent)] text-body-sm tabular-nums">
+                      {a.amount != null ? fmtUsdFull(a.amount) : "—"}
+                    </span>
+                  </div>
+                  <div className="mt-1 text-[color:var(--color-text-primary)] text-body-sm leading-snug">
+                    {a.awardingSubAgency ?? a.awardingAgency ?? "—"}
+                  </div>
+                  <div className="mt-0.5 flex flex-wrap items-center gap-x-2 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase">
+                    {(a.popCity || a.popState) && (
+                      <span>Work: {[a.popCity, a.popState].filter(Boolean).join(", ")}</span>
+                    )}
+                    {a.setAside && a.setAside !== "NONE" && (
+                      <span className="border border-[color:var(--color-border-default)] px-1.5 py-0.5 leading-none">
+                        {a.setAside}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Points of contact — public SAM record; names/titles only (no email/phone at source). */}
+      {dossier && dossier.pocs.length > 0 && (
+        <>
+          <SectionHeader title="Points of contact" />
+          <div className="flex flex-col gap-px border border-[color:var(--color-border-subtle)] bg-[color:var(--color-border-subtle)]">
+            {dossier.pocs.map((p) => (
+              <div
+                key={`${p.type}-${p.pocSlotNo}-${p.fullName}`}
+                className="flex items-baseline justify-between gap-3 bg-[color:var(--color-surface-raised)] px-4 py-3"
+              >
+                <div>
+                  <div className="text-[color:var(--color-text-primary)] text-body-sm leading-snug">
+                    {p.fullName ?? "—"}
+                  </div>
+                  <div className="mt-0.5 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase">
+                    {[p.title, [p.city, p.state].filter(Boolean).join(", ")]
+                      .filter(Boolean)
+                      .join(" · ") || "—"}
+                  </div>
+                </div>
+                {p.type && (
+                  <span className="shrink-0 font-mono text-[color:var(--color-text-subtle)] text-mono-xs uppercase">
+                    {p.type.replace(/_/g, " ")}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
 
       {/* Capital Catalysts */}
       <div className="mt-7 mb-3 flex items-baseline justify-between">
@@ -152,6 +326,21 @@ function ProfileBody({ company }: { company: Company }) {
           <CatalystCard key={catalyst.kind} catalyst={catalyst} />
         ))}
       </div>
+    </div>
+  );
+}
+
+function SectionHeader({ title, right }: { title: string; right?: string }) {
+  return (
+    <div className="mt-7 mb-3 flex items-baseline justify-between">
+      <h3 className="font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase tracking-[0.16em]">
+        {title}
+      </h3>
+      {right && (
+        <span className="font-mono text-[color:var(--color-text-subtle)] text-mono-xs uppercase">
+          {right}
+        </span>
+      )}
     </div>
   );
 }
