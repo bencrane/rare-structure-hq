@@ -31,6 +31,7 @@ import { AuthProvider, useAuth } from "./lib/auth";
 // import MapDemo from "./routes/MapDemo";
 import SignIn from "./routes/SignIn";
 import Account from "./routes/app/Account";
+import ApplicationStaging from "./routes/app/ApplicationStaging";
 import Applications from "./routes/app/Applications";
 import Calendar from "./routes/app/Calendar";
 import CompanyProfile from "./routes/app/CompanyProfile";
@@ -140,6 +141,16 @@ export function App() {
             element={
               <RequireOperator>
                 <Applications />
+              </RequireOperator>
+            }
+          />
+          {/* Per-opportunity mandate staging — opened from an Applications row. Pick the engagement
+              (archetype → template) and stage the per-deal values off-screen, ahead of the call. */}
+          <Route
+            path="applications/:opportunityId"
+            element={
+              <RequireOperator>
+                <ApplicationStaging />
               </RequireOperator>
             }
           />

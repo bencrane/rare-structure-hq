@@ -20,6 +20,9 @@ import {
   edgeConfirmMandateDraft,
   edgeCreateMandateDraft,
   edgeGetMandateDraftDocument,
+  edgeGetStagingDraft,
+  edgeListEngagementMappings,
+  edgeUpsertStagingDraft,
 } from "../lib/edge.ts";
 
 export const engagementMandateDraftRoutes = new Hono<{ Variables: AuthVariables }>();
@@ -38,6 +41,72 @@ engagementMandateDraftRoutes.post("/", requireUser, async (c) => {
     const res = await edgeCreateMandateDraft({
       opportunity_id: body.opportunityId,
       documenso_template_id: body.documensoTemplateId,
+    });
+    return c.json({ data: res });
+  } catch (e) {
+    if (e instanceof EdgeError) throw new HTTPException(502, { message: e.message });
+    throw e;
+  }
+});
+
+// ── Mandate staging (the per-opportunity prep page) ──────────────────────────
+// Engagement options for the staging picker — the operator-org's visible templates, each annotated
+// with its archetype (the form's shape) and text_fields (the form's inputs). Empty on any failure.
+engagementMandateDraftRoutes.get("/options", requireUser, async (c) => {
+  const domain = c.get("user").email.split("@")[1]?.toLowerCase() ?? "";
+  try {
+    const rows = await edgeListEngagementMappings(domain);
+    const data = rows.map((r) => ({
+      id: r.id,
+      label: r.label,
+      archetypeKey: r.archetype_key,
+      archetypeName: r.archetype_name,
+      performanceFeeBasis: r.performance_fee_basis,
+      textFields: r.text_fields,
+    }));
+    return c.json({ data });
+  } catch {
+    return c.json({ data: [] });
+  }
+});
+
+// Load the opportunity's staged mandate (selected template + entered values) to resume editing.
+engagementMandateDraftRoutes.get("/by-opportunity/:opportunityId", requireUser, async (c) => {
+  const opportunityId = c.req.param("opportunityId");
+  try {
+    const draft = await edgeGetStagingDraft(opportunityId);
+    return c.json({
+      data: draft
+        ? {
+            id: draft.id,
+            documensoTemplateId: draft.documenso_template_id,
+            archetypeId: draft.archetype_id,
+            prefillValues: draft.prefill_values,
+            status: draft.status,
+          }
+        : null,
+    });
+  } catch (e) {
+    if (e instanceof EdgeError) throw new HTTPException(502, { message: e.message });
+    throw e;
+  }
+});
+
+// Save the prep page: create-or-update the opportunity's staging draft. Org + archetype are
+// resolved server-side from the selected template (never trusted from the client).
+engagementMandateDraftRoutes.put("/by-opportunity/:opportunityId", requireUser, async (c) => {
+  const opportunityId = c.req.param("opportunityId");
+  const body = (await c.req.json().catch(() => null)) as {
+    documensoTemplateId?: string;
+    prefillValues?: Record<string, string>;
+  } | null;
+  if (!body?.documensoTemplateId) {
+    throw new HTTPException(400, { message: "documensoTemplateId is required" });
+  }
+  try {
+    const res = await edgeUpsertStagingDraft(opportunityId, {
+      documenso_template_id: body.documensoTemplateId,
+      prefill_values: body.prefillValues ?? {},
     });
     return c.json({ data: res });
   } catch (e) {
