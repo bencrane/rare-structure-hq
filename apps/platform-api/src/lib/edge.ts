@@ -287,6 +287,12 @@ export async function edgeListOpportunities(): Promise<EdgeOpportunitySummary[]>
 export interface EdgeEngagementMappingOption {
   id: string;
   label: string;
+  /** Archetype (economic shape) the option's template belongs to — drives the staging form. */
+  archetype_key: string | null;
+  archetype_name: string | null;
+  performance_fee_basis: string | null;
+  /** The template's declared Documenso merge fields — the exact inputs the value form renders. */
+  text_fields: string[];
 }
 
 export async function edgeListEngagementMappings(
@@ -359,6 +365,45 @@ export async function edgeGetMandateDraftDocument(
   if (res.status === 404) return null;
   if (!res.ok) throw new EdgeError(`edge mandate-draft document failed: ${res.status}`);
   return (await res.json()) as EdgeMandateDraftDocument;
+}
+
+// ── Mandate staging (the per-opportunity prep page) ──────────────────────────
+// The operator stages a mandate off-screen: pick the engagement (archetype → template) and enter
+// the per-deal values (term, fee). edge_api persists one editable draft per opportunity; Confirm &
+// originate later stamps those values into the document. Service-token gated (operator-scoped).
+
+export interface EdgeMandateStagingDraft {
+  id: string;
+  documenso_template_id: string | null;
+  archetype_id: string | null;
+  prefill_values: Record<string, string>;
+  status: string | null;
+}
+
+/** The opportunity's staged mandate (selected template + entered values). Null when nothing staged. */
+export async function edgeGetStagingDraft(
+  opportunityId: string,
+): Promise<EdgeMandateStagingDraft | null> {
+  const res = await fetch(
+    `${base()}/api/v1/engagement-mandate-drafts/by-opportunity/${encodeURIComponent(opportunityId)}`,
+    { headers: serviceHeaders(false) },
+  );
+  if (!res.ok) throw new EdgeError(`edge staging get failed: ${res.status} ${await res.text()}`);
+  // edge_api returns `null` (200) when nothing is staged yet.
+  return (await res.json()) as EdgeMandateStagingDraft | null;
+}
+
+/** Create-or-update the opportunity's staging draft (selected template + per-deal values). */
+export async function edgeUpsertStagingDraft(
+  opportunityId: string,
+  input: { documenso_template_id: string; prefill_values: Record<string, string> },
+): Promise<{ id: string }> {
+  const res = await fetch(
+    `${base()}/api/v1/engagement-mandate-drafts/by-opportunity/${encodeURIComponent(opportunityId)}`,
+    { method: "PUT", headers: serviceHeaders(), body: JSON.stringify(input) },
+  );
+  if (!res.ok) throw new EdgeError(`edge staging save failed: ${res.status} ${await res.text()}`);
+  return (await res.json()) as { id: string };
 }
 
 export interface EdgeCompanyProfile {
