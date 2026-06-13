@@ -30,9 +30,16 @@ WORKDIR /app/apps/platform-app
 ARG DOPPLER_TOKEN
 ENV DOPPLER_TOKEN=$DOPPLER_TOKEN
 
+# Cache-bust for baked VITE_* values. Vite inlines VITE_* at build time, pulled
+# from Doppler by `doppler run` — but a Doppler-only change (e.g. the
+# api.rarestructure.com -> api.activeoperators.com cutover) does NOT invalidate
+# the build layer below, so a plain Railway redeploy re-serves a stale bundle.
+# Bump CACHEBUST whenever a baked VITE_* value changes to force a fresh build.
+ARG CACHEBUST=2026-06-13-activeoperators
+
 # Vite reads VITE_* from the env at build time; doppler run injects them
 # from the prd config so they get baked into dist/.
-RUN doppler run -- bun run build
+RUN echo "cachebust ${CACHEBUST}" && doppler run -- bun run build
 
 # ── runtime: serve the static dist/ via Express (serve.js) ───────────────────
 # serve.js listens on process.env.PORT (Railway injects it). express is
