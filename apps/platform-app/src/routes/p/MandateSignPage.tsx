@@ -28,6 +28,7 @@ export default function MandateSignPage() {
   const [doc, setDoc] = useState<MandateDraftDocument | null>(null);
   const [state, setState] = useState<LoadState>("loading");
   const [proceed, setProceed] = useState(false);
+  const [embedReady, setEmbedReady] = useState(false);
 
   useEffect(() => {
     if (!envelopeId) {
@@ -50,6 +51,14 @@ export default function MandateSignPage() {
       active = false;
     };
   }, [envelopeId]);
+
+  // Safety net: if the embed never fires onDocumentReady (slow network / edge), drop the veil after a
+  // beat so the prospect is never stranded on the loading state.
+  useEffect(() => {
+    if (!proceed || embedReady) return;
+    const t = setTimeout(() => setEmbedReady(true), 12000);
+    return () => clearTimeout(t);
+  }, [proceed, embedReady]);
 
   // The embed (the actual agreement) takes over only after the prospect proceeds; until then the page
   // mirrors the operator's mandate scaffold. The embed needs a wide two-column frame; the scaffold a
@@ -80,16 +89,34 @@ export default function MandateSignPage() {
       />
     );
   } else {
+    // Load the embed behind a dark, branded veil; reveal it only once Documenso signals the document
+    // is ready — so the prospect never sees the iframe's white, unstyled loading flash. The container
+    // and the iframe both carry the dark surface bg as belt-and-suspenders; the iframe fades in.
     body = (
-      <EmbedSignDocument
-        token={doc.signingToken}
-        host={doc.documensoHost ?? DOCUMENSO_DEFAULT_HOST}
-        darkModeDisabled={false}
-        cssVars={DOCUMENSO_CSS_VARS}
-        css={DOCUMENSO_EMBED_CSS}
-        className="h-full min-h-[78vh] w-full border-0"
-        onDocumentError={(e) => console.error("documenso sign error", e)}
-      />
+      <div className="relative min-h-[78vh] w-full bg-[color:var(--color-surface-base)]">
+        <EmbedSignDocument
+          token={doc.signingToken}
+          host={doc.documensoHost ?? DOCUMENSO_DEFAULT_HOST}
+          darkModeDisabled={false}
+          cssVars={DOCUMENSO_CSS_VARS}
+          css={DOCUMENSO_EMBED_CSS}
+          className={`h-full min-h-[78vh] w-full border-0 bg-[color:var(--color-surface-base)] transition-opacity duration-300 ${
+            embedReady ? "opacity-100" : "opacity-0"
+          }`}
+          onDocumentReady={() => setEmbedReady(true)}
+          onDocumentError={(e) => {
+            console.error("documenso sign error", e);
+            setEmbedReady(true);
+          }}
+        />
+        {!embedReady && (
+          <div className="absolute inset-0 flex items-center justify-center bg-[color:var(--color-surface-base)]">
+            <div className="font-mono text-[0.625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.18em]">
+              Preparing your agreement…
+            </div>
+          </div>
+        )}
+      </div>
     );
   }
 
