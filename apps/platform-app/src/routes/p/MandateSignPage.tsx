@@ -3,16 +3,17 @@
  *
  * The direct-to-documenso counterpart to `SignPage`. The operator's "Confirm & originate"
  * instantiates a Documenso document from the engagement template and shares this link (the envelope
- * id is its own credential). The prospect lands on the mandate framing, clicks "Proceed to
- * proposal", and the token-driven Documenso embed reveals — the SAME `EmbedSignDocument`, theme, and
- * `DocumentFrame` chrome the proposal flow uses, so the two origination modes read identically to
- * the prospect.
+ * id is its own credential). The prospect lands on the SAME engagement-proposal scaffold the operator
+ * sees (`MandateProposalScaffold`) — except the Execution box, instead of a signature pad, shows
+ * "Proceed to Proposal"; clicking it reveals the token-driven Documenso embed (the actual agreement),
+ * reusing the same theme + `DocumentFrame` chrome the proposal flow uses.
  */
 import { EmbedSignDocument } from "@documenso/embed-react";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
 import { DocumentFrame } from "@/proposals/DocumentFrame";
+import { MandateProposalScaffold } from "@/proposals/MandateProposalScaffold";
 import { type MandateDraftDocument, getMandateDraftDocument } from "@/proposals/api";
 import {
   DOCUMENSO_CSS_VARS,
@@ -50,6 +51,11 @@ export default function MandateSignPage() {
     };
   }, [envelopeId]);
 
+  // The embed (the actual agreement) takes over only after the prospect proceeds; until then the page
+  // mirrors the operator's mandate scaffold. The embed needs a wide two-column frame; the scaffold a
+  // narrow reading column.
+  const showingEmbed = state === "ready" && !!doc?.signingToken && proceed;
+
   let body: React.ReactNode;
   if (state === "loading") {
     body = <BodyNote>Preparing the agreement…</BodyNote>;
@@ -58,7 +64,21 @@ export default function MandateSignPage() {
   } else if (!doc.signingToken) {
     body = <BodyNote>Document is being prepared — check back in a moment.</BodyNote>;
   } else if (!proceed) {
-    body = <ProceedGate onProceed={() => setProceed(true)} />;
+    // Mirror the operator's mandate scaffold; the Execution box carries the prospect's CTA in place
+    // of the signature pad. Content values are placeholders pending the draft-data wiring.
+    body = (
+      <MandateProposalScaffold
+        execution={
+          <button
+            type="button"
+            onClick={() => setProceed(true)}
+            className="flex h-[84px] w-full items-center justify-center gap-2 border border-[color:var(--color-accent-primary)] bg-[color:var(--color-accent-soft)] font-mono text-[0.75rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.18em] transition-colors hover:bg-[color:var(--color-accent-primary)] hover:text-[color:var(--color-text-onAccent)]"
+          >
+            Proceed to Proposal →
+          </button>
+        }
+      />
+    );
   } else {
     body = (
       <EmbedSignDocument
@@ -77,31 +97,13 @@ export default function MandateSignPage() {
   // lifecycle vocabulary (created/sent/signed/paid), whereas a draft carries Documenso's envelope
   // status (PENDING/COMPLETED) — a different vocabulary. The draft surface shows no lifecycle pill.
   return (
-    <DocumentFrame title="Engagement Agreement" backHref="/" maxWidthClass="max-w-[1152px]">
+    <DocumentFrame
+      title={showingEmbed ? "Engagement Agreement" : "Engagement Proposal"}
+      backHref="/"
+      maxWidthClass={showingEmbed ? "max-w-[1152px]" : "max-w-[820px]"}
+    >
       {body}
     </DocumentFrame>
-  );
-}
-
-// The "mandate page → proceed to proposal" gate: the prospect arrives here, then reveals the embed.
-// Geometry (gap/padding) is held on the inner wrapper, not the top-level JSX — the route owns its
-// own outer geometry (no-route-geometry), mirroring BodyNote.
-function ProceedGate({ onProceed }: { onProceed: () => void }) {
-  return (
-    <div className="flex min-h-[60vh] items-center justify-center text-center">
-      <div className="flex max-w-[460px] flex-col items-center gap-6 px-6">
-        <p className="text-[0.9375rem] text-[color:var(--color-text-muted)] leading-[1.6]">
-          Your engagement agreement is ready for signature.
-        </p>
-        <button
-          type="button"
-          onClick={onProceed}
-          className="border border-[color:var(--color-accent-primary)] bg-[color:var(--color-accent-soft)] px-8 py-3 font-mono text-[0.8125rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.18em] transition-colors hover:bg-[color:var(--color-accent-primary)] hover:text-[color:var(--color-text-onAccent)]"
-        >
-          Proceed to proposal →
-        </button>
-      </div>
-    </div>
   );
 }
 

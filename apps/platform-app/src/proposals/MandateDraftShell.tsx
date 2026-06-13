@@ -18,6 +18,7 @@ import { useState } from "react";
 
 import { useAuth } from "@/lib/auth";
 import { DocumentFrame } from "@/proposals/DocumentFrame";
+import { MandateProposalScaffold } from "@/proposals/MandateProposalScaffold";
 import { SignatureOverlay } from "@/proposals/SignaturePad";
 import { confirmMandateDraft } from "@/proposals/api";
 
@@ -57,34 +58,9 @@ export function MandateDraftShell({
 
   return (
     <DocumentFrame title="Engagement Proposal" maxWidthClass="max-w-[820px]" housing={housing}>
-      <div className="px-6 pt-10 pb-14 md:px-10 md:pt-12 md:pb-16">
-        {/* Prepared for — value pending the draft wiring */}
-        <div className="mb-6 border-[color:var(--color-border-subtle)] border-b pb-4">
-          <div className="mb-1 font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.16em]">
-            Prepared for
-          </div>
-          <Pending />
-        </div>
-
-        {/* Headline terms — fixed labels, values pending. Mirrors the through-docraptor PricingEditor
-            (Infrastructure Fee · Term · Billing · Total); the data-driven success-fee tiers are
-            omitted until the draft carries them. */}
-        <div className="mb-10">
-          <div className="mb-3 font-mono text-[0.625rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.2em]">
-            Strategic Origination Mandate
-          </div>
-          <TermRow label="Infrastructure Fee" />
-          <TermRow label="Term" />
-          <TermRow label="Billing" />
-          <TermRow label="Total" />
-        </div>
-
-        {/* Execution — the operator signs in the moment (performative, like the editor). */}
-        <div>
-          <div className="mb-3 font-mono text-[0.625rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.2em]">
-            Execution
-          </div>
-          <div className="border border-[color:var(--color-border-subtle)] p-6">
+      <MandateProposalScaffold
+        execution={
+          <>
             <div className="mb-2.5 flex items-center justify-between">
               <span className="font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.16em]">
                 Signature
@@ -126,20 +102,21 @@ export function MandateDraftShell({
                 </span>
               )}
             </div>
-          </div>
-        </div>
-
-        {/* Action — confirm → instantiate the Documenso document → reveal the prospect link. Gated
-            on the on-page signature (cosmetic, but the operator signs every time, like the editor). */}
-        <DraftConfirmBar
-          draftId={draftId}
-          hasSignature={!!signature}
-          status={status}
-          error={error}
-          envelopeId={envelopeId}
-          onSubmit={confirm}
-        />
-      </div>
+          </>
+        }
+        action={
+          // Confirm → instantiate the Documenso document → reveal the prospect link. Gated on the
+          // on-page signature (cosmetic, but the operator signs every time, like the editor).
+          <DraftConfirmBar
+            draftId={draftId}
+            hasSignature={!!signature}
+            status={status}
+            error={error}
+            envelopeId={envelopeId}
+            onSubmit={confirm}
+          />
+        }
+      />
 
       {signing && (
         <SignatureOverlay
@@ -247,22 +224,6 @@ function MandateReadyBar({ envelopeId }: { envelopeId: string }) {
           Open as client
         </a>
       </div>
-    </div>
-  );
-}
-
-// A blank value slot — an em-dash in subtle ink, reading as "to be filled" rather than missing.
-function Pending() {
-  return <div className="text-[0.9375rem] text-[color:var(--color-text-subtle)]">—</div>;
-}
-
-function TermRow({ label }: { label: string }) {
-  return (
-    <div className="flex items-baseline justify-between gap-4 border-[color:var(--color-border-subtle)] border-b py-3">
-      <span className="font-mono text-[0.6875rem] text-[color:var(--color-text-muted)] uppercase tracking-[0.12em]">
-        {label}
-      </span>
-      <span className="text-[0.9375rem] text-[color:var(--color-text-subtle)] tabular-nums">—</span>
     </div>
   );
 }
