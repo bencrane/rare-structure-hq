@@ -48,7 +48,7 @@ export type Industry = {
  * `ucc_debt` and `bdc_maturity` are present on a subset. New catalyst kinds
  * are added here as the taxonomy grows.
  */
-export type CatalystKind = "usaspending" | "ucc_debt" | "bdc_maturity";
+export type CatalystKind = "usaspending" | "ucc_debt" | "bdc_maturity" | "govcon_capability";
 
 /** One labelled fact rendered inside a catalyst card. */
 export type CatalystFact = {
@@ -112,6 +112,23 @@ export type Company = {
    * sum and the row represents the largest single entity. Absent/1 = a single entity.
    */
   relatedEntities?: number;
+  /**
+   * PHASE-3 govcon capability signal (winners dataset, prime recipients). Rolled from the
+   * winner's awards' extracted solicitation requirements — the "does X and requires A,B,C"
+   * axis. Present only when `hasExtractedScope` (the ~1% slice with readable docs); absent
+   * everywhere else. These are structured / controlled-vocab values, never verbatim quotes.
+   */
+  hasExtractedScope?: boolean;
+  requiresClearance?: boolean;
+  /** Highest clearance required across covered awards, e.g. "SECRET", "TOP_SECRET", "TS_SCI". */
+  reqClearanceLevelMax?: string;
+  requiresCmmc?: boolean;
+  /** Controlled-vocab capabilities the company does (e.g. "electrical_systems"). */
+  capabilityTags?: string[];
+  /** Skilled trades / labor the company's covered awards staff (e.g. "electrician"). */
+  laborCategories?: string[];
+  /** Count of the winner's awards with extracted solicitation scope. */
+  coveredAwardCount?: number;
   /** The structural signals attached to this company (usaspending always first). */
   catalysts: CapitalCatalyst[];
 };

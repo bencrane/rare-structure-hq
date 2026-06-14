@@ -30,6 +30,7 @@ import { projectLonLat } from "./projection";
 import type {
   AggregateBar,
   CapitalCatalyst,
+  CatalystFact,
   Command,
   Company,
   Industry,
@@ -1212,6 +1213,22 @@ function askRowNum(v: unknown): number {
   return Number.isFinite(x) ? x : 0;
 }
 
+function askRowBool(v: unknown): boolean {
+  return v === true || v === "true";
+}
+
+function askRowList(v: unknown): string[] | undefined {
+  if (!Array.isArray(v)) return undefined;
+  const out = v.filter((x): x is string => typeof x === "string" && x.length > 0);
+  return out.length ? out : undefined;
+}
+
+/** snake_case controlled-vocab token → human label, e.g. "electrical_systems" → "Electrical systems". */
+function humanizeTag(t: string): string {
+  const s = t.replace(/_/g, " ");
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
 /** The single `usaspending` Capital Catalyst for an /ask row's obligation rollup. */
 function askCatalyst(
   totalAwarded: number,
@@ -1233,6 +1250,52 @@ function askCatalyst(
       { label: "Federal awards", value: hasFed ? "Active" : "—" },
     ],
     tone: "accent",
+  };
+}
+
+/** PHASE-3 govcon capability Capital Catalyst — the "does X and requires A,B,C" signal rolled
+ * onto a prime winner from its awards' extracted solicitation requirements. Structured /
+ * controlled-vocab only (no verbatim quotes ever cross the serving boundary). */
+function capabilityCatalyst(
+  reqClearance: boolean,
+  clearanceMax: string | undefined,
+  reqCmmc: boolean,
+  capabilityTags: string[] | undefined,
+  laborCategories: string[] | undefined,
+  coveredAwards: number,
+): CapitalCatalyst {
+  const tags = (capabilityTags ?? []).map(humanizeTag);
+  const trades = (laborCategories ?? []).map(humanizeTag);
+  const reqs: string[] = [];
+  if (clearanceMax) reqs.push(`${clearanceMax.replace(/_/g, " ")} clearance`);
+  else if (reqClearance) reqs.push("security clearance");
+  if (reqCmmc) reqs.push("CMMC certification");
+  const headline = tags.length
+    ? `Does ${tags.slice(0, 3).join(", ")}${tags.length > 3 ? " +more" : ""}`
+    : "Extracted solicitation scope";
+  const reqsText = reqs.length
+    ? ` Requires ${reqs.join(" + ")}.`
+    : " No clearance/CMMC requirement detected.";
+  const summary = `${coveredAwards} award${
+    coveredAwards === 1 ? "" : "s"
+  } with readable solicitation docs.${reqsText}`;
+  const facts: CatalystFact[] = [
+    {
+      label: "Clearance required",
+      value: clearanceMax ? clearanceMax.replace(/_/g, " ") : reqClearance ? "Yes" : "—",
+    },
+    { label: "CMMC required", value: reqCmmc ? "Yes" : "—" },
+    { label: "Capabilities", value: tags.length ? tags.slice(0, 4).join(", ") : "—" },
+    { label: "Trades / labor", value: trades.length ? trades.slice(0, 4).join(", ") : "—" },
+    { label: "Covered awards", value: String(coveredAwards) },
+  ];
+  return {
+    kind: "govcon_capability",
+    label: "Solicitation capability profile",
+    headline,
+    summary,
+    facts,
+    tone: reqClearance || reqCmmc ? "warn" : "info",
   };
 }
 
@@ -1264,6 +1327,27 @@ function askRowToCompany(r: AskMarketRow): Company {
   const lat = askRowNum(r.lat);
   const lon = askRowNum(r.lon);
   const geo = hasLatLon && (lat !== 0 || lon !== 0) ? projectLonLat(lon, lat) : null;
+  // PHASE-3 capability fields (winners dataset, prime recipients) — absent on company/awards rows.
+  const hasExtractedScope = askRowBool(r.has_extracted_scope);
+  const requiresClearance = askRowBool(r.requires_clearance);
+  const reqClearanceLevelMax = askRowStr(r.req_clearance_level_max);
+  const requiresCmmc = askRowBool(r.requires_cmmc);
+  const capabilityTags = askRowList(r.capability_tags);
+  const laborCategories = askRowList(r.labor_categories);
+  const coveredAwardCount = askRowNum(r.covered_award_count);
+  const catalysts: CapitalCatalyst[] = [askCatalyst(totalAwarded, contractCount, naics, hasFed)];
+  if (hasExtractedScope) {
+    catalysts.push(
+      capabilityCatalyst(
+        requiresClearance,
+        reqClearanceLevelMax,
+        requiresCmmc,
+        capabilityTags,
+        laborCategories,
+        coveredAwardCount,
+      ),
+    );
+  }
   return {
     id,
     name,
@@ -1278,7 +1362,18 @@ function askRowToCompany(r: AskMarketRow): Company {
     latestAwardDate: askRowStr(r.action_date) ?? askRowStr(r.last_action_date) ?? undefined,
     activeAward: hasFed,
     ...(geo ? { x: geo.x, y: geo.y } : {}),
-    catalysts: [askCatalyst(totalAwarded, contractCount, naics, hasFed)],
+    ...(hasExtractedScope
+      ? {
+          hasExtractedScope,
+          requiresClearance,
+          reqClearanceLevelMax,
+          requiresCmmc,
+          capabilityTags,
+          laborCategories,
+          coveredAwardCount,
+        }
+      : {}),
+    catalysts,
   };
 }
 
@@ -1418,6 +1513,37 @@ export const COMMANDS: Command[] = [
     kind: "map-query",
     label: "Companies in transportation & logistics that won over $10M",
     query: { industry: "transportation_logistics", minAward: 10_000_000 },
+  },
+  // ── PHASE-3 capability queries ("does X and requires A,B,C" — winners dataset) ──
+  {
+    id: "q-cap-cleared-electrical",
+    kind: "map-query",
+    label: "Construction winners requiring Secret clearance with cleared electrical trades",
+    query: {
+      nl: "construction winners requiring secret clearance with electricians",
+      dataset: "winners",
+      minAward: 0,
+    },
+  },
+  {
+    id: "q-cap-cmmc-cyber",
+    kind: "map-query",
+    label: "Winners that do cybersecurity work and require CMMC certification",
+    query: {
+      nl: "winners that do cybersecurity work and require CMMC certification",
+      dataset: "winners",
+      minAward: 0,
+    },
+  },
+  {
+    id: "q-cap-cleared-it",
+    kind: "map-query",
+    label: "IT-services winners requiring a security clearance",
+    query: {
+      nl: "winners that do IT services and require a security clearance",
+      dataset: "winners",
+      minAward: 0,
+    },
   },
   {
     id: "agg-industry",
