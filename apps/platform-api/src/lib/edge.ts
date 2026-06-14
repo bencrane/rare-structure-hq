@@ -345,6 +345,51 @@ export async function edgeConfirmMandateDraft(id: string): Promise<EdgeMandateDr
   return (await res.json()) as EdgeMandateDraftConfirmed;
 }
 
+// ── Documenso template field defaults (the Settings "Documenso Templates" editor) ────────────
+// edge_api reads/writes the LIVE Documenso template's fields: list the editable fields (+ current
+// defaults), and bake per-field default values onto the template via /envelope/field/update-many.
+
+export interface EdgeDocumensoTemplateField {
+  /** The Documenso field id — the key used to write a default. */
+  id: number;
+  /** TEXT | NUMBER | DROPDOWN — the default-able field types. */
+  type: string;
+  label: string | null;
+  recipient_id: number | null;
+  page: number | null;
+  /** The value currently baked into the template, if any. */
+  default: string | null;
+}
+
+/** The editable fields (+ current defaults) of a Documenso template, live from the template. */
+export async function edgeListDocumensoTemplateFields(
+  documensoTemplateId: string,
+): Promise<EdgeDocumensoTemplateField[]> {
+  const qs = new URLSearchParams({ documenso_template_id: documensoTemplateId }).toString();
+  const res = await fetch(`${base()}/api/v1/documenso-template-fields?${qs}`, {
+    headers: serviceHeaders(false),
+  });
+  if (!res.ok) throw new EdgeError(`edge documenso-template-fields list failed: ${res.status}`);
+  return (await res.json()) as EdgeDocumensoTemplateField[];
+}
+
+/** Write per-field DEFAULT values onto the live template; returns the refreshed field list. */
+export async function edgeSaveDocumensoTemplateDefaults(
+  documensoTemplateId: string,
+  defaults: { id: number; value: string }[],
+): Promise<EdgeDocumensoTemplateField[]> {
+  const res = await fetch(`${base()}/api/v1/documenso-template-fields/defaults`, {
+    method: "POST",
+    headers: serviceHeaders(),
+    body: JSON.stringify({ documenso_template_id: documensoTemplateId, defaults }),
+  });
+  if (!res.ok)
+    throw new EdgeError(
+      `edge documenso-template-defaults save failed: ${res.status} ${await res.text()}`,
+    );
+  return (await res.json()) as EdgeDocumensoTemplateField[];
+}
+
 export interface EdgeMandateDraftDocument {
   signing_token: string | null;
   documenso_host: string;

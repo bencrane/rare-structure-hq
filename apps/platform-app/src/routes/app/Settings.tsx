@@ -6,7 +6,7 @@
  * markdown authoring editor. The register + editor live under
  * /app/settings/templates/*. This file owns no data — it is pure navigation.
  */
-import { ChevronRight, FileCog, FilePlus2, type LucideIcon } from "lucide-react";
+import { ChevronRight, FileCog, FilePlus2, FileSignature, type LucideIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import type { RenderMode } from "@rare-structure-hq/shared";
@@ -45,6 +45,18 @@ export default function Settings() {
 
       <Section label="Origination">
         <OriginationModeCard />
+      </Section>
+
+      <Section label="Documenso">
+        <Grid cols={1} mdCols={2} gap="4">
+          <HubCard
+            icon={FileSignature}
+            title="Documenso Templates"
+            description="Open a Documenso template and set default values on its fields. Defaults bake onto the template — every document created from it inherits them."
+            cta="Open editor"
+            onClick={() => navigate("/app/settings/documenso-templates")}
+          />
+        </Grid>
       </Section>
     </CockpitPage>
   );

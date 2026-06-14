@@ -35,6 +35,7 @@ import ApplicationStaging from "./routes/app/ApplicationStaging";
 import Applications from "./routes/app/Applications";
 import Calendar from "./routes/app/Calendar";
 import CompanyProfile from "./routes/app/CompanyProfile";
+import DocumensoTemplatesEditor from "./routes/app/DocumensoTemplatesEditor";
 import Dossier from "./routes/app/Dossier";
 import Mandate from "./routes/app/Mandate";
 import MapTab from "./routes/app/MapTab";
@@ -228,6 +229,14 @@ export function App() {
             element={
               <RequireOperator>
                 <TemplateEditor />
+              </RequireOperator>
+            }
+          />
+          <Route
+            path="settings/documenso-templates"
+            element={
+              <RequireOperator>
+                <DocumensoTemplatesEditor />
               </RequireOperator>
             }
           />
