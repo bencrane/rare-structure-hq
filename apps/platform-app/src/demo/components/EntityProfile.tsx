@@ -17,7 +17,7 @@
  */
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Building2, CalendarClock, Landmark, Receipt, X } from "lucide-react";
+import { Building2, CalendarClock, Landmark, Receipt, ShieldCheck, X } from "lucide-react";
 import { type ComponentType, useEffect, useState } from "react";
 import { industryLabel } from "../data";
 import { getDossier, peekDossier } from "../dossierCache";
@@ -33,6 +33,7 @@ const CATALYST_ICON: Record<CatalystKind, ComponentType<{ className?: string }>>
   usaspending: Landmark,
   ucc_debt: Receipt,
   bdc_maturity: CalendarClock,
+  govcon_capability: ShieldCheck,
 };
 
 const TONE_COLOR: Record<CapitalCatalyst["tone"], string> = {
