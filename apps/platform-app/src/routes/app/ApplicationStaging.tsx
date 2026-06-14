@@ -118,6 +118,15 @@ export default function ApplicationStaging() {
         Applications
       </button>
 
+      {/* Opportunity-id stamp — the staging context the originate flow carries through (the draft is
+          keyed by it; surfaced here so the pass-through is visible while the real wiring lands). */}
+      <div className={stampCls}>
+        <span className="text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
+          Opportunity ID
+        </span>
+        <span className="text-[color:var(--color-text-accent)]">{opportunityId}</span>
+      </div>
+
       {state === "loading" ? (
         <Panel>
           <div className="px-5 py-16 text-center font-mono text-[color:var(--color-text-subtle)] text-mono-xs uppercase">
@@ -249,6 +258,9 @@ function groupByArchetype(options: EngagementOption[]): [string, EngagementOptio
 
 const backCls =
   "mb-4 inline-flex items-center gap-1.5 font-mono text-[color:var(--color-text-subtle)] text-mono-xs uppercase tracking-[0.14em] transition-colors hover:text-[color:var(--color-text-accent)]";
+
+const stampCls =
+  "mb-6 inline-flex items-center gap-2 border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-raised)] px-3 py-1.5 font-mono text-mono-xs";
 
 const labelCls =
   "font-mono text-[color:var(--color-text-subtle)] text-mono-xs uppercase tracking-[0.14em]";
