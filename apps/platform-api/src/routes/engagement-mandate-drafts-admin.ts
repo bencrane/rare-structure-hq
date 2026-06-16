@@ -22,6 +22,7 @@ import {
   edgeGetMandateDraftDocument,
   edgeGetStagingDraft,
   edgeListEngagementMappings,
+  edgeOriginatePrefilledDraft,
   edgeUpsertStagingDraft,
 } from "../lib/edge.ts";
 
@@ -115,7 +116,8 @@ engagementMandateDraftRoutes.put("/by-opportunity/:opportunityId", requireUser, 
   }
 });
 
-// "Confirm & originate" — instantiate the Documenso document from the draft's template.
+// "Confirm & originate" — ENVELOPE-DISTRIBUTE lane: instantiate the Documenso document from the
+// draft's template (/envelope/use + distribute). The default direct-to-documenso lane.
 engagementMandateDraftRoutes.post("/:id/confirm", requireUser, async (c) => {
   const id = c.req.param("id");
   try {
@@ -125,6 +127,29 @@ engagementMandateDraftRoutes.post("/:id/confirm", requireUser, async (c) => {
         envelopeId: res.envelope_id,
         signingToken: res.signing_token,
         documensoHost: res.documenso_host,
+      },
+    });
+  } catch (e) {
+    if (e instanceof EdgeError) throw new HTTPException(502, { message: e.message });
+    throw e;
+  }
+});
+
+// "Confirm & originate" — TEMPLATE-PREFILL-DRAFT lane (PARALLEL to /confirm, additive): instantiate a
+// Documenso document from the draft's template via /api/v2/template/use, prefilled from
+// opportunity_specific_content and NOT distributed → the new envelope stays DRAFT. Same downstream
+// shape as /confirm (envelopeId + signingToken), plus the draft `status`.
+engagementMandateDraftRoutes.post("/:id/originate-prefilled-draft", requireUser, async (c) => {
+  const id = c.req.param("id");
+  try {
+    const res = await edgeOriginatePrefilledDraft(id);
+    return c.json({
+      data: {
+        envelopeId: res.envelope_id,
+        documentId: res.document_id,
+        signingToken: res.signing_token,
+        documensoHost: res.documenso_host,
+        status: res.status,
       },
     });
   } catch (e) {
