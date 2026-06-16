@@ -284,6 +284,77 @@ export async function edgeListOpportunities(): Promise<EdgeOpportunitySummary[]>
   return (await res.json()) as EdgeOpportunitySummary[];
 }
 
+// ── Engagement mandates (the PARALLEL AO term-only HTML → DocRaptor pathway) ──────────────────
+// Distinct from engagement-mandate-drafts (the staging-draft → Documenso path). The operator locks a
+// price+term PACKAGE on an opportunity; edge_api binds the opportunity + package into the repo-resident
+// static AO term-only HTML and renders a plain PDF via DocRaptor (fired through a Trigger.dev task).
+
+export interface EdgeEngagementPackage {
+  key: string;
+  label: string;
+  term_fee_cents: number;
+  duration_months: number;
+}
+
+/** The preset price+term options for the Applications action dropdown. */
+export async function edgeListEngagementPackages(): Promise<EdgeEngagementPackage[]> {
+  const res = await fetch(`${base()}/api/v1/engagement-mandates/packages`, {
+    headers: serviceHeaders(false),
+  });
+  if (!res.ok) throw new EdgeError(`edge engagement-packages list failed: ${res.status}`);
+  return (await res.json()) as EdgeEngagementPackage[];
+}
+
+export interface EdgeMandateGenerated {
+  opportunity_id: string;
+  mandate_id: string;
+  status: string;
+  package_key: string;
+  run_id: string | null;
+}
+
+/** Lock a package on an opportunity and enqueue its mandate render. Service-token gated. */
+export async function edgeGenerateMandate(
+  opportunityId: string,
+  packageKey: string,
+): Promise<EdgeMandateGenerated> {
+  const res = await fetch(
+    `${base()}/api/v1/engagement-mandates/${encodeURIComponent(opportunityId)}`,
+    { method: "POST", headers: serviceHeaders(), body: JSON.stringify({ packageKey }) },
+  );
+  if (!res.ok)
+    throw new EdgeError(`edge generate-mandate failed: ${res.status} ${await res.text()}`);
+  return (await res.json()) as EdgeMandateGenerated;
+}
+
+export interface EdgeMandateState {
+  id: string;
+  opportunity_id: string;
+  package_key: string;
+  term_fee_cents: number;
+  duration_months: number;
+  document_slug: string;
+  style: string;
+  status: string;
+  pdf_r2_key: string | null;
+  pdf_bytes: number | null;
+  trigger_run_id: string | null;
+  error: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+/** The opportunity's current mandate state. Null on 404 (nothing staged yet). */
+export async function edgeGetMandate(opportunityId: string): Promise<EdgeMandateState | null> {
+  const res = await fetch(
+    `${base()}/api/v1/engagement-mandates/${encodeURIComponent(opportunityId)}`,
+    { headers: serviceHeaders(false) },
+  );
+  if (res.status === 404) return null;
+  if (!res.ok) throw new EdgeError(`edge mandate get failed: ${res.status}`);
+  return (await res.json()) as EdgeMandateState;
+}
+
 export interface EdgeEngagementMappingOption {
   id: string;
   label: string;
