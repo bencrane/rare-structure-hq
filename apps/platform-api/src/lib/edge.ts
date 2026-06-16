@@ -767,3 +767,56 @@ export async function edgeGetPayment(ref: string): Promise<EdgePaymentState | nu
   if (!res.ok) throw new EdgeError(`edge payment state failed: ${res.status}`);
   return (await res.json()) as EdgePaymentState;
 }
+
+// ── Engagement templates (Settings "Engagement Templates" render surface) ──────────────────────
+// A self-contained core-x path: edge_api lists the repo-resident template tree (path/archetype/
+// version) and renders one to a clean PDF via DocRaptor (plain by default) → R2 presigned URL.
+// NO Documenso — the operator affixes the signature/date/value fields in the editor by hand. This
+// BFF only brokers the service token across the auth boundary.
+
+export interface EdgeEngagementTemplate {
+  path: string;
+  archetype: string;
+  version: string;
+  name: string;
+  default_style: string;
+  styles_available: string[];
+}
+
+/** The selectable (path, archetype, version) templates — for the Settings dropdowns. */
+export async function edgeListEngagementTemplates(): Promise<EdgeEngagementTemplate[]> {
+  const res = await fetch(`${base()}/api/v1/engagement-templates`, {
+    headers: serviceHeaders(false),
+  });
+  if (!res.ok) throw new EdgeError(`edge engagement-templates list failed: ${res.status}`);
+  return (await res.json()) as EdgeEngagementTemplate[];
+}
+
+export interface EdgeEngagementTemplateRender {
+  pdf_url: string;
+  expires_seconds: number;
+  path: string;
+  archetype: string;
+  version: string;
+  style: string;
+  pdf_bytes: number;
+}
+
+/** Render the selected template to a clean PDF (plain by default). Service-token gated. No Documenso. */
+export async function edgeRenderEngagementTemplate(input: {
+  path: string;
+  archetype: string;
+  version: string;
+  style?: string;
+}): Promise<EdgeEngagementTemplateRender> {
+  const res = await fetch(`${base()}/api/v1/engagement-templates/render`, {
+    method: "POST",
+    headers: serviceHeaders(),
+    body: JSON.stringify(input),
+  });
+  if (!res.ok)
+    throw new EdgeError(
+      `edge engagement-template render failed: ${res.status} ${await res.text()}`,
+    );
+  return (await res.json()) as EdgeEngagementTemplateRender;
+}
