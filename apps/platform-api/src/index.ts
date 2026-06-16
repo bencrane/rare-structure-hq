@@ -29,6 +29,7 @@ import { bookingAdminRoutes } from "./routes/bookings-admin.ts";
 import { companyProfileRoutes } from "./routes/company-profiles-admin.ts";
 import { documensoTemplateFieldRoutes } from "./routes/documenso-template-fields-admin.ts";
 import { engagementMandateDraftRoutes } from "./routes/engagement-mandate-drafts-admin.ts";
+import { engagementMandateAdminRoutes } from "./routes/engagement-mandates-admin.ts";
 import { engagementMappingRoutes } from "./routes/engagement-mappings-admin.ts";
 import { federalRoutes } from "./routes/federal.ts";
 import { opportunityAdminRoutes } from "./routes/opportunities-admin.ts";
@@ -114,6 +115,7 @@ app.route("/api/v1/bookings", bookingAdminRoutes);
 app.route("/api/v1/opportunities", opportunityAdminRoutes);
 app.route("/api/v1/engagement-mappings", engagementMappingRoutes);
 app.route("/api/v1/engagement-mandate-drafts", engagementMandateDraftRoutes);
+app.route("/api/v1/engagement-mandates", engagementMandateAdminRoutes);
 app.route("/api/v1/documenso-template-fields", documensoTemplateFieldRoutes);
 app.route("/api/v1/company-profiles", companyProfileRoutes);
 // PUBLIC federal map/chart surface — warm in-memory snapshot, no auth (the cockpit /map
