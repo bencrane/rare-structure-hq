@@ -416,6 +416,36 @@ export async function edgeConfirmMandateDraft(id: string): Promise<EdgeMandateDr
   return (await res.json()) as EdgeMandateDraftConfirmed;
 }
 
+export interface EdgeMandatePrefilledDraftOriginated {
+  envelope_id: string;
+  document_id: number | null;
+  signing_token: string | null;
+  status: string;
+  documenso_host: string;
+}
+
+/**
+ * Direct-to-documenso "Confirm & originate" — the TEMPLATE-PREFILL-DRAFT sub-lane (PARALLEL to
+ * {@link edgeConfirmMandateDraft}, which is the envelope-distribute lane). Instantiates a Documenso
+ * document FROM the draft's template via `POST /api/v2/template/use` with the opportunity's
+ * `opportunity_specific_content` field values PREFILLED and `distributeDocument:false`, so the new
+ * envelope stays DRAFT (never distributed). Returns the envelope id (the prospect-link capability) +
+ * the signer token. Service-token gated. The existing /confirm lane is untouched.
+ */
+export async function edgeOriginatePrefilledDraft(
+  id: string,
+): Promise<EdgeMandatePrefilledDraftOriginated> {
+  const res = await fetch(
+    `${base()}/api/v1/engagement-mandate-drafts/${encodeURIComponent(id)}/originate-prefilled-draft`,
+    { method: "POST", headers: serviceHeaders() },
+  );
+  if (!res.ok)
+    throw new EdgeError(
+      `edge mandate-draft originate-prefilled-draft failed: ${res.status} ${await res.text()}`,
+    );
+  return (await res.json()) as EdgeMandatePrefilledDraftOriginated;
+}
+
 // ── Documenso template field defaults (the Settings "Documenso Templates" editor) ────────────
 // edge_api reads/writes the LIVE Documenso template's fields: list the editable fields (+ current
 // defaults), and bake per-field default values onto the template via /envelope/field/update-many.

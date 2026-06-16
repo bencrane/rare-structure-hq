@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-import type { RenderMode } from "@rare-structure-hq/shared";
+import type { DirectToDocumensoLane, RenderMode } from "@rare-structure-hq/shared";
 import { Card, Grid, Inline, Stack, Text, cx } from "@rare-structure-hq/ui";
 
 import { CockpitPage, Section, Tile } from "@/app/cockpit";
@@ -94,12 +94,44 @@ const ORIGINATION_OPTIONS: { value: RenderMode; label: string; hint: string }[] 
   },
 ];
 
+// The direct-to-documenso SUB-LANE — only shown when "Direct to Documenso" is the selected mode.
+// Picks which direct-to-documenso lane "Confirm & Originate" uses.
+const DIRECT_TO_DOCUMENSO_LANE_OPTIONS: {
+  value: DirectToDocumensoLane;
+  label: string;
+  hint: string;
+}[] = [
+  {
+    value: "envelope-distribute",
+    label: "Envelope (distribute)",
+    hint: "Instantiate from the template and distribute the envelope. Current behavior.",
+  },
+  {
+    value: "template-prefill-draft",
+    label: "Template prefill (draft)",
+    hint: "Prefill from the opportunity content and leave the document as a DRAFT (not distributed).",
+  },
+];
+
 // Originate-pathway toggle — selects what "Confirm & Originate" does. Picking a card stages the
 // choice locally; the Save button persists it per operator via the BFF (`/api/v1/settings` →
 // public.operator_settings), where edge_api reads it at originate.
 function OriginationModeCard() {
-  const { renderMode, selected, dirty, saving, saved, error, select, save } = useOriginationMode();
+  const {
+    renderMode,
+    selected,
+    selectedLane,
+    dirty,
+    saving,
+    saved,
+    error,
+    select,
+    selectLane,
+    save,
+  } = useOriginationMode();
   const loading = renderMode === null;
+  // The sub-lane selector is only relevant under direct-to-documenso (it is ignored by docraptor).
+  const showLaneSelector = selected === "direct-to-documenso";
   return (
     <Card className="p-5">
       <Stack gap="4">
@@ -148,6 +180,56 @@ function OriginationModeCard() {
             );
           })}
         </Inline>
+
+        {showLaneSelector ? (
+          <Stack gap="3">
+            <Stack gap="1">
+              <Text size="mono-xs" mono color="muted">
+                Direct-to-Documenso lane
+              </Text>
+              <Text size="body-sm" color="muted">
+                Which Documenso lane “Confirm &amp; Originate” uses. Only applies to Direct to
+                Documenso.
+              </Text>
+            </Stack>
+            <Inline gap="3">
+              {DIRECT_TO_DOCUMENSO_LANE_OPTIONS.map((opt) => {
+                const active = selectedLane === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    disabled={saving || loading}
+                    aria-pressed={active}
+                    onClick={() => selectLane(opt.value)}
+                    className={cx(
+                      "flex-1 cursor-pointer border p-4 text-left outline-none transition-colors disabled:cursor-not-allowed disabled:opacity-50",
+                      active
+                        ? "border-[color:var(--color-border-accent)] bg-[color:var(--color-accent-soft)]"
+                        : "border-[color:var(--color-border-default)] hover:border-[color:var(--color-text-accent)]",
+                    )}
+                  >
+                    <Stack gap="1">
+                      <Inline gap="2" align="center" justify="between">
+                        <Text size="mono-xs" mono color="strong">
+                          {opt.label}
+                        </Text>
+                        {active ? (
+                          <Text size="mono-xs" mono color="accent">
+                            ●
+                          </Text>
+                        ) : null}
+                      </Inline>
+                      <Text size="body-sm" color="muted">
+                        {opt.hint}
+                      </Text>
+                    </Stack>
+                  </button>
+                );
+              })}
+            </Inline>
+          </Stack>
+        ) : null}
 
         <Inline gap="3" align="center" justify="between">
           <Text size="mono-xs" mono color="muted">
