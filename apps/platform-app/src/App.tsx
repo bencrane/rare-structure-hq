@@ -37,6 +37,7 @@ import Calendar from "./routes/app/Calendar";
 import CompanyProfile from "./routes/app/CompanyProfile";
 import DocumensoTemplatesEditor from "./routes/app/DocumensoTemplatesEditor";
 import Dossier from "./routes/app/Dossier";
+import EngagementTemplatesRender from "./routes/app/EngagementTemplatesRender";
 import Mandate from "./routes/app/Mandate";
 import MapTab from "./routes/app/MapTab";
 import Overview from "./routes/app/Overview";
@@ -237,6 +238,14 @@ export function App() {
             element={
               <RequireOperator>
                 <DocumensoTemplatesEditor />
+              </RequireOperator>
+            }
+          />
+          <Route
+            path="settings/engagement-templates"
+            element={
+              <RequireOperator>
+                <EngagementTemplatesRender />
               </RequireOperator>
             }
           />

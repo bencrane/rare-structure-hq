@@ -6,7 +6,14 @@
  * markdown authoring editor. The register + editor live under
  * /app/settings/templates/*. This file owns no data — it is pure navigation.
  */
-import { ChevronRight, FileCog, FilePlus2, FileSignature, type LucideIcon } from "lucide-react";
+import {
+  ChevronRight,
+  FileCog,
+  FileDown,
+  FilePlus2,
+  FileSignature,
+  type LucideIcon,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import type { RenderMode } from "@rare-structure-hq/shared";
@@ -55,6 +62,18 @@ export default function Settings() {
             description="Open a Documenso template and set default values on its fields. Defaults bake onto the template — every document created from it inherits them."
             cta="Open editor"
             onClick={() => navigate("/app/settings/documenso-templates")}
+          />
+        </Grid>
+      </Section>
+
+      <Section label="Engagement Templates">
+        <Grid cols={1} mdCols={2} gap="4">
+          <HubCard
+            icon={FileDown}
+            title="Engagement Templates"
+            description="Render a repo-resident engagement template (path → archetype → version) to a clean PDF via DocRaptor. Opens in a new tab; nothing is sent to Documenso."
+            cta="Open renderer"
+            onClick={() => navigate("/app/settings/engagement-templates")}
           />
         </Grid>
       </Section>
