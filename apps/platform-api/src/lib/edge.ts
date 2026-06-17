@@ -432,9 +432,7 @@ export interface EdgeMandatePrefilledOriginated {
  * lands PENDING (signable, no email). Returns the envelope id (the prospect-link capability) + the
  * signer token. Service-token gated. The existing /confirm lane is untouched.
  */
-export async function edgeOriginatePrefilled(
-  id: string,
-): Promise<EdgeMandatePrefilledOriginated> {
+export async function edgeOriginatePrefilled(id: string): Promise<EdgeMandatePrefilledOriginated> {
   const res = await fetch(
     `${base()}/api/v1/engagement-mandate-drafts/${encodeURIComponent(id)}/originate-prefilled`,
     { method: "POST", headers: serviceHeaders() },
@@ -511,6 +509,30 @@ export async function edgeGetMandateDraftDocument(
   if (res.status === 404) return null;
   if (!res.ok) throw new EdgeError(`edge mandate-draft document failed: ${res.status}`);
   return (await res.json()) as EdgeMandateDraftDocument;
+}
+
+export interface EdgeEnvelopeState {
+  envelope_id: string;
+  /** True iff a terminal DOCUMENT_COMPLETED webhook row has landed for this envelope. */
+  signed: boolean;
+  /** Most-recent raw event name (UPPERCASE_UNDERSCORE), or null if no rows captured yet. */
+  latest_event: string | null;
+  /** Envelope-level Documenso status carried in the raw payload (PENDING / COMPLETED / …). */
+  status: string | null;
+}
+
+/**
+ * PUBLIC envelope signing-state read for the prospect poll — the envelope id is the capability.
+ * edge_api DERIVES this from the RAW webhook capture (business.documenso_webhook_events), not a
+ * live envelope state read. Drives MandateSignPage's advance-on-signed.
+ */
+export async function edgeGetEnvelopeState(envelopeId: string): Promise<EdgeEnvelopeState | null> {
+  const res = await fetch(
+    `${base()}/api/v1/documenso/envelope/${encodeURIComponent(envelopeId)}/state`,
+  );
+  if (res.status === 404) return null;
+  if (!res.ok) throw new EdgeError(`edge envelope-state failed: ${res.status}`);
+  return (await res.json()) as EdgeEnvelopeState;
 }
 
 // ── Mandate staging (the per-opportunity prep page) ──────────────────────────

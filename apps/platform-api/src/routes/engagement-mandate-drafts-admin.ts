@@ -19,6 +19,7 @@ import {
   EdgeError,
   edgeConfirmMandateDraft,
   edgeCreateMandateDraft,
+  edgeGetEnvelopeState,
   edgeGetMandateDraftDocument,
   edgeGetStagingDraft,
   edgeListEngagementMappings,
@@ -170,6 +171,30 @@ engagementMandateDraftRoutes.get("/document/:envelopeId", async (c) => {
         signingToken: doc.signing_token,
         documensoHost: doc.documenso_host,
         status: doc.status,
+      },
+    });
+  } catch (e) {
+    if (e instanceof HTTPException) throw e;
+    if (e instanceof EdgeError) throw new HTTPException(502, { message: e.message });
+    throw e;
+  }
+});
+
+// PUBLIC — the prospect poll. While the embed is shown MandateSignPage polls this; `signed` flips
+// true once a terminal DOCUMENT_COMPLETED webhook lands for the envelope, and the page advances to
+// the signed-confirmation view. Same capability model as the document read (envelope id = the key);
+// proxies edge_api's /api/v1/documenso/envelope/:id/state (derived from the raw webhook capture).
+engagementMandateDraftRoutes.get("/document/:envelopeId/state", async (c) => {
+  const envelopeId = c.req.param("envelopeId");
+  try {
+    const state = await edgeGetEnvelopeState(envelopeId);
+    if (!state) throw new HTTPException(404, { message: "envelope not found" });
+    return c.json({
+      data: {
+        envelopeId: state.envelope_id,
+        signed: state.signed,
+        latestEvent: state.latest_event,
+        status: state.status,
       },
     });
   } catch (e) {

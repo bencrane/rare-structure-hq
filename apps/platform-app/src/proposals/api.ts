@@ -106,8 +106,7 @@ export async function originatePrefilled(
     `${API_BASE}/api/v1/engagement-mandate-drafts/${encodeURIComponent(id)}/originate-prefilled`,
     { method: "POST", headers: authHeaders(token) },
   );
-  if (!res.ok)
-    throw new Error(`originate prefilled failed: ${res.status} ${await res.text()}`);
+  if (!res.ok) throw new Error(`originate prefilled failed: ${res.status} ${await res.text()}`);
   return (await res.json()).data as MandatePrefilledOriginated;
 }
 
@@ -128,6 +127,30 @@ export async function getMandateDraftDocument(
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`mandate document failed: ${res.status}`);
   return (await res.json()).data as MandateDraftDocument;
+}
+
+export interface MandateEnvelopeState {
+  envelopeId: string;
+  /** True once a terminal DOCUMENT_COMPLETED webhook has landed — the signing is done. */
+  signed: boolean;
+  /** Most-recent raw Documenso event name (UPPERCASE_UNDERSCORE), or null if none yet. */
+  latestEvent: string | null;
+  /** Envelope-level Documenso status from the raw payload (PENDING / COMPLETED / …). */
+  status: string | null;
+}
+
+/** PUBLIC signing-state poll for `/p/m/:envelopeId` — server-truth, derived from the raw Documenso
+ * webhook capture (NOT a browser `onDocumentCompleted` listener). MandateSignPage polls this while
+ * the embed is shown and advances when `signed` flips true. Returns null on 404. */
+export async function getMandateEnvelopeState(
+  envelopeId: string,
+): Promise<MandateEnvelopeState | null> {
+  const res = await fetch(
+    `${API_BASE}/api/v1/engagement-mandate-drafts/document/${encodeURIComponent(envelopeId)}/state`,
+  );
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`mandate envelope state failed: ${res.status}`);
+  return (await res.json()).data as MandateEnvelopeState;
 }
 
 /** Instantiate a proposal record → its capability ref + shell path. */

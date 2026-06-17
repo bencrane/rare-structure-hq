@@ -9,12 +9,16 @@
  * reusing the same theme + `DocumentFrame` chrome the proposal flow uses.
  */
 import { EmbedSignDocument } from "@documenso/embed-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 
 import { DocumentFrame } from "@/proposals/DocumentFrame";
 import { MandateProposalScaffold } from "@/proposals/MandateProposalScaffold";
-import { type MandateDraftDocument, getMandateDraftDocument } from "@/proposals/api";
+import {
+  type MandateDraftDocument,
+  getMandateDraftDocument,
+  getMandateEnvelopeState,
+} from "@/proposals/api";
 import {
   DOCUMENSO_CSS_VARS,
   DOCUMENSO_DEFAULT_HOST,
@@ -23,12 +27,24 @@ import {
 
 type LoadState = "loading" | "ready" | "notfound";
 
+// How often the prospect poll asks the server "is this envelope signed yet?" while the embed is up.
+// Server-truth only — derived from the Documenso webhook capture, NOT a browser onDocumentCompleted
+// listener (the embed event can fire before the sealed/COMPLETED state is durable, and signing can
+// also complete on a different device/tab than the one holding this embed).
+const SIGNED_POLL_MS = 4000;
+
 export default function MandateSignPage() {
   const { envelopeId } = useParams<{ envelopeId: string }>();
   const [doc, setDoc] = useState<MandateDraftDocument | null>(null);
   const [state, setState] = useState<LoadState>("loading");
   const [proceed, setProceed] = useState(false);
   const [embedReady, setEmbedReady] = useState(false);
+  // Server-confirmed terminal state. Once true the embed is replaced by the signed-confirmation view.
+  const [signed, setSigned] = useState(false);
+  // Display-only: the embed's completion event raises a "Finalizing…" veil over the embed while the
+  // server poll catches up. It does NOT advance the page — only the server `signed` truth does that.
+  const [finalizing, setFinalizing] = useState(false);
+  const pollTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     if (!envelopeId) {
@@ -52,6 +68,34 @@ export default function MandateSignPage() {
     };
   }, [envelopeId]);
 
+  // Server-truth signed poll. Runs only while the embed is shown (the prospect has proceeded into the
+  // agreement) and stops the moment the server reports `signed`. The state endpoint derives signed
+  // from the raw Documenso webhook capture — the page advances on durable server truth, never on a
+  // browser embed event. Idiom lifted from PaymentPage's authoritative-state poll (useRef interval,
+  // cleared on unmount and on terminal state).
+  useEffect(() => {
+    const live = state === "ready" && !!doc?.signingToken && proceed && !signed;
+    if (!envelopeId || !live) return;
+    const tick = async () => {
+      const s = await getMandateEnvelopeState(envelopeId).catch(() => null);
+      if (s?.signed) {
+        setSigned(true);
+        if (pollTimer.current) {
+          clearInterval(pollTimer.current);
+          pollTimer.current = null;
+        }
+      }
+    };
+    void tick(); // probe immediately (covers the already-signed reload case)
+    pollTimer.current = setInterval(() => void tick(), SIGNED_POLL_MS);
+    return () => {
+      if (pollTimer.current) {
+        clearInterval(pollTimer.current);
+        pollTimer.current = null;
+      }
+    };
+  }, [envelopeId, state, doc?.signingToken, proceed, signed]);
+
   // Safety net: if the embed never fires onDocumentReady (slow network / edge), drop the veil after a
   // beat so the prospect is never stranded on the loading state.
   useEffect(() => {
@@ -62,11 +106,17 @@ export default function MandateSignPage() {
 
   // The embed (the actual agreement) takes over only after the prospect proceeds; until then the page
   // mirrors the operator's mandate scaffold. The embed needs a wide two-column frame; the scaffold a
-  // narrow reading column.
+  // narrow reading column. Once the server confirms `signed`, the signed-confirmation view replaces
+  // the embed (still inside this frame, still wide).
   const showingEmbed = state === "ready" && !!doc?.signingToken && proceed;
 
   let body: React.ReactNode;
-  if (state === "loading") {
+  if (signed) {
+    // Server-confirmed terminal state — the new direct-to-documenso post-sign confirmation, rendered
+    // in place (no docraptor/proposal post-sign components, no `ref` keying — this flow is keyed by
+    // the envelope id alone).
+    body = <MandateSignedConfirmation />;
+  } else if (state === "loading") {
     body = <BodyNote>Preparing the agreement…</BodyNote>;
   } else if (state === "notfound" || !doc) {
     body = <BodyNote>This mandate link is invalid or has expired.</BodyNote>;
@@ -104,6 +154,10 @@ export default function MandateSignPage() {
             embedReady ? "opacity-100" : "opacity-0"
           }`}
           onDocumentReady={() => setEmbedReady(true)}
+          // Display-only hint: raise the "Finalizing…" veil immediately on the in-frame completion so
+          // the prospect isn't staring at a signed-but-static embed during the poll gap. The actual
+          // advance is gated on the server `signed` truth (the poll), never on this event.
+          onDocumentCompleted={() => setFinalizing(true)}
           onDocumentError={(e) => {
             console.error("documenso sign error", e);
             setEmbedReady(true);
@@ -116,6 +170,13 @@ export default function MandateSignPage() {
             </div>
           </div>
         )}
+        {finalizing && (
+          <div className="absolute inset-0 flex items-center justify-center bg-[color:var(--color-surface-base)]">
+            <div className="font-mono text-[0.625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.18em]">
+              Finalizing your agreement…
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -125,9 +186,9 @@ export default function MandateSignPage() {
   // status (PENDING/COMPLETED) — a different vocabulary. The draft surface shows no lifecycle pill.
   return (
     <DocumentFrame
-      title={showingEmbed ? "Engagement Agreement" : "Engagement Proposal"}
+      title={signed || showingEmbed ? "Engagement Agreement" : "Engagement Proposal"}
       backHref="/"
-      maxWidthClass={showingEmbed ? "max-w-[1152px]" : "max-w-[820px]"}
+      maxWidthClass={showingEmbed && !signed ? "max-w-[1152px]" : "max-w-[820px]"}
     >
       {body}
     </DocumentFrame>
@@ -140,6 +201,50 @@ function BodyNote({ children }: { children: React.ReactNode }) {
       <div className="max-w-[420px] px-6 font-mono text-[0.625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.18em]">
         {children}
       </div>
+    </div>
+  );
+}
+
+/**
+ * MandateSignedConfirmation — the direct-to-documenso post-sign view, rendered IN PLACE within
+ * MandateSignPage's DocumentFrame once the server poll confirms the envelope is signed.
+ *
+ * Built first-principles for THIS flow: no docraptor/proposal post-sign components, no proposal
+ * `ref` (this flow is keyed by the envelope id alone). Deliberately minimal — the operator's bar is
+ * "a page LOADS on signing." A clear confirmation headline + one reassurance line, on-theme via the
+ * shared surface/accent tokens.
+ *
+ * PHASE 2b SEAM: the payment CTA belongs here. The through-docraptor flow advances signed → pay
+ * (`/p/:ref/pay`); the direct-to-documenso flow has no proposal `ref` to key a PaymentPage on yet, so
+ * the next-step CTA is intentionally omitted until that keying is resolved. Drop the "Continue to
+ * payment" action in the marked slot below when Phase 2b lands.
+ */
+function MandateSignedConfirmation() {
+  return (
+    <div className="flex min-h-[78vh] flex-col items-center justify-center px-6 text-center">
+      <div className="flex h-12 w-12 items-center justify-center rounded-full border border-[color:var(--color-accent-primary)] bg-[color:var(--color-accent-soft)] text-[color:var(--color-text-accent)]">
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 24 24"
+          className="h-5 w-5"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M20 6 9 17l-5-5" />
+        </svg>
+      </div>
+      <h2 className="mt-6 font-mono text-[0.8125rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.2em]">
+        Agreement signed
+      </h2>
+      <p className="mt-4 max-w-[440px] font-mono text-[0.6875rem] text-[color:var(--color-text-muted)] leading-relaxed tracking-[0.06em]">
+        Your engagement agreement has been signed and recorded. A fully executed copy will be sent
+        to your email. No further action is needed.
+      </p>
+      {/* PHASE 2b SEAM — payment CTA goes here (see component doc). Omitted until the direct-to-
+          documenso flow carries a payment key. */}
     </div>
   );
 }
