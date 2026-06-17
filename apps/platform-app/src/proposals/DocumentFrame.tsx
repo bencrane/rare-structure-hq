@@ -21,6 +21,7 @@ export function DocumentFrame({
   backHref,
   maxWidthClass = "max-w-[768px]",
   headerAccessory,
+  hideTrustStrip = false,
   housing = "standalone",
   children,
 }: {
@@ -33,6 +34,9 @@ export function DocumentFrame({
   maxWidthClass?: string;
   /** Top-right header slot. Replaces the default StatusPill (e.g. the operator's draft controls). */
   headerAccessory?: React.ReactNode;
+  /** Hide the trust-strip footer ("Legally binding e-signature" / "Audit trail preserved"). The
+   * payment surface sets this — those claims are about signing, not the ACH debit. */
+  hideTrustStrip?: boolean;
   /**
    * Where the frame is mounted. `"standalone"` (default) is the public proposal surface
    * (`/p/:ref` and its sign/pay steps) — the utility bar keeps its own `py-4` band. `"cockpit"`
@@ -87,15 +91,17 @@ export function DocumentFrame({
           {/* Body — page-specific (summary content, or the signing embed). */}
           <div className="relative flex-1 bg-[color:var(--color-surface-base)]">{children}</div>
 
-          {/* Footer — trust strip, identical across both pages. */}
-          <div className="flex items-center justify-between gap-4 border-[color:var(--color-border-subtle)] border-t bg-[color:var(--color-surface-raised)] px-6 py-3">
-            <span className="font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
-              Legally binding e-signature
-            </span>
-            <span className="font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
-              Audit trail preserved
-            </span>
-          </div>
+          {/* Footer — trust strip. Suppressed on surfaces that aren't about signing (e.g. payment). */}
+          {!hideTrustStrip && (
+            <div className="flex items-center justify-between gap-4 border-[color:var(--color-border-subtle)] border-t bg-[color:var(--color-surface-raised)] px-6 py-3">
+              <span className="font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
+                Legally binding e-signature
+              </span>
+              <span className="font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
+                Audit trail preserved
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </div>
