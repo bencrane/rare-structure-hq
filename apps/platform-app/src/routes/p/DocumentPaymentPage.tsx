@@ -142,13 +142,14 @@ export default function DocumentPaymentPage() {
   return (
     <DocumentFrame
       title="Engagement Payment"
-      status={pay.kind === "paid" ? "paid" : undefined}
-      backHref={opportunityId && documentId ? `/p/m/${opportunityId}/${documentId}` : "/"}
+      headerAccessory={<PaymentPill paid={pay.kind === "paid"} />}
+      hideTrustStrip
+      backHref={opportunityId && documentId ? `/p/m/${opportunityId}/${documentId}` : undefined}
       maxWidthClass="max-w-[768px]"
     >
       {form ? (
         <div className="px-6 pt-10 pb-14 md:px-10 md:pt-12 md:pb-16">
-          <div className="mb-8 border-[color:var(--color-border-subtle)] border-b pb-5">
+          <div className="mb-8 border-[color:var(--color-border-subtle)] border-b pb-5 text-center">
             <div className="mb-1 font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.16em]">
               Amount due
             </div>
@@ -192,8 +193,6 @@ function AchPaymentForm({
       options={{ clientSecret: init.clientSecret, appearance: STRIPE_APPEARANCE }}
     >
       <AchForm
-        amountCents={init.amountCents}
-        currency={init.currency}
         opportunityId={opportunityId}
         documentId={documentId}
         onSettledPoll={onSettledPoll}
@@ -205,14 +204,10 @@ function AchPaymentForm({
 type Phase = "idle" | "processing" | "succeeded";
 
 function AchForm({
-  amountCents,
-  currency,
   opportunityId,
   documentId,
   onSettledPoll,
 }: {
-  amountCents: number;
-  currency: string;
   opportunityId: string;
   documentId: string;
   onSettledPoll: () => void;
@@ -238,7 +233,12 @@ function AchForm({
     });
 
     if (result.error) {
-      setError(result.error.message ?? "Payment could not be initiated.");
+      // Field-level validation (incomplete email, missing name, no bank linked) is surfaced inline by
+      // the PaymentElement itself — don't echo it as a page-level error. Only show genuine
+      // processing/API failures here.
+      if (result.error.type !== "validation_error") {
+        setError(result.error.message ?? "Payment could not be initiated.");
+      }
       setSubmitting(false);
       return;
     }
@@ -281,7 +281,7 @@ function AchForm({
         disabled={!stripe || submitting}
         className="w-full border border-[color:var(--color-accent-primary)] bg-[color:var(--color-accent-soft)] py-4 font-mono text-[0.8125rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.16em] transition-colors hover:bg-[color:var(--color-accent-primary)] hover:text-[color:var(--color-text-onAccent)] disabled:cursor-not-allowed disabled:opacity-40"
       >
-        {submitting ? "Authorizing…" : `Authorize ACH debit · ${formatUsdCents(amountCents, currency)}`}
+        {submitting ? "Authorizing…" : "Authorize payment"}
       </button>
       <p className="text-center font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
         US bank account · settles in 1–3 business days · powered by Stripe
@@ -297,5 +297,20 @@ function Note({ children }: { children: React.ReactNode }) {
         {children}
       </div>
     </div>
+  );
+}
+
+// Header pill for the payment surface — speaks the PAYMENT lifecycle (not signing). Mirrors the house
+// StatusPill styling; replaces the default frame pill via DocumentFrame's headerAccessory slot.
+function PaymentPill({ paid }: { paid: boolean }) {
+  const tone = paid
+    ? "border-[color:var(--color-border-accent)] bg-[color:var(--color-accent-soft)] text-[color:var(--color-text-accent)]"
+    : "border-[color:var(--color-border-default)] text-[color:var(--color-text-muted)]";
+  return (
+    <span
+      className={`shrink-0 border px-2.5 py-1 font-mono text-[0.5rem] uppercase tracking-[0.16em] ${tone}`}
+    >
+      {paid ? "Paid" : "Awaiting payment"}
+    </span>
   );
 }

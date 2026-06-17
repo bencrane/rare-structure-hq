@@ -208,7 +208,7 @@ export default function DocumentSignPage() {
     <DocumentFrame
       title={signed || showingEmbed ? "Engagement Agreement" : "Engagement Proposal"}
       status={signed ? "signed" : undefined}
-      backHref="/"
+      backHref={opportunityId && documentId ? `/p/m/${opportunityId}/${documentId}` : undefined}
       maxWidthClass={showingEmbed && !signed ? "max-w-[1152px]" : "max-w-[820px]"}
     >
       {body}
