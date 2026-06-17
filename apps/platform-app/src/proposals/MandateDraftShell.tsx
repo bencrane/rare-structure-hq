@@ -12,8 +12,8 @@
  * The signature is in-session only (not persisted). "Confirm & originate" is the REAL direct-to-
  * documenso originate. WHICH lane it uses is the operator's `directToDocumensoLane` setting:
  *   - 'envelope-distribute'  (default): confirmMandateDraft → BFF → edge_api /envelope/use + distribute.
- *   - 'template-prefill-draft'        : originatePrefilledDraft → BFF → edge_api /api/v2/template/use,
- *                                       prefilled + NOT distributed (stays DRAFT).
+ *   - 'prefill-document-from-template': originatePrefilled → BFF → edge_api /api/v2/template/use,
+ *                                       prefilled + distribute(NONE) → PENDING (no email).
  * Both return the envelope id + token, so the downstream is identical: reveal `/p/m/:envelopeId`.
  */
 import { Check, Copy, ExternalLink, PenLine } from "lucide-react";
@@ -23,7 +23,7 @@ import { useAuth } from "@/lib/auth";
 import { DocumentFrame } from "@/proposals/DocumentFrame";
 import { MandateProposalScaffold } from "@/proposals/MandateProposalScaffold";
 import { SignatureOverlay } from "@/proposals/SignaturePad";
-import { confirmMandateDraft, originatePrefilledDraft } from "@/proposals/api";
+import { confirmMandateDraft, originatePrefilled } from "@/proposals/api";
 import { useOriginationMode } from "@/settings/originationMode";
 
 type ConfirmStatus = "idle" | "submitting" | "ready" | "error";
@@ -54,12 +54,12 @@ export function MandateDraftShell({
     setStatus("submitting");
     setError(null);
     try {
-      // Branch on the lane: template-prefill-draft → the prefilled-DRAFT endpoint; everything else
+      // Branch on the lane: prefill-document-from-template → the prefill endpoint; everything else
       // (incl. the unloaded/default case) → the existing envelope-distribute confirm. Both return the
       // envelope id (the prospect-link capability), so the success path is identical.
       const res =
-        directToDocumensoLane === "template-prefill-draft"
-          ? await originatePrefilledDraft(token, draftId)
+        directToDocumensoLane === "prefill-document-from-template"
+          ? await originatePrefilled(token, draftId)
           : await confirmMandateDraft(token, draftId);
       setEnvelopeId(res.envelopeId);
       setStatus("ready");

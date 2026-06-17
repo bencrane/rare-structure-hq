@@ -87,28 +87,28 @@ export async function confirmMandateDraft(
   return (await res.json()).data as MandateDraftConfirmed;
 }
 
-export interface MandatePrefilledDraftOriginated extends MandateDraftConfirmed {
+export interface MandatePrefilledOriginated extends MandateDraftConfirmed {
   /** The Documenso document id, when returned on create (else null — re-read the envelope). */
   documentId: number | null;
-  /** Always "draft" for this lane — the document is created but never distributed. */
+  /** "pending" for this lane — the document is distributed (no email) so it is signable. */
   status: string;
 }
 
-/** Direct-to-documenso "Confirm & originate" — the TEMPLATE-PREFILL-DRAFT sub-lane (parallel to
- * {@link confirmMandateDraft}, the envelope-distribute lane). Instantiates a Documenso document from
- * the draft's template via /api/v2/template/use, prefilled from opportunity_specific_content and NOT
- * distributed → the new envelope stays DRAFT. Returns the same envelope id + signer token downstream. */
-export async function originatePrefilledDraft(
+/** Direct-to-documenso "Confirm & originate" — the PREFILL-DOCUMENT-FROM-TEMPLATE sub-lane (parallel
+ * to {@link confirmMandateDraft}, the envelope-distribute lane). Instantiates a Documenso document
+ * from the draft's template via /api/v2/template/use, prefilled from opportunity_specific_content,
+ * then distribute(NONE) → PENDING. Returns the same envelope id + signer token downstream. */
+export async function originatePrefilled(
   token: string,
   id: string,
-): Promise<MandatePrefilledDraftOriginated> {
+): Promise<MandatePrefilledOriginated> {
   const res = await fetch(
-    `${API_BASE}/api/v1/engagement-mandate-drafts/${encodeURIComponent(id)}/originate-prefilled-draft`,
+    `${API_BASE}/api/v1/engagement-mandate-drafts/${encodeURIComponent(id)}/originate-prefilled`,
     { method: "POST", headers: authHeaders(token) },
   );
   if (!res.ok)
-    throw new Error(`originate prefilled draft failed: ${res.status} ${await res.text()}`);
-  return (await res.json()).data as MandatePrefilledDraftOriginated;
+    throw new Error(`originate prefilled failed: ${res.status} ${await res.text()}`);
+  return (await res.json()).data as MandatePrefilledOriginated;
 }
 
 export interface MandateDraftDocument {

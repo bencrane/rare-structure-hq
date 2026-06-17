@@ -416,7 +416,7 @@ export async function edgeConfirmMandateDraft(id: string): Promise<EdgeMandateDr
   return (await res.json()) as EdgeMandateDraftConfirmed;
 }
 
-export interface EdgeMandatePrefilledDraftOriginated {
+export interface EdgeMandatePrefilledOriginated {
   envelope_id: string;
   document_id: number | null;
   signing_token: string | null;
@@ -425,25 +425,25 @@ export interface EdgeMandatePrefilledDraftOriginated {
 }
 
 /**
- * Direct-to-documenso "Confirm & originate" — the TEMPLATE-PREFILL-DRAFT sub-lane (PARALLEL to
- * {@link edgeConfirmMandateDraft}, which is the envelope-distribute lane). Instantiates a Documenso
- * document FROM the draft's template via `POST /api/v2/template/use` with the opportunity's
- * `opportunity_specific_content` field values PREFILLED and `distributeDocument:false`, so the new
- * envelope stays DRAFT (never distributed). Returns the envelope id (the prospect-link capability) +
- * the signer token. Service-token gated. The existing /confirm lane is untouched.
+ * Direct-to-documenso "Confirm & originate" — the PREFILL-DOCUMENT-FROM-TEMPLATE sub-lane (PARALLEL to
+ * {@link edgeConfirmMandateDraft}, the envelope-distribute lane). Instantiates a Documenso document
+ * FROM the draft's template via `POST /api/v2/template/use` with the opportunity's
+ * `opportunity_specific_content` field values PREFILLED, then distribute(NONE) so the new envelope
+ * lands PENDING (signable, no email). Returns the envelope id (the prospect-link capability) + the
+ * signer token. Service-token gated. The existing /confirm lane is untouched.
  */
-export async function edgeOriginatePrefilledDraft(
+export async function edgeOriginatePrefilled(
   id: string,
-): Promise<EdgeMandatePrefilledDraftOriginated> {
+): Promise<EdgeMandatePrefilledOriginated> {
   const res = await fetch(
-    `${base()}/api/v1/engagement-mandate-drafts/${encodeURIComponent(id)}/originate-prefilled-draft`,
+    `${base()}/api/v1/engagement-mandate-drafts/${encodeURIComponent(id)}/originate-prefilled`,
     { method: "POST", headers: serviceHeaders() },
   );
   if (!res.ok)
     throw new EdgeError(
-      `edge mandate-draft originate-prefilled-draft failed: ${res.status} ${await res.text()}`,
+      `edge mandate-draft originate-prefilled failed: ${res.status} ${await res.text()}`,
     );
-  return (await res.json()) as EdgeMandatePrefilledDraftOriginated;
+  return (await res.json()) as EdgeMandatePrefilledOriginated;
 }
 
 // ── Documenso template field defaults (the Settings "Documenso Templates" editor) ────────────
