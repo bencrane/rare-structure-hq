@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-import type { DirectToDocumensoLane, RenderMode } from "@rare-structure-hq/shared";
+import type { DirectToDocumensoLane, RenderMode, StripeMode } from "@rare-structure-hq/shared";
 import { Card, Grid, Inline, Stack, Text, cx } from "@rare-structure-hq/ui";
 
 import { CockpitPage, Section, Tile } from "@/app/cockpit";
@@ -113,6 +113,21 @@ const DIRECT_TO_DOCUMENSO_LANE_OPTIONS: {
   },
 ];
 
+// Document-payment Stripe mode — the test/live toggle. Augments the STRIPE_MODE env so the flow can be
+// flipped from the cockpit (no redeploy). `live` is the default; `test` is for exercising the flow.
+const STRIPE_MODE_OPTIONS: { value: StripeMode; label: string; hint: string }[] = [
+  {
+    value: "live",
+    label: "Live",
+    hint: "Real ACH debits on the live Stripe account. The default for real engagements.",
+  },
+  {
+    value: "test",
+    label: "Test",
+    hint: "Stripe test mode — test bank accounts, no real money. For exercising the payment flow.",
+  },
+];
+
 // Originate-pathway toggle — selects what "Confirm & Originate" does. Picking a card stages the
 // choice locally; the Save button persists it per operator via the BFF (`/api/v1/settings` →
 // public.operator_settings), where edge_api reads it at originate.
@@ -121,12 +136,14 @@ function OriginationModeCard() {
     renderMode,
     selected,
     selectedLane,
+    selectedStripeMode,
     dirty,
     saving,
     saved,
     error,
     select,
     selectLane,
+    selectStripeMode,
     save,
   } = useOriginationMode();
   const loading = renderMode === null;
@@ -230,6 +247,54 @@ function OriginationModeCard() {
             </Inline>
           </Stack>
         ) : null}
+
+        <Stack gap="3">
+          <Stack gap="1">
+            <Text size="mono-xs" mono color="muted">
+              Payments — Stripe mode
+            </Text>
+            <Text size="body-sm" color="muted">
+              Which Stripe account document payments use. Flip to Test to exercise the flow without a
+              real charge; Live for real engagements.
+            </Text>
+          </Stack>
+          <Inline gap="3">
+            {STRIPE_MODE_OPTIONS.map((opt) => {
+              const active = selectedStripeMode === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  disabled={saving || loading}
+                  aria-pressed={active}
+                  onClick={() => selectStripeMode(opt.value)}
+                  className={cx(
+                    "flex-1 cursor-pointer border p-4 text-left outline-none transition-colors disabled:cursor-not-allowed disabled:opacity-50",
+                    active
+                      ? "border-[color:var(--color-border-accent)] bg-[color:var(--color-accent-soft)]"
+                      : "border-[color:var(--color-border-default)] hover:border-[color:var(--color-text-accent)]",
+                  )}
+                >
+                  <Stack gap="1">
+                    <Inline gap="2" align="center" justify="between">
+                      <Text size="mono-xs" mono color="strong">
+                        {opt.label}
+                      </Text>
+                      {active ? (
+                        <Text size="mono-xs" mono color="accent">
+                          ●
+                        </Text>
+                      ) : null}
+                    </Inline>
+                    <Text size="body-sm" color="muted">
+                      {opt.hint}
+                    </Text>
+                  </Stack>
+                </button>
+              );
+            })}
+          </Inline>
+        </Stack>
 
         <Inline gap="3" align="center" justify="between">
           <Text size="mono-xs" mono color="muted">

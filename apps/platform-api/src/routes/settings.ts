@@ -1,16 +1,20 @@
 /**
  * Operator settings — the Settings tab's persistence.
  *
- *   GET /api/v1/settings   → { data: OperatorSettings }                       (the default view when no row exists yet)
- *   PUT /api/v1/settings   → upsert { renderMode, directToDocumensoLane }     → { data: OperatorSettings }
+ *   GET /api/v1/settings   → { data: OperatorSettings }
+ *   PUT /api/v1/settings   → upsert { renderMode?, directToDocumensoLane?, stripeMode? } → { data: OperatorSettings }
  *
- * Stored in `public.operator_settings`, keyed by the validated JWT `sub`. The table is reachable
- * only via the BFF's service-role client (RLS-locked, no anon/authenticated grants).
+ * DUMB PASS-THROUGH to edge_api's operator-settings gateway (service-token). The BFF validates the
+ * operator's Supabase session (requireUser), asserts the validated JWT `sub` as the auth_user_id on
+ * the edge path, and forwards — it NO LONGER touches public.operator_settings directly. edge_api owns
+ * the table; this is consistent with the rest of the wiring (platform-app → platform-api → edge_api).
  *
- * `directToDocumensoLane` is a SECOND, INDEPENDENT setting that only applies when
- * `renderMode === 'direct-to-documenso'` — it picks the direct-to-documenso lane ('envelope-distribute'
- * vs 'prefill-document-from-template'). It is always persisted (the column is NOT NULL), but the SPA only
- * surfaces it under direct-to-documenso.
+ * Fields are snake_case on the edge wire, camelCase here, and all three are independent + optional on
+ * the PUT (the gateway merges — an omitted field is preserved):
+ *   - renderMode             — the originate pathway.
+ *   - directToDocumensoLane  — the direct-to-documenso sub-lane (only meaningful under direct-to-documenso).
+ *   - stripeMode             — document-payment test/live, augmenting the STRIPE_MODE env (null in the
+ *                              DB = follow env; surfaced here as the `live` default).
  */
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
@@ -18,33 +22,53 @@ import { HTTPException } from "hono/http-exception";
 import {
   DEFAULT_DIRECT_TO_DOCUMENSO_LANE,
   DEFAULT_RENDER_MODE,
+  DEFAULT_STRIPE_MODE,
   DIRECT_TO_DOCUMENSO_LANES,
   type DirectToDocumensoLane,
   type OperatorSettings,
   RENDER_MODES,
   type RenderMode,
+  STRIPE_MODES,
+  type StripeMode,
 } from "@rare-structure-hq/shared";
 
 import { type AuthVariables, requireUser } from "../auth.ts";
-import { db } from "../lib/db.ts";
+import { EdgeError, edgeGetOperatorSettings, edgePutOperatorSettings } from "../lib/edge.ts";
 
 export const settingsRoutes = new Hono<{ Variables: AuthVariables }>();
 
+// Map the edge gateway's snake_case row → the cockpit's camelCase shape, defaulting any
+// unrecognized/absent value (the gateway returns stripe_mode=null when unset → `live` here).
+function toOperatorSettings(e: {
+  render_mode: string;
+  direct_to_documenso_lane: string;
+  stripe_mode: string | null;
+}): OperatorSettings {
+  return {
+    renderMode: RENDER_MODES.includes(e.render_mode as RenderMode)
+      ? (e.render_mode as RenderMode)
+      : DEFAULT_RENDER_MODE,
+    directToDocumensoLane: DIRECT_TO_DOCUMENSO_LANES.includes(
+      e.direct_to_documenso_lane as DirectToDocumensoLane,
+    )
+      ? (e.direct_to_documenso_lane as DirectToDocumensoLane)
+      : DEFAULT_DIRECT_TO_DOCUMENSO_LANE,
+    stripeMode:
+      e.stripe_mode && STRIPE_MODES.includes(e.stripe_mode as StripeMode)
+        ? (e.stripe_mode as StripeMode)
+        : DEFAULT_STRIPE_MODE,
+  };
+}
+
 settingsRoutes.get("/", requireUser, async (c) => {
   const user = c.get("user");
-  const { data, error } = await db()
-    .from("operator_settings")
-    .select("render_mode, direct_to_documenso_lane")
-    .eq("auth_user_id", user.user_id)
-    .maybeSingle();
-  if (error) throw new HTTPException(502, { message: `settings read failed: ${error.message}` });
-  const settings: OperatorSettings = {
-    renderMode: (data?.render_mode as RenderMode | undefined) ?? DEFAULT_RENDER_MODE,
-    directToDocumensoLane:
-      (data?.direct_to_documenso_lane as DirectToDocumensoLane | undefined) ??
-      DEFAULT_DIRECT_TO_DOCUMENSO_LANE,
-  };
-  return c.json({ data: settings });
+  try {
+    const edge = await edgeGetOperatorSettings(user.user_id);
+    return c.json({ data: toOperatorSettings(edge) });
+  } catch (e) {
+    if (e instanceof EdgeError) throw new HTTPException(502, { message: e.message });
+    throw e;
+  }
 });
 
 settingsRoutes.put("/", requireUser, async (c) => {
@@ -52,52 +76,46 @@ settingsRoutes.put("/", requireUser, async (c) => {
   const body = (await c.req.json().catch(() => null)) as {
     renderMode?: unknown;
     directToDocumensoLane?: unknown;
+    stripeMode?: unknown;
   } | null;
-  const renderMode = body?.renderMode;
-  if (typeof renderMode !== "string" || !RENDER_MODES.includes(renderMode as RenderMode)) {
-    throw new HTTPException(400, {
-      message: `renderMode must be one of: ${RENDER_MODES.join(", ")}`,
-    });
+
+  // Validate-if-present (clean 400 on a bad enum) and forward only the supplied fields; the gateway
+  // merges, so an omitted field preserves its stored value.
+  const edgeBody: {
+    render_mode?: string;
+    direct_to_documenso_lane?: string;
+    stripe_mode?: string;
+  } = {};
+
+  if (body?.renderMode !== undefined) {
+    if (typeof body.renderMode !== "string" || !RENDER_MODES.includes(body.renderMode as RenderMode)) {
+      throw new HTTPException(400, { message: `renderMode must be one of: ${RENDER_MODES.join(", ")}` });
+    }
+    edgeBody.render_mode = body.renderMode;
   }
-  // The sub-lane is OPTIONAL on the PUT: when present it is validated + persisted; when omitted the
-  // existing stored value is preserved (a client that only knows renderMode never clobbers it).
-  const laneRaw = body?.directToDocumensoLane;
-  let directToDocumensoLane: DirectToDocumensoLane | undefined;
-  if (laneRaw !== undefined) {
+  if (body?.directToDocumensoLane !== undefined) {
     if (
-      typeof laneRaw !== "string" ||
-      !DIRECT_TO_DOCUMENSO_LANES.includes(laneRaw as DirectToDocumensoLane)
+      typeof body.directToDocumensoLane !== "string" ||
+      !DIRECT_TO_DOCUMENSO_LANES.includes(body.directToDocumensoLane as DirectToDocumensoLane)
     ) {
       throw new HTTPException(400, {
         message: `directToDocumensoLane must be one of: ${DIRECT_TO_DOCUMENSO_LANES.join(", ")}`,
       });
     }
-    directToDocumensoLane = laneRaw as DirectToDocumensoLane;
+    edgeBody.direct_to_documenso_lane = body.directToDocumensoLane;
+  }
+  if (body?.stripeMode !== undefined) {
+    if (typeof body.stripeMode !== "string" || !STRIPE_MODES.includes(body.stripeMode as StripeMode)) {
+      throw new HTTPException(400, { message: `stripeMode must be one of: ${STRIPE_MODES.join(", ")}` });
+    }
+    edgeBody.stripe_mode = body.stripeMode;
   }
 
-  const row: {
-    auth_user_id: string;
-    render_mode: RenderMode;
-    direct_to_documenso_lane?: DirectToDocumensoLane;
-    updated_at: string;
-  } = {
-    auth_user_id: user.user_id,
-    render_mode: renderMode as RenderMode,
-    updated_at: new Date().toISOString(),
-  };
-  if (directToDocumensoLane !== undefined) row.direct_to_documenso_lane = directToDocumensoLane;
-
-  const { data, error } = await db()
-    .from("operator_settings")
-    .upsert(row, { onConflict: "auth_user_id" })
-    .select("render_mode, direct_to_documenso_lane")
-    .single();
-  if (error) throw new HTTPException(502, { message: `settings write failed: ${error.message}` });
-  const settings: OperatorSettings = {
-    renderMode: (data?.render_mode as RenderMode | undefined) ?? (renderMode as RenderMode),
-    directToDocumensoLane:
-      (data?.direct_to_documenso_lane as DirectToDocumensoLane | undefined) ??
-      DEFAULT_DIRECT_TO_DOCUMENSO_LANE,
-  };
-  return c.json({ data: settings });
+  try {
+    const edge = await edgePutOperatorSettings(user.user_id, edgeBody);
+    return c.json({ data: toOperatorSettings(edge) });
+  } catch (e) {
+    if (e instanceof EdgeError) throw new HTTPException(502, { message: e.message });
+    throw e;
+  }
 });
