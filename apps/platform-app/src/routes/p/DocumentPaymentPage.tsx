@@ -217,6 +217,17 @@ function AchForm({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>("idle");
+  const [elementReady, setElementReady] = useState(false);
+
+  // Reveal the PaymentElement only once Stripe signals it has rendered — its iframe paints white
+  // before the dark Elements appearance applies, so we hold a dark veil over it until ready (mirrors
+  // the signing embed's dark-veil fix). A timeout fallback reveals it even if `onReady` is missed, so
+  // it can never get stuck hidden.
+  useEffect(() => {
+    if (elementReady) return;
+    const t = setTimeout(() => setElementReady(true), 4000);
+    return () => clearTimeout(t);
+  }, [elementReady]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -268,9 +279,25 @@ function AchForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <PaymentElement
-        options={{ fields: { billingDetails: { name: "auto", email: "auto" } } }}
-      />
+      {/* Dark veil over the Stripe iframe until it's rendered — masks the white, unstyled paint the
+          PaymentElement shows before its appearance applies. */}
+      <div className="relative bg-[color:var(--color-surface-base)]">
+        <div
+          className={`transition-opacity duration-300 ${elementReady ? "opacity-100" : "opacity-0"}`}
+        >
+          <PaymentElement
+            options={{ fields: { billingDetails: { name: "auto", email: "auto" } } }}
+            onReady={() => setElementReady(true)}
+          />
+        </div>
+        {!elementReady && (
+          <div className="absolute inset-0 flex items-center justify-center bg-[color:var(--color-surface-base)]">
+            <div className="font-mono text-[0.625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.18em]">
+              Loading secure payment…
+            </div>
+          </div>
+        )}
+      </div>
       {error ? (
         <p className="font-mono text-[0.6875rem] text-[color:var(--color-state-error,#f87171)]">
           {error}
