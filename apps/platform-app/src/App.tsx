@@ -47,7 +47,7 @@ import Proposals from "./routes/app/Proposals";
 import Settings from "./routes/app/Settings";
 import TemplateEditor from "./routes/app/TemplateEditor";
 import TemplatesTable from "./routes/app/TemplatesTable";
-import MandateSignPage from "./routes/p/MandateSignPage";
+import DocumentSignPage from "./routes/p/DocumentSignPage";
 import PaymentPage from "./routes/p/PaymentPage";
 import SignPage from "./routes/p/SignPage";
 import SummaryPage from "./routes/p/SummaryPage";
@@ -96,7 +96,7 @@ export function App() {
         {/* Direct-to-documenso prospect signing — the opportunity UUID is the unguessable access
             capability, the numeric document id a disambiguator behind it. The static `/p/m/` segment
             ranks above the dynamic `/p/:ref`, so there is no collision. */}
-        <Route path="/p/m/:opportunityId/:documentId" element={<MandateSignPage />} />
+        <Route path="/p/m/:opportunityId/:documentId" element={<DocumentSignPage />} />
         {/* Full-page signing view — Documenso two-column embed, on our domain. */}
         <Route path="/p/:ref/sign" element={<SignPage />} />
         {/* ACH payment view — Stripe Elements, on our domain, after signing. */}

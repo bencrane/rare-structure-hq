@@ -1,11 +1,11 @@
 /**
- * MandateProposalScaffold — the shared engagement-proposal document body for the direct-to-documenso
+ * DocumentSummaryScaffold — the shared engagement-proposal document body for the direct-to-documenso
  * mandate. Two surfaces render the SAME structure (Prepared for · Strategic Origination Mandate
  * terms · Execution) so they read identically:
  *
  *   - operator cockpit  (`MandateDraftShell`, /app/m/:ref)  — Execution box = the operator's signature
  *                                                             pad; action = "Confirm & originate".
- *   - prospect entry    (`MandateSignPage`, /p/m/:envelopeId) — Execution box = "Proceed to Proposal"
+ *   - prospect entry    (`DocumentSignPage`, /p/m/:envelopeId) — Execution box = "Proceed to Proposal"
  *                                                             (reveals the Documenso embed); no action.
  *
  * Only the Execution box content and the optional action below it differ between the two — everything
@@ -14,7 +14,7 @@
  */
 import type { ReactNode } from "react";
 
-export function MandateProposalScaffold({
+export function DocumentSummaryScaffold({
   execution,
   action,
 }: {

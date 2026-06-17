@@ -208,7 +208,7 @@ engagementMandateDraftRoutes.get("/sign/:opportunityId/:documentId/token", async
 });
 
 // PUBLIC — the prospect poll for `/p/m/:opportunityId/:documentId`. While the embed is shown
-// MandateSignPage polls this; `signed` flips true once a terminal DOCUMENT_COMPLETED webhook lands
+// DocumentSignPage polls this; `signed` flips true once a terminal DOCUMENT_COMPLETED webhook lands
 // for the (opportunity, document) PAIR, and the page advances to the signed-confirmation view.
 // edge_api derives this FULLY OFFLINE from the raw webhook capture — ZERO Documenso calls in the
 // poll loop. The pair gate means a guessed document id with a wrong UUID returns signed:false.

@@ -531,7 +531,7 @@ export interface EdgeSignState {
  * FULLY OFFLINE on the edge_api side — DERIVED from the RAW webhook capture
  * (business.documenso_webhook_events), ZERO Documenso calls. `signed` requires the pair to match
  * (`external_id = opportunityId AND envelope_id = documentId`), so a guessed numeric document id
- * with a wrong/missing opportunity UUID returns signed:false. Drives MandateSignPage's advance.
+ * with a wrong/missing opportunity UUID returns signed:false. Drives DocumentSignPage's advance.
  */
 export async function edgeGetSignState(
   opportunityId: string,

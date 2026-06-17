@@ -1,12 +1,12 @@
 /**
- * MandateSignPage — the prospect's direct-to-documenso signing view at
+ * DocumentSignPage — the prospect's direct-to-documenso signing view at
  * `/p/m/:opportunityId/:documentId`.
  *
  * The direct-to-documenso counterpart to `SignPage`. The operator's "Confirm & originate"
  * instantiates a Documenso document from the engagement template and shares this link. The
  * opportunity UUID is the unguessable access capability; the numeric document id is a disambiguator
  * BEHIND it. The prospect lands on the SAME engagement-proposal scaffold the operator sees
- * (`MandateProposalScaffold`) — except the Execution box, instead of a signature pad, shows
+ * (`DocumentSummaryScaffold`) — except the Execution box, instead of a signature pad, shows
  * "Proceed to Proposal"; clicking it reveals the token-driven Documenso embed (the actual agreement),
  * reusing the same theme + `DocumentFrame` chrome the proposal flow uses.
  *
@@ -19,7 +19,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import { DocumentFrame } from "@/proposals/DocumentFrame";
-import { MandateProposalScaffold } from "@/proposals/MandateProposalScaffold";
+import { DocumentSummaryScaffold } from "@/proposals/DocumentSummaryScaffold";
 import {
   type MandateSignToken,
   getMandateSignState,
@@ -39,7 +39,7 @@ type LoadState = "loading" | "ready" | "notfound";
 // also complete on a different device/tab than the one holding this embed).
 const SIGNED_POLL_MS = 4000;
 
-export default function MandateSignPage() {
+export default function DocumentSignPage() {
   const { opportunityId, documentId } = useParams<{
     opportunityId: string;
     documentId: string;
@@ -145,7 +145,7 @@ export default function MandateSignPage() {
     // Mirror the operator's mandate scaffold; the Execution box carries the prospect's CTA in place
     // of the signature pad. Content values are placeholders pending the draft-data wiring.
     body = (
-      <MandateProposalScaffold
+      <DocumentSummaryScaffold
         execution={
           <button
             type="button"
@@ -228,7 +228,7 @@ function BodyNote({ children }: { children: React.ReactNode }) {
 
 /**
  * DocumentSignedConfirmation — the direct-to-documenso post-sign view, rendered IN PLACE within
- * MandateSignPage's DocumentFrame once the server poll confirms the envelope is signed.
+ * DocumentSignPage's DocumentFrame once the server poll confirms the envelope is signed.
  *
  * Built first-principles for THIS flow: no docraptor/proposal post-sign components, no proposal
  * `ref` (this flow is keyed by the envelope id alone). Deliberately minimal — the operator's bar is
