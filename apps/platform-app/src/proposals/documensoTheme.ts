@@ -54,14 +54,17 @@ export const DOCUMENSO_CSS_VARS = {
   warning: "#fbbf24", // state.warn
 } as const;
 
-// Raw CSS injected into the embed (Platform). Two concerns:
+// Raw CSS injected into the embed (Platform). Three concerns:
 //   1. Type face + dark scrollbars — identity touches `cssVars` can't express.
 //   2. LAYOUT of Documenso's internal two-column. `.embed--DocumentContainer { row-reverse }` puts
-//      the SIGN panel on the left and the agreement PDF on the right; `.embed--Root` caps the
-//      content width. These internal class names are VERIFIED against a live Platform embed
-//      (`revenue-engineer-v3/src/app/native-proposal/page.tsx`), not guessed — they only take
-//      effect on Platform (where raw `css` is honored), which is also the only tier that renders
-//      the surface at all.
+//      the SIGN panel on the left and the agreement PDF on the right; `.embed--Root` caps the width.
+//   3. CHROME the prospect shouldn't see: the header's document-title + role badge (the
+//      "AO_Term_Plain_v1.pdf · Signer" cluster) and the "Full Name" signer field (the participant
+//      name is already prefilled + locked into the body, so the signer only applies the signature).
+//      The "N Field Remaining / Next Field" nav is intentionally KEPT.
+// Class names + element ids are VERIFIED against Documenso's live embed bundle (header `<nav>`'s first
+// child = title/badge group; the name input is `#full-name`), not guessed. They only take effect on
+// Platform (where raw `css` is honored), the only tier that renders the surface at all.
 export const DOCUMENSO_EMBED_CSS = `
   body, button, input, textarea, select {
     font-family: "Geist Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
@@ -76,6 +79,18 @@ export const DOCUMENSO_EMBED_CSS = `
     .embed--DocumentContainer { flex-direction: row-reverse; }
     .embed--Root { max-width: 72rem; }
   }
+
+  /* Hide the header's document-title + role badge (the "AO_Term_Plain_v1.pdf · Signer" group — the
+     first child of the header <nav>). Field-progress / "Next Field" lives in the nav's other
+     children and is kept. */
+  .embed--DocumentWidgetHeader > div:first-child { display: none !important; }
+
+  /* Hide the signer "Full Name" field — the participant name is prefilled + locked in the document
+     body (participant_full_name), so the signer only signs. The name value persists in the embed's
+     own state (seeded from the recipient), so signing is unaffected. */
+  .embed--DocumentWidgetForm label[for="full-name"],
+  .embed--DocumentWidgetForm #full-name { display: none !important; }
+  .embed--DocumentWidgetForm div:has(> #full-name) { display: none !important; }
 `;
 
 export const DOCUMENSO_DEFAULT_HOST = "https://app.documenso.com";
