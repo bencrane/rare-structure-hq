@@ -569,6 +569,59 @@ export async function edgeGetSignToken(
   return (await res.json()) as EdgeSignToken;
 }
 
+// ── Document payments (direct-to-documenso engagement fee, Stripe ACH) ────────
+// PUBLIC, keyed by the same (opportunityId, documentId) pair as signing — edge_api owns the whole
+// flow; these are pure pass-throughs. The mint is gated on the document being signed and resolves the
+// amount server-side from fee_amount; `paid` advances only via the Stripe webhook.
+
+export interface EdgeDocumentPaymentInit {
+  client_secret: string;
+  publishable_key: string;
+  amount_cents: number;
+  currency: string;
+  payment_status: string;
+}
+
+/** Mint (or reuse) the ACH PaymentIntent for the pair. edge_api 409s until the document is signed
+ * (and for "already paid" / no payable fee). The HTTP status is attached to the thrown EdgeError so
+ * the route can propagate it verbatim to the SPA. */
+export async function edgeCreateDocumentPaymentIntent(
+  opportunityId: string,
+  documentId: string,
+): Promise<EdgeDocumentPaymentInit> {
+  const res = await fetch(
+    `${base()}/api/v1/documenso/payment-intent/${encodeURIComponent(opportunityId)}/${encodeURIComponent(documentId)}`,
+    { method: "POST" },
+  );
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    const err = new EdgeError(detail || `edge document payment-intent failed: ${res.status}`);
+    (err as EdgeError & { status?: number }).status = res.status;
+    throw err;
+  }
+  return (await res.json()) as EdgeDocumentPaymentInit;
+}
+
+export interface EdgeDocumentPaymentState {
+  payment_status: string;
+  amount_cents: number | null;
+  currency: string;
+  paid_at: string | null;
+}
+
+/** The authoritative payment state for the pair (the poll target). `none` before the first mint and
+ * for a pair mismatch. `succeeded` only after the Stripe webhook lands. */
+export async function edgeGetDocumentPaymentState(
+  opportunityId: string,
+  documentId: string,
+): Promise<EdgeDocumentPaymentState> {
+  const res = await fetch(
+    `${base()}/api/v1/documenso/payment/${encodeURIComponent(opportunityId)}/${encodeURIComponent(documentId)}`,
+  );
+  if (!res.ok) throw new EdgeError(`edge document payment state failed: ${res.status}`);
+  return (await res.json()) as EdgeDocumentPaymentState;
+}
+
 // ── Mandate staging (the per-opportunity prep page) ──────────────────────────
 // The operator stages a mandate off-screen: pick the engagement (archetype → template) and enter
 // the per-deal values (term, fee). edge_api persists one editable draft per opportunity; Confirm &
