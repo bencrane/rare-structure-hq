@@ -16,7 +16,7 @@
  */
 import { EmbedSignDocument } from "@documenso/embed-react";
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 
 import { DocumentFrame } from "@/proposals/DocumentFrame";
 import { MandateProposalScaffold } from "@/proposals/MandateProposalScaffold";
@@ -129,7 +129,12 @@ export default function MandateSignPage() {
     // Server-confirmed terminal state — the new direct-to-documenso post-sign confirmation, rendered
     // in place (no docraptor/proposal post-sign components, no `ref` keying — this flow is keyed by
     // the envelope id alone).
-    body = <MandateSignedConfirmation />;
+    body = (
+      <MandateSignedConfirmation
+        opportunityId={opportunityId ?? ""}
+        documentId={documentId ?? ""}
+      />
+    );
   } else if (state === "loading") {
     body = <BodyNote>Preparing the agreement…</BodyNote>;
   } else if (state === "notfound" || !doc) {
@@ -230,12 +235,18 @@ function BodyNote({ children }: { children: React.ReactNode }) {
  * "a page LOADS on signing." A clear confirmation headline + one reassurance line, on-theme via the
  * shared surface/accent tokens.
  *
- * PHASE 2b SEAM: the payment CTA belongs here. The through-docraptor flow advances signed → pay
- * (`/p/:ref/pay`); the direct-to-documenso flow has no proposal `ref` to key a PaymentPage on yet, so
- * the next-step CTA is intentionally omitted until that keying is resolved. Drop the "Continue to
- * payment" action in the marked slot below when Phase 2b lands.
+ * PHASE 2b: the payment CTA advances signed → pay. The direct-to-documenso flow keys payment on the
+ * `(opportunityId, documentId)` PAIR the signing link already carries (mirroring the route shape
+ * `/p/m/:opportunityId/:documentId`), not a proposal `ref`. The "Continue to payment" action below
+ * points at `/p/m/:opportunityId/:documentId/pay`.
  */
-function MandateSignedConfirmation() {
+function MandateSignedConfirmation({
+  opportunityId,
+  documentId,
+}: {
+  opportunityId: string;
+  documentId: string;
+}) {
   return (
     <div className="flex min-h-[78vh] flex-col items-center justify-center px-6 text-center">
       <div className="flex h-12 w-12 items-center justify-center rounded-full border border-[color:var(--color-accent-primary)] bg-[color:var(--color-accent-soft)] text-[color:var(--color-text-accent)]">
@@ -257,10 +268,15 @@ function MandateSignedConfirmation() {
       </h2>
       <p className="mt-4 max-w-[440px] font-mono text-[0.6875rem] text-[color:var(--color-text-muted)] leading-relaxed tracking-[0.06em]">
         Your engagement agreement has been signed and recorded. A fully executed copy will be sent
-        to your email. No further action is needed.
+        to your email.
       </p>
-      {/* PHASE 2b SEAM — payment CTA goes here (see component doc). Omitted until the direct-to-
-          documenso flow carries a payment key. */}
+      {/* PHASE 2b — payment handoff, keyed by the (opportunityId, documentId) pair. */}
+      <Link
+        to={`/p/m/${opportunityId}/${documentId}/pay`}
+        className="mt-8 inline-block border border-[color:var(--color-accent-primary)] bg-[color:var(--color-accent-soft)] px-6 py-3 font-mono text-[0.75rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.14em] transition-colors hover:bg-[color:var(--color-accent-primary)] hover:text-[color:var(--color-text-onAccent)]"
+      >
+        Continue to payment →
+      </Link>
     </div>
   );
 }
