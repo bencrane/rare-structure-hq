@@ -9,7 +9,7 @@
  *
  * `directToDocumensoLane` is a SECOND, INDEPENDENT setting that only applies when
  * `renderMode === 'direct-to-documenso'` — it picks the direct-to-documenso lane ('envelope-distribute'
- * vs 'template-prefill-draft'). It is always persisted (the column is NOT NULL), but the SPA only
+ * vs 'prefill-document-from-template'). It is always persisted (the column is NOT NULL), but the SPA only
  * surfaces it under direct-to-documenso.
  */
 import { Hono } from "hono";

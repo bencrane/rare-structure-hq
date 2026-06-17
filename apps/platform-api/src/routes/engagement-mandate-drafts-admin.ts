@@ -22,7 +22,7 @@ import {
   edgeGetMandateDraftDocument,
   edgeGetStagingDraft,
   edgeListEngagementMappings,
-  edgeOriginatePrefilledDraft,
+  edgeOriginatePrefilled,
   edgeUpsertStagingDraft,
 } from "../lib/edge.ts";
 
@@ -135,14 +135,14 @@ engagementMandateDraftRoutes.post("/:id/confirm", requireUser, async (c) => {
   }
 });
 
-// "Confirm & originate" — TEMPLATE-PREFILL-DRAFT lane (PARALLEL to /confirm, additive): instantiate a
-// Documenso document from the draft's template via /api/v2/template/use, prefilled from
-// opportunity_specific_content and NOT distributed → the new envelope stays DRAFT. Same downstream
-// shape as /confirm (envelopeId + signingToken), plus the draft `status`.
-engagementMandateDraftRoutes.post("/:id/originate-prefilled-draft", requireUser, async (c) => {
+// "Confirm & originate" — PREFILL-DOCUMENT-FROM-TEMPLATE lane (PARALLEL to /confirm, additive):
+// instantiate a Documenso document from the draft's template via /api/v2/template/use, prefilled from
+// opportunity_specific_content, then distribute(NONE) → the new envelope lands PENDING (no email).
+// Same downstream shape as /confirm (envelopeId + signingToken), plus the `status`.
+engagementMandateDraftRoutes.post("/:id/originate-prefilled", requireUser, async (c) => {
   const id = c.req.param("id");
   try {
-    const res = await edgeOriginatePrefilledDraft(id);
+    const res = await edgeOriginatePrefilled(id);
     return c.json({
       data: {
         envelopeId: res.envelope_id,

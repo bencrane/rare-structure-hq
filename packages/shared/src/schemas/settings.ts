@@ -19,18 +19,17 @@ export const DEFAULT_RENDER_MODE: RenderMode = "through-docraptor";
  * `renderMode === 'direct-to-documenso'`. It picks which direct-to-documenso lane "Confirm &
  * Originate" uses. Ignored under `through-docraptor`.
  *   - 'envelope-distribute'  (default — existing behavior): `/envelope/use` + distribute →
- *                            `.../{id}/confirm` (create_document_from_template). Stays the default.
- *   - 'template-prefill-draft'                            : `/api/v2/template/use`,
- *                            distributeDocument:false, prefilled from opportunity_specific_content →
- *                            `.../{id}/originate-prefilled-draft` (create_draft_document_from_template).
- *                            The new document stays DRAFT.
+ *                            `.../{id}/confirm` (create_document_from_template_with_custom_pdf). Stays the default.
+ *   - 'prefill-document-from-template'                    : `/api/v2/template/use`, prefilled from
+ *                            opportunity_specific_content, then distribute(NONE) → PENDING (no email) →
+ *                            `.../{id}/originate-prefilled` (create_document_from_template).
  */
-export type DirectToDocumensoLane = "envelope-distribute" | "template-prefill-draft";
+export type DirectToDocumensoLane = "envelope-distribute" | "prefill-document-from-template";
 
 /** The allowed lane values, runtime-usable for validation (BFF) and the sub-selector (frontend). */
 export const DIRECT_TO_DOCUMENSO_LANES: readonly DirectToDocumensoLane[] = [
   "envelope-distribute",
-  "template-prefill-draft",
+  "prefill-document-from-template",
 ];
 
 export const DEFAULT_DIRECT_TO_DOCUMENSO_LANE: DirectToDocumensoLane = "envelope-distribute";

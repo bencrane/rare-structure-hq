@@ -107,9 +107,9 @@ const DIRECT_TO_DOCUMENSO_LANE_OPTIONS: {
     hint: "Instantiate from the template and distribute the envelope. Current behavior.",
   },
   {
-    value: "template-prefill-draft",
-    label: "Template prefill (draft)",
-    hint: "Prefill from the opportunity content and leave the document as a DRAFT (not distributed).",
+    value: "prefill-document-from-template",
+    label: "Prefill document from template",
+    hint: "Prefill from the opportunity content and originate the document — ready to sign, no email sent.",
   },
 ];
 
