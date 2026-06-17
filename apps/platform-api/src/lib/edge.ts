@@ -622,6 +622,39 @@ export async function edgeGetDocumentPaymentState(
   return (await res.json()) as EdgeDocumentPaymentState;
 }
 
+// ── Operator settings (the cockpit Settings tab) ─────────────────────────────
+// edge_api owns public.operator_settings behind its service-token gateway; this BFF is a DUMB
+// pass-through (validate the session, assert the auth_user_id on the path, forward). Snake_case on the
+// wire. Replaces the BFF's prior direct Supabase access — consistent with the rest of the wiring.
+
+export interface EdgeOperatorSettings {
+  render_mode: string;
+  direct_to_documenso_lane: string;
+  stripe_mode: string | null;
+  updated_at: string | null;
+}
+
+export async function edgeGetOperatorSettings(authUserId: string): Promise<EdgeOperatorSettings> {
+  const res = await fetch(`${base()}/api/v1/operator-settings/${encodeURIComponent(authUserId)}`, {
+    headers: serviceHeaders(false),
+  });
+  if (!res.ok) throw new EdgeError(`edge operator-settings read failed: ${res.status}`);
+  return (await res.json()) as EdgeOperatorSettings;
+}
+
+export async function edgePutOperatorSettings(
+  authUserId: string,
+  body: { render_mode?: string; direct_to_documenso_lane?: string; stripe_mode?: string },
+): Promise<EdgeOperatorSettings> {
+  const res = await fetch(`${base()}/api/v1/operator-settings/${encodeURIComponent(authUserId)}`, {
+    method: "PUT",
+    headers: serviceHeaders(),
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new EdgeError(`edge operator-settings write failed: ${res.status}`);
+  return (await res.json()) as EdgeOperatorSettings;
+}
+
 // ── Mandate staging (the per-opportunity prep page) ──────────────────────────
 // The operator stages a mandate off-screen: pick the engagement (archetype → template) and enter
 // the per-deal values (term, fee). edge_api persists one editable draft per opportunity; Confirm &

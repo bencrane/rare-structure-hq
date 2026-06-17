@@ -34,8 +34,22 @@ export const DIRECT_TO_DOCUMENSO_LANES: readonly DirectToDocumensoLane[] = [
 
 export const DEFAULT_DIRECT_TO_DOCUMENSO_LANE: DirectToDocumensoLane = "envelope-distribute";
 
+/**
+ * The Stripe mode the DOCUMENT-PAYMENT flow uses, AUGMENTING the `STRIPE_MODE` env. Lets the operator
+ * flip test↔live from the cockpit without a Doppler change + redeploy. edge_api reads it as the global
+ * (single-operator) selection at mint time. 99% `live`; `test` only while testing.
+ */
+export type StripeMode = "test" | "live";
+
+/** Allowed Stripe modes, runtime-usable for validation (BFF) and the toggle (frontend). */
+export const STRIPE_MODES: readonly StripeMode[] = ["test", "live"];
+
+export const DEFAULT_STRIPE_MODE: StripeMode = "live";
+
 export interface OperatorSettings {
   renderMode: RenderMode;
   /** The direct-to-documenso sub-lane. Only meaningful when `renderMode === 'direct-to-documenso'`. */
   directToDocumensoLane: DirectToDocumensoLane;
+  /** Stripe mode for document payments. Defaults to `live` (the BFF resolves an unset DB value). */
+  stripeMode: StripeMode;
 }

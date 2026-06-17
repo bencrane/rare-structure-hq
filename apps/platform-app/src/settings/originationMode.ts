@@ -1,19 +1,22 @@
 /**
  * Origination-mode setting client + hook.
  *
- * Reads/writes the operator's `renderMode` AND the `directToDocumensoLane` sub-lane via the BFF
- * (`/api/v1/settings`), persisted in `public.operator_settings`. The Settings tab toggles them;
- * edge_api branches on `renderMode` at originate, and the SPA branches on `directToDocumensoLane`
- * (which endpoint "Confirm & Originate" calls) when `renderMode === 'direct-to-documenso'`.
+ * Reads/writes the operator's `renderMode`, the `directToDocumensoLane` sub-lane, AND the
+ * document-payment `stripeMode` via the BFF (`/api/v1/settings` → edge_api → `public.operator_settings`).
+ * The Settings tab toggles them; edge_api branches on `renderMode` at originate, on
+ * `directToDocumensoLane` (which endpoint "Confirm & Originate" calls) when
+ * `renderMode === 'direct-to-documenso'`, and on `stripeMode` at document-payment mint.
  * Skips the call under the DEV mock session (whose "dev" token the BFF can't verify).
  */
 import { useCallback, useEffect, useState } from "react";
 
 import {
   DEFAULT_DIRECT_TO_DOCUMENSO_LANE,
+  DEFAULT_STRIPE_MODE,
   type DirectToDocumensoLane,
   type OperatorSettings,
   type RenderMode,
+  type StripeMode,
 } from "@rare-structure-hq/shared";
 
 import { useAuth } from "@/lib/auth";
@@ -30,7 +33,11 @@ async function getSettings(token: string): Promise<OperatorSettings> {
 
 async function putSettings(
   token: string,
-  body: { renderMode: RenderMode; directToDocumensoLane: DirectToDocumensoLane },
+  body: {
+    renderMode: RenderMode;
+    directToDocumensoLane: DirectToDocumensoLane;
+    stripeMode: StripeMode;
+  },
 ): Promise<OperatorSettings> {
   const res = await fetch(`${API_BASE}/api/v1/settings`, {
     method: "PUT",
@@ -50,7 +57,11 @@ export interface OriginationModeState {
   directToDocumensoLane: DirectToDocumensoLane | null;
   /** The staged sub-lane selection — mirrors `directToDocumensoLane` until the operator picks one. */
   selectedLane: DirectToDocumensoLane | null;
-  /** `selected`/`selectedLane` differ from the persisted values → there is an unsaved change. */
+  /** Persisted document-payment Stripe mode, or `null` until loaded. */
+  stripeMode: StripeMode | null;
+  /** The staged Stripe-mode selection — mirrors `stripeMode` until the operator picks one. */
+  selectedStripeMode: StripeMode | null;
+  /** Any staged selection differs from its persisted value → there is an unsaved change. */
   dirty: boolean;
   saving: boolean;
   /** True after a successful save until the next selection — drives the "Saved" confirmation. */
@@ -60,6 +71,8 @@ export interface OriginationModeState {
   select: (mode: RenderMode) => void;
   /** Stage a sub-lane selection locally (no network). */
   selectLane: (lane: DirectToDocumensoLane) => void;
+  /** Stage a Stripe-mode selection locally (no network). */
+  selectStripeMode: (mode: StripeMode) => void;
   /** Persist the staged selections to `public.operator_settings` via the BFF. */
   save: () => void;
 }
@@ -71,6 +84,8 @@ export function useOriginationMode(): OriginationModeState {
   const [selected, setSelected] = useState<RenderMode | null>(null);
   const [lane, setLane] = useState<DirectToDocumensoLane | null>(null);
   const [selectedLane, setSelectedLane] = useState<DirectToDocumensoLane | null>(null);
+  const [stripeMode, setStripeMode] = useState<StripeMode | null>(null);
+  const [selectedStripeMode, setSelectedStripeMode] = useState<StripeMode | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -81,6 +96,8 @@ export function useOriginationMode(): OriginationModeState {
       setSelected(null);
       setLane(null);
       setSelectedLane(null);
+      setStripeMode(null);
+      setSelectedStripeMode(null);
       return;
     }
     let active = true;
@@ -92,6 +109,9 @@ export function useOriginationMode(): OriginationModeState {
         const resolvedLane = s.directToDocumensoLane ?? DEFAULT_DIRECT_TO_DOCUMENSO_LANE;
         setLane(resolvedLane);
         setSelectedLane(resolvedLane);
+        const resolvedStripe = s.stripeMode ?? DEFAULT_STRIPE_MODE;
+        setStripeMode(resolvedStripe);
+        setSelectedStripeMode(resolvedStripe);
       })
       .catch(() => {
         if (active) setError("Could not load the setting.");
@@ -101,25 +121,31 @@ export function useOriginationMode(): OriginationModeState {
     };
   }, [token]);
 
-  // Stage a mode choice — local only, no write. Clears any prior save/error state.
+  // Stage choices — local only, no write. Each clears any prior save/error state.
   const select = useCallback((mode: RenderMode) => {
     setSelected(mode);
     setSaved(false);
     setError(null);
   }, []);
 
-  // Stage a sub-lane choice — local only, no write. Clears any prior save/error state.
   const selectLane = useCallback((nextLane: DirectToDocumensoLane) => {
     setSelectedLane(nextLane);
     setSaved(false);
     setError(null);
   }, []);
 
+  const selectStripeMode = useCallback((mode: StripeMode) => {
+    setSelectedStripeMode(mode);
+    setSaved(false);
+    setError(null);
+  }, []);
+
   const dirty =
     (selected !== null && selected !== renderMode) ||
-    (selectedLane !== null && selectedLane !== lane);
+    (selectedLane !== null && selectedLane !== lane) ||
+    (selectedStripeMode !== null && selectedStripeMode !== stripeMode);
 
-  // Commit the staged selections. No-op when there is nothing to save or a write is in flight.
+  // Commit the staged selections in one PUT. No-op when there is nothing to save or a write is in flight.
   const save = useCallback(() => {
     if (!token || token === "dev" || saving || selected === null || !dirty) return;
     setSaving(true);
@@ -127,9 +153,8 @@ export function useOriginationMode(): OriginationModeState {
     setSaved(false);
     putSettings(token, {
       renderMode: selected,
-      // The column is NOT NULL; send the staged lane (falling back to the loaded value, then the
-      // default) so a save never omits it.
       directToDocumensoLane: selectedLane ?? lane ?? DEFAULT_DIRECT_TO_DOCUMENSO_LANE,
+      stripeMode: selectedStripeMode ?? stripeMode ?? DEFAULT_STRIPE_MODE,
     })
       .then((s) => {
         setRenderMode(s.renderMode);
@@ -137,23 +162,29 @@ export function useOriginationMode(): OriginationModeState {
         const resolvedLane = s.directToDocumensoLane ?? DEFAULT_DIRECT_TO_DOCUMENSO_LANE;
         setLane(resolvedLane);
         setSelectedLane(resolvedLane);
+        const resolvedStripe = s.stripeMode ?? DEFAULT_STRIPE_MODE;
+        setStripeMode(resolvedStripe);
+        setSelectedStripeMode(resolvedStripe);
         setSaved(true);
       })
       .catch(() => setError("Could not save the change."))
       .finally(() => setSaving(false));
-  }, [token, saving, selected, selectedLane, lane, dirty]);
+  }, [token, saving, selected, selectedLane, lane, selectedStripeMode, stripeMode, dirty]);
 
   return {
     renderMode,
     selected,
     directToDocumensoLane: lane,
     selectedLane,
+    stripeMode,
+    selectedStripeMode,
     dirty,
     saving,
     saved,
     error,
     select,
     selectLane,
+    selectStripeMode,
     save,
   };
 }
