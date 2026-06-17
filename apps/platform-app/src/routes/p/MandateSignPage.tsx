@@ -195,12 +195,14 @@ export default function MandateSignPage() {
     );
   }
 
-  // `status` is intentionally not forwarded: DocumentFrame's status pill speaks the proposal
-  // lifecycle vocabulary (created/sent/signed/paid), whereas a draft carries Documenso's envelope
-  // status (PENDING/COMPLETED) — a different vocabulary. The draft surface shows no lifecycle pill.
+  // The frame's StatusPill reflects the signing state: once the server confirms `signed` it reads
+  // "Signed" (executed styling); until then it shows the default "Awaiting signature". (Documenso's
+  // PENDING/COMPLETED envelope status is NOT forwarded — only the binary signed truth, which maps
+  // cleanly onto the pill's "signed" lifecycle value.)
   return (
     <DocumentFrame
       title={signed || showingEmbed ? "Engagement Agreement" : "Engagement Proposal"}
+      status={signed ? "signed" : undefined}
       backHref="/"
       maxWidthClass={showingEmbed && !signed ? "max-w-[1152px]" : "max-w-[820px]"}
     >
