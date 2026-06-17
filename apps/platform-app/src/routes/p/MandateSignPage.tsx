@@ -80,7 +80,7 @@ export default function MandateSignPage() {
 
   // Server-truth signed poll. Runs from initial load (NOT gated on `proceed`) so an already-signed
   // prospect who refreshes or returns to the link lands straight on the confirmation — the immediate
-  // probe sets `signed` and the body renders `MandateSignedConfirmation` before the `!proceed`
+  // probe sets `signed` and the body renders `DocumentSignedConfirmation` before the `!proceed`
   // scaffold. Stops the moment the server reports `signed`. The state endpoint derives signed from the
   // raw Documenso webhook capture — the page advances on durable server truth, never on a browser
   // embed event. Idiom lifted from PaymentPage's authoritative-state poll (useRef interval, cleared on
@@ -130,7 +130,7 @@ export default function MandateSignPage() {
     // in place (no docraptor/proposal post-sign components, no `ref` keying — this flow is keyed by
     // the envelope id alone).
     body = (
-      <MandateSignedConfirmation
+      <DocumentSignedConfirmation
         opportunityId={opportunityId ?? ""}
         documentId={documentId ?? ""}
       />
@@ -227,7 +227,7 @@ function BodyNote({ children }: { children: React.ReactNode }) {
 }
 
 /**
- * MandateSignedConfirmation — the direct-to-documenso post-sign view, rendered IN PLACE within
+ * DocumentSignedConfirmation — the direct-to-documenso post-sign view, rendered IN PLACE within
  * MandateSignPage's DocumentFrame once the server poll confirms the envelope is signed.
  *
  * Built first-principles for THIS flow: no docraptor/proposal post-sign components, no proposal
@@ -240,7 +240,7 @@ function BodyNote({ children }: { children: React.ReactNode }) {
  * `/p/m/:opportunityId/:documentId`), not a proposal `ref`. The "Continue to payment" action below
  * points at `/p/m/:opportunityId/:documentId/pay`.
  */
-function MandateSignedConfirmation({
+function DocumentSignedConfirmation({
   opportunityId,
   documentId,
 }: {
