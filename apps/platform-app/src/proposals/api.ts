@@ -149,7 +149,7 @@ export interface MandateSignState {
 /** PUBLIC signing-state POLL for `/p/m/:opportunityId/:documentId` — server-truth, derived FULLY
  * OFFLINE from the raw Documenso webhook capture (ZERO Documenso calls, NOT a browser
  * `onDocumentCompleted` listener). `signed` requires the (opportunity, document) PAIR to match.
- * MandateSignPage polls this while the embed is shown and advances when `signed` flips true.
+ * DocumentSignPage polls this while the embed is shown and advances when `signed` flips true.
  * Returns null on 404. */
 export async function getMandateSignState(
   opportunityId: string,

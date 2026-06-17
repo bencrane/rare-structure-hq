@@ -23,7 +23,7 @@ import { useState } from "react";
 
 import { useAuth } from "@/lib/auth";
 import { DocumentFrame } from "@/proposals/DocumentFrame";
-import { MandateProposalScaffold } from "@/proposals/MandateProposalScaffold";
+import { DocumentSummaryScaffold } from "@/proposals/DocumentSummaryScaffold";
 import { SignatureOverlay } from "@/proposals/SignaturePad";
 import { confirmMandateDraft, originatePrefilled } from "@/proposals/api";
 import { useOriginationMode } from "@/settings/originationMode";
@@ -85,7 +85,7 @@ export function MandateDraftShell({
 
   return (
     <DocumentFrame title="Engagement Proposal" maxWidthClass="max-w-[820px]" housing={housing}>
-      <MandateProposalScaffold
+      <DocumentSummaryScaffold
         execution={
           <>
             <div className="mb-2.5 flex items-center justify-between">
