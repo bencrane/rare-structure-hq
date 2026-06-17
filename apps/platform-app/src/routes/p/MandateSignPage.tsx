@@ -1,12 +1,18 @@
 /**
- * MandateSignPage — the prospect's direct-to-documenso signing view at `/p/m/:envelopeId`.
+ * MandateSignPage — the prospect's direct-to-documenso signing view at
+ * `/p/m/:opportunityId/:documentId`.
  *
  * The direct-to-documenso counterpart to `SignPage`. The operator's "Confirm & originate"
- * instantiates a Documenso document from the engagement template and shares this link (the envelope
- * id is its own credential). The prospect lands on the SAME engagement-proposal scaffold the operator
- * sees (`MandateProposalScaffold`) — except the Execution box, instead of a signature pad, shows
+ * instantiates a Documenso document from the engagement template and shares this link. The
+ * opportunity UUID is the unguessable access capability; the numeric document id is a disambiguator
+ * BEHIND it. The prospect lands on the SAME engagement-proposal scaffold the operator sees
+ * (`MandateProposalScaffold`) — except the Execution box, instead of a signature pad, shows
  * "Proceed to Proposal"; clicking it reveals the token-driven Documenso embed (the actual agreement),
  * reusing the same theme + `DocumentFrame` chrome the proposal flow uses.
+ *
+ * The embed token is fetched ONCE at load via the pair-gated token endpoint (the only Documenso
+ * call); the "am I signed?" poll reads the offline `/sign-state` derivation — ZERO Documenso calls
+ * in the poll loop.
  */
 import { EmbedSignDocument } from "@documenso/embed-react";
 import { useEffect, useRef, useState } from "react";
@@ -15,9 +21,9 @@ import { useParams } from "react-router-dom";
 import { DocumentFrame } from "@/proposals/DocumentFrame";
 import { MandateProposalScaffold } from "@/proposals/MandateProposalScaffold";
 import {
-  type MandateDraftDocument,
-  getMandateDraftDocument,
-  getMandateEnvelopeState,
+  type MandateSignToken,
+  getMandateSignState,
+  getMandateSignToken,
 } from "@/proposals/api";
 import {
   DOCUMENSO_CSS_VARS,
@@ -34,8 +40,11 @@ type LoadState = "loading" | "ready" | "notfound";
 const SIGNED_POLL_MS = 4000;
 
 export default function MandateSignPage() {
-  const { envelopeId } = useParams<{ envelopeId: string }>();
-  const [doc, setDoc] = useState<MandateDraftDocument | null>(null);
+  const { opportunityId, documentId } = useParams<{
+    opportunityId: string;
+    documentId: string;
+  }>();
+  const [doc, setDoc] = useState<MandateSignToken | null>(null);
   const [state, setState] = useState<LoadState>("loading");
   const [proceed, setProceed] = useState(false);
   const [embedReady, setEmbedReady] = useState(false);
@@ -47,12 +56,13 @@ export default function MandateSignPage() {
   const pollTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    if (!envelopeId) {
+    if (!opportunityId || !documentId) {
       setState("notfound");
       return;
     }
     let active = true;
-    getMandateDraftDocument(envelopeId)
+    // ONE-TIME pair-gated token read at load (the only Documenso call). 404 ⇒ invalid pair / unknown.
+    getMandateSignToken(opportunityId, documentId)
       .then((d) => {
         if (!active) return;
         if (!d) {
@@ -66,7 +76,7 @@ export default function MandateSignPage() {
     return () => {
       active = false;
     };
-  }, [envelopeId]);
+  }, [opportunityId, documentId]);
 
   // Server-truth signed poll. Runs only while the embed is shown (the prospect has proceeded into the
   // agreement) and stops the moment the server reports `signed`. The state endpoint derives signed
@@ -75,9 +85,11 @@ export default function MandateSignPage() {
   // cleared on unmount and on terminal state).
   useEffect(() => {
     const live = state === "ready" && !!doc?.signingToken && proceed && !signed;
-    if (!envelopeId || !live) return;
+    if (!opportunityId || !documentId || !live) return;
     const tick = async () => {
-      const s = await getMandateEnvelopeState(envelopeId).catch(() => null);
+      // OFFLINE on the server — derived from the raw webhook capture, ZERO Documenso calls. `signed`
+      // requires the (opportunity, document) pair to match.
+      const s = await getMandateSignState(opportunityId, documentId).catch(() => null);
       if (s?.signed) {
         setSigned(true);
         if (pollTimer.current) {
@@ -94,7 +106,7 @@ export default function MandateSignPage() {
         pollTimer.current = null;
       }
     };
-  }, [envelopeId, state, doc?.signingToken, proceed, signed]);
+  }, [opportunityId, documentId, state, doc?.signingToken, proceed, signed]);
 
   // Safety net: if the embed never fires onDocumentReady (slow network / edge), drop the veil after a
   // beat so the prospect is never stranded on the loading state.

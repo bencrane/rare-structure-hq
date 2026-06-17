@@ -19,8 +19,9 @@ import {
   EdgeError,
   edgeConfirmMandateDraft,
   edgeCreateMandateDraft,
-  edgeGetEnvelopeState,
   edgeGetMandateDraftDocument,
+  edgeGetSignState,
+  edgeGetSignToken,
   edgeGetStagingDraft,
   edgeListEngagementMappings,
   edgeOriginatePrefilled,
@@ -148,6 +149,8 @@ engagementMandateDraftRoutes.post("/:id/originate-prefilled", requireUser, async
       data: {
         envelopeId: res.envelope_id,
         documentId: res.document_id,
+        // The opportunity UUID is the prospect-link capability: /p/m/{opportunityId}/{documentId}.
+        opportunityId: res.opportunity_id,
         signingToken: res.signing_token,
         documensoHost: res.documenso_host,
         status: res.status,
@@ -180,18 +183,45 @@ engagementMandateDraftRoutes.get("/document/:envelopeId", async (c) => {
   }
 });
 
-// PUBLIC — the prospect poll. While the embed is shown MandateSignPage polls this; `signed` flips
-// true once a terminal DOCUMENT_COMPLETED webhook lands for the envelope, and the page advances to
-// the signed-confirmation view. Same capability model as the document read (envelope id = the key);
-// proxies edge_api's /api/v1/documenso/envelope/:id/state (derived from the raw webhook capture).
-engagementMandateDraftRoutes.get("/document/:envelopeId/state", async (c) => {
-  const envelopeId = c.req.param("envelopeId");
+// PUBLIC — the prospect's embed-load TOKEN read for `/p/m/:opportunityId/:documentId`. edge_api
+// makes ONE live Documenso read and PAIR-GATES (the document's externalId must equal opportunityId)
+// before returning the signer token; a guessed document id under a wrong/missing UUID → 404. The
+// opportunity UUID is the capability; the numeric document id is only a disambiguator behind it.
+engagementMandateDraftRoutes.get("/sign/:opportunityId/:documentId/token", async (c) => {
+  const opportunityId = c.req.param("opportunityId");
+  const documentId = c.req.param("documentId");
   try {
-    const state = await edgeGetEnvelopeState(envelopeId);
-    if (!state) throw new HTTPException(404, { message: "envelope not found" });
+    const tok = await edgeGetSignToken(opportunityId, documentId);
+    if (!tok) throw new HTTPException(404, { message: "document not found" });
     return c.json({
       data: {
-        envelopeId: state.envelope_id,
+        signingToken: tok.signing_token,
+        documensoHost: tok.documenso_host,
+        status: tok.status,
+      },
+    });
+  } catch (e) {
+    if (e instanceof HTTPException) throw e;
+    if (e instanceof EdgeError) throw new HTTPException(502, { message: e.message });
+    throw e;
+  }
+});
+
+// PUBLIC — the prospect poll for `/p/m/:opportunityId/:documentId`. While the embed is shown
+// MandateSignPage polls this; `signed` flips true once a terminal DOCUMENT_COMPLETED webhook lands
+// for the (opportunity, document) PAIR, and the page advances to the signed-confirmation view.
+// edge_api derives this FULLY OFFLINE from the raw webhook capture — ZERO Documenso calls in the
+// poll loop. The pair gate means a guessed document id with a wrong UUID returns signed:false.
+engagementMandateDraftRoutes.get("/sign/:opportunityId/:documentId/state", async (c) => {
+  const opportunityId = c.req.param("opportunityId");
+  const documentId = c.req.param("documentId");
+  try {
+    const state = await edgeGetSignState(opportunityId, documentId);
+    if (!state) throw new HTTPException(404, { message: "document not found" });
+    return c.json({
+      data: {
+        opportunityId: state.opportunity_id,
+        documentId: state.document_id,
         signed: state.signed,
         latestEvent: state.latest_event,
         status: state.status,

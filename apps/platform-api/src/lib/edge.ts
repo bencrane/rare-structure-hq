@@ -419,6 +419,9 @@ export async function edgeConfirmMandateDraft(id: string): Promise<EdgeMandateDr
 export interface EdgeMandatePrefilledOriginated {
   envelope_id: string;
   document_id: number | null;
+  /** The opportunity UUID stamped as the envelope's externalId — the prospect-link capability.
+   * The link is `/p/m/{opportunity_id}/{document_id}`. */
+  opportunity_id: string;
   signing_token: string | null;
   status: string;
   documenso_host: string;
@@ -511,9 +514,11 @@ export async function edgeGetMandateDraftDocument(
   return (await res.json()) as EdgeMandateDraftDocument;
 }
 
-export interface EdgeEnvelopeState {
-  envelope_id: string;
-  /** True iff a terminal DOCUMENT_COMPLETED webhook row has landed for this envelope. */
+export interface EdgeSignState {
+  opportunity_id: string;
+  document_id: string;
+  /** True iff a terminal DOCUMENT_COMPLETED webhook row has landed for THIS (opportunity, document)
+   * pair. */
   signed: boolean;
   /** Most-recent raw event name (UPPERCASE_UNDERSCORE), or null if no rows captured yet. */
   latest_event: string | null;
@@ -522,17 +527,46 @@ export interface EdgeEnvelopeState {
 }
 
 /**
- * PUBLIC envelope signing-state read for the prospect poll — the envelope id is the capability.
- * edge_api DERIVES this from the RAW webhook capture (business.documenso_webhook_events), not a
- * live envelope state read. Drives MandateSignPage's advance-on-signed.
+ * PUBLIC signing-state read for the prospect poll, keyed by the `(opportunityId, documentId)` PAIR.
+ * FULLY OFFLINE on the edge_api side — DERIVED from the RAW webhook capture
+ * (business.documenso_webhook_events), ZERO Documenso calls. `signed` requires the pair to match
+ * (`external_id = opportunityId AND envelope_id = documentId`), so a guessed numeric document id
+ * with a wrong/missing opportunity UUID returns signed:false. Drives MandateSignPage's advance.
  */
-export async function edgeGetEnvelopeState(envelopeId: string): Promise<EdgeEnvelopeState | null> {
+export async function edgeGetSignState(
+  opportunityId: string,
+  documentId: string,
+): Promise<EdgeSignState | null> {
   const res = await fetch(
-    `${base()}/api/v1/documenso/envelope/${encodeURIComponent(envelopeId)}/state`,
+    `${base()}/api/v1/documenso/sign-state/${encodeURIComponent(opportunityId)}/${encodeURIComponent(documentId)}`,
   );
   if (res.status === 404) return null;
-  if (!res.ok) throw new EdgeError(`edge envelope-state failed: ${res.status}`);
-  return (await res.json()) as EdgeEnvelopeState;
+  if (!res.ok) throw new EdgeError(`edge sign-state failed: ${res.status}`);
+  return (await res.json()) as EdgeSignState;
+}
+
+export interface EdgeSignToken {
+  signing_token: string | null;
+  status: string | null;
+  documenso_host: string;
+}
+
+/**
+ * PUBLIC signing-TOKEN read for the embed load, keyed by the same `(opportunityId, documentId)`
+ * pair. edge_api makes ONE live Documenso read (`GET /api/v2/document/{documentId}`) and PAIR-GATES
+ * (asserts the document's `externalId == opportunityId`) before returning the recipient token; a
+ * mismatched/guessed id → 404 (null here). NOT in the poll loop — called once at embed load.
+ */
+export async function edgeGetSignToken(
+  opportunityId: string,
+  documentId: string,
+): Promise<EdgeSignToken | null> {
+  const res = await fetch(
+    `${base()}/api/v1/documenso/sign-token/${encodeURIComponent(opportunityId)}/${encodeURIComponent(documentId)}`,
+  );
+  if (res.status === 404) return null;
+  if (!res.ok) throw new EdgeError(`edge sign-token failed: ${res.status}`);
+  return (await res.json()) as EdgeSignToken;
 }
 
 // ── Mandate staging (the per-opportunity prep page) ──────────────────────────

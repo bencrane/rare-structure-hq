@@ -93,9 +93,10 @@ export function App() {
         <Route path="/map" element={<Navigate to="/signin" replace />} />
         {/* Engagement proposal summary — the ref is its own credential. */}
         <Route path="/p/:ref" element={<SummaryPage />} />
-        {/* Direct-to-documenso prospect signing — the envelope id is its own credential. The static
-            `/p/m/` segment ranks above the dynamic `/p/:ref`, so there is no collision. */}
-        <Route path="/p/m/:envelopeId" element={<MandateSignPage />} />
+        {/* Direct-to-documenso prospect signing — the opportunity UUID is the unguessable access
+            capability, the numeric document id a disambiguator behind it. The static `/p/m/` segment
+            ranks above the dynamic `/p/:ref`, so there is no collision. */}
+        <Route path="/p/m/:opportunityId/:documentId" element={<MandateSignPage />} />
         {/* Full-page signing view — Documenso two-column embed, on our domain. */}
         <Route path="/p/:ref/sign" element={<SignPage />} />
         {/* ACH payment view — Stripe Elements, on our domain, after signing. */}

@@ -88,8 +88,11 @@ export async function confirmMandateDraft(
 }
 
 export interface MandatePrefilledOriginated extends MandateDraftConfirmed {
-  /** The Documenso document id, when returned on create (else null — re-read the envelope). */
+  /** The Documenso document id (numeric) — the disambiguator in the signing link, behind the UUID. */
   documentId: number | null;
+  /** The opportunity UUID (the envelope's externalId) — the unguessable prospect-link capability.
+   * The link is `/p/m/{opportunityId}/{documentId}`. */
+  opportunityId: string;
   /** "pending" for this lane — the document is distributed (no email) so it is signable. */
   status: string;
 }
@@ -110,28 +113,32 @@ export async function originatePrefilled(
   return (await res.json()).data as MandatePrefilledOriginated;
 }
 
-export interface MandateDraftDocument {
+export interface MandateSignToken {
   signingToken: string | null;
   documensoHost: string;
   status: string | null;
 }
 
-/** PUBLIC prospect read for `/p/m/:envelopeId` — the signer token + host that drive the embed.
- * The envelope id is the capability (no auth). Returns null on 404. */
-export async function getMandateDraftDocument(
-  envelopeId: string,
-): Promise<MandateDraftDocument | null> {
+/** PUBLIC embed-load TOKEN read for `/p/m/:opportunityId/:documentId` — the signer token + host
+ * that drive the embed. ONE-TIME (not in the poll loop): edge_api makes one live Documenso read and
+ * PAIR-GATES (the document's externalId must equal opportunityId) before returning the token. The
+ * opportunity UUID is the capability; a guessed document id under a wrong UUID → 404 (null). */
+export async function getMandateSignToken(
+  opportunityId: string,
+  documentId: string,
+): Promise<MandateSignToken | null> {
   const res = await fetch(
-    `${API_BASE}/api/v1/engagement-mandate-drafts/document/${encodeURIComponent(envelopeId)}`,
+    `${API_BASE}/api/v1/engagement-mandate-drafts/sign/${encodeURIComponent(opportunityId)}/${encodeURIComponent(documentId)}/token`,
   );
   if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`mandate document failed: ${res.status}`);
-  return (await res.json()).data as MandateDraftDocument;
+  if (!res.ok) throw new Error(`mandate sign token failed: ${res.status}`);
+  return (await res.json()).data as MandateSignToken;
 }
 
-export interface MandateEnvelopeState {
-  envelopeId: string;
-  /** True once a terminal DOCUMENT_COMPLETED webhook has landed — the signing is done. */
+export interface MandateSignState {
+  opportunityId: string;
+  documentId: string;
+  /** True once a terminal DOCUMENT_COMPLETED webhook has landed for THIS pair — signing is done. */
   signed: boolean;
   /** Most-recent raw Documenso event name (UPPERCASE_UNDERSCORE), or null if none yet. */
   latestEvent: string | null;
@@ -139,18 +146,21 @@ export interface MandateEnvelopeState {
   status: string | null;
 }
 
-/** PUBLIC signing-state poll for `/p/m/:envelopeId` — server-truth, derived from the raw Documenso
- * webhook capture (NOT a browser `onDocumentCompleted` listener). MandateSignPage polls this while
- * the embed is shown and advances when `signed` flips true. Returns null on 404. */
-export async function getMandateEnvelopeState(
-  envelopeId: string,
-): Promise<MandateEnvelopeState | null> {
+/** PUBLIC signing-state POLL for `/p/m/:opportunityId/:documentId` — server-truth, derived FULLY
+ * OFFLINE from the raw Documenso webhook capture (ZERO Documenso calls, NOT a browser
+ * `onDocumentCompleted` listener). `signed` requires the (opportunity, document) PAIR to match.
+ * MandateSignPage polls this while the embed is shown and advances when `signed` flips true.
+ * Returns null on 404. */
+export async function getMandateSignState(
+  opportunityId: string,
+  documentId: string,
+): Promise<MandateSignState | null> {
   const res = await fetch(
-    `${API_BASE}/api/v1/engagement-mandate-drafts/document/${encodeURIComponent(envelopeId)}/state`,
+    `${API_BASE}/api/v1/engagement-mandate-drafts/sign/${encodeURIComponent(opportunityId)}/${encodeURIComponent(documentId)}/state`,
   );
   if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`mandate envelope state failed: ${res.status}`);
-  return (await res.json()).data as MandateEnvelopeState;
+  if (!res.ok) throw new Error(`mandate sign state failed: ${res.status}`);
+  return (await res.json()).data as MandateSignState;
 }
 
 /** Instantiate a proposal record → its capability ref + shell path. */

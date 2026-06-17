@@ -14,7 +14,9 @@
  *   - 'envelope-distribute'  (default): confirmMandateDraft → BFF → edge_api /envelope/use + distribute.
  *   - 'prefill-document-from-template': originatePrefilled → BFF → edge_api /api/v2/template/use,
  *                                       prefilled + distribute(NONE) → PENDING (no email).
- * Both return the envelope id + token, so the downstream is identical: reveal `/p/m/:envelopeId`.
+ * The prospect link is `/p/m/{opportunityId}/{documentId}`: the opportunity UUID is the unguessable
+ * access capability, the numeric document id a disambiguator behind it. Both come off the
+ * prefill-lane originate response (`originatePrefilled`), so the link is built directly from it.
  */
 import { Check, Copy, ExternalLink, PenLine } from "lucide-react";
 import { useState } from "react";
@@ -46,7 +48,12 @@ export function MandateDraftShell({
   const [signedAt, setSignedAt] = useState<string | null>(null);
   const [signing, setSigning] = useState(false);
   const [status, setStatus] = useState<ConfirmStatus>("idle");
-  const [envelopeId, setEnvelopeId] = useState<string | null>(null);
+  // The originated prospect-link pair. The link is /p/m/{opportunityId}/{documentId}; only the
+  // prefill lane stamps the opportunity UUID as the envelope's externalId AND returns the numeric
+  // document id, so only it can build the pair link.
+  const [signLink, setSignLink] = useState<{ opportunityId: string; documentId: number } | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
 
   async function confirm() {
@@ -54,14 +61,21 @@ export function MandateDraftShell({
     setStatus("submitting");
     setError(null);
     try {
-      // Branch on the lane: prefill-document-from-template → the prefill endpoint; everything else
-      // (incl. the unloaded/default case) → the existing envelope-distribute confirm. Both return the
-      // envelope id (the prospect-link capability), so the success path is identical.
-      const res =
-        directToDocumensoLane === "prefill-document-from-template"
-          ? await originatePrefilled(token, draftId)
-          : await confirmMandateDraft(token, draftId);
-      setEnvelopeId(res.envelopeId);
+      // Branch on the lane: prefill-document-from-template → the prefill endpoint (returns the
+      // opportunity UUID + numeric document id → the pair link). Everything else (incl. the
+      // unloaded/default case) → the envelope-distribute confirm.
+      if (directToDocumensoLane === "prefill-document-from-template") {
+        const res = await originatePrefilled(token, draftId);
+        if (res.documentId == null) {
+          throw new Error("originate did not return a document id");
+        }
+        setSignLink({ opportunityId: res.opportunityId, documentId: res.documentId });
+      } else {
+        await confirmMandateDraft(token, draftId);
+        // The envelope-distribute lane stamps externalId=draftId (not the opportunity UUID) and does
+        // not return the pair, so it cannot build the /p/m/{opportunity}/{document} link.
+        setSignLink(null);
+      }
       setStatus("ready");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not originate the mandate");
@@ -125,7 +139,7 @@ export function MandateDraftShell({
             hasSignature={!!signature}
             status={status}
             error={error}
-            envelopeId={envelopeId}
+            signLink={signLink}
             onSubmit={confirm}
           />
         }
@@ -152,17 +166,17 @@ function DraftConfirmBar({
   hasSignature,
   status,
   error,
-  envelopeId,
+  signLink,
   onSubmit,
 }: {
   draftId?: string;
   hasSignature: boolean;
   status: ConfirmStatus;
   error: string | null;
-  envelopeId: string | null;
+  signLink: { opportunityId: string; documentId: number } | null;
   onSubmit: () => void;
 }) {
-  if (status === "ready" && envelopeId) return <MandateReadyBar envelopeId={envelopeId} />;
+  if (status === "ready") return <MandateReadyBar signLink={signLink} />;
 
   if (status === "submitting") {
     return (
@@ -192,13 +206,22 @@ function DraftConfirmBar({
   );
 }
 
-// Success surface — the prospect share link for the just-created Documenso document. The envelope id
-// is the capability carried in `/p/m/:envelopeId`. Mirrors MandateEditor's ReadyBar (copy + open).
-function MandateReadyBar({ envelopeId }: { envelopeId: string }) {
-  const url = `${window.location.origin}/p/m/${envelopeId}`;
+// Success surface — the prospect share link for the just-created Documenso document. The link is
+// `/p/m/{opportunityId}/{documentId}`: the opportunity UUID is the unguessable access capability,
+// the numeric document id a disambiguator behind it. Mirrors MandateEditor's ReadyBar (copy + open).
+// `signLink` is null for the envelope-distribute lane (it doesn't stamp the opportunity pair).
+function MandateReadyBar({
+  signLink,
+}: {
+  signLink: { opportunityId: string; documentId: number } | null;
+}) {
+  const url = signLink
+    ? `${window.location.origin}/p/m/${signLink.opportunityId}/${signLink.documentId}`
+    : null;
   const [copied, setCopied] = useState(false);
 
   async function copy() {
+    if (!url) return;
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
@@ -218,25 +241,31 @@ function MandateReadyBar({ envelopeId }: { envelopeId: string }) {
         The agreement is live in Documenso. Share the link on the call, or send it yourself when
         you're ready to close.
       </p>
-      <div className="grid grid-cols-2 gap-3">
-        <button
-          type="button"
-          onClick={copy}
-          className="flex items-center justify-center gap-2 border border-[color:var(--color-border-default)] py-2.5 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase tracking-[0.14em] transition-colors hover:border-[color:var(--color-text-accent)] hover:text-[color:var(--color-text-accent)]"
-        >
-          {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
-          {copied ? "Copied" : "Copy link"}
-        </button>
-        <a
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center justify-center gap-2 border border-[color:var(--color-border-default)] py-2.5 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase tracking-[0.14em] transition-colors hover:border-[color:var(--color-text-accent)] hover:text-[color:var(--color-text-accent)]"
-        >
-          <ExternalLink className="size-3.5" />
-          Open as client
-        </a>
-      </div>
+      {url ? (
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={copy}
+            className="flex items-center justify-center gap-2 border border-[color:var(--color-border-default)] py-2.5 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase tracking-[0.14em] transition-colors hover:border-[color:var(--color-text-accent)] hover:text-[color:var(--color-text-accent)]"
+          >
+            {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+            {copied ? "Copied" : "Copy link"}
+          </button>
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 border border-[color:var(--color-border-default)] py-2.5 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase tracking-[0.14em] transition-colors hover:border-[color:var(--color-text-accent)] hover:text-[color:var(--color-text-accent)]"
+          >
+            <ExternalLink className="size-3.5" />
+            Open as client
+          </a>
+        </div>
+      ) : (
+        <p className="font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
+          Shareable link is available on the prefill-document lane.
+        </p>
+      )}
     </div>
   );
 }
