@@ -78,13 +78,15 @@ export default function MandateSignPage() {
     };
   }, [opportunityId, documentId]);
 
-  // Server-truth signed poll. Runs only while the embed is shown (the prospect has proceeded into the
-  // agreement) and stops the moment the server reports `signed`. The state endpoint derives signed
-  // from the raw Documenso webhook capture — the page advances on durable server truth, never on a
-  // browser embed event. Idiom lifted from PaymentPage's authoritative-state poll (useRef interval,
-  // cleared on unmount and on terminal state).
+  // Server-truth signed poll. Runs from initial load (NOT gated on `proceed`) so an already-signed
+  // prospect who refreshes or returns to the link lands straight on the confirmation — the immediate
+  // probe sets `signed` and the body renders `MandateSignedConfirmation` before the `!proceed`
+  // scaffold. Stops the moment the server reports `signed`. The state endpoint derives signed from the
+  // raw Documenso webhook capture — the page advances on durable server truth, never on a browser
+  // embed event. Idiom lifted from PaymentPage's authoritative-state poll (useRef interval, cleared on
+  // unmount and on terminal state).
   useEffect(() => {
-    const live = state === "ready" && !!doc?.signingToken && proceed && !signed;
+    const live = state === "ready" && !!doc?.signingToken && !signed;
     if (!opportunityId || !documentId || !live) return;
     const tick = async () => {
       // OFFLINE on the server — derived from the raw webhook capture, ZERO Documenso calls. `signed`
@@ -106,7 +108,7 @@ export default function MandateSignPage() {
         pollTimer.current = null;
       }
     };
-  }, [opportunityId, documentId, state, doc?.signingToken, proceed, signed]);
+  }, [opportunityId, documentId, state, doc?.signingToken, signed]);
 
   // Safety net: if the embed never fires onDocumentReady (slow network / edge), drop the veil after a
   // beat so the prospect is never stranded on the loading state.
