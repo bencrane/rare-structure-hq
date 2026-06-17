@@ -282,3 +282,54 @@ export async function getPaymentState(ref: string): Promise<PaymentState | null>
   if (!res.ok) throw new Error(`payment state failed: ${res.status}`);
   return (await res.json()).data as PaymentState;
 }
+
+// ── Document payments (direct-to-documenso engagement fee) — keyed by the (opportunity, document)
+// pair, NOT a proposal ref. PUBLIC (the pair is the capability); edge_api owns the flow, the BFF
+// passes through. ────────────────────────────────────────────────────────────────────────────────
+
+export interface DocumentPaymentInit {
+  clientSecret: string;
+  publishableKey: string;
+  amountCents: number;
+  currency: string;
+  paymentStatus: string;
+}
+
+/** Mint (or reuse) the ACH PaymentIntent for `/p/m/:opportunityId/:documentId/pay`. Throws
+ * PaymentError(409) until the document is signed (the gate). The amount is resolved server-side from
+ * fee_amount — the browser never sends one. */
+export async function createDocumentPaymentIntent(
+  opportunityId: string,
+  documentId: string,
+): Promise<DocumentPaymentInit> {
+  const res = await fetch(
+    `${API_BASE}/api/v1/engagement-mandate-drafts/sign/${encodeURIComponent(opportunityId)}/${encodeURIComponent(documentId)}/payment-intent`,
+    { method: "POST" },
+  );
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new PaymentError(res.status, body || res.statusText);
+  }
+  return (await res.json()).data as DocumentPaymentInit;
+}
+
+export interface DocumentPaymentState {
+  paymentStatus: string;
+  amountCents: number | null;
+  currency: string;
+  paidAt: string | null;
+}
+
+/** Poll the authoritative (webhook-driven) document payment state. `paymentStatus === "succeeded"` is
+ * the settled truth (ACH settles after the browser hands off). Returns null on 404. */
+export async function getDocumentPaymentState(
+  opportunityId: string,
+  documentId: string,
+): Promise<DocumentPaymentState | null> {
+  const res = await fetch(
+    `${API_BASE}/api/v1/engagement-mandate-drafts/sign/${encodeURIComponent(opportunityId)}/${encodeURIComponent(documentId)}/payment`,
+  );
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`document payment state failed: ${res.status}`);
+  return (await res.json()).data as DocumentPaymentState;
+}
