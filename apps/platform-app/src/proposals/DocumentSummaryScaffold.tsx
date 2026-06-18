@@ -77,11 +77,11 @@ export function DocumentSummaryScaffold({
             value={values.preparedFor}
             onChange={(e) => set("preparedFor")(e.target.value)}
             placeholder="—"
-            className="w-28 border-[color:var(--color-border-default)] border-b bg-transparent py-0.5 text-[0.9375rem] text-[color:var(--color-text-primary)] outline-none transition-colors placeholder:text-[color:var(--color-text-subtle)] focus:border-[color:var(--color-text-accent)]"
+            className="w-28 border-[color:var(--color-border-default)] border-b bg-transparent py-0.5 text-[0.9375rem] text-[color:var(--color-text-muted)] outline-none transition-colors placeholder:text-[color:var(--color-text-subtle)] focus:border-[color:var(--color-text-accent)]"
           />
         ) : (
           <div
-            className={`text-[0.9375rem] ${values.preparedFor ? "text-[color:var(--color-text-primary)]" : "text-[color:var(--color-text-subtle)]"}`}
+            className={`text-[0.9375rem] ${values.preparedFor ? "text-[color:var(--color-text-muted)]" : "text-[color:var(--color-text-subtle)]"}`}
           >
             {values.preparedFor || "—"}
           </div>
@@ -201,11 +201,11 @@ function TermRow({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder="—"
-          className="w-28 border-[color:var(--color-border-default)] border-b bg-transparent py-0.5 text-right text-[0.9375rem] text-[color:var(--color-text-primary)] outline-none transition-colors placeholder:text-[color:var(--color-text-subtle)] focus:border-[color:var(--color-text-accent)]"
+          className="w-28 border-[color:var(--color-border-default)] border-b bg-transparent py-0.5 text-right text-[0.9375rem] text-[color:var(--color-text-muted)] outline-none transition-colors placeholder:text-[color:var(--color-text-subtle)] focus:border-[color:var(--color-text-accent)]"
         />
       ) : (
         <span
-          className={`text-right text-[0.9375rem] tabular-nums ${value ? "text-[color:var(--color-text-primary)]" : "text-[color:var(--color-text-subtle)]"}`}
+          className={`text-right text-[0.9375rem] tabular-nums ${value ? "text-[color:var(--color-text-muted)]" : "text-[color:var(--color-text-subtle)]"}`}
         >
           {value || "—"}
         </span>
