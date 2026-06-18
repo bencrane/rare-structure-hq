@@ -75,19 +75,22 @@ export const DOCUMENSO_EMBED_CSS = `
   ::-webkit-scrollbar-track { background: #0a0e1a; }
   ::-webkit-scrollbar-thumb { background: #2d3548; border: 2px solid #0a0e1a; }
   ::-webkit-scrollbar-thumb:hover { background: #3f4b63; }
-  @media (min-width: 768px) {
-    .embed--DocumentContainer { flex-direction: row-reverse; }
-    .embed--Root { max-width: 72rem; }
-  }
 
-  /* Hide the header's document-title + role badge (the "AO_Term_Plain_v1.pdf · Signer" group — the
-     first child of the header <nav>). Field-progress / "Next Field" lives in the nav's other
-     children and is kept. */
+  /* No layout CSS: the V2 signing UI renders the sign panel left + PDF right by default and fills the
+     iframe (the host route caps the outer width). The old V1 @media row-reverse / max-width rules
+     were verified no-ops in V2 (row-reverse hit the PDF column, not the row parent; max-width was
+     ignored by the inner full-bleed row) and were removed. */
+
+  /* Hide the document title + role badge. In V2, .embed--DocumentWidgetHeader is the top app <nav>;
+     its FIRST child is the left cluster (the <h1> document title + the "Signer"/"Approver" Badge).
+     Hiding that cluster keeps the right-hand "N Fields Remaining" + Complete cluster (a separate flex
+     child) intact; the Documenso logo here is already auto-hidden in embed mode. NOTE: Documenso
+     exposes NO documented hook or id for the title/badge — this is necessarily a structural selector,
+     verified against the Documenso V2 source (envelope-signer-header). Re-verify on Documenso upgrades. */
   .embed--DocumentWidgetHeader > div:first-child { display: none !important; }
 
-  /* Right-align the kept field-progress + Complete cluster. With the title (first child) hidden above,
-     the nav's space-between collapses the remaining cluster to the LEFT (where the title sat); push it
-     back to the right edge of the header. */
+  /* Keep the retained right-side cluster (Fields Remaining + Complete) pinned right once the left
+     cluster above is hidden. */
   .embed--DocumentWidgetHeader { justify-content: flex-end !important; }
 
   /* Hide the signer "Full Name" field. Version-agnostic: target the stable #full-name id directly. The
