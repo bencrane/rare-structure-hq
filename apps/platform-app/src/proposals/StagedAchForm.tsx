@@ -189,7 +189,6 @@ export function StagedAchForm({
             value={fullName}
             onChange={setFullName}
             onFocus={collapseToConfirm}
-            placeholder="First and last name"
             autoComplete="name"
           />
           <Field
@@ -205,7 +204,6 @@ export function StagedAchForm({
               setEmailTouched(false);
               collapseToConfirm();
             }}
-            placeholder="you@example.com"
             autoComplete="email"
             inputMode="email"
             error={emailError}
