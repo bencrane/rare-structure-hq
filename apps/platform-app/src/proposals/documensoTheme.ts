@@ -90,12 +90,19 @@ export const DOCUMENSO_EMBED_CSS = `
      back to the right edge of the header. */
   .embed--DocumentWidgetHeader { justify-content: flex-end !important; }
 
-  /* Hide the signer "Full Name" field — the participant name is prefilled + locked in the document
-     body (participant_full_name), so the signer only signs. The name value persists in the embed's
-     own state (seeded from the recipient), so signing is unaffected. */
-  .embed--DocumentWidgetForm label[for="full-name"],
-  .embed--DocumentWidgetForm #full-name { display: none !important; }
-  .embed--DocumentWidgetForm div:has(> #full-name) { display: none !important; }
+  /* Hide the signer "Full Name" field. Version-agnostic: target the stable #full-name id directly. The
+     V2 signing UI does NOT wrap the field in .embed--DocumentWidgetForm (that class only wraps an
+     assistant-mode fieldset in V2), so the old scoped selectors matched nothing and the field showed.
+     Safe to hide because the name is prefilled from the recipient AND locked via lockName on the
+     embed — the field stays populated, so signing/completion is unaffected. */
+  label[for="full-name"],
+  #full-name,
+  :has(> #full-name) { display: none !important; }
+
+  /* Hide the quick-actions panel (Download PDF / attachments). .embed--Actions is a documented embed
+     theming hook (docs.documenso.com/developers/embedding/css-variables), stable across the V1/V2
+     signing UIs — V1 has no Download action, so this is a no-op there. */
+  .embed--Actions { display: none !important; }
 `;
 
 export const DOCUMENSO_DEFAULT_HOST = "https://app.documenso.com";
