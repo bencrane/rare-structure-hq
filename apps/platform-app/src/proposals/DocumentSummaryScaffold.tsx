@@ -1,16 +1,16 @@
 /**
  * DocumentSummaryScaffold — the shared engagement-proposal document body for the direct-to-documenso
- * mandate. Two surfaces render the SAME structure (Prepared for · Strategic Origination Mandate
- * terms · Execution) so they read identically:
+ * mandate. Two surfaces render the SAME structure so they read identically:
  *
  *   - operator cockpit  (`MandateDraftShell`, /app/m/:ref)  — Execution box = the operator's signature
  *                                                             pad; action = "Confirm & originate".
  *   - prospect entry    (`DocumentSignPage`, /p/m/:envelopeId) — Execution box = "Proceed to Proposal"
  *                                                             (reveals the Documenso embed); no action.
  *
- * Only the Execution box content and the optional action below it differ between the two — everything
- * else lives here, so the surfaces stay equivalent as the placeholder term values get wired to real
- * draft data later.
+ * Sections: Prepared for · Strategic Origination Mandate (narrative) · Mandate Parameters ·
+ * Commercial Terms · Execution. Only the Execution box content and the optional action below it differ
+ * between the two surfaces — everything else lives here, so the surfaces stay equivalent as the
+ * placeholder copy/values get wired to real draft data later.
  */
 import type { ReactNode } from "react";
 
@@ -27,35 +27,59 @@ export function DocumentSummaryScaffold({
   return (
     <div className="px-6 pt-10 pb-14 md:px-10 md:pt-12 md:pb-16">
       {/* Prepared for — value pending the draft wiring */}
-      <div className="mb-6 border-[color:var(--color-border-subtle)] border-b pb-4">
+      <div className="mb-10 border-[color:var(--color-border-subtle)] border-b pb-4">
         <div className="mb-1 font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.16em]">
           Prepared for
         </div>
         <div className="text-[0.9375rem] text-[color:var(--color-text-subtle)]">—</div>
       </div>
 
-      {/* Headline terms — fixed labels, values pending. Mirrors the through-docraptor PricingEditor
-          (Infrastructure Fee · Term · Billing · Total); the data-driven success-fee tiers are
-          omitted until the draft carries them. */}
+      {/* Strategic Origination Mandate — the mandate narrative. */}
       <div className="mb-10">
-        <div className="mb-3 font-mono text-[0.625rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.2em]">
-          Strategic Origination Mandate
-        </div>
-        <TermRow label="Infrastructure Fee" />
-        <TermRow label="Term" />
-        <TermRow label="Billing" />
+        <SectionHeading>Strategic Origination Mandate</SectionHeading>
+        <p className="text-[0.9375rem] text-[color:var(--color-text-muted)] leading-[1.65]">
+          Active Operators will allocate localized routing capacity exclusively to Acme Corp. This
+          mandate establishes a dedicated information channel for identifying high-probability
+          corporate inflection points prior to broader market awareness.
+        </p>
+      </div>
+
+      {/* Mandate Parameters — fixed labels, values pending the draft wiring. */}
+      <div className="mb-10">
+        <SectionHeading>Mandate Parameters</SectionHeading>
+        <TermRow label="Target Market" />
+        <TermRow label="Key Inflection Points" />
+        <TermRow label="Core Capabilities" />
+        <TermRow label="Regional Activity" />
+      </div>
+
+      {/* Commercial Terms — fixed labels, values pending the draft wiring. */}
+      <div className="mb-10">
+        <SectionHeading>Commercial Terms</SectionHeading>
+        <TermRow label="Data Infrastructure Fee" />
+        <TermRow label="Access Allocation Payment" />
+        <TermRow label="Term Duration" />
+        <TermRow label="Billing Cadence" />
         <TermRow label="Total" />
       </div>
 
       {/* Execution — the operator signs here; the prospect proceeds to the Documenso document. */}
       <div>
-        <div className="mb-3 font-mono text-[0.625rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.2em]">
-          Execution
-        </div>
+        <SectionHeading>Execution</SectionHeading>
         <div className="border border-[color:var(--color-border-subtle)] p-6">{execution}</div>
       </div>
 
       {action}
+    </div>
+  );
+}
+
+// Section heading — the blue accent label (the "Strategic Origination Mandate" style). Shared by every
+// section so the document reads as one system.
+function SectionHeading({ children }: { children: ReactNode }) {
+  return (
+    <div className="mb-3 font-mono text-[0.625rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.2em]">
+      {children}
     </div>
   );
 }
