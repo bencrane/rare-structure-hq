@@ -125,29 +125,39 @@ export function StagedAchForm({
   onSettledPoll,
   submitLabel,
   nameDefault = "",
+  emailDefault = "",
   enableCard = false,
+  requireConfirm = false,
 }: {
   init: StagedAchInit;
   returnUrl: string;
   onSettledPoll: (hint?: SettledHint) => void;
   submitLabel: string;
   nameDefault?: string;
+  /** Seed the email input (the document flow pre-fills the opportunity contact). */
+  emailDefault?: string;
   // When set, the minted intent carries both `card` and `us_bank_account`; the PaymentElement renders
   // Stripe's "Card | US bank account" tabs. Default false keeps the proposal-ref surface ACH-only.
   enableCard?: boolean;
+  /** Require an explicit "Continue to payment" confirmation of the contact details before the payment
+   * step appears (the document flow, where the details are pre-filled). When false the payment step
+   * auto-reveals as soon as the details validate (the proposal-ref ACH-only surface). */
+  requireConfirm?: boolean;
 }) {
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(emailDefault);
   const [emailTouched, setEmailTouched] = useState(false);
   const [fullName, setFullName] = useState(nameDefault);
   const detailsValid = isEmail(email) && fullName.trim().length > 1;
 
-  // Reveal (and mount) the bank step once details validate. LATCHED: once revealed it never
-  // un-mounts — a transiently-invalid email mid-edit must not destroy the live Financial Connections
-  // session inside the PaymentElement. The Authorize button re-checks `detailsValid` to gate submit.
+  // Reveal (and mount) the bank step. LATCHED: once revealed it never un-mounts — a transiently-invalid
+  // email mid-edit must not destroy the live Financial Connections session inside the PaymentElement.
+  // The Authorize button re-checks `detailsValid` to gate submit.
   const [revealBank, setRevealBank] = useState(false);
   useEffect(() => {
-    if (detailsValid && !revealBank) setRevealBank(true);
-  }, [detailsValid, revealBank]);
+    // Auto-reveal only when no explicit confirmation is required (the proposal-ref surface). The
+    // document flow gates the reveal behind a "Continue to payment" confirm of the pre-filled details.
+    if (!requireConfirm && detailsValid && !revealBank) setRevealBank(true);
+  }, [requireConfirm, detailsValid, revealBank]);
 
   // Validate on BLUR, never while typing — surfacing "Enter a valid email" on the first keystroke of a
   // half-typed address is hostile. Once the field has been blurred with an invalid value the error
@@ -159,8 +169,10 @@ export function StagedAchForm({
     <>
       <StepSection
         index="01"
-        label="Your details"
-        hint="Used for your payment record and any bank-verification notices."
+        label="Contact information"
+        hint={
+          enableCard ? undefined : "Used for your payment record and any bank-verification notices."
+        }
         active
       >
         <div className="grid gap-4 md:grid-cols-2">
@@ -185,34 +197,50 @@ export function StagedAchForm({
             error={emailError}
           />
         </div>
+        {/* Confirm step (document flow): the contact is pre-filled, so the prospect confirms (or edits)
+            it; only then does the payment step appear. */}
+        {requireConfirm && !revealBank ? (
+          <button
+            type="button"
+            disabled={!detailsValid}
+            onClick={() => setRevealBank(true)}
+            className="mt-6 w-full border border-[color:var(--color-accent-primary)] bg-[color:var(--color-accent-soft)] py-4 font-mono text-[0.8125rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.16em] transition-colors hover:bg-[color:var(--color-accent-primary)] hover:text-[color:var(--color-text-onAccent)] disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Continue to payment →
+          </button>
+        ) : null}
       </StepSection>
 
-      <StepSection
-        index="02"
-        label={enableCard ? "Payment method" : "Bank account"}
-        hint={
-          enableCard
-            ? "Pay by card for instant activation, or connect your US bank account (ACH)."
-            : "Find your bank to verify instantly, or enter your account details manually."
-        }
-        active={revealBank}
-        divider
-      >
-        {revealBank ? (
-          <AchPaymentForm
-            init={init}
-            returnUrl={returnUrl}
-            name={fullName}
-            email={email}
-            canSubmit={detailsValid}
-            submitLabel={submitLabel}
-            enableCard={enableCard}
-            onSettledPoll={onSettledPoll}
-          />
-        ) : (
-          <LockedNote>Complete your details above to continue.</LockedNote>
-        )}
-      </StepSection>
+      {/* Payment step. Auto-revealed on the proposal surface; on the document surface it appears only
+          after the contact-confirm above (so it's never shown as a locked placeholder there). */}
+      {!requireConfirm || revealBank ? (
+        <StepSection
+          index="02"
+          label={enableCard ? "Payment method" : "Bank account"}
+          hint={
+            enableCard
+              ? undefined
+              : "Find your bank to verify instantly, or enter your account details manually."
+          }
+          active={revealBank}
+          divider
+        >
+          {revealBank ? (
+            <AchPaymentForm
+              init={init}
+              returnUrl={returnUrl}
+              name={fullName}
+              email={email}
+              canSubmit={detailsValid}
+              submitLabel={submitLabel}
+              enableCard={enableCard}
+              onSettledPoll={onSettledPoll}
+            />
+          ) : (
+            <LockedNote>Complete your details above to continue.</LockedNote>
+          )}
+        </StepSection>
+      ) : null}
     </>
   );
 }
@@ -228,7 +256,7 @@ function StepSection({
 }: {
   index: string;
   label: string;
-  hint: string;
+  hint?: string;
   active: boolean;
   divider?: boolean;
   children: React.ReactNode;
@@ -257,9 +285,11 @@ function StepSection({
           {label}
         </span>
       </div>
-      <p className="mt-2 font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase leading-[1.7] tracking-[0.12em]">
-        {hint}
-      </p>
+      {hint ? (
+        <p className="mt-2 font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase leading-[1.7] tracking-[0.12em]">
+          {hint}
+        </p>
+      ) : null}
       <div className="mt-6">{children}</div>
     </section>
   );

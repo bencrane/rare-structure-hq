@@ -580,6 +580,10 @@ export interface EdgeDocumentPaymentInit {
   amount_cents: number;
   currency: string;
   payment_status: string;
+  // Optional: an older edge_api during a staggered deploy omits these; the BFF then maps them to
+  // undefined and the SPA falls back to empty (no pre-fill), never a crash.
+  recipient_name?: string | null;
+  recipient_email?: string | null;
 }
 
 /** Mint (or reuse) the ACH PaymentIntent for the pair. edge_api 409s until the document is signed

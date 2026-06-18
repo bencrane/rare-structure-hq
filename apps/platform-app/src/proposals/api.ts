@@ -293,6 +293,9 @@ export interface DocumentPaymentInit {
   amountCents: number;
   currency: string;
   paymentStatus: string;
+  /** Opportunity contact, to pre-fill the editable name/email on the pay page. Null when unavailable. */
+  contactName?: string | null;
+  contactEmail?: string | null;
 }
 
 /** Mint (or reuse) the ACH PaymentIntent for `/p/m/:opportunityId/:documentId/pay`. Throws
