@@ -106,6 +106,10 @@ export const DOCUMENSO_EMBED_CSS = `
      theming hook (docs.documenso.com/developers/embedding/css-variables), stable across the V1/V2
      signing UIs — V1 has no Download action, so this is a no-op there. */
   .embed--Actions { display: none !important; }
+
+  /* Hide the "Powered by Documenso" link. We are on the white-label/Platform tier, so this is entitled.
+     No .embed-- hook exists on the link, so target it by href. */
+  a[href*="documenso.com"] { display: none !important; }
 `;
 
 export const DOCUMENSO_DEFAULT_HOST = "https://app.documenso.com";
