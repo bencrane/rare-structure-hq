@@ -21,7 +21,12 @@ import { useParams } from "react-router-dom";
 import { DocumentFrame } from "@/proposals/DocumentFrame";
 import { DocumentSignedConfirmation } from "@/proposals/DocumentSignedConfirmation";
 import { DocumentSummaryScaffold } from "@/proposals/DocumentSummaryScaffold";
-import { type MandateSignToken, getMandateSignState, getMandateSignToken } from "@/proposals/api";
+import {
+  type MandateSignToken,
+  getDocumentPaymentState,
+  getMandateSignState,
+  getMandateSignToken,
+} from "@/proposals/api";
 import {
   DOCUMENSO_CSS_VARS,
   DOCUMENSO_DEFAULT_HOST,
@@ -47,6 +52,13 @@ export default function DocumentSignPage() {
   const [embedReady, setEmbedReady] = useState(false);
   // Server-confirmed terminal state. Once true the embed is replaced by the signed-confirmation view.
   const [signed, setSigned] = useState(false);
+  // Payment server-truth — the Stripe-webhook-advanced `business.document_payments` row read via
+  // getDocumentPaymentState, NEVER a browser confirm result. Once paid (or ACH initiated), the signed
+  // view drops the "Continue to payment" CTA so the prospect can't re-enter the already-paid flow.
+  const [paid, setPaid] = useState(false);
+  // Gates the signed-but-not-paid confirmation until the payment read resolves — a returning paid
+  // prospect must never flash the "Continue to payment" CTA before we know they've already paid.
+  const [paymentChecked, setPaymentChecked] = useState(false);
   // Display-only: the embed's completion event raises a "Finalizing…" veil over the embed while the
   // server poll catches up. It does NOT advance the page — only the server `signed` truth does that.
   const [finalizing, setFinalizing] = useState(false);
@@ -107,6 +119,27 @@ export default function DocumentSignPage() {
     };
   }, [opportunityId, documentId, state, doc?.signingToken, signed]);
 
+  // One-time read of the authoritative (Stripe-webhook-driven) payment state. `succeeded` (card/settled
+  // ACH) or `processing` (ACH initiated) means the prospect has already paid/authorized — the signed
+  // view then shows the read-only engagement summary instead of "Continue to payment".
+  useEffect(() => {
+    if (!opportunityId || !documentId) return;
+    let active = true;
+    getDocumentPaymentState(opportunityId, documentId)
+      .then((s) => {
+        if (active && (s?.paymentStatus === "succeeded" || s?.paymentStatus === "processing")) {
+          setPaid(true);
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (active) setPaymentChecked(true);
+      });
+    return () => {
+      active = false;
+    };
+  }, [opportunityId, documentId]);
+
   // Safety net: if the embed never fires onDocumentReady (slow network / edge), drop the veil after a
   // beat so the prospect is never stranded on the loading state.
   useEffect(() => {
@@ -122,16 +155,33 @@ export default function DocumentSignPage() {
   const showingEmbed = state === "ready" && !!doc?.signingToken && proceed;
 
   let body: React.ReactNode;
-  if (signed) {
-    // Server-confirmed terminal state — the new direct-to-documenso post-sign confirmation, rendered
-    // in place (no docraptor/proposal post-sign components, no `ref` keying — this flow is keyed by
-    // the envelope id alone).
+  if (signed && paid) {
+    // Already paid (server truth) — show the read-only engagement summary, NOT the post-sign
+    // "Continue to payment" confirmation, so the prospect can never re-enter the already-paid flow.
+    // This is also where the pay page's "Back to summary" lands once payment is complete.
+    body = (
+      <DocumentSummaryScaffold
+        execution={
+          <div className="flex h-[84px] w-full items-center justify-center gap-2 border border-[color:var(--color-border-accent)] bg-[color:var(--color-accent-soft)] font-mono text-[0.75rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.18em]">
+            Payment received
+          </div>
+        }
+      />
+    );
+  } else if (signed && paymentChecked) {
+    // Server-confirmed signed AND payment read resolved as not-yet-paid — the direct-to-documenso
+    // post-sign confirmation with the "Continue to payment" CTA. Rendered in place (no docraptor/proposal
+    // post-sign components, no `ref` keying — this flow is keyed by the envelope id alone).
     body = (
       <DocumentSignedConfirmation
         opportunityId={opportunityId ?? ""}
         documentId={documentId ?? ""}
       />
     );
+  } else if (signed) {
+    // Signed, but the payment read hasn't resolved yet — hold the loading note rather than flash the
+    // "Continue to payment" CTA to someone who may already have paid.
+    body = <BodyNote>Preparing the agreement…</BodyNote>;
   } else if (state === "loading") {
     body = <BodyNote>Preparing the agreement…</BodyNote>;
   } else if (state === "notfound" || !doc) {
@@ -204,9 +254,17 @@ export default function DocumentSignPage() {
   return (
     <DocumentFrame
       title={signed || showingEmbed ? "Engagement Agreement" : "Engagement Proposal"}
-      status={signed ? "signed" : undefined}
+      status={paid ? "paid" : signed ? "signed" : undefined}
       backHref={opportunityId && documentId ? `/p/m/${opportunityId}/${documentId}` : undefined}
-      maxWidthClass={signed ? "max-w-[920px]" : showingEmbed ? "max-w-[1152px]" : "max-w-[820px]"}
+      maxWidthClass={
+        paid
+          ? "max-w-[820px]"
+          : signed
+            ? "max-w-[920px]"
+            : showingEmbed
+              ? "max-w-[1152px]"
+              : "max-w-[820px]"
+      }
     >
       {body}
     </DocumentFrame>
