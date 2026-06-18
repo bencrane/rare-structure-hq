@@ -48,6 +48,9 @@ export function DocumentPaymentForm({
         init={init}
         returnUrl={`${window.location.origin}/p/m/${opportunityId}/${documentId}/pay?status=submitted`}
         submitLabel="Authorize payment"
+        nameDefault={init.contactName ?? ""}
+        emailDefault={init.contactEmail ?? ""}
+        requireConfirm
         enableCard
         onSettledPoll={onSettledPoll}
       />

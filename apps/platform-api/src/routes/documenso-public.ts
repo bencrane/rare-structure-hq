@@ -97,6 +97,8 @@ documensoPublicRoutes.post("/sign/:opportunityId/:documentId/payment-intent", as
         amountCents: init.amount_cents,
         currency: init.currency,
         paymentStatus: init.payment_status,
+        contactName: init.recipient_name,
+        contactEmail: init.recipient_email,
       },
     });
   } catch (e) {
