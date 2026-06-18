@@ -318,6 +318,9 @@ export interface DocumentPaymentState {
   amountCents: number | null;
   currency: string;
   paidAt: string | null;
+  /** Settled rail ("card" | "us_bank_account"), stamped by the webhook; null until settlement.
+   * Cosmetic — tailors the paid-state copy only. */
+  rail?: string | null;
 }
 
 /** Poll the authoritative (webhook-driven) document payment state. `paymentStatus === "succeeded"` is

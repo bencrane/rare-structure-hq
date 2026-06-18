@@ -3,18 +3,21 @@
  * DocumentPaymentPage's DocumentFrame at `/p/m/:opportunityId/:documentId/pay`.
  *
  * Thin wrapper: it owns this surface's amount header + page padding, then drops the shared
- * `StagedAchForm` (Step 01 "Your details" → Step 02 "Bank account", the Stripe billing-details split)
- * into the frame. The staged body is shared with the proposal-ref surface (`StripePaymentSection`) so
- * the two ACH surfaces cannot drift in billing-collection behavior — see `StagedAchForm` for the
- * progressive-disclosure structure, the latched reveal, and the `us_bank_account` billing-fields split.
+ * `StagedAchForm` (Step 01 "Your details" → Step 02 "Payment method", the Stripe billing-details split)
+ * into the frame. This surface passes `enableCard` — the minted intent is dual-rail, so the
+ * PaymentElement offers a "Card | US bank account" two-choice (card settles instantly; ACH async). The
+ * staged body is shared with the proposal-ref surface (`StripePaymentSection`, ACH-only) so the two
+ * surfaces cannot drift in billing-collection behavior — see `StagedAchForm` for the
+ * progressive-disclosure structure, the latched reveal, and the billing-fields split (which the
+ * dual-method intent's union of requirements keeps mandatory).
  *
  * Lives in `proposals/` (alongside StripePaymentSection) deliberately: it owns form geometry on behalf
  * of the route, which keeps the `no-route-geometry` lint where it belongs (the route stays
  * content/state-only).
  *
- * ACH settles asynchronously: `confirmPayment` returns `processing`, NOT `succeeded`. The authoritative
- * "paid" transition arrives later via the Stripe webhook → edge_api; the route polls
- * `getDocumentPaymentState` for the settled status (via `onSettledPoll`).
+ * Card captures synchronously (`confirmPayment` → `succeeded`); ACH returns `processing` and settles
+ * 1–3 business days later. The authoritative "paid" transition arrives via the Stripe webhook →
+ * edge_api; the route polls `getDocumentPaymentState` for the settled status (via `onSettledPoll`).
  */
 import { StagedAchForm, formatUsdCents } from "./StagedAchForm";
 import type { DocumentPaymentInit } from "./api";
@@ -44,7 +47,8 @@ export function DocumentPaymentForm({
       <StagedAchForm
         init={init}
         returnUrl={`${window.location.origin}/p/m/${opportunityId}/${documentId}/pay?status=submitted`}
-        submitLabel="Authorize payment"
+        submitLabel={`Pay ${formatUsdCents(init.amountCents, init.currency)}`}
+        enableCard
         onSettledPoll={onSettledPoll}
       />
     </div>

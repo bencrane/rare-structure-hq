@@ -607,6 +607,7 @@ export interface EdgeDocumentPaymentState {
   amount_cents: number | null;
   currency: string;
   paid_at: string | null;
+  rail: string | null;
 }
 
 /** The authoritative payment state for the pair (the poll target). `none` before the first mint and

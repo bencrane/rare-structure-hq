@@ -277,6 +277,7 @@ engagementMandateDraftRoutes.get("/sign/:opportunityId/:documentId/payment", asy
         amountCents: state.amount_cents,
         currency: state.currency,
         paidAt: state.paid_at,
+        rail: state.rail,
       },
     });
   } catch (e) {
