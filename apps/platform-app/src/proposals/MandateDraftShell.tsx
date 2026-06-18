@@ -18,12 +18,16 @@
  * access capability, the numeric document id a disambiguator behind it. Both come off the
  * prefill-lane originate response (`originatePrefilled`), so the link is built directly from it.
  */
-import { Check, Copy, ExternalLink, PenLine } from "lucide-react";
+import { Check, Copy, ExternalLink, Lock, LockOpen, PenLine } from "lucide-react";
 import { useState } from "react";
 
 import { useAuth } from "@/lib/auth";
 import { DocumentFrame } from "@/proposals/DocumentFrame";
-import { DocumentSummaryScaffold } from "@/proposals/DocumentSummaryScaffold";
+import {
+  DocumentSummaryScaffold,
+  EMPTY_MANDATE_SUMMARY_VALUES,
+  type MandateSummaryValues,
+} from "@/proposals/DocumentSummaryScaffold";
 import { SignatureOverlay } from "@/proposals/SignaturePad";
 import { confirmMandateDraft, originatePrefilled } from "@/proposals/api";
 import { useOriginationMode } from "@/settings/originationMode";
@@ -56,6 +60,16 @@ export function MandateDraftShell({
   );
   const [error, setError] = useState<string | null>(null);
 
+  // ── Inline edit prototype ──────────────────────────────────────────────────────────────────────
+  // The header lock toggle reveals inline inputs for the mandate fields. Values are in-session only
+  // (not persisted, not yet wired to the draft or the prospect view) — this is the operator's "add the
+  // values and see how it looks" prototype. Terms lock once the operator signs (re-sign to edit) or
+  // once originated, mirroring the through-docraptor MandateEditor's lock/edit gate.
+  const [editing, setEditing] = useState(false);
+  const [values, setValues] = useState<MandateSummaryValues>(EMPTY_MANDATE_SUMMARY_VALUES);
+  const finalized = status === "submitting" || status === "ready";
+  const canEdit = editing && !finalized && !signature;
+
   async function confirm() {
     if (!draftId || !signature || status === "submitting") return;
     setStatus("submitting");
@@ -84,8 +98,23 @@ export function MandateDraftShell({
   }
 
   return (
-    <DocumentFrame title="Engagement Summary" maxWidthClass="max-w-[820px]" housing={housing}>
+    <DocumentFrame
+      title="Engagement Summary"
+      maxWidthClass="max-w-[820px]"
+      housing={housing}
+      headerAccessory={
+        <DraftEditControls
+          finalized={finalized}
+          signed={!!signature}
+          editing={editing}
+          onToggle={() => setEditing((e) => !e)}
+        />
+      }
+    >
       <DocumentSummaryScaffold
+        values={values}
+        editable={canEdit}
+        onChange={(key, value) => setValues((v) => ({ ...v, [key]: value }))}
         execution={
           <>
             <div className="mb-2.5 flex items-center justify-between">
@@ -156,6 +185,51 @@ export function MandateDraftShell({
         />
       )}
     </DocumentFrame>
+  );
+}
+
+// Header control — the lock toggle (sits where the StatusPill would). Mirrors the through-docraptor
+// MandateEditor's DraftControls: an unsigned, un-originated draft shows the lock (click to reveal the
+// inline field inputs); once signed the terms lock to what was signed (re-sign in the execution block
+// to edit); once originating/ready they're locked in.
+function DraftEditControls({
+  finalized,
+  signed,
+  editing,
+  onToggle,
+}: {
+  finalized: boolean;
+  signed: boolean;
+  editing: boolean;
+  onToggle: () => void;
+}) {
+  if (finalized)
+    return (
+      <span className="flex shrink-0 items-center gap-1.5 border border-[color:var(--color-border-default)] px-2.5 py-1 font-mono text-[0.5rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.16em]">
+        <Lock className="size-3" />
+        Locked
+      </span>
+    );
+  if (signed)
+    return (
+      <span className="flex shrink-0 items-center gap-1.5 border border-[color:var(--color-border-accent)] bg-[color:var(--color-accent-soft)] px-2.5 py-1 font-mono text-[0.5rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.16em]">
+        <Check className="size-3" />
+        Signed
+      </span>
+    );
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-label={editing ? "Lock terms" : "Edit terms"}
+      className={`flex shrink-0 items-center gap-1.5 border px-2.5 py-1 font-mono text-[0.5rem] uppercase tracking-[0.16em] transition-colors ${
+        editing
+          ? "border-[color:var(--color-border-accent)] bg-[color:var(--color-accent-soft)] text-[color:var(--color-text-accent)]"
+          : "border-[color:var(--color-border-default)] text-[color:var(--color-text-subtle)] hover:text-[color:var(--color-text-accent)]"
+      }`}
+    >
+      {editing ? <LockOpen className="size-3" /> : <Lock className="size-3" />}
+    </button>
   );
 }
 
