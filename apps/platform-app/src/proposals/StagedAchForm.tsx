@@ -18,13 +18,16 @@
  *     IntegrationError before the bank flow runs, so the native inputs are LOAD-BEARING, not cosmetic,
  *     and we validate them ourselves (Stripe no longer does). `nameDefault` seeds the name input (the
  *     proposal flow passes the known `clientName`); the email is always collected.
- *   Step 02 "Bank account" — the Stripe `us_bank_account` collection (Financial Connections: search /
- *     instant bank-login, or "enter details manually" → routing+account / microdeposits). It mounts
- *     only once Step 01 validates; until then Step 02 shows a locked placeholder. The two collection
- *     paths live INSIDE Stripe's iframe — external tabs cannot drive that mode, so we FRAME them with a
- *     section hint, we don't re-tab them. The reveal is LATCHED: once mounted the Elements subtree is
- *     never unmounted, so a transiently-invalid email mid-edit can't destroy the live Financial
- *     Connections session.
+ *   Step 02 "Bank account" / "Payment method" — the Stripe payment collection. ACH-only by default
+ *     (`us_bank_account` Financial Connections: search / instant bank-login, or "enter details
+ *     manually"). When `enableCard` is set (the document flow), the minted intent carries BOTH `card`
+ *     and `us_bank_account`, and the PaymentElement renders Stripe's "Card | US bank account" tabs
+ *     (`layout:{type:"tabs"}`) — the prospect's neutral two-choice. Card captures synchronously (instant
+ *     activation); ACH settles asynchronously. The billing-details split is unchanged and load-bearing
+ *     either way: the union of requirements on a dual-method intent still forces name+email, so Step 01
+ *     stays mandatory. It mounts only once Step 01 validates; until then Step 02 shows a locked
+ *     placeholder. The reveal is LATCHED: once mounted the Elements subtree is never unmounted, so a
+ *     transiently-invalid email mid-edit can't destroy the live Financial Connections session.
  *
  * ACH settles asynchronously: `confirmPayment` returns `processing`, NOT `succeeded`. The authoritative
  * "paid" transition arrives later via the Stripe webhook → edge_api; the mounting route polls its
@@ -69,7 +72,14 @@ const STRIPE_APPEARANCE: Appearance = {
       color: T.mutedForeground,
     },
     ".Tab, .Block": { backgroundColor: T.muted, border: `1px solid ${T.border}` },
-    ".Tab--selected": { borderColor: T.ring },
+    ".Tab:hover": { borderColor: T.ring },
+    // Selected rail reads as a deliberate choice — accent border + ring on the sunken surface. This
+    // is the entire "Card | US bank account" two-choice styling (the tabs are Stripe's, framed by us).
+    ".Tab--selected": {
+      borderColor: T.ring,
+      backgroundColor: T.input,
+      boxShadow: `0 0 0 1px ${T.ring}`,
+    },
   },
 };
 
@@ -95,12 +105,16 @@ export function StagedAchForm({
   onSettledPoll,
   submitLabel,
   nameDefault = "",
+  enableCard = false,
 }: {
   init: StagedAchInit;
   returnUrl: string;
   onSettledPoll: () => void;
   submitLabel: string;
   nameDefault?: string;
+  // When set, the minted intent carries both `card` and `us_bank_account`; the PaymentElement renders
+  // Stripe's "Card | US bank account" tabs. Default false keeps the proposal-ref surface ACH-only.
+  enableCard?: boolean;
 }) {
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState(nameDefault);
@@ -150,8 +164,12 @@ export function StagedAchForm({
 
       <StepSection
         index="02"
-        label="Bank account"
-        hint="Find your bank to verify instantly, or enter your account details manually."
+        label={enableCard ? "Payment method" : "Bank account"}
+        hint={
+          enableCard
+            ? "Pay by card for instant activation, or connect your US bank account (ACH)."
+            : "Find your bank to verify instantly, or enter your account details manually."
+        }
         active={revealBank}
         divider
       >
@@ -163,6 +181,7 @@ export function StagedAchForm({
             email={email}
             canSubmit={detailsValid}
             submitLabel={submitLabel}
+            enableCard={enableCard}
             onSettledPoll={onSettledPoll}
           />
         ) : (
@@ -294,6 +313,7 @@ function AchPaymentForm({
   email,
   canSubmit,
   submitLabel,
+  enableCard,
   onSettledPoll,
 }: {
   init: StagedAchInit;
@@ -302,6 +322,7 @@ function AchPaymentForm({
   email: string;
   canSubmit: boolean;
   submitLabel: string;
+  enableCard: boolean;
   onSettledPoll: () => void;
 }) {
   const stripePromise = useMemo<Promise<Stripe | null>>(
@@ -319,6 +340,7 @@ function AchPaymentForm({
         email={email}
         canSubmit={canSubmit}
         submitLabel={submitLabel}
+        enableCard={enableCard}
         onSettledPoll={onSettledPoll}
       />
     </Elements>
@@ -333,6 +355,7 @@ function AchForm({
   email,
   canSubmit,
   submitLabel,
+  enableCard,
   onSettledPoll,
 }: {
   returnUrl: string;
@@ -340,6 +363,7 @@ function AchForm({
   email: string;
   canSubmit: boolean;
   submitLabel: string;
+  enableCard: boolean;
   onSettledPoll: () => void;
 }) {
   const stripe = useStripe();
@@ -422,7 +446,13 @@ function AchForm({
           className={`transition-opacity duration-300 ${elementReady ? "opacity-100" : "opacity-0"}`}
         >
           <PaymentElement
-            options={{ fields: { billingDetails: { name: "never", email: "never" } } }}
+            options={{
+              fields: { billingDetails: { name: "never", email: "never" } },
+              // Dual-rail → Stripe's "Card | US bank account" tabs. ACH-only → default (single method,
+              // no tab strip). `address`/`phone` stay at the implicit "auto" so the card tab can still
+              // collect postal/ZIP for AVS while the bank tab renders nothing extra.
+              layout: enableCard ? { type: "tabs" } : undefined,
+            }}
             onReady={() => setElementReady(true)}
           />
         </div>
@@ -447,7 +477,9 @@ function AchForm({
         {submitting ? "Authorizing…" : submitLabel}
       </button>
       <p className="text-center font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
-        US bank account · settles in 1–3 business days · powered by Stripe
+        {enableCard
+          ? "Card or US bank account · powered by Stripe"
+          : "US bank account · settles in 1–3 business days · powered by Stripe"}
       </p>
     </form>
   );

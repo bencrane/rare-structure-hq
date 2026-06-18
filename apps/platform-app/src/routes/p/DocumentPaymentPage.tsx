@@ -30,7 +30,7 @@ import {
 type PayState =
   | { kind: "loading" }
   | { kind: "ready"; init: DocumentPaymentInit }
-  | { kind: "paid" }
+  | { kind: "paid"; rail?: string | null }
   | { kind: "unsigned" }
   | { kind: "unavailable" };
 
@@ -50,7 +50,7 @@ export default function DocumentPaymentPage() {
       const existing = await getDocumentPaymentState(opportunityId, documentId).catch(() => null);
       if (!active) return;
       if (existing?.paymentStatus === "succeeded") {
-        setPay({ kind: "paid" });
+        setPay({ kind: "paid", rail: existing.rail });
         return;
       }
       try {
@@ -78,7 +78,7 @@ export default function DocumentPaymentPage() {
     pollTimer.current = setInterval(async () => {
       const s = await getDocumentPaymentState(opportunityId, documentId).catch(() => null);
       if (s?.paymentStatus === "succeeded") {
-        setPay({ kind: "paid" });
+        setPay({ kind: "paid", rail: s.rail });
         if (pollTimer.current) clearInterval(pollTimer.current);
         pollTimer.current = null;
       }
@@ -97,7 +97,13 @@ export default function DocumentPaymentPage() {
   } else if (!opportunityId || !documentId) {
     note = <Note>This payment link is invalid or has expired.</Note>;
   } else if (pay.kind === "paid") {
-    note = <Note>Payment received — this engagement is active.</Note>;
+    const byRail =
+      pay.rail === "card"
+        ? "Payment received by card"
+        : pay.rail === "us_bank_account"
+          ? "Payment received by bank transfer"
+          : "Payment received";
+    note = <Note>{byRail} — this engagement is active.</Note>;
   } else if (pay.kind === "unsigned") {
     note = (
       <Note>Sign the engagement agreement before payment. Return to the document to continue.</Note>
