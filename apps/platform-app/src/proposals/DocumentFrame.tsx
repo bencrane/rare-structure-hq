@@ -34,8 +34,9 @@ export function DocumentFrame({
   maxWidthClass?: string;
   /** Top-right header slot. Replaces the default StatusPill (e.g. the operator's draft controls). */
   headerAccessory?: React.ReactNode;
-  /** Hide the trust-strip footer ("Legally binding e-signature" / "Audit trail preserved"). The
-   * payment surface sets this — those claims are about signing, not the ACH debit. */
+  /** Suppress the trust-strip TEXT ("Legally binding e-signature" / "Audit trail preserved") while
+   * KEEPING the footer band. The payment surface sets this — those claims are about signing, not the
+   * ACH debit — but the band itself stays as the framed document's bottom edge. */
   hideTrustStrip?: boolean;
   /**
    * Where the frame is mounted. `"standalone"` (default) is the public proposal surface
@@ -91,17 +92,27 @@ export function DocumentFrame({
           {/* Body — page-specific (summary content, or the signing embed). */}
           <div className="relative flex-1 bg-[color:var(--color-surface-base)]">{children}</div>
 
-          {/* Footer — trust strip. Suppressed on surfaces that aren't about signing (e.g. payment). */}
-          {!hideTrustStrip && (
-            <div className="flex items-center justify-between gap-4 border-[color:var(--color-border-subtle)] border-t bg-[color:var(--color-surface-raised)] px-6 py-3">
-              <span className="font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
-                Legally binding e-signature
+          {/* Footer band — the framed document's bottom edge (letterhead rhythm). Signing surfaces
+              fill it with the trust strip; surfaces where those claims don't apply (payment) keep the
+              band but render it empty via `hideTrustStrip`. */}
+          <div className="flex items-center justify-between gap-4 border-[color:var(--color-border-subtle)] border-t bg-[color:var(--color-surface-raised)] px-6 py-3">
+            {hideTrustStrip ? (
+              // Empty band — a non-breaking space holds the same line box as the trust-strip text, so
+              // the band's height matches the signing surfaces exactly.
+              <span className="font-mono text-[0.5625rem] uppercase tracking-[0.14em]">
+                {"\u00A0"}
               </span>
-              <span className="font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
-                Audit trail preserved
-              </span>
-            </div>
-          )}
+            ) : (
+              <>
+                <span className="font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
+                  Legally binding e-signature
+                </span>
+                <span className="font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
+                  Audit trail preserved
+                </span>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>
