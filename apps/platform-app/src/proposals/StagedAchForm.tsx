@@ -524,11 +524,13 @@ function AchForm({
       >
         {submitting ? "Authorizing…" : submitLabel}
       </button>
-      <p className="text-center font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
-        {enableCard
-          ? "Powered by Stripe"
-          : "US bank account · settles in 1–3 business days · powered by Stripe"}
-      </p>
+      {/* Document (card-enabled) surface carries "Powered by Stripe" in the DocumentFrame footer band,
+          so no caption here. The ACH-only proposal surface keeps its settlement caption. */}
+      {!enableCard ? (
+        <p className="text-center font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
+          US bank account · settles in 1–3 business days · powered by Stripe
+        </p>
+      ) : null}
     </form>
   );
 }

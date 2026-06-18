@@ -47,7 +47,7 @@ export function DocumentPaymentForm({
       <StagedAchForm
         init={init}
         returnUrl={`${window.location.origin}/p/m/${opportunityId}/${documentId}/pay?status=submitted`}
-        submitLabel={`Pay ${formatUsdCents(init.amountCents, init.currency)}`}
+        submitLabel="Authorize payment"
         enableCard
         onSettledPoll={onSettledPoll}
       />

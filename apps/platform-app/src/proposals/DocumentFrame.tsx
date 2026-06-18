@@ -22,6 +22,7 @@ export function DocumentFrame({
   maxWidthClass = "max-w-[768px]",
   headerAccessory,
   hideTrustStrip = false,
+  footer,
   housing = "standalone",
   children,
 }: {
@@ -38,6 +39,9 @@ export function DocumentFrame({
    * KEEPING the footer band. The payment surface sets this — those claims are about signing, not the
    * ACH debit — but the band itself stays as the framed document's bottom edge. */
   hideTrustStrip?: boolean;
+  /** Custom footer-band text (left/right), overriding both the default trust strip and the empty
+   * `hideTrustStrip` band. The payment surface uses it for "Secure transaction" / "Powered by Stripe". */
+  footer?: { left: string; right: string };
   /**
    * Where the frame is mounted. `"standalone"` (default) is the public proposal surface
    * (`/p/:ref` and its sign/pay steps) — the utility bar keeps its own `py-4` band. `"cockpit"`
@@ -92,11 +96,20 @@ export function DocumentFrame({
           {/* Body — page-specific (summary content, or the signing embed). */}
           <div className="relative flex-1 bg-[color:var(--color-surface-base)]">{children}</div>
 
-          {/* Footer band — the framed document's bottom edge (letterhead rhythm). Signing surfaces
-              fill it with the trust strip; surfaces where those claims don't apply (payment) keep the
-              band but render it empty via `hideTrustStrip`. */}
+          {/* Footer band — the framed document's bottom edge (letterhead rhythm). `footer` sets custom
+              left/right text (payment uses "Secure transaction" / "Powered by Stripe"); else signing
+              surfaces fill it with the trust strip; else `hideTrustStrip` keeps the band but empty. */}
           <div className="flex items-center justify-between gap-4 border-[color:var(--color-border-subtle)] border-t bg-[color:var(--color-surface-raised)] px-6 py-3">
-            {hideTrustStrip ? (
+            {footer ? (
+              <>
+                <span className="font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
+                  {footer.left}
+                </span>
+                <span className="font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
+                  {footer.right}
+                </span>
+              </>
+            ) : hideTrustStrip ? (
               // Empty band — a non-breaking space holds the same line box as the trust-strip text, so
               // the band's height matches the signing surfaces exactly.
               <span className="font-mono text-[0.5625rem] uppercase tracking-[0.14em]">

@@ -194,7 +194,7 @@ export default function DocumentPaymentPage() {
     <DocumentFrame
       title="Engagement Payment"
       headerAccessory={<PaymentPill paid={pay.kind === "succeeded"} />}
-      hideTrustStrip
+      footer={{ left: "Secure transaction", right: "Powered by Stripe" }}
       backHref={opportunityId && documentId ? `/p/m/${opportunityId}/${documentId}` : undefined}
       maxWidthClass="max-w-[920px]"
     >
