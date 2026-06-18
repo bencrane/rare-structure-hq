@@ -466,6 +466,13 @@ function AchForm({
               // no tab strip). `address`/`phone` stay at the implicit "auto" so the card tab can still
               // collect postal/ZIP for AVS while the bank tab renders nothing extra.
               layout: enableCard ? { type: "tabs" } : undefined,
+              // Suppress Stripe Link. Link is a WALLET (not a payment method), so it can't be removed
+              // via the intent's payment_method_types or excluded_payment_method_types — the only
+              // per-integration control is this client flag. `link:"never"` drops BOTH Link surfaces
+              // (the "Secure, fast checkout with Link" express bar AND the inline "Save my information"
+              // email/phone passive-signup in the card form). applePay/googlePay are independent
+              // properties left at the implicit "auto" — wallets we may still want stay intact.
+              wallets: { link: "never" },
             }}
             onReady={() => setElementReady(true)}
           />
