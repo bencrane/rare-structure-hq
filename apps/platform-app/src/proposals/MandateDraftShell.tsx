@@ -3,7 +3,7 @@
  * engagement_mandate_draft id (no proposal row, no DocRaptor render).
  *
  * It renders the SAME engagement-proposal STRUCTURE as the through-docraptor `MandateEditor` — the
- * shared `DocumentFrame` chrome (utility bar · "Engagement Proposal" letterhead · trust-strip
+ * shared `DocumentFrame` chrome (utility bar · "Engagement Summary" letterhead · trust-strip
  * footer) plus the section scaffold (Prepared for · the mandate terms · Execution · the originate
  * action). The headline-term values are intentionally blank pending the draft wiring.
  *
@@ -84,7 +84,7 @@ export function MandateDraftShell({
   }
 
   return (
-    <DocumentFrame title="Engagement Proposal" maxWidthClass="max-w-[820px]" housing={housing}>
+    <DocumentFrame title="Engagement Summary" maxWidthClass="max-w-[820px]" housing={housing}>
       <DocumentSummaryScaffold
         execution={
           <>
