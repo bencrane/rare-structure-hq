@@ -126,9 +126,12 @@ export interface MandateSignToken {
 export async function getMandateSignToken(
   opportunityId: string,
   documentId: string,
+  signer?: "originator",
 ): Promise<MandateSignToken | null> {
+  // `signer=originator` (the operator's own "Copy your link") → the originator's token; default = prospect.
+  const q = signer === "originator" ? "?signer=originator" : "";
   const res = await fetch(
-    `${API_BASE}/api/v1/documenso/sign/${encodeURIComponent(opportunityId)}/${encodeURIComponent(documentId)}/token`,
+    `${API_BASE}/api/v1/documenso/sign/${encodeURIComponent(opportunityId)}/${encodeURIComponent(documentId)}/token${q}`,
   );
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`mandate sign token failed: ${res.status}`);

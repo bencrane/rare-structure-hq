@@ -16,7 +16,7 @@
  */
 import { EmbedSignDocument } from "@documenso/embed-react";
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 
 import { DocumentFrame } from "@/proposals/DocumentFrame";
 import { DocumentSignedConfirmation } from "@/proposals/DocumentSignedConfirmation";
@@ -46,9 +46,13 @@ export default function DocumentSignPage() {
     opportunityId: string;
     documentId: string;
   }>();
+  const [searchParams] = useSearchParams();
+  // "Copy your link" carries ?signer=originator → YOU sign your own field: straight into the embed (no
+  // summary step), with the originator recipient's token. Bare /p/m/... stays the prospect path.
+  const asOriginator = searchParams.get("signer") === "originator";
   const [doc, setDoc] = useState<MandateSignToken | null>(null);
   const [state, setState] = useState<LoadState>("loading");
-  const [proceed, setProceed] = useState(false);
+  const [proceed, setProceed] = useState(asOriginator);
   const [embedReady, setEmbedReady] = useState(false);
   // Server-confirmed terminal state. Once true the embed is replaced by the signed-confirmation view.
   const [signed, setSigned] = useState(false);
@@ -71,7 +75,7 @@ export default function DocumentSignPage() {
     }
     let active = true;
     // ONE-TIME pair-gated token read at load (the only Documenso call). 404 ⇒ invalid pair / unknown.
-    getMandateSignToken(opportunityId, documentId)
+    getMandateSignToken(opportunityId, documentId, asOriginator ? "originator" : undefined)
       .then((d) => {
         if (!active) return;
         if (!d) {
@@ -85,7 +89,7 @@ export default function DocumentSignPage() {
     return () => {
       active = false;
     };
-  }, [opportunityId, documentId]);
+  }, [opportunityId, documentId, asOriginator]);
 
   // Server-truth signed poll. Runs from initial load (NOT gated on `proceed`) so an already-signed
   // prospect who refreshes or returns to the link lands straight on the confirmation — the immediate
@@ -155,7 +159,10 @@ export default function DocumentSignPage() {
   const showingEmbed = state === "ready" && !!doc?.signingToken && proceed;
 
   let body: React.ReactNode;
-  if (signed && paid) {
+  if (signed && asOriginator) {
+    // You (the originator) signed your part — no "Continue to payment" CTA (that's the prospect flow).
+    body = <BodyNote>Your signature is recorded. Thank you.</BodyNote>;
+  } else if (signed && paid) {
     // Already paid (server truth) — show the read-only engagement summary, NOT the post-sign
     // "Continue to payment" confirmation, so the prospect can never re-enter the already-paid flow.
     // This is also where the pay page's "Back to summary" lands once payment is complete.
@@ -260,7 +267,7 @@ export default function DocumentSignPage() {
     <DocumentFrame
       title={signed || showingEmbed ? "Engagement Agreement" : "Engagement Proposal"}
       status={paid ? "paid" : signed ? "signed" : undefined}
-      onBack={showingEmbed && !signed ? () => setProceed(false) : undefined}
+      onBack={!asOriginator && showingEmbed && !signed ? () => setProceed(false) : undefined}
       maxWidthClass={
         paid
           ? "max-w-[820px]"
