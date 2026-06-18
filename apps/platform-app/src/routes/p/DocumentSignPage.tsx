@@ -214,6 +214,11 @@ export default function DocumentSignPage() {
           token={doc.signingToken}
           host={doc.documensoHost ?? DOCUMENSO_DEFAULT_HOST}
           darkModeDisabled={false}
+          // Lock the prefilled signer name (first-class embed prop, version-independent). The name comes
+          // from the recipient record and is locked into the document body, so the Full Name field is
+          // read-only — and hidden via DOCUMENSO_EMBED_CSS. Locking keeps it safe even if the CSS hide
+          // drifts across Documenso embed versions (it stays a populated, non-editable value).
+          lockName={true}
           cssVars={DOCUMENSO_CSS_VARS}
           css={DOCUMENSO_EMBED_CSS}
           className={`h-full min-h-[78vh] w-full border-0 bg-[color:var(--color-surface-base)] transition-opacity duration-300 ${
