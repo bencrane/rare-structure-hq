@@ -13,7 +13,8 @@
  * Lives in `proposals/` (not `routes/`) deliberately: it owns confirmation-body geometry on behalf of
  * the route, keeping the `no-route-geometry` lint where it belongs (the route stays state-only).
  *
- * Copy makes NO claim about emailed receipts — none are sent yet.
+ * The success copy promises a MANUAL follow-up email from the team (onboarding + a copy of the signed
+ * agreement); no automated receipt/email is sent by the system.
  */
 import { formatUsdCents } from "./StagedAchForm";
 
@@ -22,14 +23,13 @@ export function DocumentPaymentConfirmation({
   rail,
   amountCents,
   currency = "usd",
-  paidAt,
 }: {
   status: "succeeded" | "processing";
   /** Settled rail ("card" | "us_bank_account"); null until settlement or if the rail read failed. */
   rail?: string | null;
   amountCents?: number | null;
   currency?: string;
-  /** ISO-8601, set only on `succeeded`; null while processing. */
+  /** ISO-8601, set only on `succeeded`; null while processing. Accepted but no longer displayed. */
   paidAt?: string | null;
 }) {
   const settled = status === "succeeded";
@@ -37,20 +37,12 @@ export function DocumentPaymentConfirmation({
     rail === "card" ? "Card" : rail === "us_bank_account" ? "Bank transfer (ACH)" : null;
 
   const reassurance = settled
-    ? rail === "card"
-      ? "Paid by card — your engagement is now active."
-      : rail === "us_bank_account"
-        ? "Funds have settled by bank transfer (ACH) — your engagement is now active."
-        : "Your payment has settled — your engagement is now active."
+    ? "We have received your payment. You will receive an email shortly from a member of our team with onboarding information and a copy of your signed agreement. You may exit this page now."
     : "Your bank debit is authorized. ACH transfers settle in 1–3 business days; your engagement activates on settlement — you can safely close this page.";
 
-  // Meta row: rail · date once settled; rail · "Awaiting settlement" while the ACH debit clears. The
-  // date is guarded against a malformed paidAt so a bad value omits the date rather than rendering
-  // "Invalid Date".
-  const dateLabel = settled ? formatPaidDate(paidAt) : null;
-  const metaParts = settled
-    ? [railLabel, dateLabel].filter(Boolean)
-    : [railLabel ?? "Bank transfer (ACH)", "Awaiting settlement"];
+  // Meta row: hidden once settled (the message above is self-contained — no rail/date line); while the
+  // ACH debit clears it shows the rail + "Awaiting settlement".
+  const metaParts = settled ? [] : [railLabel ?? "Bank transfer (ACH)", "Awaiting settlement"];
 
   return (
     <div className="flex min-h-[78vh] flex-col items-center justify-center px-6 text-center">
@@ -75,14 +67,6 @@ export function DocumentPaymentConfirmation({
       ) : null}
     </div>
   );
-}
-
-// Format the settled date, or null if absent/unparseable (→ the meta row omits the date gracefully).
-function formatPaidDate(paidAt?: string | null): string | null {
-  if (!paidAt) return null;
-  const d = new Date(paidAt);
-  if (Number.isNaN(d.getTime())) return null;
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
 function CheckIcon() {
