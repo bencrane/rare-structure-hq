@@ -182,7 +182,7 @@ function DraftConfirmBar({
     return (
       <div className="mt-8 flex items-center justify-center gap-2 border border-[color:var(--color-border-subtle)] bg-[color:var(--color-surface-raised)] py-4 font-mono text-[0.6875rem] text-[color:var(--color-text-muted)] uppercase tracking-[0.14em]">
         <span className="size-1.5 animate-pulse rounded-full bg-[color:var(--color-text-subtle)]" />
-        Originating — creating the Documenso document…
+        Originating
       </div>
     );
   }
@@ -238,8 +238,7 @@ function MandateReadyBar({
         <span className="font-mono text-mono-xs uppercase tracking-[0.16em]">Document ready</span>
       </div>
       <p className="mb-4 text-[color:var(--color-text-muted)] text-body-sm leading-[1.5]">
-        The agreement is live in Documenso. Share the link on the call, or send it yourself when
-        you're ready to close.
+        The agreement is live and ready for signature.
       </p>
       {url ? (
         <div className="grid grid-cols-2 gap-3">
