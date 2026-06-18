@@ -85,6 +85,11 @@ export const DOCUMENSO_EMBED_CSS = `
      children and is kept. */
   .embed--DocumentWidgetHeader > div:first-child { display: none !important; }
 
+  /* Right-align the kept field-progress + Complete cluster. With the title (first child) hidden above,
+     the nav's space-between collapses the remaining cluster to the LEFT (where the title sat); push it
+     back to the right edge of the header. */
+  .embed--DocumentWidgetHeader { justify-content: flex-end !important; }
+
   /* Hide the signer "Full Name" field — the participant name is prefilled + locked in the document
      body (participant_full_name), so the signer only signs. The name value persists in the embed's
      own state (seeded from the recipient), so signing is unaffected. */
