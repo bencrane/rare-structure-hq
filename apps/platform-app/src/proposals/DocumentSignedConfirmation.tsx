@@ -46,7 +46,7 @@ export function DocumentSignedConfirmation({
       </h2>
       <p className="mt-4 max-w-[440px] font-mono text-[0.6875rem] text-[color:var(--color-text-muted)] leading-relaxed tracking-[0.06em]">
         Your engagement agreement has been signed and recorded. A fully executed copy will be sent
-        to your email.
+        to your email upon payment completion.
       </p>
       {/* PHASE 2b — payment handoff, keyed by the (opportunityId, documentId) pair. */}
       <Link
