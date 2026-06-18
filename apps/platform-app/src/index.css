@@ -22,6 +22,14 @@
 html,
 body {
   margin: 0;
+  /* Pair the CSS color-scheme with the `dark` class on <html>. Without it the browser treats the
+   * page as light-scheme for UA-default rendering — which includes the INITIAL canvas paint of any
+   * iframe injected at runtime. Stripe opens the Financial Connections bank-connect flow as a fresh
+   * modal iframe (us_bank_account verification_method=automatic); absent color-scheme:dark that
+   * iframe flashes white before its own dark content paints (a flash our PaymentElement dark-veil
+   * can't cover, since the FC modal is a separate, later iframe). Declaring it dark makes the UA
+   * default canvas — and thus the FC modal, Link/3DS modals, and native scrollbars/controls — dark. */
+  color-scheme: dark;
   background-color: var(--color-surface-base);
   color: var(--color-text-strong);
   font-family: var(--font-sans);
