@@ -19,7 +19,7 @@
  * 1–3 business days later. The authoritative "paid" transition arrives via the Stripe webhook →
  * edge_api; the route polls `getDocumentPaymentState` for the settled status (via `onSettledPoll`).
  */
-import { StagedAchForm, formatUsdCents } from "./StagedAchForm";
+import { type SettledHint, StagedAchForm, formatUsdCents } from "./StagedAchForm";
 import type { DocumentPaymentInit } from "./api";
 
 export function DocumentPaymentForm({
@@ -31,7 +31,7 @@ export function DocumentPaymentForm({
   init: DocumentPaymentInit;
   opportunityId: string;
   documentId: string;
-  onSettledPoll: () => void;
+  onSettledPoll: (hint?: SettledHint) => void;
 }) {
   return (
     <div className="px-6 pt-10 pb-14 md:px-12 md:pt-12 md:pb-16">
