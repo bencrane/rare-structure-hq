@@ -3,14 +3,14 @@
  * engagement_mandate_draft id (no proposal row, no DocRaptor render).
  *
  * It renders the SAME engagement-proposal STRUCTURE as the through-docraptor `MandateEditor` — the
- * shared `DocumentFrame` chrome (utility bar · "Engagement Summary" letterhead · trust-strip
- * footer) plus the section scaffold (Prepared for · the mandate terms · Execution · the originate
- * action). The headline-term values are intentionally blank pending the draft wiring.
+ * shared `DocumentFrame` chrome (utility bar · "Engagement Summary" letterhead · trust-strip footer)
+ * plus the section scaffold (Prepared for · the mandate narrative + parameters · Commercial Terms ·
+ * Execution). The field values are editable in-session via the header lock (a look/feel prototype;
+ * not persisted, not yet on the prospect view).
  *
- * Execution is LIVE: the operator can sign (the same performative, cosmetic gate as the editor — it
- * binds nothing; the real originator counter-signature is Documenso's), reusing `SignatureOverlay`.
- * The signature is in-session only (not persisted). "Confirm & originate" is the REAL direct-to-
- * documenso originate. WHICH lane it uses is the operator's `directToDocumensoLane` setting:
+ * Approve = the direct "Confirm & Originate" action: it originates the document IMMEDIATELY (no on-page
+ * signature step — the binding originator counter-signature is Documenso's). WHICH lane it uses is the
+ * operator's `directToDocumensoLane` setting:
  *   - 'envelope-distribute'  (default): confirmMandateDraft → BFF → edge_api /envelope/use + distribute.
  *   - 'prefill-document-from-template': originatePrefilled → BFF → edge_api /api/v2/template/use,
  *                                       prefilled + distribute(NONE) → PENDING (no email).
@@ -18,7 +18,7 @@
  * access capability, the numeric document id a disambiguator behind it. Both come off the
  * prefill-lane originate response (`originatePrefilled`), so the link is built directly from it.
  */
-import { Check, Copy, ExternalLink, Lock, LockOpen, PenLine } from "lucide-react";
+import { Check, Copy, ExternalLink, Lock, LockOpen } from "lucide-react";
 import { useState } from "react";
 
 import { useAuth } from "@/lib/auth";
@@ -28,7 +28,6 @@ import {
   EMPTY_MANDATE_SUMMARY_VALUES,
   type MandateSummaryValues,
 } from "@/proposals/DocumentSummaryScaffold";
-import { SignatureOverlay } from "@/proposals/SignaturePad";
 import { confirmMandateDraft, originatePrefilled } from "@/proposals/api";
 import { useOriginationMode } from "@/settings/originationMode";
 
@@ -38,7 +37,7 @@ export function MandateDraftShell({
   draftId,
   housing = "standalone",
 }: {
-  /** The engagement_mandate_draft id this page is keyed to — drives "Confirm & originate". */
+  /** The engagement_mandate_draft id this page is keyed to — drives "Confirm & Originate". */
   draftId?: string;
   /** Forwarded to DocumentFrame. `"cockpit"` only when mounted in the Mandate page. */
   housing?: "standalone" | "cockpit";
@@ -48,9 +47,6 @@ export function MandateDraftShell({
   // The persisted direct-to-documenso sub-lane decides which originate endpoint Confirm calls. Falls
   // back to the envelope-distribute default until loaded (and under the DEV mock session).
   const { directToDocumensoLane } = useOriginationMode();
-  const [signature, setSignature] = useState<string | null>(null);
-  const [signedAt, setSignedAt] = useState<string | null>(null);
-  const [signing, setSigning] = useState(false);
   const [status, setStatus] = useState<ConfirmStatus>("idle");
   // The originated prospect-link pair. The link is /p/m/{opportunityId}/{documentId}; only the
   // prefill lane stamps the opportunity UUID as the envelope's externalId AND returns the numeric
@@ -63,15 +59,14 @@ export function MandateDraftShell({
   // ── Inline edit prototype ──────────────────────────────────────────────────────────────────────
   // The header lock toggle reveals inline inputs for the mandate fields. Values are in-session only
   // (not persisted, not yet wired to the draft or the prospect view) — this is the operator's "add the
-  // values and see how it looks" prototype. Terms lock once the operator signs (re-sign to edit) or
-  // once originated, mirroring the through-docraptor MandateEditor's lock/edit gate.
+  // values and see how it looks" prototype. Editing locks once originating/ready.
   const [editing, setEditing] = useState(false);
   const [values, setValues] = useState<MandateSummaryValues>(EMPTY_MANDATE_SUMMARY_VALUES);
   const finalized = status === "submitting" || status === "ready";
-  const canEdit = editing && !finalized && !signature;
+  const canEdit = editing && !finalized;
 
   async function confirm() {
-    if (!draftId || !signature || status === "submitting") return;
+    if (!draftId || status === "submitting" || status === "ready") return;
     setStatus("submitting");
     setError(null);
     try {
@@ -105,7 +100,6 @@ export function MandateDraftShell({
       headerAccessory={
         <DraftEditControls
           finalized={finalized}
-          signed={!!signature}
           editing={editing}
           onToggle={() => setEditing((e) => !e)}
         />
@@ -117,89 +111,55 @@ export function MandateDraftShell({
         onChange={(key, value) => setValues((v) => ({ ...v, [key]: value }))}
         execution={
           <>
-            <div className="mb-2.5 flex items-center justify-between">
-              <span className="font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.16em]">
-                Signature
-              </span>
-              {signature && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSignature(null);
-                    setSignedAt(null);
-                  }}
-                  className="font-mono text-[0.5rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em] transition-colors hover:text-[color:var(--color-text-accent)]"
-                >
-                  Re-sign
-                </button>
-              )}
+            <div className="mb-2.5 font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.16em]">
+              Approve
             </div>
-            {signature ? (
-              <div className="flex h-[84px] items-center justify-center border border-[color:var(--color-border-subtle)] bg-[color:var(--color-surface-sunken)]">
-                <img src={signature} alt="Originator signature" className="max-h-[72px] w-auto" />
+            {status === "ready" ? (
+              <div className="flex h-[84px] w-full items-center justify-center gap-2 border border-[color:var(--color-border-accent)] bg-[color:var(--color-accent-soft)] font-mono text-[0.75rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.18em]">
+                <Check className="size-4" />
+                Originated
               </div>
             ) : (
               <button
                 type="button"
-                onClick={() => setSigning(true)}
-                className="flex h-[84px] w-full items-center justify-center gap-2 border border-[color:var(--color-accent-primary)] bg-[color:var(--color-accent-soft)] font-mono text-[0.75rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.18em] transition-colors hover:bg-[color:var(--color-accent-primary)] hover:text-[color:var(--color-text-onAccent)]"
+                onClick={confirm}
+                disabled={!draftId || status === "submitting"}
+                className="flex h-[84px] w-full items-center justify-center gap-2 border border-[color:var(--color-accent-primary)] bg-[color:var(--color-accent-soft)] font-mono text-[0.75rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.18em] transition-colors hover:bg-[color:var(--color-accent-primary)] hover:text-[color:var(--color-text-onAccent)] disabled:cursor-not-allowed disabled:opacity-40"
               >
-                <PenLine className="size-4" />
-                Sign the mandate
+                {status === "submitting"
+                  ? "Originating…"
+                  : status === "error"
+                    ? "Retry — Confirm & Originate"
+                    : "Confirm & Originate"}
               </button>
             )}
+            {error ? (
+              <p className="mt-2 text-center font-mono text-[0.5625rem] text-[color:var(--color-state-warn)] uppercase tracking-[0.14em]">
+                {error}
+              </p>
+            ) : null}
             <div className="mt-3 flex items-baseline justify-between gap-4">
               <span className="text-[0.875rem] text-[color:var(--color-text-primary)]">
                 Rare Structure LLC
               </span>
-              {signedAt && (
-                <span className="text-[0.75rem] text-[color:var(--color-text-muted)] tabular-nums">
-                  {formatDate(signedAt)}
-                </span>
-              )}
             </div>
           </>
         }
-        action={
-          // Confirm → instantiate the Documenso document → reveal the prospect link. Gated on the
-          // on-page signature (cosmetic, but the operator signs every time, like the editor).
-          <DraftConfirmBar
-            draftId={draftId}
-            hasSignature={!!signature}
-            status={status}
-            error={error}
-            signLink={signLink}
-            onSubmit={confirm}
-          />
-        }
+        // Success surface — the prospect share link for the just-created Documenso document.
+        action={status === "ready" ? <MandateReadyBar signLink={signLink} /> : null}
       />
-
-      {signing && (
-        <SignatureOverlay
-          onApply={(dataUrl) => {
-            setSignature(dataUrl);
-            setSignedAt(new Date().toISOString());
-            setSigning(false);
-          }}
-          onCancel={() => setSigning(false)}
-        />
-      )}
     </DocumentFrame>
   );
 }
 
-// Header control — the lock toggle (sits where the StatusPill would). Mirrors the through-docraptor
-// MandateEditor's DraftControls: an unsigned, un-originated draft shows the lock (click to reveal the
-// inline field inputs); once signed the terms lock to what was signed (re-sign in the execution block
-// to edit); once originating/ready they're locked in.
+// Header control — the lock toggle (sits where the StatusPill would). Click to reveal the inline field
+// inputs; once originating/ready the terms are locked in and it shows a static "Locked" pill.
 function DraftEditControls({
   finalized,
-  signed,
   editing,
   onToggle,
 }: {
   finalized: boolean;
-  signed: boolean;
   editing: boolean;
   onToggle: () => void;
 }) {
@@ -208,13 +168,6 @@ function DraftEditControls({
       <span className="flex shrink-0 items-center gap-1.5 border border-[color:var(--color-border-default)] px-2.5 py-1 font-mono text-[0.5rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.16em]">
         <Lock className="size-3" />
         Locked
-      </span>
-    );
-  if (signed)
-    return (
-      <span className="flex shrink-0 items-center gap-1.5 border border-[color:var(--color-border-accent)] bg-[color:var(--color-accent-soft)] px-2.5 py-1 font-mono text-[0.5rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.16em]">
-        <Check className="size-3" />
-        Signed
       </span>
     );
   return (
@@ -233,57 +186,10 @@ function DraftEditControls({
   );
 }
 
-// Confirm → submitting → ready lifecycle. Mirrors MandateEditor's DraftActionBar, simplified for the
-// stateless draft path: success reveals the prospect link rather than a re-derivable proposal ref.
-function DraftConfirmBar({
-  draftId,
-  hasSignature,
-  status,
-  error,
-  signLink,
-  onSubmit,
-}: {
-  draftId?: string;
-  hasSignature: boolean;
-  status: ConfirmStatus;
-  error: string | null;
-  signLink: { opportunityId: string; documentId: number } | null;
-  onSubmit: () => void;
-}) {
-  if (status === "ready") return <MandateReadyBar signLink={signLink} />;
-
-  if (status === "submitting") {
-    return (
-      <div className="mt-8 flex items-center justify-center gap-2 border border-[color:var(--color-border-subtle)] bg-[color:var(--color-surface-raised)] py-4 font-mono text-[0.6875rem] text-[color:var(--color-text-muted)] uppercase tracking-[0.14em]">
-        <span className="size-1.5 animate-pulse rounded-full bg-[color:var(--color-text-subtle)]" />
-        Originating
-      </div>
-    );
-  }
-
-  return (
-    <div className="mt-8">
-      <button
-        type="button"
-        onClick={onSubmit}
-        disabled={!hasSignature || !draftId}
-        className="w-full border border-[color:var(--color-accent-primary)] bg-[color:var(--color-accent-soft)] py-3 text-center font-mono text-[0.8125rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.18em] transition-colors hover:bg-[color:var(--color-accent-primary)] hover:text-[color:var(--color-text-onAccent)] disabled:opacity-40"
-      >
-        {status === "error" ? "Retry — confirm & originate" : "Confirm & originate"}
-      </button>
-      {error ? (
-        <p className="mt-2 text-center font-mono text-[0.5625rem] text-[color:var(--color-state-warn)] uppercase tracking-[0.14em]">
-          {error}
-        </p>
-      ) : null}
-    </div>
-  );
-}
-
 // Success surface — the prospect share link for the just-created Documenso document. The link is
-// `/p/m/{opportunityId}/{documentId}`: the opportunity UUID is the unguessable access capability,
-// the numeric document id a disambiguator behind it. Mirrors MandateEditor's ReadyBar (copy + open).
-// `signLink` is null for the envelope-distribute lane (it doesn't stamp the opportunity pair).
+// `/p/m/{opportunityId}/{documentId}`: the opportunity UUID is the unguessable access capability, the
+// numeric document id a disambiguator behind it. `signLink` is null for the envelope-distribute lane
+// (it doesn't stamp the opportunity pair).
 function MandateReadyBar({
   signLink,
 }: {
@@ -341,10 +247,4 @@ function MandateReadyBar({
       )}
     </div>
   );
-}
-
-function formatDate(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 }
