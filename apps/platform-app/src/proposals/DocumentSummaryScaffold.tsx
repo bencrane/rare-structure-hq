@@ -77,7 +77,7 @@ export function DocumentSummaryScaffold({
             value={values.preparedFor}
             onChange={(e) => set("preparedFor")(e.target.value)}
             placeholder="—"
-            className="w-full max-w-[24rem] border-[color:var(--color-border-default)] border-b bg-transparent py-0.5 text-[0.9375rem] text-[color:var(--color-text-primary)] outline-none transition-colors placeholder:text-[color:var(--color-text-subtle)] focus:border-[color:var(--color-text-accent)]"
+            className="w-28 border-[color:var(--color-border-default)] border-b bg-transparent py-0.5 text-[0.9375rem] text-[color:var(--color-text-primary)] outline-none transition-colors placeholder:text-[color:var(--color-text-subtle)] focus:border-[color:var(--color-text-accent)]"
           />
         ) : (
           <div
@@ -201,7 +201,7 @@ function TermRow({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder="—"
-          className="min-w-0 flex-1 border-[color:var(--color-border-default)] border-b bg-transparent py-0.5 text-right text-[0.9375rem] text-[color:var(--color-text-primary)] outline-none transition-colors placeholder:text-[color:var(--color-text-subtle)] focus:border-[color:var(--color-text-accent)]"
+          className="w-28 border-[color:var(--color-border-default)] border-b bg-transparent py-0.5 text-right text-[0.9375rem] text-[color:var(--color-text-primary)] outline-none transition-colors placeholder:text-[color:var(--color-text-subtle)] focus:border-[color:var(--color-text-accent)]"
         />
       ) : (
         <span
