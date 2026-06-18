@@ -149,15 +149,22 @@ export function StagedAchForm({
   const [fullName, setFullName] = useState(nameDefault);
   const detailsValid = isEmail(email) && fullName.trim().length > 1;
 
-  // Reveal (and mount) the bank step. LATCHED: once revealed it never un-mounts — a transiently-invalid
-  // email mid-edit must not destroy the live Financial Connections session inside the PaymentElement.
-  // The Authorize button re-checks `detailsValid` to gate submit.
+  // Reveal (and mount) the bank step. Proposal surface (auto-reveal): LATCHED — once revealed it never
+  // un-mounts, so a transiently-invalid email mid-edit can't destroy the live Financial Connections
+  // session. Document surface (confirm): focusing a contact field collapses the payment step back to the
+  // "Continue to payment" confirm (see `collapseToConfirm`) — the prospect explicitly chose to revise.
   const [revealBank, setRevealBank] = useState(false);
   useEffect(() => {
     // Auto-reveal only when no explicit confirmation is required (the proposal-ref surface). The
     // document flow gates the reveal behind a "Continue to payment" confirm of the pre-filled details.
     if (!requireConfirm && detailsValid && !revealBank) setRevealBank(true);
   }, [requireConfirm, detailsValid, revealBank]);
+
+  // Confirm (document) surface only: re-focusing a contact field after confirming collapses the payment
+  // step, so the prospect re-confirms after editing name/email. No-op on the auto-reveal surface.
+  const collapseToConfirm = () => {
+    if (requireConfirm && revealBank) setRevealBank(false);
+  };
 
   // Validate on BLUR, never while typing — surfacing "Enter a valid email" on the first keystroke of a
   // half-typed address is hostile. Once the field has been blurred with an invalid value the error
@@ -181,6 +188,7 @@ export function StagedAchForm({
             label="Full name"
             value={fullName}
             onChange={setFullName}
+            onFocus={collapseToConfirm}
             placeholder="First and last name"
             autoComplete="name"
           />
@@ -191,6 +199,12 @@ export function StagedAchForm({
             value={email}
             onChange={setEmail}
             onBlur={() => setEmailTouched(true)}
+            // Re-entering the field clears the touched gate, so the error never fires while typing —
+            // it returns only after blur with an invalid value. Also collapses the payment step (doc flow).
+            onFocus={() => {
+              setEmailTouched(false);
+              collapseToConfirm();
+            }}
             placeholder="you@example.com"
             autoComplete="email"
             inputMode="email"
@@ -304,6 +318,7 @@ function Field({
   value,
   onChange,
   onBlur,
+  onFocus,
   placeholder,
   type = "text",
   autoComplete,
@@ -315,6 +330,7 @@ function Field({
   value: string;
   onChange: (v: string) => void;
   onBlur?: () => void;
+  onFocus?: () => void;
   placeholder?: string;
   type?: "text" | "email";
   autoComplete?: string;
@@ -332,6 +348,7 @@ function Field({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onBlur={onBlur}
+        onFocus={onFocus}
         placeholder={placeholder}
         autoComplete={autoComplete}
         inputMode={inputMode}
