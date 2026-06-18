@@ -21,11 +21,7 @@ import { useParams } from "react-router-dom";
 import { DocumentFrame } from "@/proposals/DocumentFrame";
 import { DocumentSignedConfirmation } from "@/proposals/DocumentSignedConfirmation";
 import { DocumentSummaryScaffold } from "@/proposals/DocumentSummaryScaffold";
-import {
-  type MandateSignToken,
-  getMandateSignState,
-  getMandateSignToken,
-} from "@/proposals/api";
+import { type MandateSignToken, getMandateSignState, getMandateSignToken } from "@/proposals/api";
 import {
   DOCUMENSO_CSS_VARS,
   DOCUMENSO_DEFAULT_HOST,
@@ -210,7 +206,7 @@ export default function DocumentSignPage() {
       title={signed || showingEmbed ? "Engagement Agreement" : "Engagement Proposal"}
       status={signed ? "signed" : undefined}
       backHref={opportunityId && documentId ? `/p/m/${opportunityId}/${documentId}` : undefined}
-      maxWidthClass={showingEmbed && !signed ? "max-w-[1152px]" : "max-w-[820px]"}
+      maxWidthClass={signed ? "max-w-[920px]" : showingEmbed ? "max-w-[1152px]" : "max-w-[820px]"}
     >
       {body}
     </DocumentFrame>

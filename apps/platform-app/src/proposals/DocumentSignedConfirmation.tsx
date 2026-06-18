@@ -41,10 +41,10 @@ export function DocumentSignedConfirmation({
           <path d="M20 6 9 17l-5-5" />
         </svg>
       </div>
-      <h2 className="mt-6 font-mono text-[0.8125rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.2em]">
+      <h2 className="mt-6 font-mono text-[1.25rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.2em]">
         Agreement signed
       </h2>
-      <p className="mt-4 max-w-[440px] font-mono text-[0.6875rem] text-[color:var(--color-text-muted)] leading-relaxed tracking-[0.06em]">
+      <p className="mt-4 max-w-[480px] font-mono text-[0.875rem] text-[color:var(--color-text-muted)] leading-relaxed tracking-[0.06em]">
         Your engagement agreement has been signed and recorded. A fully executed copy will be sent
         to your email upon payment completion.
       </p>
