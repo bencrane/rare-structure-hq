@@ -48,6 +48,12 @@ export interface StagedAchInit {
   currency: string;
 }
 
+// Optimistic settlement hint passed from the in-form confirm result to the mounting route, so the
+// post-payment screen shows the RIGHT outcome immediately (card → succeeded, ACH → processing) rather
+// than waiting for the server poll to resolve — which could momentarily mislabel a card success as an
+// ACH "settles in 1–3 days" screen during the webhook race. The poll still refines with server truth.
+export type SettledHint = { status: "succeeded" | "processing"; rail: string | null };
+
 // Stripe Appearance from the brand token palette — parity with the signing surface and with our own
 // native "Your details" inputs (same border / surface / focus ring), so the two read as one system.
 const STRIPE_APPEARANCE: Appearance = {
@@ -123,7 +129,7 @@ export function StagedAchForm({
 }: {
   init: StagedAchInit;
   returnUrl: string;
-  onSettledPoll: () => void;
+  onSettledPoll: (hint?: SettledHint) => void;
   submitLabel: string;
   nameDefault?: string;
   // When set, the minted intent carries both `card` and `us_bank_account`; the PaymentElement renders
@@ -131,6 +137,7 @@ export function StagedAchForm({
   enableCard?: boolean;
 }) {
   const [email, setEmail] = useState("");
+  const [emailTouched, setEmailTouched] = useState(false);
   const [fullName, setFullName] = useState(nameDefault);
   const detailsValid = isEmail(email) && fullName.trim().length > 1;
 
@@ -142,15 +149,18 @@ export function StagedAchForm({
     if (detailsValid && !revealBank) setRevealBank(true);
   }, [detailsValid, revealBank]);
 
-  // Only nag once they've typed something — never an error on a pristine field.
-  const emailError = email.length > 0 && !isEmail(email) ? "Enter a valid email" : undefined;
+  // Validate on BLUR, never while typing — surfacing "Enter a valid email" on the first keystroke of a
+  // half-typed address is hostile. Once the field has been blurred with an invalid value the error
+  // shows, and live re-validation clears it the instant the address becomes valid.
+  const emailError =
+    emailTouched && email.length > 0 && !isEmail(email) ? "Enter a valid email" : undefined;
 
   return (
     <>
       <StepSection
         index="01"
         label="Your details"
-        hint="Where your receipt and any verification notices are sent."
+        hint="Used for your payment record and any bank-verification notices."
         active
       >
         <div className="grid gap-4 md:grid-cols-2">
@@ -168,6 +178,7 @@ export function StagedAchForm({
             type="email"
             value={email}
             onChange={setEmail}
+            onBlur={() => setEmailTouched(true)}
             placeholder="you@example.com"
             autoComplete="email"
             inputMode="email"
@@ -262,6 +273,7 @@ function Field({
   label,
   value,
   onChange,
+  onBlur,
   placeholder,
   type = "text",
   autoComplete,
@@ -272,6 +284,7 @@ function Field({
   label: string;
   value: string;
   onChange: (v: string) => void;
+  onBlur?: () => void;
   placeholder?: string;
   type?: "text" | "email";
   autoComplete?: string;
@@ -288,6 +301,7 @@ function Field({
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onBlur={onBlur}
         placeholder={placeholder}
         autoComplete={autoComplete}
         inputMode={inputMode}
@@ -337,7 +351,7 @@ function AchPaymentForm({
   canSubmit: boolean;
   submitLabel: string;
   enableCard: boolean;
-  onSettledPoll: () => void;
+  onSettledPoll: (hint?: SettledHint) => void;
 }) {
   const stripePromise = useMemo<Promise<Stripe | null>>(
     () => loadStripe(init.publishableKey),
@@ -378,7 +392,7 @@ function AchForm({
   canSubmit: boolean;
   submitLabel: string;
   enableCard: boolean;
-  onSettledPoll: () => void;
+  onSettledPoll: (hint?: SettledHint) => void;
 }) {
   const stripe = useStripe();
   const elements = useElements();
@@ -427,12 +441,19 @@ function AchForm({
       setSubmitting(false);
       return;
     }
-    // ACH → 'processing' (settles in 1-3 business days). The webhook is authoritative either way; kick
-    // the page's poll for the settled state.
-    const status = result.paymentIntent?.status;
-    setPhase(status === "succeeded" ? "succeeded" : "processing");
+    // Card confirms synchronously → 'succeeded'; ACH (us_bank_account) returns 'processing' (settles in
+    // 1-3 business days). The webhook is authoritative either way, but we hand the route an optimistic
+    // hint so it can show the correct post-payment screen instantly (and not mislabel a card success as
+    // ACH while the poll catches up). In this dual-rail intent the status uniquely identifies the rail:
+    // succeeded ⇒ card, processing ⇒ us_bank_account. The poll then refines with the server's rail/date.
+    const succeeded = result.paymentIntent?.status === "succeeded";
+    setPhase(succeeded ? "succeeded" : "processing");
     setSubmitting(false);
-    onSettledPoll();
+    onSettledPoll(
+      succeeded
+        ? { status: "succeeded", rail: "card" }
+        : { status: "processing", rail: "us_bank_account" },
+    );
   };
 
   if (phase !== "idle") {
@@ -466,12 +487,18 @@ function AchForm({
               // no tab strip). `address`/`phone` stay at the implicit "auto" so the card tab can still
               // collect postal/ZIP for AVS while the bank tab renders nothing extra.
               layout: enableCard ? { type: "tabs" } : undefined,
-              // Suppress Stripe Link. Link is a WALLET (not a payment method), so it can't be removed
-              // via the intent's payment_method_types or excluded_payment_method_types — the only
-              // per-integration control is this client flag. `link:"never"` drops BOTH Link surfaces
-              // (the "Secure, fast checkout with Link" express bar AND the inline "Save my information"
-              // email/phone passive-signup in the card form). applePay/googlePay are independent
-              // properties left at the implicit "auto" — wallets we may still want stay intact.
+              // Default-select the US bank account (ACH) tab — we prefer ACH. In a tabs layout the
+              // LEADING entry of paymentMethodOrder renders selected on load; the server
+              // payment_method_types order does NOT drive selection (absent this, Stripe applies its
+              // own dynamic ordering). Listing `card` keeps it available as the second tab; harmless on
+              // the ACH-only surface where `card` simply isn't present.
+              paymentMethodOrder: ["us_bank_account", "card"],
+              // Suppress the Stripe Link EXPRESS bar ("Secure, fast checkout with Link"). NOTE: this
+              // flag does NOT remove the inline "Save my information for faster checkout" signup inside
+              // the card form — that is account-level Link behavior, controlled by the account's
+              // Payment Method Configuration (Stripe Dashboard → Settings → Payment methods → Link, or
+              // the Payment Method Configurations API: link[display_preference][preference]=off), set
+              // per Stripe mode. applePay/googlePay stay at the implicit "auto".
               wallets: { link: "never" },
             }}
             onReady={() => setElementReady(true)}
@@ -499,7 +526,7 @@ function AchForm({
       </button>
       <p className="text-center font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
         {enableCard
-          ? "Card or US bank account · powered by Stripe"
+          ? "Powered by Stripe"
           : "US bank account · settles in 1–3 business days · powered by Stripe"}
       </p>
     </form>

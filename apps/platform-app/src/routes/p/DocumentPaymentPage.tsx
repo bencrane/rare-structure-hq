@@ -6,20 +6,24 @@
  * from `fee_amount` — never hardcoded) and hands off to the staged payment form. Keyed by the
  * (opportunity, document) PAIR, not a proposal ref.
  *
- * This route owns DATA + STATE only — minting/reusing the intent, the gate states (unsigned / paid /
- * unavailable), and the authoritative settled-status poll. The form geometry + Stripe Elements live in
- * `proposals/DocumentPaymentForm` (so the `no-route-geometry` lint stays satisfied). See that module
- * for the two-step progressive-disclosure structure and the Stripe billing-details split.
+ * This route owns DATA + STATE only — minting/reusing the intent, the gate states (unsigned /
+ * succeeded / processing / unavailable), and the authoritative settled-status poll. The form geometry +
+ * Stripe Elements live in `proposals/DocumentPaymentForm`, and the post-payment screen in
+ * `proposals/DocumentPaymentConfirmation` (so the `no-route-geometry` lint stays satisfied).
  *
  * ACH settles asynchronously: `confirmPayment` returns `processing`, NOT `succeeded`. The authoritative
  * "paid" transition arrives later via the Stripe webhook → edge_api; this page polls
- * `getDocumentPaymentState` for the settled status.
+ * `getDocumentPaymentState` for the settled status and reflects it with DocumentPaymentConfirmation.
+ * A prospect who authorizes an ACH debit and returns later (state already `processing`) lands straight
+ * on the in-frame confirmation screen with the poll re-armed — not the form again.
  */
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 
 import { DocumentFrame } from "@/proposals/DocumentFrame";
+import { DocumentPaymentConfirmation } from "@/proposals/DocumentPaymentConfirmation";
 import { DocumentPaymentForm, PaymentPill } from "@/proposals/DocumentPaymentForm";
+import type { SettledHint } from "@/proposals/StagedAchForm";
 import {
   type DocumentPaymentInit,
   PaymentError,
@@ -30,7 +34,14 @@ import {
 type PayState =
   | { kind: "loading" }
   | { kind: "ready"; init: DocumentPaymentInit }
-  | { kind: "paid"; rail?: string | null }
+  | {
+      kind: "succeeded";
+      rail?: string | null;
+      amountCents?: number | null;
+      currency?: string;
+      paidAt?: string | null;
+    }
+  | { kind: "processing"; rail?: string | null; amountCents?: number | null; currency?: string }
   | { kind: "unsigned" }
   | { kind: "unavailable" };
 
@@ -42,7 +53,52 @@ export default function DocumentPaymentPage() {
   const [pay, setPay] = useState<PayState>({ kind: "loading" });
   const pollTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Mint (or reuse) the intent once the pair is known. If already settled, short-circuit to "paid".
+  const stopPolling = useCallback(() => {
+    if (pollTimer.current) {
+      clearInterval(pollTimer.current);
+      pollTimer.current = null;
+    }
+  }, []);
+
+  // Poll the authoritative (webhook-driven) state until it reaches a terminal status. Armed after the
+  // client authorizes the debit AND on mount when the pair is already `processing` (return-mid-ACH).
+  // SERVER TRUTH only — the browser confirm result never advances the page.
+  const startPolling = useCallback(() => {
+    if (!opportunityId || !documentId || pollTimer.current) return;
+    pollTimer.current = setInterval(async () => {
+      const s = await getDocumentPaymentState(opportunityId, documentId).catch(() => null);
+      if (!s) return;
+      if (s.paymentStatus === "succeeded") {
+        setPay({
+          kind: "succeeded",
+          rail: s.rail,
+          amountCents: s.amountCents,
+          currency: s.currency,
+          paidAt: s.paidAt,
+        });
+        stopPolling();
+      } else if (s.paymentStatus === "failed" || s.paymentStatus === "canceled") {
+        // Terminal failure — stop polling so the screen can't spin "Payment initiated" forever.
+        setPay({ kind: "unavailable" });
+        stopPolling();
+      } else if (s.paymentStatus === "processing") {
+        // Keep the in-flight confirmation up; functional update avoids a churn re-render each tick.
+        setPay((prev) =>
+          prev.kind === "processing"
+            ? prev
+            : {
+                kind: "processing",
+                rail: s.rail,
+                amountCents: s.amountCents,
+                currency: s.currency,
+              },
+        );
+      }
+    }, 5000);
+  }, [opportunityId, documentId, stopPolling]);
+
+  // Mint (or reuse) the intent once the pair is known. Short-circuit to the confirmation screen when
+  // the pair is already settled (succeeded) or in-flight (processing — re-arm the poll); otherwise mint.
   useEffect(() => {
     if (!opportunityId || !documentId) return;
     let active = true;
@@ -50,7 +106,23 @@ export default function DocumentPaymentPage() {
       const existing = await getDocumentPaymentState(opportunityId, documentId).catch(() => null);
       if (!active) return;
       if (existing?.paymentStatus === "succeeded") {
-        setPay({ kind: "paid", rail: existing.rail });
+        setPay({
+          kind: "succeeded",
+          rail: existing.rail,
+          amountCents: existing.amountCents,
+          currency: existing.currency,
+          paidAt: existing.paidAt,
+        });
+        return;
+      }
+      if (existing?.paymentStatus === "processing") {
+        setPay({
+          kind: "processing",
+          rail: existing.rail,
+          amountCents: existing.amountCents,
+          currency: existing.currency,
+        });
+        startPolling();
         return;
       }
       try {
@@ -60,8 +132,8 @@ export default function DocumentPaymentPage() {
         if (!active) return;
         if (e instanceof PaymentError && e.status === 409) {
           // 409 = "agreement not yet signed" (the common gate). An "already paid" race resolves via
-          // the poll/state read; treat the gate as "sign first".
-          setPay(/already paid/i.test(e.message) ? { kind: "paid" } : { kind: "unsigned" });
+          // the state read; treat the gate as "sign first".
+          setPay(/already paid/i.test(e.message) ? { kind: "succeeded" } : { kind: "unsigned" });
         } else {
           setPay({ kind: "unavailable" });
         }
@@ -69,26 +141,40 @@ export default function DocumentPaymentPage() {
     })();
     return () => {
       active = false;
+      stopPolling();
     };
-  }, [opportunityId, documentId]);
+  }, [opportunityId, documentId, startPolling, stopPolling]);
 
-  // After the client authorizes the debit, poll the authoritative state until it settles.
-  const startPolling = () => {
-    if (!opportunityId || !documentId || pollTimer.current) return;
-    pollTimer.current = setInterval(async () => {
-      const s = await getDocumentPaymentState(opportunityId, documentId).catch(() => null);
-      if (s?.paymentStatus === "succeeded") {
-        setPay({ kind: "paid", rail: s.rail });
-        if (pollTimer.current) clearInterval(pollTimer.current);
-        pollTimer.current = null;
+  // Clear any live poll on unmount.
+  useEffect(() => stopPolling, [stopPolling]);
+
+  // Bridge from the in-form confirm result: show the correct post-payment screen IMMEDIATELY (card →
+  // succeeded, ACH → processing), carrying the amount already known from the minted intent so it never
+  // blinks out, then arm the poll to refine with server truth (authoritative rail + settled date).
+  const handleSettled = useCallback(
+    (hint?: SettledHint) => {
+      if (hint) {
+        setPay((prev) => {
+          const amountCents =
+            prev.kind === "ready"
+              ? prev.init.amountCents
+              : prev.kind === "succeeded" || prev.kind === "processing"
+                ? prev.amountCents
+                : null;
+          const currency =
+            prev.kind === "ready"
+              ? prev.init.currency
+              : prev.kind === "succeeded" || prev.kind === "processing"
+                ? prev.currency
+                : undefined;
+          return hint.status === "succeeded"
+            ? { kind: "succeeded", rail: hint.rail, amountCents, currency, paidAt: null }
+            : { kind: "processing", rail: hint.rail, amountCents, currency };
+        });
       }
-    }, 5000);
-  };
-  useEffect(
-    () => () => {
-      if (pollTimer.current) clearInterval(pollTimer.current);
+      startPolling();
     },
-    [],
+    [startPolling],
   );
 
   let note: React.ReactNode = null;
@@ -96,14 +182,6 @@ export default function DocumentPaymentPage() {
     note = <Note>Preparing payment…</Note>;
   } else if (!opportunityId || !documentId) {
     note = <Note>This payment link is invalid or has expired.</Note>;
-  } else if (pay.kind === "paid") {
-    const byRail =
-      pay.rail === "card"
-        ? "Payment received by card"
-        : pay.rail === "us_bank_account"
-          ? "Payment received by bank transfer"
-          : "Payment received";
-    note = <Note>{byRail} — this engagement is active.</Note>;
   } else if (pay.kind === "unsigned") {
     note = (
       <Note>Sign the engagement agreement before payment. Return to the document to continue.</Note>
@@ -115,7 +193,7 @@ export default function DocumentPaymentPage() {
   return (
     <DocumentFrame
       title="Engagement Payment"
-      headerAccessory={<PaymentPill paid={pay.kind === "paid"} />}
+      headerAccessory={<PaymentPill paid={pay.kind === "succeeded"} />}
       hideTrustStrip
       backHref={opportunityId && documentId ? `/p/m/${opportunityId}/${documentId}` : undefined}
       maxWidthClass="max-w-[920px]"
@@ -125,7 +203,15 @@ export default function DocumentPaymentPage() {
           init={pay.init}
           opportunityId={opportunityId}
           documentId={documentId}
-          onSettledPoll={startPolling}
+          onSettledPoll={handleSettled}
+        />
+      ) : pay.kind === "succeeded" || pay.kind === "processing" ? (
+        <DocumentPaymentConfirmation
+          status={pay.kind}
+          rail={pay.rail}
+          amountCents={pay.amountCents}
+          currency={pay.currency}
+          paidAt={pay.kind === "succeeded" ? pay.paidAt : null}
         />
       ) : (
         note
