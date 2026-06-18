@@ -19,6 +19,7 @@ export function DocumentFrame({
   title,
   status,
   backHref,
+  onBack,
   maxWidthClass = "max-w-[768px]",
   headerAccessory,
   hideTrustStrip = false,
@@ -29,8 +30,13 @@ export function DocumentFrame({
   /** Document identity shown in the card header — e.g. "Engagement Proposal" / "Engagement Agreement". */
   title: string;
   status?: ProposalShell["status"];
-  /** When set, the utility bar's left slot is a "← Back to summary" link; otherwise the brand tagline. */
+  /** When set, the utility bar's left slot is a "← Back to summary" link to another ROUTE; otherwise
+   * the brand tagline. Use for cross-route back nav (e.g. the pay page → the summary route). */
   backHref?: string;
+  /** In-page back handler — takes precedence over `backHref`. Use when "back" is a state change on the
+   * SAME route, not a navigation (e.g. the sign page returning from the Documenso embed to its summary
+   * scaffold, where a `<Link>` to the current URL would be a no-op). Renders a button, not a link. */
+  onBack?: () => void;
   /** Card width — narrow for the reading summary, wide for the two-column signing embed. */
   maxWidthClass?: string;
   /** Top-right header slot. Replaces the default StatusPill (e.g. the operator's draft controls). */
@@ -63,7 +69,15 @@ export function DocumentFrame({
           housing === "cockpit" ? "min-h-16" : "py-4"
         }`}
       >
-        {backHref ? (
+        {onBack ? (
+          <button
+            type="button"
+            onClick={onBack}
+            className="font-mono text-[0.625rem] text-[color:var(--color-text-muted)] uppercase tracking-[0.16em] transition-colors hover:text-[color:var(--color-text-accent)]"
+          >
+            ← Back to summary
+          </button>
+        ) : backHref ? (
           <Link
             to={backHref}
             className="font-mono text-[0.625rem] text-[color:var(--color-text-muted)] uppercase tracking-[0.16em] transition-colors hover:text-[color:var(--color-text-accent)]"
