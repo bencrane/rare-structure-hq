@@ -57,6 +57,12 @@ const STRIPE_APPEARANCE: Appearance = {
     colorBackground: T.input,
     colorText: T.foreground,
     colorTextSecondary: T.mutedForeground,
+    // Set explicitly: against our extra-dark colorBackground (#050812) Stripe's auto-derived
+    // placeholder/icon colors come out near-invisible. Pin them to visible token greys.
+    colorTextPlaceholder: T.mutedForeground,
+    colorIcon: T.mutedForeground,
+    colorIconTab: T.mutedForeground,
+    colorIconTabSelected: T.foreground,
     colorDanger: T.destructive,
     fontFamily: '"Geist Variable", ui-sans-serif, system-ui, sans-serif',
     borderRadius: "0px",
@@ -71,15 +77,23 @@ const STRIPE_APPEARANCE: Appearance = {
       letterSpacing: "0.08em",
       color: T.mutedForeground,
     },
-    ".Tab, .Block": { backgroundColor: T.muted, border: `1px solid ${T.border}` },
+    ".Tab, .Block": {
+      backgroundColor: T.muted,
+      border: `1px solid ${T.border}`,
+      color: T.mutedForeground,
+    },
     ".Tab:hover": { borderColor: T.ring },
     // Selected rail reads as a deliberate choice — accent border + ring on the sunken surface. This
     // is the entire "Card | US bank account" two-choice styling (the tabs are Stripe's, framed by us).
+    // `color` is load-bearing: the selected background (#050812) is near-black, so without an explicit
+    // light label color Stripe derives a dark one and the selected tab's text/icon vanish.
     ".Tab--selected": {
       borderColor: T.ring,
       backgroundColor: T.input,
+      color: T.foreground,
       boxShadow: `0 0 0 1px ${T.ring}`,
     },
+    ".TabLabel--selected": { color: T.foreground },
   },
 };
 
