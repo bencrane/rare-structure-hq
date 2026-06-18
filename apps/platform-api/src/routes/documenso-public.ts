@@ -37,8 +37,10 @@ export const documensoPublicRoutes = new Hono<{ Variables: AuthVariables }>();
 documensoPublicRoutes.get("/sign/:opportunityId/:documentId/token", async (c) => {
   const opportunityId = c.req.param("opportunityId");
   const documentId = c.req.param("documentId");
+  // `?signer=originator` → the originator's (your) token; anything else → the prospect's.
+  const signer = c.req.query("signer") === "originator" ? "originator" : undefined;
   try {
-    const tok = await edgeGetSignToken(opportunityId, documentId);
+    const tok = await edgeGetSignToken(opportunityId, documentId, signer);
     if (!tok) throw new HTTPException(404, { message: "document not found" });
     return c.json({
       data: {

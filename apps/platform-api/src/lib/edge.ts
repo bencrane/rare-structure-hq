@@ -560,9 +560,12 @@ export interface EdgeSignToken {
 export async function edgeGetSignToken(
   opportunityId: string,
   documentId: string,
+  signer?: "client" | "originator",
 ): Promise<EdgeSignToken | null> {
+  // `signer=originator` selects the originator's token (the "Copy your link" path); default = client.
+  const q = signer === "originator" ? "?signer=originator" : "";
   const res = await fetch(
-    `${base()}/api/v1/documenso/sign-token/${encodeURIComponent(opportunityId)}/${encodeURIComponent(documentId)}`,
+    `${base()}/api/v1/documenso/sign-token/${encodeURIComponent(opportunityId)}/${encodeURIComponent(documentId)}${q}`,
   );
   if (res.status === 404) return null;
   if (!res.ok) throw new EdgeError(`edge sign-token failed: ${res.status}`);
