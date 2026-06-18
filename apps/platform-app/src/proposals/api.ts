@@ -128,7 +128,7 @@ export async function getMandateSignToken(
   documentId: string,
 ): Promise<MandateSignToken | null> {
   const res = await fetch(
-    `${API_BASE}/api/v1/engagement-mandate-drafts/sign/${encodeURIComponent(opportunityId)}/${encodeURIComponent(documentId)}/token`,
+    `${API_BASE}/api/v1/documenso/sign/${encodeURIComponent(opportunityId)}/${encodeURIComponent(documentId)}/token`,
   );
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`mandate sign token failed: ${res.status}`);
@@ -156,7 +156,7 @@ export async function getMandateSignState(
   documentId: string,
 ): Promise<MandateSignState | null> {
   const res = await fetch(
-    `${API_BASE}/api/v1/engagement-mandate-drafts/sign/${encodeURIComponent(opportunityId)}/${encodeURIComponent(documentId)}/state`,
+    `${API_BASE}/api/v1/documenso/sign/${encodeURIComponent(opportunityId)}/${encodeURIComponent(documentId)}/state`,
   );
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`mandate sign state failed: ${res.status}`);
@@ -303,7 +303,7 @@ export async function createDocumentPaymentIntent(
   documentId: string,
 ): Promise<DocumentPaymentInit> {
   const res = await fetch(
-    `${API_BASE}/api/v1/engagement-mandate-drafts/sign/${encodeURIComponent(opportunityId)}/${encodeURIComponent(documentId)}/payment-intent`,
+    `${API_BASE}/api/v1/documenso/sign/${encodeURIComponent(opportunityId)}/${encodeURIComponent(documentId)}/payment-intent`,
     { method: "POST" },
   );
   if (!res.ok) {
@@ -330,7 +330,7 @@ export async function getDocumentPaymentState(
   documentId: string,
 ): Promise<DocumentPaymentState | null> {
   const res = await fetch(
-    `${API_BASE}/api/v1/engagement-mandate-drafts/sign/${encodeURIComponent(opportunityId)}/${encodeURIComponent(documentId)}/payment`,
+    `${API_BASE}/api/v1/documenso/sign/${encodeURIComponent(opportunityId)}/${encodeURIComponent(documentId)}/payment`,
   );
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`document payment state failed: ${res.status}`);

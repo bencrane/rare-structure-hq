@@ -27,6 +27,7 @@ import { db } from "./lib/db.ts";
 import { awardProfileRoutes } from "./routes/award-profile.ts";
 import { bookingAdminRoutes } from "./routes/bookings-admin.ts";
 import { companyProfileRoutes } from "./routes/company-profiles-admin.ts";
+import { documensoPublicRoutes } from "./routes/documenso-public.ts";
 import { documensoTemplateFieldRoutes } from "./routes/documenso-template-fields-admin.ts";
 import { engagementMandateDraftRoutes } from "./routes/engagement-mandate-drafts-admin.ts";
 import { engagementMandateAdminRoutes } from "./routes/engagement-mandates-admin.ts";
@@ -115,6 +116,13 @@ app.route("/api/v1/award-profile", awardProfileRoutes);
 app.route("/api/v1/bookings", bookingAdminRoutes);
 app.route("/api/v1/opportunities", opportunityAdminRoutes);
 app.route("/api/v1/engagement-mappings", engagementMappingRoutes);
+// Direct-to-documenso public prospect surface (sign token/state + ACH payment). Mirrors edge_api's
+// own `documenso/*` namespace. Also mounted under the legacy `engagement-mandate-drafts` prefix below
+// as a transitional alias so an in-flight SPA bundle on the old path keeps working across the
+// independent platform-app / platform-api deploys — drop that alias once the new bundle is fully live.
+app.route("/api/v1/documenso", documensoPublicRoutes);
+app.route("/api/v1/engagement-mandate-drafts", documensoPublicRoutes);
+// Operator-authenticated mandate-DRAFT CRUD (+ the public /document/:envelopeId signer read).
 app.route("/api/v1/engagement-mandate-drafts", engagementMandateDraftRoutes);
 app.route("/api/v1/engagement-mandates", engagementMandateAdminRoutes);
 app.route("/api/v1/engagement-templates", engagementTemplateRoutes);
