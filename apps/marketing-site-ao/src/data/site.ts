@@ -147,17 +147,17 @@ export const networkArchitecture: ProtocolPillar[] = [
   {
     num: "01",
     title: "Structural Allocation",
-    body: "The network operates on non-discretionary, pre-vetted routing. When a federal trigger is detected, the exact regional asset assigned to that geographic and sector block is activated. No bidding. No delays.",
+    body: "Our network is mapped in advance — every jurisdiction and sector matched to pre-vetted resources before a federal action surfaces. Allocation is structural, so the resource that fits is already in position rather than sourced under pressure.",
   },
   {
     num: "02",
-    title: "Specialized Providers",
-    body: "A precise syndicate of specialized infrastructure, service, legal, and capital providers explicitly supporting the federal and commercial contracting markets.",
+    title: "Specialized Resolution",
+    body: "The network spans infrastructure, service, legal, and capital, with every provider vetted for federal and commercial contracting work before admission. Each trigger draws the precise capability required to resolve it — nothing assembled ad hoc.",
   },
   {
     num: "03",
     title: "Execution Velocity",
-    body: "Network partners operate under mandatory, time-sensitive response protocols ensuring immediate mobilization upon target allocation.",
+    body: "Our partners operate under mandatory, time-sensitive response protocols. Once a resource is allocated, mobilization is immediate — measured against the enforcement timeline, not a procurement calendar.",
   },
 ];
 
@@ -230,33 +230,42 @@ export const vectorOptions: string[] = [
   "Other / Unclassified",
 ];
 
-export interface FooterLink {
-  label: string;
-  href: string;
+/**
+ * Public Utility section — GovernmentContracted.com, framed as an Active Operators
+ * asset. The detection apparatus that powers routing is the same market-wide index
+ * exposed (free) by the public dashboard; the section makes that congruence the proof.
+ */
+export interface PublicUtilityPanel {
+  kicker: string;
+  wordmark: string;
+  descriptor: string;
+  capabilities: string[];
+  sourceLine: string;
 }
 
-export interface FooterColumn {
-  heading: string;
-  links: FooterLink[];
+export interface PublicUtilityContent {
+  body: string[];
+  ctaLabel: string;
+  ctaHref: string;
+  panel: PublicUtilityPanel;
 }
 
-export const footerColumns: FooterColumn[] = [
-  {
-    heading: "Infrastructure",
-    links: [
-      { label: "Remediation Protocol", href: "#operating-protocol" },
-      { label: "Capital Routing", href: "#coverage-vectors" },
-      { label: "Surety Defense", href: "#operational-precedent" },
-      { label: "Secure Portal Login", href: "#deployment-protocol" },
+export const publicUtility: PublicUtilityContent = {
+  body: [
+    "Your awards, obligation history, and agency concentration, consolidated from the federal systems that hold them. Active contracts stay in view, and the new solicitations you're eligible to pursue surface as they post.",
+  ],
+  ctaLabel: "GovernmentContracted.com",
+  ctaHref: "https://governmentcontracted.com",
+  panel: {
+    kicker: "Operated by Active Operators",
+    wordmark: "Government · Contracted",
+    descriptor: "Your federal profile and open opportunities, in one view.",
+    capabilities: [
+      "Your SAM.gov Profile",
+      "Awards & Obligations",
+      "Active Contracts",
+      "Opportunities You Qualify For",
     ],
+    sourceLine: "Federal Systems · SAM.gov · USAspending.gov",
   },
-  {
-    heading: "Compliance Ops",
-    links: [
-      { label: "MSHA District 4-8", href: "#coverage-vectors" },
-      { label: "OSHA Region 3-6", href: "#coverage-vectors" },
-      { label: "EPA Region 2-5", href: "#coverage-vectors" },
-      { label: "USACE LA District", href: "#coverage-vectors" },
-    ],
-  },
-];
+};

@@ -55,7 +55,7 @@ export function LiveFeed() {
   return (
     <aside
       aria-label="Live enforcement intercept"
-      className="flex flex-col border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-raised-translucent)]"
+      className="flex flex-col self-start border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-raised-translucent)]"
     >
       <div className="flex items-center justify-between border-b border-[color:var(--color-border-default)] bg-[color:var(--color-surface-raised)] px-5 py-3">
         <span className="flex items-center gap-2 font-mono text-[0.6875rem] uppercase tracking-[0.16em] text-[color:var(--color-text-default)]">
@@ -120,12 +120,6 @@ export function LiveFeed() {
           );
         })}
       </ul>
-
-      <div className="flex flex-1 items-center justify-center px-5 py-6">
-        <span className="font-mono text-[0.5625rem] uppercase tracking-[0.2em] text-[color:var(--color-text-subtle)]">
-          Monitoring 8 Districts · 5 Agencies
-        </span>
-      </div>
 
       <div className="grid grid-cols-3 border-t border-[color:var(--color-border-default)]">
         {heroStats.map((stat, i) => (
