@@ -34,7 +34,7 @@ export function DeploymentProtocol() {
       aside={
         <form
           onSubmit={handleSubmit}
-          className="border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-raised-translucent)] p-6 sm:p-8"
+          className="border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-raised-translucent)] p-6 sm:p-7"
         >
           <div className="grid gap-5 sm:grid-cols-2">
             <div>
@@ -97,7 +97,7 @@ export function DeploymentProtocol() {
             <textarea
               id="ao-sitrep"
               name="sitrep"
-              rows={4}
+              rows={3}
               placeholder="Describe immediate hazard or liquidity cliff..."
               className={`${fieldControl} resize-none`}
             />
