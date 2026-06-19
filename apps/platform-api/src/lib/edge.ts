@@ -122,124 +122,6 @@ export function postureMonthlyFeeCents(templateId: string): number {
   return /acceler/i.test(templateId) ? 5_000_000 : 2_500_000;
 }
 
-export interface EdgeCreateInput {
-  clientName: string;
-  clientSignerName: string;
-  clientEmail: string;
-  clientTitle?: string;
-  monthlyFeeCents: number;
-  /** Published-template slug the operator selected; the engine resolves its body + fee. */
-  templateId?: string;
-}
-
-export interface EdgeCreateResult {
-  ref: string;
-  path: string;
-  status: string;
-  provisioned: boolean;
-  provision_error: string | null;
-}
-
-/** Raised on a 409 from confirm — the proposal already has an envelope (already originated). */
-export class EdgeAlreadyOriginated extends EdgeError {}
-
-export interface EdgeConfirmInput {
-  monthly_fee_cents?: number;
-  duration_months?: number;
-  billing_cadence?: string;
-  success_fee_schedule?: { tier: string; rate: string }[];
-  effective_date?: string;
-  /** Originate pathway, resolved by the BFF from the operator's settings. edge_api branches on it. */
-  render_mode?: string;
-}
-
-export interface EdgeConfirmResult {
-  ref: string;
-  status: string;
-  provisioned: boolean;
-  provision_error: string | null;
-  signing_token: string | null;
-}
-
-/**
- * Originate: stamp the operator's locked-in values onto the draft, render the PDF + create the
- * envelope. 409 → already originated (immutable). Service-token gated.
- */
-export async function edgeConfirmProposal(
-  ref: string,
-  input: EdgeConfirmInput,
-): Promise<EdgeConfirmResult> {
-  const res = await fetch(`${base()}/api/v1/proposals/${encodeURIComponent(ref)}/confirm`, {
-    method: "POST",
-    headers: serviceHeaders(),
-    body: JSON.stringify(input),
-  });
-  if (res.status === 409) throw new EdgeAlreadyOriginated(`proposal already originated: ${ref}`);
-  if (!res.ok) throw new EdgeError(`edge confirm failed: ${res.status} ${await res.text()}`);
-  return (await res.json()) as EdgeConfirmResult;
-}
-
-export async function edgeCreateProposal(input: EdgeCreateInput): Promise<EdgeCreateResult> {
-  const res = await fetch(`${base()}/api/v1/proposals`, {
-    method: "POST",
-    headers: serviceHeaders(),
-    body: JSON.stringify({
-      template_id: input.templateId ?? null,
-      client_name: input.clientName,
-      client_signer_name: input.clientSignerName,
-      client_email: input.clientEmail,
-      client_title: input.clientTitle ?? null,
-      monthly_fee_cents: input.monthlyFeeCents,
-    }),
-  });
-  if (!res.ok) throw new EdgeError(`edge create failed: ${res.status} ${await res.text()}`);
-  return (await res.json()) as EdgeCreateResult;
-}
-
-export interface EdgeProposalPublic {
-  ref: string;
-  status: string;
-  template_label: string;
-  /** Engagement-page blurb, resolved by the engine from the proposal's template (read-time). */
-  exec_summary: string;
-  client: { name: string; signer_name: string; title: string | null };
-  effective_date: string;
-  monthly_fee: string;
-  monthly_fee_cents: number;
-  duration_months: number;
-  billing_cadence: string;
-  total: string;
-  quarterly_total: string; // legacy alias of total (kept for back-compat)
-  success_fee_tiers: { tier: string; rate: string }[];
-  signing_token: string | null;
-  signed_pdf_url: string | null;
-  created_at: string | null;
-  /** Stripe ACH payment state ('none' until a PaymentIntent exists; 'succeeded' once funds settle). */
-  payment_status?: string;
-}
-
-export async function edgeGetProposal(ref: string): Promise<EdgeProposalPublic | null> {
-  const res = await fetch(`${base()}/api/v1/proposals/${encodeURIComponent(ref)}`);
-  if (res.status === 404) return null;
-  if (!res.ok) throw new EdgeError(`edge shell failed: ${res.status}`);
-  return (await res.json()) as EdgeProposalPublic;
-}
-
-export interface EdgeProposalSummary {
-  ref: string;
-  client_name: string;
-  client_signer_name: string;
-  status: string;
-  monthly_fee: string;
-  created_at: string | null;
-}
-
-export async function edgeListProposals(): Promise<EdgeProposalSummary[]> {
-  const res = await fetch(`${base()}/api/v1/proposals`, { headers: serviceHeaders(false) });
-  if (!res.ok) throw new EdgeError(`edge list failed: ${res.status}`);
-  return (await res.json()) as EdgeProposalSummary[];
-}
-
 // ── Bookings (Pipeline surface) ──────────────────────────────────────────────
 // Thin passthrough to edge_api's GET /api/v1/bookings (corex.bookings). Operator list
 // for the Pipeline tab; the BFF brokers the service token across the auth boundary.
@@ -326,8 +208,8 @@ export async function edgeCreateMandateDraft(input: {
 export interface EdgeMandatePrefilledOriginated {
   envelope_id: string;
   document_id: number | null;
-  /** The opportunity UUID stamped as the envelope's externalId — the prospect-link capability.
-   * The link is `/p/m/{opportunity_id}/{document_id}`. */
+  /** The opportunity's 8-char handle stamped as the envelope's externalId — the prospect-link
+   * capability. The link is `/p/m/{opportunity_id}/{document_id}`. */
   opportunity_id: string;
   signing_token: string | null;
   status: string;
@@ -415,7 +297,7 @@ export interface EdgeSignState {
  * FULLY OFFLINE on the edge_api side — DERIVED from the RAW webhook capture
  * (business.documenso_webhook_events), ZERO Documenso calls. `signed` requires the pair to match
  * (`external_id = opportunityId AND envelope_id = documentId`), so a guessed numeric document id
- * with a wrong/missing opportunity UUID returns signed:false. Drives DocumentSignPage's advance.
+ * with a wrong/missing opportunity handle returns signed:false. Drives DocumentSignPage's advance.
  */
 export async function edgeGetSignState(
   opportunityId: string,
@@ -788,48 +670,6 @@ export async function edgeTemplatePublish(
   }
   if (!res.ok) throw new EdgeError(`edge template publish: ${res.status} ${await res.text()}`);
   return (await res.json()) as EdgeTemplateRow;
-}
-
-// ── Payments (public, ACH) — the ref is the capability, no service token ─────────────────────
-// edge_api owns the Stripe surface: it mints/reuses the PaymentIntent (amount resolved server-side
-// from the proposal content) and verifies the webhook. This BFF only brokers the public ref
-// endpoints; the Stripe SECRET key never leaves core-x. The publishable key + client_secret flow
-// through to the browser (both are safe to expose by design).
-
-export interface EdgePaymentInit {
-  client_secret: string;
-  publishable_key: string;
-  amount_cents: number;
-  currency: string;
-  payment_status: string;
-}
-
-export interface EdgePaymentState {
-  payment_status: string;
-  amount_cents: number | null;
-  currency: string;
-  paid_at: string | null;
-}
-
-/** Raised when the agreement is not yet signed (edge_api 409). The pay page maps it to a prompt. */
-export class EdgePaymentNotReady extends EdgeError {}
-
-/** Mint (or reuse) the ACH PaymentIntent. edge_api resolves the amount; we never send one. */
-export async function edgeCreatePaymentIntent(ref: string): Promise<EdgePaymentInit> {
-  const res = await fetch(`${base()}/api/v1/proposals/${encodeURIComponent(ref)}/payment-intent`, {
-    method: "POST",
-  });
-  if (res.status === 409) throw new EdgePaymentNotReady("agreement not yet signed");
-  if (!res.ok) throw new EdgeError(`edge payment-intent failed: ${res.status} ${await res.text()}`);
-  return (await res.json()) as EdgePaymentInit;
-}
-
-/** The authoritative (webhook-driven) payment state. Returns null on 404. */
-export async function edgeGetPayment(ref: string): Promise<EdgePaymentState | null> {
-  const res = await fetch(`${base()}/api/v1/proposals/${encodeURIComponent(ref)}/payment`);
-  if (res.status === 404) return null;
-  if (!res.ok) throw new EdgeError(`edge payment state failed: ${res.status}`);
-  return (await res.json()) as EdgePaymentState;
 }
 
 // ── Engagement templates (Settings "Engagement Templates" render surface) ──────────────────────

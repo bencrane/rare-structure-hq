@@ -32,8 +32,8 @@ export const documensoPublicRoutes = new Hono<{ Variables: AuthVariables }>();
 
 // PUBLIC — the prospect's embed-load TOKEN read for `/p/m/:opportunityId/:documentId`. edge_api
 // makes ONE live Documenso read and PAIR-GATES (the document's externalId must equal opportunityId)
-// before returning the signer token; a guessed document id under a wrong/missing UUID → 404. The
-// opportunity UUID is the capability; the numeric document id is only a disambiguator behind it.
+// before returning the signer token; a guessed document id under a wrong/missing handle → 404. The
+// opportunity 8-char handle is the capability; the numeric document id is only a disambiguator behind it.
 documensoPublicRoutes.get("/sign/:opportunityId/:documentId/token", async (c) => {
   const opportunityId = c.req.param("opportunityId");
   const documentId = c.req.param("documentId");
@@ -60,7 +60,7 @@ documensoPublicRoutes.get("/sign/:opportunityId/:documentId/token", async (c) =>
 // DocumentSignPage polls this; `signed` flips true once a terminal DOCUMENT_COMPLETED webhook lands
 // for the (opportunity, document) PAIR, and the page advances to the signed-confirmation view.
 // edge_api derives this FULLY OFFLINE from the raw webhook capture — ZERO Documenso calls in the
-// poll loop. The pair gate means a guessed document id with a wrong UUID returns signed:false.
+// poll loop. The pair gate means a guessed document id with a wrong 8-char handle returns signed:false.
 documensoPublicRoutes.get("/sign/:opportunityId/:documentId/state", async (c) => {
   const opportunityId = c.req.param("opportunityId");
   const documentId = c.req.param("documentId");

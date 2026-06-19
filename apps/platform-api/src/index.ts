@@ -6,7 +6,6 @@
  * - /health (unauthenticated) for liveness probes
  * - /api/v1/me (auth-required) resolved identity: validated user + org affiliation
  * - /api/v1/settings (auth-required) operator settings (originate render_mode toggle)
- * - /api/v1/proposals (auth) instantiate; /api/v1/proposals/:ref (public) shell read
  * - /api/v1/proposal-templates (auth) the non-revealing posture catalog
  * - /api/v1/award-profile/:domain (auth-required) brokers to core-x catalyst_api
  * - /api/v1/federal/* (PUBLIC) warm map/chart snapshot — in-memory, no Lance/DuckDB
@@ -35,7 +34,7 @@ import { engagementTemplateRoutes } from "./routes/engagement-templates-admin.ts
 import { federalRoutes } from "./routes/federal.ts";
 import { opportunityAdminRoutes } from "./routes/opportunities-admin.ts";
 import { proposalTemplateEditorRoutes } from "./routes/proposal-templates-admin.ts";
-import { proposalAdminRoutes, proposalTemplateRoutes } from "./routes/proposals-admin.ts";
+import { proposalTemplateRoutes } from "./routes/proposals-admin.ts";
 import { settingsRoutes } from "./routes/settings.ts";
 
 const app = new Hono<{ Variables: AuthVariables & { requestId: string } }>();
@@ -107,7 +106,6 @@ app.get("/api/v1/me", requireUser, async (c) => {
 });
 
 app.route("/api/v1/settings", settingsRoutes);
-app.route("/api/v1/proposals", proposalAdminRoutes);
 // Authoring surface mounts BEFORE the bare picker so the more specific prefix wins.
 app.route("/api/v1/proposal-templates/manage", proposalTemplateEditorRoutes);
 app.route("/api/v1/proposal-templates", proposalTemplateRoutes);

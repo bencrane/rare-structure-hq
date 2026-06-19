@@ -123,7 +123,7 @@ engagementMandateDraftRoutes.post("/:id/originate-prefilled", requireUser, async
       data: {
         envelopeId: res.envelope_id,
         documentId: res.document_id,
-        // The opportunity UUID is the prospect-link capability: /p/m/{opportunityId}/{documentId}.
+        // The opportunity 8-char handle is the prospect-link capability: /p/m/{opportunityId}/{documentId}.
         opportunityId: res.opportunity_id,
         signingToken: res.signing_token,
         documensoHost: res.documenso_host,
