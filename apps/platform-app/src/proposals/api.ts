@@ -67,27 +67,10 @@ export async function createMandateDraft(
   return (await res.json()).data as { id: string };
 }
 
-export interface MandateDraftConfirmed {
+export interface MandatePrefilledOriginated {
   envelopeId: string;
   signingToken: string | null;
   documensoHost: string;
-}
-
-/** Direct-to-documenso "Confirm & originate": instantiate a Documenso document from the draft's
- * template and get back the prospect signer token + envelope id (the prospect-link capability). */
-export async function confirmMandateDraft(
-  token: string,
-  id: string,
-): Promise<MandateDraftConfirmed> {
-  const res = await fetch(
-    `${API_BASE}/api/v1/engagement-mandate-drafts/${encodeURIComponent(id)}/confirm`,
-    { method: "POST", headers: authHeaders(token) },
-  );
-  if (!res.ok) throw new Error(`confirm mandate failed: ${res.status} ${await res.text()}`);
-  return (await res.json()).data as MandateDraftConfirmed;
-}
-
-export interface MandatePrefilledOriginated extends MandateDraftConfirmed {
   /** The Documenso document id (numeric) — the disambiguator in the signing link, behind the UUID. */
   documentId: number | null;
   /** The opportunity UUID (the envelope's externalId) — the unguessable prospect-link capability.
@@ -97,10 +80,10 @@ export interface MandatePrefilledOriginated extends MandateDraftConfirmed {
   status: string;
 }
 
-/** Direct-to-documenso "Confirm & originate" — the PREFILL-DOCUMENT-FROM-TEMPLATE sub-lane (parallel
- * to {@link confirmMandateDraft}, the envelope-distribute lane). Instantiates a Documenso document
- * from the draft's template via /api/v2/template/use, prefilled from opportunity_specific_content,
- * then distribute(NONE) → PENDING. Returns the same envelope id + signer token downstream. */
+/** Direct-to-documenso "Confirm & originate" — the PREFILL-DOCUMENT-FROM-TEMPLATE lane. Instantiates
+ * a Documenso document from the draft's template via /api/v2/template/use, prefilled from
+ * opportunity_specific_content, then distribute(NONE) → PENDING. Returns the envelope id + signer
+ * token + the opportunity/document pair (the prospect-link capability). */
 export async function originatePrefilled(
   token: string,
   id: string,
