@@ -35,12 +35,10 @@ export const leadText = "text-[1.0625rem] leading-[1.55] text-[color:var(--color
  *
  * - layout="stack": eyebrow renders full-width above the heading, content fills
  *   the column below.
- * - layout="split": the left block is one flex-col beside the tall `aside`,
- *   mirroring the hero's text+panel grid. Columns stretch to equal height; the
- *   eyebrow/heading/lead anchor at the top and `children` is pinned to the
- *   bottom (mt-auto), so the left spans the aside's height — heading up top,
- *   trailing paragraph aligned to the card's bottom edge. Balanced, not
- *   top-clinging and not floated to the middle.
+ * - layout="split": the left block (eyebrow → heading → lead → children) sits
+ *   top-aligned beside the `aside`, with normal paragraph spacing. Balance comes
+ *   from sizing the copy and the card to comparable heights — not from vertical
+ *   distribution tricks (centering floats the heading; mt-auto opens a void).
  *
  * This is the single legal way to render a content section. Do not hand-roll
  * the label/heading/gutters in a section file; pass `aside` for a side panel.
@@ -78,14 +76,14 @@ export function SectionShell({
       )}
     >
       {layout === "split" ? (
-        <div className="grid gap-12 lg:grid-cols-[1.08fr_0.92fr] lg:gap-16">
+        <div className="grid gap-12 lg:grid-cols-[1.08fr_0.92fr] lg:items-start lg:gap-16">
           <div className="flex min-w-0 flex-col">
             <Eyebrow label={index} tone="accent" />
             <h2 id={headingId} className={cx("mt-8", headingClass)}>
               {heading}
             </h2>
             {leadNode}
-            {children ? <div className="mt-auto max-w-[34rem] pt-10">{children}</div> : null}
+            {children ? <div className="mt-4 max-w-[34rem]">{children}</div> : null}
           </div>
           <div className="min-w-0">{aside}</div>
         </div>

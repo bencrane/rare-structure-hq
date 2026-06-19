@@ -260,8 +260,6 @@ export interface SampleProfile {
 }
 
 export interface PublicUtilityPanel {
-  wordmark: string;
-  descriptor: string;
   sourceLine: string;
   sample: SampleProfile;
 }
@@ -284,8 +282,6 @@ export const publicUtility: PublicUtilityContent = {
   accessNote:
     "Enter your name or UEI and your full federal record resolves into one profile — drawn from the same systems a contracting officer reviews. Your standing is the standing they see; confirm it before a renewal, a recompete, or a new pursuit.",
   panel: {
-    wordmark: "Government · Contracted",
-    descriptor: "The dashboard for federal contractors — your record, pulled from the source.",
     sourceLine: "Federal Systems · SAM.gov · USAspending.gov",
     sample: {
       name: "Granite Ridge Construction Group, LLC",
