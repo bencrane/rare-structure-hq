@@ -6,11 +6,7 @@ const headerCell =
 
 export function CoverageVectors() {
   return (
-    <SectionShell
-      id="coverage-vectors"
-      index="III. Coverage Vectors"
-      heading="Active Coverage Vectors"
-    >
+    <SectionShell id="coverage-vectors" index="Coverage Vectors" heading="Active Coverage Vectors">
       <div className="overflow-x-auto border border-[color:var(--color-border-default)]">
         <table className="w-full min-w-[40rem] border-collapse text-left font-mono">
           <thead>

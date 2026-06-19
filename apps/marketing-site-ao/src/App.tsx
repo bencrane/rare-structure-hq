@@ -3,6 +3,7 @@ import { DeploymentProtocol } from "./sections/DeploymentProtocol";
 import { Hero } from "./sections/Hero";
 import { OperatingProtocol } from "./sections/OperatingProtocol";
 import { OperationalPrecedent } from "./sections/OperationalPrecedent";
+import { PublicUtility } from "./sections/PublicUtility";
 import { SiteFooter } from "./sections/SiteFooter";
 import { SiteHeader } from "./sections/SiteHeader";
 
@@ -16,6 +17,7 @@ export function App() {
           <OperatingProtocol />
           <OperationalPrecedent />
           <CoverageVectors />
+          <PublicUtility />
           <DeploymentProtocol />
         </main>
         <SiteFooter />

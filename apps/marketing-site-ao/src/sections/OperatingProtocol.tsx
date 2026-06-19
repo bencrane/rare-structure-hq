@@ -3,12 +3,8 @@ import { networkArchitecture } from "../data/site";
 
 export function OperatingProtocol() {
   return (
-    <SectionShell
-      id="operating-protocol"
-      index="II. Operating Protocol"
-      heading="Network Architecture"
-    >
-      <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3 lg:gap-14">
+    <SectionShell id="operating-protocol" index="Operating Protocol" heading="Network Architecture">
+      <div className="grid gap-10 lg:grid-cols-2 xl:grid-cols-3 lg:gap-14">
         {networkArchitecture.map((pillar) => (
           <div key={pillar.num}>
             <div className="h-px w-full bg-[color:var(--color-border-default)]" />
