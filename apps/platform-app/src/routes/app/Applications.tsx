@@ -11,18 +11,11 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import type { OpportunitySummary } from "@rare-structure-hq/shared";
-import { Badge, Inline, Text } from "@rare-structure-hq/ui";
+import { Badge, Text } from "@rare-structure-hq/ui";
 
 import { CockpitPage, EmptyState, Panel, Section } from "@/app/cockpit";
 import { useAuth } from "@/lib/auth";
-import {
-  type EngagementPackage,
-  type MandateState,
-  generateMandate,
-  getMandate,
-  listEngagementPackages,
-  listOpportunities,
-} from "@/pipeline/api";
+import { listOpportunities } from "@/pipeline/api";
 
 const DATE = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" });
 
@@ -49,7 +42,6 @@ export default function Applications() {
   const token = session?.access_token ?? "";
 
   const [list, setList] = useState<OpportunitySummary[] | null>(null);
-  const [packages, setPackages] = useState<EngagementPackage[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(() => {
@@ -59,9 +51,6 @@ export default function Applications() {
     listOpportunities(token)
       .then(setList)
       .catch((e) => setError(e instanceof Error ? e.message : "Failed to load opportunities"));
-    listEngagementPackages(token)
-      .then(setPackages)
-      .catch(() => setPackages([]));
   }, [token]);
 
   useEffect(() => {
@@ -118,7 +107,6 @@ export default function Applications() {
                       <Th>Title</Th>
                       <Th>Status</Th>
                       <Th>Booked</Th>
-                      <Th>Mandate</Th>
                       <th className="w-10" aria-hidden />
                     </tr>
                   </thead>
@@ -181,17 +169,6 @@ export default function Applications() {
                             {formatDate(o.bookedAt ?? o.createdAt)}
                           </Text>
                         </td>
-                        <td
-                          className="px-4 py-3"
-                          onClick={(e) => e.stopPropagation()}
-                          onKeyDown={(e) => e.stopPropagation()}
-                        >
-                          <MandateAction
-                            opportunityId={o.opportunityId}
-                            packages={packages}
-                            token={token}
-                          />
-                        </td>
                         <td className="px-4 py-3 text-right">
                           <ChevronRight className="ml-auto size-3.5 text-[color:var(--color-text-subtle)] opacity-0 transition-opacity group-hover:opacity-100" />
                         </td>
@@ -217,119 +194,3 @@ const thCls =
 
 const secondaryBtnCls =
   "flex items-center justify-center gap-2 border border-[color:var(--color-border-default)] px-4 py-2.5 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase tracking-[0.14em] transition-colors hover:border-[color:var(--color-text-accent)] hover:text-[color:var(--color-text-accent)]";
-
-// ── Mandate action — the PARALLEL "lock the price + term" control (AO term-only HTML → DocRaptor) ──
-// Pick a preset package and stage it: the BFF → edge_api binds the opportunity + package into the
-// static AO HTML and renders a plain PDF via DocRaptor (through a Trigger.dev task). Distinct from the
-// row-click, which opens the staging-draft → Documenso page.
-
-function mandateTone(status: string): "info" | "warn" | "success" {
-  if (/fail/i.test(status)) return "warn";
-  if (/rendered/i.test(status)) return "success";
-  return "info"; // pending / rendering
-}
-
-function MandateAction({
-  opportunityId,
-  packages,
-  token,
-}: {
-  opportunityId: string;
-  packages: EngagementPackage[];
-  token: string;
-}) {
-  const [pkg, setPkg] = useState("");
-  const [state, setState] = useState<MandateState | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-
-  // Default the dropdown to the first package once they load.
-  useEffect(() => {
-    setPkg((cur) => cur || packages[0]?.key || "");
-  }, [packages]);
-
-  // Surface any mandate already staged for this opportunity.
-  useEffect(() => {
-    let alive = true;
-    getMandate(token, opportunityId)
-      .then((m) => {
-        if (alive) setState(m);
-      })
-      .catch(() => {});
-    return () => {
-      alive = false;
-    };
-  }, [opportunityId, token]);
-
-  const stage = async () => {
-    if (!pkg) return;
-    setBusy(true);
-    setErr(null);
-    try {
-      const r = await generateMandate(token, opportunityId, pkg);
-      setState((s) => ({
-        id: r.mandate_id,
-        term_fee_cents: s?.term_fee_cents ?? 0,
-        duration_months: s?.duration_months ?? 0,
-        pdf_bytes: s?.pdf_bytes ?? null,
-        error: null,
-        status: r.status,
-        package_key: r.package_key,
-      }));
-      // Poll briefly until the Trigger render flips it to 'rendered' / 'failed'.
-      let tries = 0;
-      const iv = setInterval(async () => {
-        tries += 1;
-        const m = await getMandate(token, opportunityId).catch(() => null);
-        if (m) setState(m);
-        if (!m || m.status === "rendered" || m.status === "failed" || tries >= 15) {
-          clearInterval(iv);
-        }
-      }, 2000);
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : "Failed to stage");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  if (packages.length === 0) {
-    return (
-      <Text size="mono-xs" mono color="subtle">
-        —
-      </Text>
-    );
-  }
-
-  return (
-    <Inline gap="2" align="center">
-      <select
-        value={pkg}
-        onChange={(e) => setPkg(e.target.value)}
-        className={mandateSelectCls}
-        aria-label="Engagement package"
-      >
-        {packages.map((p) => (
-          <option key={p.key} value={p.key}>
-            {p.label}
-          </option>
-        ))}
-      </select>
-      <button type="button" onClick={stage} disabled={busy || !pkg} className={mandateBtnCls}>
-        {busy ? "…" : state?.status === "rendered" ? "Re-stage" : "Stage"}
-      </button>
-      {state ? <Badge tone={mandateTone(state.status)}>{state.status}</Badge> : null}
-      {err ? (
-        <Text size="mono-xs" mono color="muted" className="max-w-[20ch] truncate" title={err}>
-          {err}
-        </Text>
-      ) : null}
-    </Inline>
-  );
-}
-
-const mandateSelectCls =
-  "border border-[color:var(--color-border-default)] bg-transparent px-2 py-1.5 font-mono text-[color:var(--color-text-default)] text-mono-xs focus:border-[color:var(--color-text-accent)] focus:outline-none";
-
-const mandateBtnCls =
-  "border border-[color:var(--color-border-default)] px-3 py-1.5 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase tracking-[0.14em] transition-colors hover:border-[color:var(--color-text-accent)] hover:text-[color:var(--color-text-accent)] disabled:opacity-50";

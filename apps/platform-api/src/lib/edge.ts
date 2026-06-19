@@ -284,77 +284,6 @@ export async function edgeListOpportunities(): Promise<EdgeOpportunitySummary[]>
   return (await res.json()) as EdgeOpportunitySummary[];
 }
 
-// ── Engagement mandates (the PARALLEL AO term-only HTML → DocRaptor pathway) ──────────────────
-// Distinct from engagement-mandate-drafts (the staging-draft → Documenso path). The operator locks a
-// price+term PACKAGE on an opportunity; edge_api binds the opportunity + package into the repo-resident
-// static AO term-only HTML and renders a plain PDF via DocRaptor (fired through a Trigger.dev task).
-
-export interface EdgeEngagementPackage {
-  key: string;
-  label: string;
-  term_fee_cents: number;
-  duration_months: number;
-}
-
-/** The preset price+term options for the Applications action dropdown. */
-export async function edgeListEngagementPackages(): Promise<EdgeEngagementPackage[]> {
-  const res = await fetch(`${base()}/api/v1/engagement-mandates/packages`, {
-    headers: serviceHeaders(false),
-  });
-  if (!res.ok) throw new EdgeError(`edge engagement-packages list failed: ${res.status}`);
-  return (await res.json()) as EdgeEngagementPackage[];
-}
-
-export interface EdgeMandateGenerated {
-  opportunity_id: string;
-  mandate_id: string;
-  status: string;
-  package_key: string;
-  run_id: string | null;
-}
-
-/** Lock a package on an opportunity and enqueue its mandate render. Service-token gated. */
-export async function edgeGenerateMandate(
-  opportunityId: string,
-  packageKey: string,
-): Promise<EdgeMandateGenerated> {
-  const res = await fetch(
-    `${base()}/api/v1/engagement-mandates/${encodeURIComponent(opportunityId)}`,
-    { method: "POST", headers: serviceHeaders(), body: JSON.stringify({ packageKey }) },
-  );
-  if (!res.ok)
-    throw new EdgeError(`edge generate-mandate failed: ${res.status} ${await res.text()}`);
-  return (await res.json()) as EdgeMandateGenerated;
-}
-
-export interface EdgeMandateState {
-  id: string;
-  opportunity_id: string;
-  package_key: string;
-  term_fee_cents: number;
-  duration_months: number;
-  document_slug: string;
-  style: string;
-  status: string;
-  pdf_r2_key: string | null;
-  pdf_bytes: number | null;
-  trigger_run_id: string | null;
-  error: string | null;
-  created_at: string | null;
-  updated_at: string | null;
-}
-
-/** The opportunity's current mandate state. Null on 404 (nothing staged yet). */
-export async function edgeGetMandate(opportunityId: string): Promise<EdgeMandateState | null> {
-  const res = await fetch(
-    `${base()}/api/v1/engagement-mandates/${encodeURIComponent(opportunityId)}`,
-    { headers: serviceHeaders(false) },
-  );
-  if (res.status === 404) return null;
-  if (!res.ok) throw new EdgeError(`edge mandate get failed: ${res.status}`);
-  return (await res.json()) as EdgeMandateState;
-}
-
 export interface EdgeEngagementMappingOption {
   id: string;
   label: string;
@@ -394,28 +323,6 @@ export async function edgeCreateMandateDraft(input: {
   return (await res.json()) as EdgeMandateDraftCreated;
 }
 
-export interface EdgeMandateDraftConfirmed {
-  envelope_id: string;
-  signing_token: string | null;
-  documenso_host: string;
-}
-
-/**
- * Direct-to-documenso "Confirm & originate": instantiate a signable Documenso document FROM the
- * draft's template (edge_api resolves the template → envelope id, calls /envelope/use, distributes
- * NONE) and return the envelope id (the prospect-link capability) + the signer token. Service-token
- * gated. Stateless — re-confirm mints a fresh document.
- */
-export async function edgeConfirmMandateDraft(id: string): Promise<EdgeMandateDraftConfirmed> {
-  const res = await fetch(
-    `${base()}/api/v1/engagement-mandate-drafts/${encodeURIComponent(id)}/confirm`,
-    { method: "POST", headers: serviceHeaders() },
-  );
-  if (!res.ok)
-    throw new EdgeError(`edge mandate-draft confirm failed: ${res.status} ${await res.text()}`);
-  return (await res.json()) as EdgeMandateDraftConfirmed;
-}
-
 export interface EdgeMandatePrefilledOriginated {
   envelope_id: string;
   document_id: number | null;
@@ -428,12 +335,11 @@ export interface EdgeMandatePrefilledOriginated {
 }
 
 /**
- * Direct-to-documenso "Confirm & originate" — the PREFILL-DOCUMENT-FROM-TEMPLATE sub-lane (PARALLEL to
- * {@link edgeConfirmMandateDraft}, the envelope-distribute lane). Instantiates a Documenso document
- * FROM the draft's template via `POST /api/v2/template/use` with the opportunity's
+ * Direct-to-documenso "Confirm & originate" — the PREFILL-DOCUMENT-FROM-TEMPLATE lane. Instantiates a
+ * Documenso document FROM the draft's template via `POST /api/v2/template/use` with the opportunity's
  * `opportunity_specific_content` field values PREFILLED, then distribute(NONE) so the new envelope
  * lands PENDING (signable, no email). Returns the envelope id (the prospect-link capability) + the
- * signer token. Service-token gated. The existing /confirm lane is untouched.
+ * signer token. Service-token gated.
  */
 export async function edgeOriginatePrefilled(id: string): Promise<EdgeMandatePrefilledOriginated> {
   const res = await fetch(
@@ -490,28 +396,6 @@ export async function edgeSaveDocumensoTemplateDefaults(
       `edge documenso-template-defaults save failed: ${res.status} ${await res.text()}`,
     );
   return (await res.json()) as EdgeDocumensoTemplateField[];
-}
-
-export interface EdgeMandateDraftDocument {
-  signing_token: string | null;
-  documenso_host: string;
-  status: string | null;
-}
-
-/**
- * PUBLIC prospect read for `/p/m/:envelopeId` — the envelope id is the capability (no service
- * token). edge_api re-reads the live Documenso envelope for the signer token + status the embed
- * needs. Returns null on 404 (unknown / expired envelope).
- */
-export async function edgeGetMandateDraftDocument(
-  envelopeId: string,
-): Promise<EdgeMandateDraftDocument | null> {
-  const res = await fetch(
-    `${base()}/api/v1/engagement-mandate-drafts/document/${encodeURIComponent(envelopeId)}`,
-  );
-  if (res.status === 404) return null;
-  if (!res.ok) throw new EdgeError(`edge mandate-draft document failed: ${res.status}`);
-  return (await res.json()) as EdgeMandateDraftDocument;
 }
 
 export interface EdgeSignState {

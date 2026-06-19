@@ -15,9 +15,8 @@
  * The originated link pair is persisted to localStorage (keyed by draftId), so returning to the page
  * re-surfaces both links and blocks an accidental second originate.
  *
- * Lane (operator's `directToDocumensoLane`): 'prefill-document-from-template' (originatePrefilled →
- * returns the opportunity+document pair → the links) or 'envelope-distribute' (confirmMandateDraft →
- * no pair link).
+ * Origination is the prefill-document-from-template lane (originatePrefilled → returns the
+ * opportunity+document pair → the links).
  */
 import { Check, Copy, Lock, LockOpen } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -29,8 +28,7 @@ import {
   EMPTY_MANDATE_SUMMARY_VALUES,
   type MandateSummaryValues,
 } from "@/proposals/DocumentSummaryScaffold";
-import { confirmMandateDraft, originatePrefilled } from "@/proposals/api";
-import { useOriginationMode } from "@/settings/originationMode";
+import { originatePrefilled } from "@/proposals/api";
 
 type ConfirmStatus = "idle" | "submitting" | "ready" | "error";
 type SignLink = { opportunityId: string; documentId: number };
@@ -69,7 +67,6 @@ export function MandateDraftShell({
 }) {
   const { session } = useAuth();
   const token = session?.access_token ?? "";
-  const { directToDocumensoLane } = useOriginationMode();
 
   // Hydrate the originated state from localStorage so returning to the page shows the links + the
   // "Originated" state instead of a fresh Confirm button (which would double-originate).
@@ -90,20 +87,13 @@ export function MandateDraftShell({
     setStatus("submitting");
     setError(null);
     try {
-      if (directToDocumensoLane === "prefill-document-from-template") {
-        const res = await originatePrefilled(token, draftId);
-        if (res.documentId == null) {
-          throw new Error("originate did not return a document id");
-        }
-        const link = { opportunityId: res.opportunityId, documentId: res.documentId };
-        saveSignLink(draftId, link);
-        setSignLink(link);
-      } else {
-        // The envelope-distribute lane stamps externalId=draftId (not the opportunity pair) and does
-        // not return the document id, so it cannot build the /p/m/{opportunity}/{document} links.
-        await confirmMandateDraft(token, draftId);
-        setSignLink(null);
+      const res = await originatePrefilled(token, draftId);
+      if (res.documentId == null) {
+        throw new Error("originate did not return a document id");
       }
+      const link = { opportunityId: res.opportunityId, documentId: res.documentId };
+      saveSignLink(draftId, link);
+      setSignLink(link);
       setStatus("ready");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not originate the mandate");
@@ -192,8 +182,7 @@ function DraftEditControls({
 }
 
 // Success surface — the two share links for the just-created Documenso document. Prospect link lands on
-// the summary; your link drops you straight into your signing embed (`?signer=originator`). `signLink`
-// is null for the envelope-distribute lane (it doesn't stamp the opportunity pair).
+// the summary; your link drops you straight into your signing embed (`?signer=originator`).
 function MandateReadyBar({ signLink }: { signLink: SignLink | null }) {
   const prospectUrl = signLink
     ? `${window.location.origin}/p/m/${signLink.opportunityId}/${signLink.documentId}`

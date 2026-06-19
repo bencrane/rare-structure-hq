@@ -30,7 +30,6 @@ import { companyProfileRoutes } from "./routes/company-profiles-admin.ts";
 import { documensoPublicRoutes } from "./routes/documenso-public.ts";
 import { documensoTemplateFieldRoutes } from "./routes/documenso-template-fields-admin.ts";
 import { engagementMandateDraftRoutes } from "./routes/engagement-mandate-drafts-admin.ts";
-import { engagementMandateAdminRoutes } from "./routes/engagement-mandates-admin.ts";
 import { engagementMappingRoutes } from "./routes/engagement-mappings-admin.ts";
 import { engagementTemplateRoutes } from "./routes/engagement-templates-admin.ts";
 import { federalRoutes } from "./routes/federal.ts";
@@ -122,9 +121,8 @@ app.route("/api/v1/engagement-mappings", engagementMappingRoutes);
 // independent platform-app / platform-api deploys — drop that alias once the new bundle is fully live.
 app.route("/api/v1/documenso", documensoPublicRoutes);
 app.route("/api/v1/engagement-mandate-drafts", documensoPublicRoutes);
-// Operator-authenticated mandate-DRAFT CRUD (+ the public /document/:envelopeId signer read).
+// Operator-authenticated mandate-DRAFT CRUD.
 app.route("/api/v1/engagement-mandate-drafts", engagementMandateDraftRoutes);
-app.route("/api/v1/engagement-mandates", engagementMandateAdminRoutes);
 app.route("/api/v1/engagement-templates", engagementTemplateRoutes);
 app.route("/api/v1/documenso-template-fields", documensoTemplateFieldRoutes);
 app.route("/api/v1/company-profiles", companyProfileRoutes);
