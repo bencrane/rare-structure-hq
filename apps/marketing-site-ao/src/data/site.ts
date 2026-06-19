@@ -235,18 +235,43 @@ export const vectorOptions: string[] = [
  * asset. The detection apparatus that powers routing is the same market-wide index
  * exposed (free) by the public dashboard; the section makes that congruence the proof.
  */
+export interface ProfileStat {
+  label: string;
+  value: string;
+  sub?: string;
+}
+
+export interface AgencyShare {
+  name: string;
+  value: string;
+  /** Share of lifetime awards, 0–100 — drives the bar width. */
+  pct: number;
+}
+
+/** Illustrative entity profile rendered as the panel specimen (decorative). */
+export interface SampleProfile {
+  name: string;
+  meta: string;
+  /** First badge is the active/status pill (rendered with a success dot). */
+  badges: string[];
+  stats: ProfileStat[];
+  agenciesLabel: string;
+  agencies: AgencyShare[];
+}
+
 export interface PublicUtilityPanel {
-  kicker: string;
   wordmark: string;
   descriptor: string;
-  capabilities: string[];
   sourceLine: string;
+  sample: SampleProfile;
 }
 
 export interface PublicUtilityContent {
   body: string[];
   ctaLabel: string;
   ctaHref: string;
+  /** Sentences that follow the GovernmentContracted.com link in the access paragraph. */
+  accessNote: string;
   panel: PublicUtilityPanel;
 }
 
@@ -256,16 +281,28 @@ export const publicUtility: PublicUtilityContent = {
   ],
   ctaLabel: "GovernmentContracted.com",
   ctaHref: "https://governmentcontracted.com",
+  accessNote:
+    "Enter your name or UEI and your full federal record resolves into one profile — drawn from the same systems a contracting officer reviews. Your standing is the standing they see; confirm it before a renewal, a recompete, or a new pursuit.",
   panel: {
-    kicker: "Operated by Active Operators",
     wordmark: "Government · Contracted",
-    descriptor: "Your federal profile and open opportunities, in one view.",
-    capabilities: [
-      "Your SAM.gov Profile",
-      "Awards & Obligations",
-      "Active Contracts",
-      "Opportunities You Qualify For",
-    ],
+    descriptor: "The dashboard for federal contractors — your record, pulled from the source.",
     sourceLine: "Federal Systems · SAM.gov · USAspending.gov",
+    sample: {
+      name: "Granite Ridge Construction Group, LLC",
+      meta: "UEI GR7K2M9XLQ84 · CAGE 8J4K2 · Tampa, FL",
+      badges: ["SAM Active", "SDVOSB", "HUBZone"],
+      stats: [
+        { label: "Lifetime Awards", value: "$24.6M" },
+        { label: "Active Value", value: "$8.9M" },
+        { label: "Awards", value: "31", sub: "9 active" },
+      ],
+      agenciesLabel: "Where the work comes from",
+      agencies: [
+        { name: "U.S. Army Corps of Engineers", value: "$11.2M", pct: 46 },
+        { name: "Dept. of Veterans Affairs", value: "$6.4M", pct: 26 },
+        { name: "GSA · Public Buildings Service", value: "$4.0M", pct: 16 },
+        { name: "Dept. of the Navy · NAVFAC", value: "$3.0M", pct: 12 },
+      ],
+    },
   },
 };

@@ -1,5 +1,5 @@
 import { type FormEvent, useState } from "react";
-import { SectionShell } from "../components/SectionShell";
+import { SectionShell, leadText } from "../components/SectionShell";
 import { StatusDot } from "../components/StatusDot";
 import { ArrowIcon, ChevronDownIcon } from "../components/icons";
 import { vectorOptions } from "../data/site";
@@ -119,6 +119,12 @@ export function DeploymentProtocol() {
           )}
         </form>
       }
-    />
+    >
+      <p className={leadText}>
+        Each submission is assessed against active coverage vectors and current network capacity —
+        qualification, not a queue. Where the parameters align, an operator is assigned and
+        mobilization begins on the enforcement timeline.
+      </p>
+    </SectionShell>
   );
 }
