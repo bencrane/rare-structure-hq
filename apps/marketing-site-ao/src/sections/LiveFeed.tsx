@@ -55,7 +55,7 @@ export function LiveFeed() {
   return (
     <aside
       aria-label="Live enforcement intercept"
-      className="flex flex-col self-start border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-raised-translucent)]"
+      className="flex w-full max-w-[34rem] flex-col self-start border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-raised-translucent)] md:max-w-none"
     >
       <div className="flex items-center justify-between border-b border-[color:var(--color-border-default)] bg-[color:var(--color-surface-raised)] px-5 py-3">
         <span className="flex items-center gap-2 font-mono text-[0.6875rem] uppercase tracking-[0.16em] text-[color:var(--color-text-default)]">
