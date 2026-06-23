@@ -15,6 +15,7 @@
 
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
+import { compress } from "hono/compress";
 import { cors } from "hono/cors";
 import { requestId } from "hono/request-id";
 
@@ -38,6 +39,12 @@ import { proposalTemplateRoutes } from "./routes/proposals-admin.ts";
 import { settingsRoutes } from "./routes/settings.ts";
 
 const app = new Hono<{ Variables: AuthVariables & { requestId: string } }>();
+
+// Gzip every response >1 KB (Hono default threshold). The /api/v1/federal/ask map payload is
+// large, repetitive JSON (~85-90% smaller gzipped) crossing the public internet to the cockpit;
+// registered outermost so it wraps every downstream route. The prod runtime is Bun (Dockerfile
+// oven/bun) which provides the Web CompressionStream global this relies on.
+app.use("*", compress());
 
 app.use("*", requestId());
 
