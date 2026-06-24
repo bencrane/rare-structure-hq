@@ -235,6 +235,48 @@ export async function edgeOriginatePrefilled(id: string): Promise<EdgeMandatePre
   return (await res.json()) as EdgeMandatePrefilledOriginated;
 }
 
+export interface EdgeMandateEmbedTemplateOriginated {
+  /** The reusable Documenso DIRECT-TEMPLATE token (the EmbedDirectTemplate `token` prop). Mints NO
+   * document — Documenso creates the document when the signer completes the embed. */
+  direct_token: string;
+  documenso_host: string;
+  /** `${documenso_host}/embed/direct/${direct_token}` — the raw Documenso embed URL (informational). */
+  embed_url: string;
+  /** The opportunity's 8-char public handle — the unguessable prospect-link capability + externalId. */
+  external_id: string;
+  /** Same 8-char handle as external_id; carried for the prospect-link path `/p/t/{opportunity_id}/…`. */
+  opportunity_id: string;
+  direct_recipient_id: number | null;
+  recipient_email: string | null;
+  recipient_name: string | null;
+  status: string;
+}
+
+/**
+ * Direct-to-documenso "Confirm & originate" — the EMBED-TEMPLATE lane. The embed-template analog of
+ * `edgeOriginatePrefilled`. Mints NO document — returns the reusable Documenso DIRECT-TEMPLATE token;
+ * the signer self-identifies in an `EmbedDirectTemplate` and Documenso creates the document on
+ * completion (source=TEMPLATE_DIRECT_LINK). Service-token gated. `directRecipientId` is optional.
+ */
+export async function edgeOriginateEmbedTemplate(
+  id: string,
+  directRecipientId?: number | null,
+): Promise<EdgeMandateEmbedTemplateOriginated> {
+  const res = await fetch(
+    `${base()}/api/v1/engagement-mandate-drafts/${encodeURIComponent(id)}/originate-embed-template`,
+    {
+      method: "POST",
+      headers: serviceHeaders(),
+      body: JSON.stringify({ direct_recipient_id: directRecipientId ?? null }),
+    },
+  );
+  if (!res.ok)
+    throw new EdgeError(
+      `edge mandate-draft originate-embed-template failed: ${res.status} ${await res.text()}`,
+    );
+  return (await res.json()) as EdgeMandateEmbedTemplateOriginated;
+}
+
 // ── Documenso template field defaults (the Settings "Documenso Templates" editor) ────────────
 // edge_api reads/writes the LIVE Documenso template's fields: list the editable fields (+ current
 // defaults), and bake per-field default values onto the template via /envelope/field/update-many.

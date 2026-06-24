@@ -17,6 +17,7 @@ import {
   edgeCreateMandateDraft,
   edgeGetStagingDraft,
   edgeListEngagementMappings,
+  edgeOriginateEmbedTemplate,
   edgeOriginatePrefilled,
   edgeUpsertStagingDraft,
 } from "../lib/edge.ts";
@@ -127,6 +128,37 @@ engagementMandateDraftRoutes.post("/:id/originate-prefilled", requireUser, async
         opportunityId: res.opportunity_id,
         signingToken: res.signing_token,
         documensoHost: res.documenso_host,
+        status: res.status,
+      },
+    });
+  } catch (e) {
+    if (e instanceof EdgeError) throw new HTTPException(502, { message: e.message });
+    throw e;
+  }
+});
+
+// "Confirm & originate" — EMBED-TEMPLATE lane (the embed-template analog of originate-prefilled).
+// Mints NO document — returns the reusable Documenso DIRECT-TEMPLATE token. The signer self-identifies
+// in an EmbedDirectTemplate; Documenso creates the document on completion (source=TEMPLATE_DIRECT_LINK).
+// The prospect-link capability is /p/t/{opportunityId}/{directToken}.
+engagementMandateDraftRoutes.post("/:id/originate-embed-template", requireUser, async (c) => {
+  const id = c.req.param("id");
+  const body = (await c.req.json().catch(() => null)) as {
+    directRecipientId?: number | null;
+  } | null;
+  try {
+    const res = await edgeOriginateEmbedTemplate(id, body?.directRecipientId ?? null);
+    return c.json({
+      data: {
+        directToken: res.direct_token,
+        documensoHost: res.documenso_host,
+        embedUrl: res.embed_url,
+        externalId: res.external_id,
+        // The opportunity 8-char handle is the prospect-link capability: /p/t/{opportunityId}/{directToken}.
+        opportunityId: res.opportunity_id,
+        directRecipientId: res.direct_recipient_id,
+        recipientEmail: res.recipient_email,
+        recipientName: res.recipient_name,
         status: res.status,
       },
     });
