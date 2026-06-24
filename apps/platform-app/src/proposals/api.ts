@@ -96,6 +96,46 @@ export async function originatePrefilled(
   return (await res.json()).data as MandatePrefilledOriginated;
 }
 
+export interface MandateEmbedTemplateOriginated {
+  /** The reusable Documenso DIRECT-TEMPLATE token (the EmbedDirectTemplate `token` prop). Mints NO
+   * document — Documenso creates the document when the signer completes the embed. */
+  directToken: string;
+  documensoHost: string;
+  /** `${documensoHost}/embed/direct/${directToken}` — the raw Documenso embed URL (informational). */
+  embedUrl: string;
+  /** The opportunity's 8-char public handle — the unguessable prospect-link capability + externalId. */
+  externalId: string;
+  /** Same 8-char handle as externalId; the prospect-link path is `/p/t/{opportunityId}/{directToken}`. */
+  opportunityId: string;
+  directRecipientId: number | null;
+  recipientEmail: string | null;
+  recipientName: string | null;
+  /** "ready" for this lane — the direct-template token is live and self-serve signable. */
+  status: string;
+}
+
+/** Direct-to-documenso "Confirm & originate" — the EMBED-TEMPLATE lane (the embed-template analog of
+ * `originatePrefilled`). Mints NO document — returns the reusable Documenso DIRECT-TEMPLATE token; the
+ * signer self-identifies in an EmbedDirectTemplate and Documenso creates the document on completion
+ * (source=TEMPLATE_DIRECT_LINK). `directRecipientId` is optional. */
+export async function originateEmbedTemplate(
+  token: string,
+  id: string,
+  directRecipientId?: number | null,
+): Promise<MandateEmbedTemplateOriginated> {
+  const res = await fetch(
+    `${API_BASE}/api/v1/engagement-mandate-drafts/${encodeURIComponent(id)}/originate-embed-template`,
+    {
+      method: "POST",
+      headers: authHeaders(token),
+      body: JSON.stringify({ directRecipientId: directRecipientId ?? null }),
+    },
+  );
+  if (!res.ok)
+    throw new Error(`originate embed template failed: ${res.status} ${await res.text()}`);
+  return (await res.json()).data as MandateEmbedTemplateOriginated;
+}
+
 export interface MandateSignToken {
   signingToken: string | null;
   documensoHost: string;

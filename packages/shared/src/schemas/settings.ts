@@ -23,13 +23,21 @@ export const DEFAULT_RENDER_MODE: RenderMode = "through-docraptor";
  *   - 'prefill-document-from-template'                    : `/api/v2/template/use`, prefilled from
  *                            opportunity_specific_content, then distribute(NONE) → PENDING (no email) →
  *                            `.../{id}/originate-prefilled` (create_document_from_template).
+ *   - 'embed-template'                                    : mint NO document — return the reusable
+ *                            Documenso DIRECT-TEMPLATE token (`.../{id}/originate-embed-template`).
+ *                            The signer self-identifies in an `EmbedDirectTemplate`, and Documenso
+ *                            creates the document on completion (source=TEMPLATE_DIRECT_LINK).
  */
-export type DirectToDocumensoLane = "envelope-distribute" | "prefill-document-from-template";
+export type DirectToDocumensoLane =
+  | "envelope-distribute"
+  | "prefill-document-from-template"
+  | "embed-template";
 
 /** The allowed lane values, runtime-usable for validation (BFF) and the sub-selector (frontend). */
 export const DIRECT_TO_DOCUMENSO_LANES: readonly DirectToDocumensoLane[] = [
   "envelope-distribute",
   "prefill-document-from-template",
+  "embed-template",
 ];
 
 export const DEFAULT_DIRECT_TO_DOCUMENSO_LANE: DirectToDocumensoLane = "envelope-distribute";

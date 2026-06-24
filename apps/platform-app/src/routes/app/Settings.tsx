@@ -111,6 +111,11 @@ const DIRECT_TO_DOCUMENSO_LANE_OPTIONS: {
     label: "Prefill document from template",
     hint: "Prefill from the opportunity content and originate the document — ready to sign, no email sent.",
   },
+  {
+    value: "embed-template",
+    label: "Embed template (self-serve direct link)",
+    hint: "Mint no document — share a reusable direct link; the signer self-identifies and the document is created when they finish signing.",
+  },
 ];
 
 // Document-payment Stripe mode — the test/live toggle. Augments the STRIPE_MODE env so the flow can be

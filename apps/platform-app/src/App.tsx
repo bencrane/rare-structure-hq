@@ -47,6 +47,7 @@ import Proposals from "./routes/app/Proposals";
 import Settings from "./routes/app/Settings";
 import TemplateEditor from "./routes/app/TemplateEditor";
 import TemplatesTable from "./routes/app/TemplatesTable";
+import DirectTemplateSignPage from "./routes/p/DirectTemplateSignPage";
 import DocumentPaymentPage from "./routes/p/DocumentPaymentPage";
 import DocumentSignPage from "./routes/p/DocumentSignPage";
 import PaymentPage from "./routes/p/PaymentPage";
@@ -98,6 +99,12 @@ export function App() {
             capability, the numeric document id a disambiguator behind it. The static `/p/m/` segment
             ranks above the dynamic `/p/:ref`, so there is no collision. */}
         <Route path="/p/m/:opportunityId/:documentId" element={<DocumentSignPage />} />
+        {/* Direct-to-documenso EMBED-TEMPLATE (self-serve direct link) — the embed-template lane,
+            PARALLEL to /p/m/ above. No document exists up front: the path carries the opportunity
+            handle + the reusable Documenso DIRECT-TEMPLATE token (the capability). The signer
+            self-identifies; Documenso creates the document on completion. The static `/p/t/` segment
+            ranks above the dynamic `/p/:ref`, so there is no collision. */}
+        <Route path="/p/t/:opportunityId/:directToken" element={<DirectTemplateSignPage />} />
         {/* Direct-to-documenso ACH payment — same (opportunity, document) pair; reached from the
             signed-confirmation "Continue to payment" CTA. Ranks above the dynamic /p/:ref/pay. */}
         <Route path="/p/m/:opportunityId/:documentId/pay" element={<DocumentPaymentPage />} />
