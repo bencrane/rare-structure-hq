@@ -62,6 +62,10 @@ export default function DirectTemplateSignPage() {
   // lane). The operator can append `?email=…&name=…` when sharing; both are optional.
   const prefillEmail = searchParams.get("email") ?? undefined;
   const prefillName = searchParams.get("name") ?? undefined;
+  // The Documenso instance the embed must point at, pinned on the share link as `?host=` by
+  // MandateReadyBar (the embed host must match the template's Documenso instance). Falls back to the
+  // default host, mirroring DocumentSignPage's `?? DOCUMENSO_DEFAULT_HOST`.
+  const hostParam = searchParams.get("host") ?? undefined;
 
   const [state] = useState<LoadState>(directToken ? "ready" : "notfound");
   const [proceed, setProceed] = useState(false);
@@ -173,7 +177,7 @@ export default function DirectTemplateSignPage() {
       <div className="relative min-h-[78vh] w-full bg-[color:var(--color-surface-base)]">
         <EmbedDirectTemplate
           token={directToken}
-          host={DOCUMENSO_DEFAULT_HOST}
+          host={hostParam ?? DOCUMENSO_DEFAULT_HOST}
           // The opportunity handle rides as externalId so the document Documenso mints on completion
           // inherits it — keeping the offline sign-state derivation pair-able by (externalId, documentId).
           externalId={opportunityId}

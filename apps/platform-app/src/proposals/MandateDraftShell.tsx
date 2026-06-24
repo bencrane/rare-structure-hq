@@ -38,14 +38,13 @@ import { originateEmbedTemplate, originatePrefilled } from "@/proposals/api";
 import { useOriginationMode } from "@/settings/originationMode";
 
 type ConfirmStatus = "idle" | "submitting" | "ready" | "error";
-// The originated share-link target. The prefill lane carries a numeric documentId (→ /p/m/…); the
-// embed-template lane carries the reusable direct-template token (→ /p/t/…). Exactly one is set.
-type SignLink = {
-  opportunityId: string;
-  documentId?: number;
-  /** The reusable Documenso DIRECT-TEMPLATE token — set only for the embed-template lane. */
-  directToken?: string;
-};
+// The originated share-link target — a discriminated union so exactly one lane shape is set (TS forbids
+// mixing documentId with directToken/documensoHost). The prefill lane carries a numeric documentId
+// (→ /p/m/…); the embed-template lane carries the reusable direct-template token + the Documenso host
+// the embed must point at (→ /p/t/…?host=…).
+type SignLink =
+  | { opportunityId: string; documentId: number }
+  | { opportunityId: string; directToken: string; documensoHost: string };
 
 // Persist the originated prospect-link pair per draft so returning to the page re-surfaces the share
 // links (and blocks an accidental re-originate). In-session prototype scope — the same localStorage
@@ -113,7 +112,13 @@ export function MandateDraftShell({
         if (!res.directToken) {
           throw new Error("originate did not return a direct-template token");
         }
-        link = { opportunityId: res.opportunityId, directToken: res.directToken };
+        // Carry the Documenso host so the share link can pin the embed to the right instance — the
+        // embed host must match the template's Documenso instance (mirrors DocumentSignPage).
+        link = {
+          opportunityId: res.opportunityId,
+          directToken: res.directToken,
+          documensoHost: res.documensoHost,
+        };
       } else {
         // Default — PREFILL-DOCUMENT-FROM-TEMPLATE lane: a document is minted now (returns its id).
         const res = await originatePrefilled(token, draftId);
@@ -218,9 +223,10 @@ function DraftEditControls({
 //     The signer self-identifies inside the embed; Documenso creates the document on completion. There
 //     is no separate "your link" — the same link self-serves both prospect and operator.
 function MandateReadyBar({ signLink }: { signLink: SignLink | null }) {
-  // embed-template lane — the reusable direct-template token routes to /p/t/{opp}/{token}.
-  if (signLink?.directToken) {
-    const directUrl = `${window.location.origin}/p/t/${signLink.opportunityId}/${signLink.directToken}`;
+  // embed-template lane — the reusable direct-template token routes to /p/t/{opp}/{token}, with the
+  // Documenso host pinned as `?host=` so the embed loads against the template's own instance.
+  if (signLink && "directToken" in signLink) {
+    const directUrl = `${window.location.origin}/p/t/${signLink.opportunityId}/${signLink.directToken}?host=${encodeURIComponent(signLink.documensoHost)}`;
     return (
       <div className="mt-8 border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-raised)] p-5">
         <div className="mb-3 flex items-center gap-2 text-[color:var(--color-text-accent)]">
