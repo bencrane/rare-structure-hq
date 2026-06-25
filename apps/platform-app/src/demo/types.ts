@@ -193,3 +193,25 @@ export type AggregateBar = {
   total: number;
   count: number;
 };
+
+/**
+ * A dynamic aggregate resolved from a free-typed `/ask` query (breakdown / total /
+ * distribution / ranking). UNLIKE the canned `AggregateSpec` — which fetches a precomputed
+ * warm chart by `groupBy` — this carries render-ready bars plus the cohort readout, so the
+ * window and filters are exactly what the operator asked (query-driven), not a fixed vantage.
+ */
+export type ResolvedAggregate = {
+  /** Human title — the compiler's `query.title`, or a derived "<measure> by <dim>". */
+  title: string;
+  /** The dimension grouped on (a field name, or 'winner' / 'size_band'). */
+  groupBy: string;
+  /** Bar value unit, e.g. "USD obligated" or "award actions". */
+  unitLabel: string;
+  /** Rows in the aggregated cohort — the N behind the bars. */
+  matchedRows: number;
+  /** Distinct groups before the top-N cut. */
+  totalGroups: number;
+  bars: AggregateBar[];
+  /** Honesty contract — constraints the compiler could not express ("not applied"). */
+  notApplied: string[];
+};

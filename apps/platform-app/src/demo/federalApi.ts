@@ -151,11 +151,40 @@ export async function fetchEntityDossiers(
 /** A flattened edge `/ask` GeoJSON row — the serving-table properties + real coordinates. */
 export type AskMarketRow = Record<string, unknown> & { lat?: number; lon?: number };
 
-/** The NL market-query result: matched rows, the full match total, and the interpreted filter. */
+/** One group of an aggregate result — a measure rolled up over the cohort. `sum`/`avg`/
+ * `median`/`p90` per the requested metrics; `lo`/`hi` bound a size_band; `uei` is the entity
+ * key on a 'winner' grouping. */
+export type MarketAggregateGroup = {
+  key: string | number | null;
+  count: number;
+  sum?: number | null;
+  avg?: number | null;
+  median?: number | null;
+  p90?: number | null;
+  lo?: number | null;
+  hi?: number | null;
+  uei?: string | null;
+};
+
+/** The aggregate side of an /ask result — present (instead of `rows`) when the query asked
+ * for a breakdown / total / distribution / ranking over award actions. */
+export type MarketAggregate = {
+  groupBy: string;
+  measure: string;
+  metrics: string[];
+  matchedRows: number;
+  totalGroups: number;
+  groups: MarketAggregateGroup[];
+};
+
+/** The NL market-query result: matched rows OR an aggregate, the full match total, and the
+ * interpreted filter. */
 export type AskMarketResult = {
   rows: AskMarketRow[];
   total: number;
   capped: boolean;
+  /** Present for breakdown/total/distribution/ranking queries — the aggregate in place of rows. */
+  aggregate?: MarketAggregate | null;
   query: {
     title?: string;
     filters: { field: string; op: string; value: unknown }[];
