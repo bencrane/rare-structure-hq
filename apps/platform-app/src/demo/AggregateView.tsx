@@ -230,7 +230,7 @@ function BarRow({
           }}
         />
       </div>
-      <div className="w-28 shrink-0 text-right">
+      <div className="w-36 shrink-0 text-right">
         <div
           className={`font-display font-semibold text-[color:var(--color-text-primary)] tabular-nums ${
             dense ? "text-body-sm" : "text-body-md"
@@ -242,6 +242,14 @@ function BarRow({
           <div className="font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase">
             {bar.count.toLocaleString()}{" "}
             {bar.count === 1 ? countNoun : countNoun === "company" ? "companies" : "actions"}
+          </div>
+        )}
+        {/* Distribution shape per group — only when the aggregate computed it (dynamic /ask). */}
+        {!dense && (bar.median != null || bar.p90 != null) && (
+          <div className="mt-0.5 font-mono text-[color:var(--color-text-subtle)] text-mono-xs tabular-nums">
+            {bar.median != null && <>med {fmtUsd(bar.median)}</>}
+            {bar.median != null && bar.p90 != null && " · "}
+            {bar.p90 != null && <>p90 {fmtUsd(bar.p90)}</>}
           </div>
         )}
       </div>

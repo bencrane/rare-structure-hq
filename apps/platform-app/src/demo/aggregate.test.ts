@@ -47,6 +47,8 @@ describe("resolveAggregate", () => {
       label: "National Aeronautics and Space Administration",
       total: 928_754_597,
       count: 60,
+      median: null,
+      p90: null,
     });
   });
 
@@ -102,7 +104,14 @@ describe("resolveAggregate", () => {
     );
     expect(r.unitLabel).toBe("award actions");
     expect(r.title).toBe("Award actions by set-aside");
-    expect(r.bars[0]).toEqual({ key: "8A", label: "8A", total: 120, count: 120 });
+    expect(r.bars[0]).toEqual({
+      key: "8A",
+      label: "8A",
+      total: 120,
+      count: 120,
+      median: null,
+      p90: null,
+    });
   });
 
   it("prefers the compiler's title and carries notApplied through", () => {
@@ -113,5 +122,18 @@ describe("resolveAggregate", () => {
     );
     expect(r.title).toBe("Top agencies, transportation services, last 365d");
     expect(r.notApplied).toEqual(["over $1M"]);
+  });
+
+  it("carries median + p90 onto bars when the aggregate computed them", () => {
+    const r = resolveAggregate(
+      agg({
+        groupBy: "awarding_agency",
+        groups: [{ key: "DoD", count: 10, sum: 100, median: 25, p90: 80 }],
+      }),
+      undefined,
+      [],
+    );
+    expect(r.bars[0].median).toBe(25);
+    expect(r.bars[0].p90).toBe(80);
   });
 });

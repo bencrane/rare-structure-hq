@@ -156,7 +156,7 @@ export type MapQuery = {
    */
   nl?: string;
   /** Serving table the NL query targets. Defaults to "auto" (sentence-routed). */
-  dataset?: "company" | "winners" | "awards" | "auto";
+  dataset?: "company" | "winners" | "awards" | "active" | "auto";
 };
 
 /** An aggregate command — collapses the market into one chart. */
@@ -186,12 +186,15 @@ export type Command =
       aggregate: AggregateSpec;
     };
 
-/** One bar in an aggregate chart. */
+/** One bar in an aggregate chart. `median`/`p90` ride along when the aggregate requested them
+ * (the distribution shape per group) — surfaced as a secondary line; absent on the canned charts. */
 export type AggregateBar = {
   key: string;
   label: string;
   total: number;
   count: number;
+  median?: number | null;
+  p90?: number | null;
 };
 
 /**

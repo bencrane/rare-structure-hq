@@ -1490,6 +1490,8 @@ export function resolveAggregate(
     label: aggregateLabel(agg.groupBy, g),
     total: hasSum ? (g.sum ?? 0) : g.count,
     count: g.count,
+    median: g.median ?? null,
+    p90: g.p90 ?? null,
   }));
   const dim = AGG_DIM_LABEL[agg.groupBy] ?? agg.groupBy;
   return {
@@ -1508,7 +1510,7 @@ export function resolveAggregate(
  * the query asked for a breakdown/total/distribution/ranking, a result carrying an `aggregate`. */
 export async function runAsk(
   nl: string,
-  dataset: "company" | "winners" | "awards" | "auto" = "auto",
+  dataset: "company" | "winners" | "awards" | "active" | "auto" = "auto",
 ): Promise<QueryResult> {
   const res = await askMap(nl, dataset);
   // Aggregate intent → a chart, not pins. companies stays empty; the view routes on `aggregate`.
@@ -1619,6 +1621,37 @@ export const COMMANDS: Command[] = [
     query: {
       nl: "winners that do IT services and require a security clearance",
       dataset: "winners",
+      minAward: 0,
+    },
+  },
+  // ── Recompete radar (forward-looking active-awards dataset) — incumbents about to rebuy ──
+  {
+    id: "q-recompete-transportation",
+    kind: "map-query",
+    label: "Transportation contracts up for recompete in the next 180 days",
+    query: {
+      nl: "transportation contracts expiring in the next 180 days",
+      dataset: "active",
+      minAward: 0,
+    },
+  },
+  {
+    id: "q-recompete-small-business",
+    kind: "map-query",
+    label: "Small-business contracts expiring in the next 90 days",
+    query: {
+      nl: "small business contracts expiring in the next 90 days",
+      dataset: "active",
+      minAward: 0,
+    },
+  },
+  {
+    id: "q-recompete-by-agency",
+    kind: "map-query",
+    label: "Expiring contract value by agency (next 180 days)",
+    query: {
+      nl: "contracts expiring in the next 180 days broken down by awarding agency",
+      dataset: "active",
       minAward: 0,
     },
   },
