@@ -118,10 +118,15 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
   }, [query]);
 
   const results = result?.companies ?? [];
+  // A free-typed /ask query may resolve to an AGGREGATE (breakdown/total/distribution/top-N)
+  // rather than rows — the response shape drives the view. Only when NOT loading, so the
+  // chart doesn't flash a stale aggregate from the previous query mid-fetch.
+  const dynamicAggregate = !loading ? (result?.aggregate ?? null) : null;
+  const showingAggregate = !!aggregate || !!dynamicAggregate;
 
   return (
     <div
-      data-cockpit-view={aggregate ? "aggregate" : "map"}
+      data-cockpit-view={showingAggregate ? "aggregate" : "map"}
       className="relative h-screen w-full overflow-hidden bg-[color:var(--color-surface-base)]"
     >
       <AnimatePresence mode="wait">
@@ -129,6 +134,12 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
           <AggregateView
             key="aggregate"
             spec={aggregate}
+            onInvokeCommand={() => setCommandOpen(true)}
+          />
+        ) : dynamicAggregate ? (
+          <AggregateView
+            key="dyn-aggregate"
+            resolved={dynamicAggregate}
             onInvokeCommand={() => setCommandOpen(true)}
           />
         ) : query && resultView === "table" ? (

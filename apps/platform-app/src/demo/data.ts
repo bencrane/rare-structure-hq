@@ -18,6 +18,7 @@ import type { FederalEntity } from "@rare-structure-hq/shared";
 import { startDossierPrefetch } from "./dossierCache";
 import {
   type AskMarketRow,
+  type MarketAggregate,
   askMap,
   fetchAgencyChart,
   fetchEntities,
@@ -36,6 +37,7 @@ import type {
   Industry,
   IndustryKey,
   MapQuery,
+  ResolvedAggregate,
 } from "./types";
 
 // The headline firehose number — shown in the terminal header.
@@ -1440,13 +1442,88 @@ function collapseAwardActions(rows: AskMarketRow[]): AskMarketRow[] {
   return out;
 }
 
+// PSC categories the operator queries by name; the leading char is the FPDS PSC "category".
+const PSC_CATEGORY_LABEL: Record<string, string> = { V: "Transportation/Travel/Relocation" };
+
+/** A human label for one aggregate group, by grouping dimension. size_band → a $ range from
+ * its lo/hi bounds; winner → the entity name; psc_category → the named category; else the raw key. */
+function aggregateLabel(groupBy: string, g: MarketAggregate["groups"][number]): string {
+  if (groupBy === "size_band") {
+    const lo = g.lo ?? null;
+    const hi = g.hi ?? null;
+    if (lo == null) return `< ${fmtUsd(hi ?? 0)}`;
+    if (hi == null) return `> ${fmtUsd(lo)}`;
+    return `${fmtUsd(lo)} – ${fmtUsd(hi)}`;
+  }
+  const key = g.key == null ? "—" : String(g.key);
+  if (groupBy === "psc_category" && PSC_CATEGORY_LABEL[key])
+    return `${key} · ${PSC_CATEGORY_LABEL[key]}`;
+  return key;
+}
+
+const AGG_DIM_LABEL: Record<string, string> = {
+  awarding_agency: "agency",
+  awarding_sub_agency: "sub-agency",
+  naics2: "NAICS sector",
+  naics_code: "NAICS",
+  psc_category: "PSC category",
+  psc_code: "PSC",
+  state: "winner state",
+  pop_state: "place-of-performance state",
+  set_aside: "set-aside",
+  winner_type: "winner type",
+  winner: "top winners",
+  size_band: "award size",
+};
+
+/** Map the camelCase aggregate envelope → render-ready ResolvedAggregate. The bar value is the
+ * summed measure when present (the $ vantage), else the group count (a pure histogram).
+ * Exported for unit tests (the label + USD-vs-count mapping is the load-bearing logic). */
+export function resolveAggregate(
+  agg: MarketAggregate,
+  title: string | undefined,
+  notApplied: string[],
+): ResolvedAggregate {
+  const hasSum = agg.groups.some((g) => g.sum != null);
+  const bars: AggregateBar[] = agg.groups.map((g, i) => ({
+    key: `${g.key ?? i}`,
+    label: aggregateLabel(agg.groupBy, g),
+    total: hasSum ? (g.sum ?? 0) : g.count,
+    count: g.count,
+  }));
+  const dim = AGG_DIM_LABEL[agg.groupBy] ?? agg.groupBy;
+  return {
+    title: title?.trim() || `${hasSum ? "Obligated $" : "Award actions"} by ${dim}`,
+    groupBy: agg.groupBy,
+    unitLabel: hasSum ? "USD obligated" : "award actions",
+    matchedRows: agg.matchedRows,
+    totalGroups: agg.totalGroups,
+    bars,
+    notApplied,
+  };
+}
+
 /** Run a free-typed natural-language market query through edge_api `/ask`. Returns the SAME
- * `QueryResult` shape the canned filter path produces (same-name entities collapsed). */
+ * `QueryResult` shape the canned filter path produces (same-name entities collapsed) — or, when
+ * the query asked for a breakdown/total/distribution/ranking, a result carrying an `aggregate`. */
 export async function runAsk(
   nl: string,
   dataset: "company" | "winners" | "awards" | "auto" = "auto",
 ): Promise<QueryResult> {
   const res = await askMap(nl, dataset);
+  // Aggregate intent → a chart, not pins. companies stays empty; the view routes on `aggregate`.
+  if (res.aggregate) {
+    return {
+      companies: [],
+      total: res.aggregate.matchedRows,
+      minLifetimeBound: 0,
+      fullUniverse: res.aggregate.matchedRows,
+      materializedAt: "",
+      profileAsOfDate: null,
+      notApplied: res.unmapped ?? [],
+      aggregate: resolveAggregate(res.aggregate, res.query?.title, res.unmapped ?? []),
+    };
+  }
   const baseRows = res.dataset === "awards" ? collapseAwardActions(res.rows) : res.rows;
   const companies = dedupeByName(baseRows.map(askRowToCompany));
   // Eager dossier prefetch for the ENTIRE result set, in ranked order — fire and
@@ -1598,6 +1675,9 @@ export type QueryResult = {
   /** NL-query constraints the compiler could NOT express ("not applied" banner signal).
    * Absent/empty on the canned filter path — every canned constraint always runs. */
   notApplied?: string[];
+  /** Present when the NL query was a breakdown/total/distribution/ranking — the cockpit
+   * renders AggregateView from this instead of the map/table. Absent for row queries. */
+  aggregate?: ResolvedAggregate;
 };
 
 // The map plots query results; a generous page covers the densest vertical without a

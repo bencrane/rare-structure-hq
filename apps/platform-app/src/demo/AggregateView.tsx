@@ -1,11 +1,16 @@
 /**
- * AggregateView — the chart surface. An aggregate command swaps the map for
- * this: a hand-rolled horizontal bar chart that collapses the company
- * universe into one vantage (federal spend by industry, or by state).
+ * AggregateView — the chart surface. An aggregate swaps the map for a hand-rolled
+ * horizontal bar chart that collapses the universe into one vantage.
  *
- * No chart library — the bars are token-styled HTML, the same hand-rolled
- * discipline as the SVG map. It proves the cockpit can take any vantage on
- * the data, not just the geographic one.
+ * Two drivers, one renderer:
+ *   • `spec`     — a CANNED vantage (federal spend by industry/state/agency); the bars are
+ *                  fetched from the BFF's precomputed warm chart endpoints.
+ *   • `resolved` — a DYNAMIC aggregate from a free-typed `/ask` query (breakdown / total /
+ *                  distribution / top-N over award actions); the bars arrive pre-resolved,
+ *                  scoped to exactly the cohort + window the operator asked for.
+ *
+ * No chart library — the bars are token-styled HTML, the same hand-rolled discipline as the
+ * SVG map.
  */
 
 import { motion, useReducedMotion } from "framer-motion";
@@ -13,31 +18,33 @@ import { useEffect, useState } from "react";
 import { CommandPill } from "./components/TerminalChrome";
 import { aggregateBy } from "./data";
 import { fmtUsd } from "./format";
-import type { AggregateBar, AggregateSpec } from "./types";
+import type { AggregateBar, AggregateSpec, ResolvedAggregate } from "./types";
 
 export function AggregateView({
   spec,
+  resolved,
   onInvokeCommand,
 }: {
-  spec: AggregateSpec;
+  spec?: AggregateSpec;
+  resolved?: ResolvedAggregate;
   onInvokeCommand: () => void;
 }) {
   const reduced = !!useReducedMotion();
 
-  // The bars are LIVE — fetched from the BFF's precomputed chart endpoints. 3-state load
-  // (loading / error / data), re-fetched when the grouping changes. Guarded against an
-  // out-of-order resolve clobbering a newer grouping.
-  const [bars, setBars] = useState<AggregateBar[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Canned vantage → fetch warm chart bars (3-state load). Dynamic → bars already in hand.
+  const [fetched, setFetched] = useState<AggregateBar[]>([]);
+  const [loading, setLoading] = useState(!resolved);
   const [error, setError] = useState<string | null>(null);
 
+  const cannedGroupBy = resolved ? undefined : spec?.groupBy;
   useEffect(() => {
+    if (!cannedGroupBy) return; // dynamic (resolved) or no spec: nothing to fetch
     let cancelled = false;
     setLoading(true);
     setError(null);
-    aggregateBy(spec.groupBy)
+    aggregateBy(cannedGroupBy)
       .then((b) => {
-        if (!cancelled) setBars(b);
+        if (!cancelled) setFetched(b);
       })
       .catch((e) => {
         if (!cancelled) setError(e instanceof Error ? e.message : "chart failed");
@@ -48,11 +55,22 @@ export function AggregateView({
     return () => {
       cancelled = true;
     };
-  }, [spec.groupBy]);
+  }, [cannedGroupBy]);
 
+  const bars = resolved ? resolved.bars : fetched;
+  const title = resolved ? resolved.title : (spec?.title ?? "Aggregate");
+  const isUsd = resolved ? resolved.unitLabel === "USD obligated" : true; // canned charts are USD
   const max = Math.max(...bars.map((b) => b.total), 1);
   const total = bars.reduce((sum, b) => sum + b.total, 0);
   const dense = bars.length > 10;
+
+  // Header headline + meta line differ by driver.
+  const headline = isUsd ? fmtUsd(total) : total.toLocaleString();
+  const metaLine = resolved
+    ? `${resolved.matchedRows.toLocaleString()} award actions · ${bars.length}${
+        resolved.totalGroups > bars.length ? ` of ${resolved.totalGroups}` : ""
+      } groups`
+    : `${spec?.unitLabel ?? ""} · ${bars.length} groups`;
 
   return (
     <motion.div
@@ -64,10 +82,14 @@ export function AggregateView({
     >
       <div className="rs-scanlines pointer-events-none absolute inset-0 opacity-60" />
 
-      {/* No TerminalHeader here: the LIVE / entities-tracked badge belongs to the live
-          map only. Dropping it also lifts the chart heading to the top of the page. */}
       <div className="relative flex min-h-0 flex-1 flex-col px-6 pt-8 pb-2 sm:px-10 sm:pt-10">
-        <ChartHeader spec={spec} total={total} groups={bars.length} reduced={reduced} />
+        <ChartHeader
+          title={title}
+          headline={headline}
+          metaLine={metaLine}
+          notApplied={resolved?.notApplied ?? []}
+          reduced={reduced}
+        />
         <div
           className="flex min-h-0 flex-1 flex-col justify-center overflow-y-auto py-5"
           style={{ gap: dense ? 6 : 12 }}
@@ -82,10 +104,24 @@ export function AggregateView({
               Live federal feed unavailable
             </div>
           )}
+          {!loading && !error && bars.length === 0 && (
+            <div className="text-center font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase tracking-[0.18em]">
+              No matching award actions
+            </div>
+          )}
           {!loading &&
             !error &&
             bars.map((bar, i) => (
-              <BarRow key={bar.key} bar={bar} max={max} index={i} dense={dense} reduced={reduced} />
+              <BarRow
+                key={bar.key}
+                bar={bar}
+                max={max}
+                index={i}
+                dense={dense}
+                isUsd={isUsd}
+                countNoun={resolved ? "action" : "company"}
+                reduced={reduced}
+              />
             ))}
         </div>
       </div>
@@ -96,14 +132,16 @@ export function AggregateView({
 }
 
 function ChartHeader({
-  spec,
-  total,
-  groups,
+  title,
+  headline,
+  metaLine,
+  notApplied,
   reduced,
 }: {
-  spec: AggregateSpec;
-  total: number;
-  groups: number;
+  title: string;
+  headline: string;
+  metaLine: string;
+  notApplied: string[];
   reduced: boolean;
 }) {
   return (
@@ -118,17 +156,32 @@ function ChartHeader({
       </div>
       <div className="mt-2 flex items-end justify-between gap-6">
         <h2 className="font-display font-semibold text-[color:var(--color-text-primary)] text-display-sm uppercase leading-tight tracking-tight">
-          {spec.title}
+          {title}
         </h2>
         <div className="shrink-0 text-right">
           <div className="font-display font-semibold text-[color:var(--color-text-accent)] text-display-sm leading-none tabular-nums">
-            {fmtUsd(total)}
+            {headline}
           </div>
           <div className="mt-1.5 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase">
-            {spec.unitLabel} · {groups} groups
+            {metaLine}
           </div>
         </div>
       </div>
+      {notApplied.length > 0 && (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <span className="font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase tracking-[0.14em]">
+            Not applied:
+          </span>
+          {notApplied.map((u) => (
+            <span
+              key={u}
+              className="border border-[color:var(--color-border-default)] px-1.5 py-0.5 font-mono text-[color:var(--color-text-muted)] text-mono-xs"
+            >
+              {u}
+            </span>
+          ))}
+        </div>
+      )}
     </motion.div>
   );
 }
@@ -138,12 +191,16 @@ function BarRow({
   max,
   index,
   dense,
+  isUsd,
+  countNoun,
   reduced,
 }: {
   bar: AggregateBar;
   max: number;
   index: number;
   dense: boolean;
+  isUsd: boolean;
+  countNoun: "company" | "action";
   reduced: boolean;
 }) {
   const pct = Math.max((bar.total / max) * 100, 1.5);
@@ -179,11 +236,12 @@ function BarRow({
             dense ? "text-body-sm" : "text-body-md"
           }`}
         >
-          {fmtUsd(bar.total)}
+          {isUsd ? fmtUsd(bar.total) : bar.total.toLocaleString()}
         </div>
         {!dense && (
           <div className="font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase">
-            {bar.count} compan{bar.count === 1 ? "y" : "ies"}
+            {bar.count.toLocaleString()}{" "}
+            {bar.count === 1 ? countNoun : countNoun === "company" ? "companies" : "actions"}
           </div>
         )}
       </div>

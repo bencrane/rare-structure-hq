@@ -56,10 +56,39 @@ export interface AskMarketRow {
   lon?: number;
 }
 
+/** One group row of an aggregate result — a measure rolled up over the cohort. `sum`/`avg`/
+ * `median`/`p90` are present per the requested metrics; `lo`/`hi` bound a size_band; `uei`
+ * carries the entity key for a 'winner' grouping. */
+export interface MarketAggregateGroup {
+  key: string | number | null;
+  count: number;
+  sum?: number | null;
+  avg?: number | null;
+  median?: number | null;
+  p90?: number | null;
+  lo?: number | null;
+  hi?: number | null;
+  uei?: string | null;
+}
+
+/** The aggregate side of an /ask result: a cohort-scoped group-by over award actions. Present
+ * (instead of `rows`) when the query asked for a breakdown / total / distribution / ranking. */
+export interface MarketAggregate {
+  groupBy: string;
+  measure: string;
+  metrics: string[];
+  matchedRows: number;
+  totalGroups: number;
+  groups: MarketAggregateGroup[];
+}
+
 export interface AskMarketResult {
   rows: AskMarketRow[];
   total: number;
   capped: boolean;
+  /** Present when the query was a breakdown/total/distribution/ranking — the aggregate
+   * rows in place of the GeoJSON `rows`. Null for a plain row query. */
+  aggregate: MarketAggregate | null;
   /** The interpreted filter the model produced — for the UI to echo "interpreted as…". */
   query: {
     title?: string;
@@ -71,6 +100,15 @@ export interface AskMarketResult {
   unmapped: string[];
   /** The dataset that executed (router-resolved when "auto" was requested). */
   dataset: AskMarketExecutedDataset;
+}
+
+interface RawAggregate {
+  group_by: string;
+  measure: string;
+  metrics: string[];
+  matched_rows: number;
+  total_groups: number;
+  groups: MarketAggregateGroup[];
 }
 
 interface GeoFeature {
@@ -90,7 +128,7 @@ export async function askMarket(dataset: AskMarketDataset, q: string): Promise<A
     throw new EdgeError(`edge_api /ask failed: ${res.status} ${await res.text()}`);
   }
   const env = (await res.json()) as {
-    data?: { features?: GeoFeature[] };
+    data?: { features?: GeoFeature[]; aggregate?: RawAggregate };
     meta?: { returned?: number; total?: number; capped?: boolean; dataset?: string };
     query?: AskMarketResult["query"] & { dataset?: string };
   };
@@ -100,6 +138,19 @@ export async function askMarket(dataset: AskMarketDataset, q: string): Promise<A
     lon: f.geometry?.coordinates?.[0],
     lat: f.geometry?.coordinates?.[1],
   }));
+  // The aggregate envelope (snake_case from catalyst) → camelCase wire shape. Present only
+  // for breakdown/total/distribution/ranking queries; the group rows pass through as-is.
+  const aggRaw = env.data?.aggregate;
+  const aggregate: MarketAggregate | null = aggRaw
+    ? {
+        groupBy: aggRaw.group_by,
+        measure: aggRaw.measure,
+        metrics: aggRaw.metrics ?? [],
+        matchedRows: aggRaw.matched_rows ?? 0,
+        totalGroups: aggRaw.total_groups ?? 0,
+        groups: aggRaw.groups ?? [],
+      }
+    : null;
   const executed = (env.meta?.dataset ?? env.query?.dataset) as
     | AskMarketExecutedDataset
     | undefined;
@@ -108,6 +159,7 @@ export async function askMarket(dataset: AskMarketDataset, q: string): Promise<A
     // meta.total is the EXACT match count (pre-cap); `returned` is the served slice.
     total: env.meta?.total ?? env.meta?.returned ?? rows.length,
     capped: env.meta?.capped ?? false,
+    aggregate,
     query: env.query ?? null,
     unmapped: env.query?.unmapped ?? [],
     dataset: executed ?? (dataset === "auto" ? "company" : dataset),
