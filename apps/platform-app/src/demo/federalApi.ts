@@ -204,7 +204,7 @@ export type AskMarketResult = {
  */
 export function askMap(
   q: string,
-  dataset: "company" | "winners" | "awards" | "auto" = "auto",
+  dataset: "company" | "winners" | "awards" | "active" | "auto" = "auto",
 ): Promise<AskMarketResult> {
   const qs = new URLSearchParams({ q, dataset });
   return getJson<AskMarketResult>(`/api/v1/federal/ask?${qs.toString()}`);

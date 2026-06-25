@@ -133,7 +133,10 @@ federalRoutes.get("/ask", async (c) => {
   // obligation / firmographic phrasing → company).
   const requested = c.req.query("dataset");
   const dataset: AskMarketDataset =
-    requested === "winners" || requested === "company" || requested === "awards"
+    requested === "winners" ||
+    requested === "company" ||
+    requested === "awards" ||
+    requested === "active"
       ? requested
       : "auto";
   try {
