@@ -104,7 +104,7 @@ export default function DocumentSignPage() {
     const tick = async () => {
       // OFFLINE on the server — derived from the raw webhook capture, ZERO Documenso calls. `signed`
       // requires the (opportunity, document) pair to match.
-      const s = await getMandateSignState(opportunityId, documentId).catch(() => null);
+      const s = await getMandateSignState(opportunityId, documentId, asOriginator ? "originator" : undefined).catch(() => null);
       if (s?.signed) {
         setSigned(true);
         if (pollTimer.current) {
