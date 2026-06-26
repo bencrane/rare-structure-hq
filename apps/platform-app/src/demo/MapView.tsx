@@ -14,7 +14,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { useState } from "react";
 import { CommandPill, type ResultView, TerminalHeader } from "./components/TerminalChrome";
-import { industryLabel } from "./data";
+import { resultScopeCell } from "./data";
 import { promoteDossier } from "./dossierCache";
 import { fmtUsd } from "./format";
 import type { Company, MapQuery } from "./types";
@@ -46,6 +46,7 @@ export function MapView({
   error = null,
   total,
   notApplied = [],
+  interpretedTitle = null,
   profileAsOfDate = null,
   selectedId,
   onSelectCompany,
@@ -64,6 +65,8 @@ export function MapView({
   total?: number;
   /** NL-query constraints the compiler could not express — rendered as "not applied". */
   notApplied?: string[];
+  /** The `/ask` compiler's interpretation of an NL query — the banner's "Scope" value. */
+  interpretedTitle?: string | null;
   profileAsOfDate?: string | null;
   selectedId: string | null;
   onSelectCompany: (company: Company) => void;
@@ -258,6 +261,7 @@ export function MapView({
             loading={loading}
             error={error}
             notApplied={notApplied}
+            interpretedTitle={interpretedTitle}
             plottedCount={plottable.length}
             profileAsOfDate={profileAsOfDate}
             reduced={reduced}
@@ -347,6 +351,7 @@ function ResultBanner({
   loading,
   error,
   notApplied,
+  interpretedTitle,
   plottedCount,
   profileAsOfDate,
   reduced,
@@ -358,12 +363,14 @@ function ResultBanner({
   loading: boolean;
   error: string | null;
   notApplied: string[];
+  interpretedTitle: string | null;
   plottedCount: number;
   profileAsOfDate: string | null;
   reduced: boolean;
   onResultView: (v: ResultView) => void;
 }) {
   const awards = results.reduce((sum, c) => sum + c.totalAwarded, 0);
+  const scope = resultScopeCell(query, interpretedTitle);
   // Map mode with nothing plotted (live entities have no coords yet — geo deferred): rather than
   // an overlay list, nudge to the Table view, which owns the full result rendering now.
   const geoPending = plottedCount === 0 && results.length > 0 && !loading && !error;
@@ -376,7 +383,7 @@ function ResultBanner({
       transition={{ duration: 0.35, delay: reduced ? 0 : 0.2 }}
     >
       <div className="flex items-stretch border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-raised)] shadow-lg shadow-black/40">
-        <BannerCell label="Vertical" value={industryLabel(query.industry)} accent />
+        <BannerCell label={scope.label} value={scope.value} accent />
         <BannerCell
           label="Companies"
           value={loading ? "…" : error ? "—" : total.toLocaleString("en-US")}
