@@ -1334,7 +1334,7 @@ function askRowToCompany(r: AskMarketRow): Company {
   // active (recompete) rows: current_value (the contract's current total value). The active
   // dataset carries none of the first three keys, so without current_value its money read $0.
   const totalAwarded = askRowNum(
-    r.total_active_obligations ?? r.entity_obligated_usd ?? r.action_obligated_usd ?? r.current_value,
+    r.entity_active_obligated_usd ?? r.entity_obligated_usd ?? r.action_obligated_usd ?? r.current_value,
   );
   const contractCount = askRowNum(r.award_count);
   const hasFed =
