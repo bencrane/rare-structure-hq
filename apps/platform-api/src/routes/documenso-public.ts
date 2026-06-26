@@ -64,8 +64,10 @@ documensoPublicRoutes.get("/sign/:opportunityId/:documentId/token", async (c) =>
 documensoPublicRoutes.get("/sign/:opportunityId/:documentId/state", async (c) => {
   const opportunityId = c.req.param("opportunityId");
   const documentId = c.req.param("documentId");
+  // `?signer=originator` scopes `signed` to YOUR countersignature; anything else → the prospect's.
+  const signer = c.req.query("signer") === "originator" ? "originator" : undefined;
   try {
-    const state = await edgeGetSignState(opportunityId, documentId);
+    const state = await edgeGetSignState(opportunityId, documentId, signer);
     if (!state) throw new HTTPException(404, { message: "document not found" });
     return c.json({
       data: {

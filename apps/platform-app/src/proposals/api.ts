@@ -180,9 +180,13 @@ export interface MandateSignState {
 export async function getMandateSignState(
   opportunityId: string,
   documentId: string,
+  signer?: "originator",
 ): Promise<MandateSignState | null> {
+  // `signer=originator` scopes `signed` to the operator's own countersignature (the "Copy your link"
+  // poll) so it advances only once YOU sign; default = prospect. Mirrors getMandateSignToken.
+  const q = signer === "originator" ? "?signer=originator" : "";
   const res = await fetch(
-    `${API_BASE}/api/v1/documenso/sign/${encodeURIComponent(opportunityId)}/${encodeURIComponent(documentId)}/state`,
+    `${API_BASE}/api/v1/documenso/sign/${encodeURIComponent(opportunityId)}/${encodeURIComponent(documentId)}/state${q}`,
   );
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`mandate sign state failed: ${res.status}`);

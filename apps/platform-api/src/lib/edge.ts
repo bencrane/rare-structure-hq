@@ -396,9 +396,13 @@ export interface EdgeSignState {
 export async function edgeGetSignState(
   opportunityId: string,
   documentId: string,
+  signer?: "client" | "originator",
 ): Promise<EdgeSignState | null> {
+  // `signer=originator` scopes `signed` to the originator's countersignature (the "Copy your link"
+  // path); default = client (the prospect). Mirrors edgeGetSignToken.
+  const q = signer === "originator" ? "?signer=originator" : "";
   const res = await fetch(
-    `${base()}/api/v1/documenso/sign-state/${encodeURIComponent(opportunityId)}/${encodeURIComponent(documentId)}`,
+    `${base()}/api/v1/documenso/sign-state/${encodeURIComponent(opportunityId)}/${encodeURIComponent(documentId)}${q}`,
   );
   if (res.status === 404) return null;
   if (!res.ok) throw new EdgeError(`edge sign-state failed: ${res.status}`);
