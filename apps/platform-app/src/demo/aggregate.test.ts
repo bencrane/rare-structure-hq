@@ -14,7 +14,7 @@ import type { MarketAggregate } from "./federalApi";
 function agg(partial: Partial<MarketAggregate>): MarketAggregate {
   return {
     groupBy: "awarding_agency",
-    measure: "award_amount",
+    measure: "action_obligated_usd",
     metrics: ["count", "sum"],
     matchedRows: 0,
     totalGroups: 0,
