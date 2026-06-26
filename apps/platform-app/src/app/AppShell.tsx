@@ -17,6 +17,7 @@ import {
   Crosshair,
   FileCog,
   FileSignature,
+  Headphones,
   LayoutDashboard,
   LogOut,
   type LucideIcon,
@@ -49,6 +50,7 @@ const OPERATOR_NAV: NavItem[] = [
   { to: "/app/dossier", label: "Dossier", icon: ScanSearch },
   { to: "/app/proposals", label: "Proposals", icon: FileSignature },
   { to: "/app/calendar", label: "Calendar", icon: CalendarDays },
+  { to: "/app/insights", label: "Insights", icon: Headphones },
   { to: "/app/settings", label: "Settings", icon: FileCog },
   { to: "/app/account", label: "Account", icon: CircleUser },
 ];
