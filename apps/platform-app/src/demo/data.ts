@@ -1474,6 +1474,9 @@ const AGG_DIM_LABEL: Record<string, string> = {
   winner_type: "winner type",
   winner: "top winners",
   size_band: "award size",
+  vertical: "vertical",
+  work_type: "work type",
+  equipment_intensity: "equipment intensity",
 };
 
 /** Map the camelCase aggregate envelope → render-ready ResolvedAggregate. The bar value is the
@@ -1551,47 +1554,56 @@ export async function runAsk(
 // ───────────────────────────────────────────────────────────────────
 
 export const COMMANDS: Command[] = [
+  // ── Industry VERTICAL axis (live GTM label on the awards serving table — the (NAICS,PSC)
+  // pair classified into a 24-name vertical, distinct from the raw naics2 sector). NL routed
+  // through /ask so the sentence compiles onto the BITMAP `vertical` column. ──
   {
-    id: "q-heavy-construction",
+    id: "q-vertical-aerospace",
     kind: "map-query",
-    label: "Companies in heavy construction that won over $10M",
-    query: { industry: "heavy_construction", minAward: 10_000_000 },
+    label: "Aerospace & Defense contracts over $5M",
+    query: { nl: "aerospace contracts over $5M", dataset: "awards", minAward: 0 },
   },
   {
-    id: "q-energy-infrastructure",
+    id: "q-vertical-it-software",
     kind: "map-query",
-    label: "Companies in energy infrastructure that won over $25M",
-    query: { industry: "energy_infrastructure", minAward: 25_000_000 },
+    label: "Information Technology & Software awards over $10M",
+    query: { nl: "information technology contracts over $10M", dataset: "awards", minAward: 0 },
   },
   {
-    id: "q-industrial-manufacturing",
+    id: "q-vertical-healthcare",
     kind: "map-query",
-    label: "Companies in industrial manufacturing that won over $5M",
-    query: { industry: "industrial_manufacturing", minAward: 5_000_000 },
+    label: "Healthcare & Life Sciences awards over $5M",
+    query: { nl: "healthcare contracts over $5M", dataset: "awards", minAward: 0 },
   },
   {
-    id: "q-defense-aerospace",
+    id: "q-vertical-breakdown",
     kind: "map-query",
-    label: "Companies in defense & aerospace that won over $50M",
-    query: { industry: "defense_aerospace", minAward: 50_000_000 },
+    label: "Break down award obligations by vertical",
+    query: {
+      nl: "total award obligations broken down by vertical",
+      dataset: "awards",
+      minAward: 0,
+    },
   },
   {
-    id: "q-it-services",
+    id: "q-vertical-top",
     kind: "map-query",
-    label: "Companies in IT & professional services that won over $10M",
-    query: { industry: "it_services", minAward: 10_000_000 },
+    label: "Top verticals by obligations",
+    query: { nl: "top verticals by total obligations", dataset: "awards", minAward: 0 },
+  },
+  // ── work_type (make-vs-resell) + equipment_intensity (financing signal) — the mobilization-
+  // capital axes that AND with the vertical. ──
+  {
+    id: "q-worktype-manufacturers",
+    kind: "map-query",
+    label: "Manufacturers that won over $5M",
+    query: { nl: "manufacturers that won over $5M", dataset: "awards", minAward: 0 },
   },
   {
-    id: "q-healthcare",
+    id: "q-equip-heavy",
     kind: "map-query",
-    label: "Companies in healthcare & life sciences that won over $5M",
-    query: { industry: "healthcare_life_sciences", minAward: 5_000_000 },
-  },
-  {
-    id: "q-transportation",
-    kind: "map-query",
-    label: "Companies in transportation & logistics that won over $10M",
-    query: { industry: "transportation_logistics", minAward: 10_000_000 },
+    label: "Equipment-heavy awards over $1M",
+    query: { nl: "equipment-heavy awards over $1M", dataset: "awards", minAward: 0 },
   },
   // ── PHASE-3 capability queries ("does X and requires A,B,C" — winners dataset) ──
   {

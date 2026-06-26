@@ -120,7 +120,7 @@ export function CommandPalette({
                 value={queryText}
                 onChange={(e) => setQueryText(e.target.value)}
                 onKeyDown={onInputKeyDown}
-                placeholder="Query the market — e.g. companies in heavy construction"
+                placeholder="Query the market — e.g. aerospace & defense contracts over $5M"
                 className="flex-1 bg-transparent font-mono text-[color:var(--color-text-primary)] text-body-sm outline-none placeholder:text-[color:var(--color-text-subtle)]"
                 aria-label="Command query"
               />
