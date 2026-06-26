@@ -1334,12 +1334,12 @@ function askRowToCompany(r: AskMarketRow): Company {
   // active (recompete) rows: current_value (the contract's current total value). The active
   // dataset carries none of the first three keys, so without current_value its money read $0.
   const totalAwarded = askRowNum(
-    r.total_active_obligations ?? r.total_obligation ?? r.action_obligated_usd ?? r.current_value,
+    r.total_active_obligations ?? r.entity_obligated_usd ?? r.action_obligated_usd ?? r.current_value,
   );
   const contractCount = askRowNum(r.award_count);
   const hasFed =
     r.has_federal_awards === true ||
-    askRowNum(r.total_obligation) > 0 ||
+    askRowNum(r.entity_obligated_usd) > 0 ||
     askRowNum(r.action_obligated_usd) > 0 ||
     totalAwarded > 0;
   // Project the row's real lat/lon onto the us-geo 1000x590 viewBox so the dot layer can plot it.
@@ -1426,7 +1426,7 @@ function dedupeByName(list: Company[]): Company[] {
 /**
  * Collapse award-ACTION rows (the `awards` dataset is 1 row per contract action) to ONE row
  * per winner: the demo reads COMPANIES that won qualifying awards, not per-action duplicates.
- * `total_obligation` becomes the winner's QUALIFYING-window sum, `award_count` the number of
+ * `action_obligated_usd` becomes the winner's QUALIFYING-window sum, `award_count` the number of
  * qualifying actions, `action_date` the most recent one. The representative row is the largest
  * single action; coordinates borrow from any geocoded action so the dot still plots when the
  * top action's address didn't resolve.
