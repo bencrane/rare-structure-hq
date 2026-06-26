@@ -111,11 +111,12 @@ export const DOCUMENSO_EMBED_CSS = `
      No .embed-- hook exists on the link, so target it by href. */
   a[href*="documenso.com"] { display: none !important; }
 
-  /* Hide the left "Sign Document" sidebar widget entirely. Verified against Documenso V2 source: the
+  /* The left "Sign Document" sidebar widget. Verified against Documenso V2 source: the
      recipient signs by clicking the field(s) ON the document, which opens a capture dialog mounted
      OUTSIDE this container; Complete lives in the top nav + mobile widget; signature/name state is
-     shared. Requires name/lockName on the embed (set) so typed signatures/name fields aren't blank. */
-  .embed--DocumentWidgetContainer { display: none !important; }
+     shared. Requires name/lockName on the embed (set) so typed signatures/name fields aren't blank.
+     TEMPORARILY SHOWN for operator evaluation (2026-06-26) — to hide again, uncomment the rule below. */
+  /* .embed--DocumentWidgetContainer { display: none !important; } */
 `;
 
 export const DOCUMENSO_DEFAULT_HOST = "https://app.documenso.com";
