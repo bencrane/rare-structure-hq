@@ -1334,13 +1334,13 @@ function askRowToCompany(r: AskMarketRow): Company {
   // active (recompete) rows: current_value (the contract's current total value). The active
   // dataset carries none of the first three keys, so without current_value its money read $0.
   const totalAwarded = askRowNum(
-    r.total_active_obligations ?? r.total_obligation ?? r.award_amount ?? r.current_value,
+    r.total_active_obligations ?? r.total_obligation ?? r.action_obligated_usd ?? r.current_value,
   );
   const contractCount = askRowNum(r.award_count);
   const hasFed =
     r.has_federal_awards === true ||
     askRowNum(r.total_obligation) > 0 ||
-    askRowNum(r.award_amount) > 0 ||
+    askRowNum(r.action_obligated_usd) > 0 ||
     totalAwarded > 0;
   // Project the row's real lat/lon onto the us-geo 1000x590 viewBox so the dot layer can plot it.
   // askRowNum coerces missing to 0, so guard the (0,0) null-island explicitly; projectLonLat
@@ -1442,9 +1442,9 @@ function collapseAwardActions(rows: AskMarketRow[]): AskMarketRow[] {
   const out: AskMarketRow[] = [];
   for (const group of byWinner.values()) {
     const rep = group.reduce((a, b) =>
-      askRowNum(b.award_amount) > askRowNum(a.award_amount) ? b : a,
+      askRowNum(b.action_obligated_usd) > askRowNum(a.action_obligated_usd) ? b : a,
     );
-    const sum = group.reduce((acc, r) => acc + askRowNum(r.award_amount), 0);
+    const sum = group.reduce((acc, r) => acc + askRowNum(r.action_obligated_usd), 0);
     const latest = group.reduce<string | undefined>((acc, r) => {
       const d = askRowStr(r.action_date);
       return d && (!acc || d > acc) ? d : acc;
@@ -1452,7 +1452,7 @@ function collapseAwardActions(rows: AskMarketRow[]): AskMarketRow[] {
     const geocoded = group.find((r) => r.lat != null && r.lon != null);
     out.push({
       ...rep,
-      total_obligation: sum,
+      action_obligated_usd: sum,
       award_count: group.length,
       action_date: latest,
       lat: rep.lat ?? geocoded?.lat,
