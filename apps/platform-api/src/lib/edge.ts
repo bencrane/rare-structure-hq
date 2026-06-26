@@ -527,6 +527,29 @@ export async function edgePutOperatorSettings(
   return (await res.json()) as EdgeOperatorSettings;
 }
 
+// ── Close.com call-sync (the Insights "now dialing" read) ────────────────────
+// edge_api derives the operator's current outbound Close call OFFLINE from the raw Close webhook
+// events + the lead→domain crosswalk — NOT operator-scoped (one operator; all logins are "me").
+// The Insights tab polls the BFF, which brokers this. Service-token gated.
+
+export interface EdgeActiveCall {
+  active: boolean;
+  close_lead_id?: string | null;
+  close_contact_id?: string | null;
+  status?: string | null;
+  remote_phone?: string | null;
+  started_at?: string | null;
+  normalized_domain?: string | null;
+  company_name?: string | null;
+  resolved_contact_id?: string | null;
+}
+
+export async function edgeGetActiveCall(): Promise<EdgeActiveCall> {
+  const res = await fetch(`${base()}/api/v1/close/active-call`, { headers: serviceHeaders(false) });
+  if (!res.ok) throw new EdgeError(`edge active-call read failed: ${res.status}`);
+  return (await res.json()) as EdgeActiveCall;
+}
+
 // ── Mandate staging (the per-opportunity prep page) ──────────────────────────
 // The operator stages a mandate off-screen: pick the engagement (archetype → template) and enter
 // the per-deal values (term, fee). edge_api persists one editable draft per opportunity; Confirm &

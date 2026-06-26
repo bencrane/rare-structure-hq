@@ -33,6 +33,7 @@ import { engagementMandateDraftRoutes } from "./routes/engagement-mandate-drafts
 import { engagementMappingRoutes } from "./routes/engagement-mappings-admin.ts";
 import { engagementTemplateRoutes } from "./routes/engagement-templates-admin.ts";
 import { federalRoutes } from "./routes/federal.ts";
+import { insightsAdminRoutes } from "./routes/insights-admin.ts";
 import { opportunityAdminRoutes } from "./routes/opportunities-admin.ts";
 import { proposalTemplateEditorRoutes } from "./routes/proposal-templates-admin.ts";
 import { proposalTemplateRoutes } from "./routes/proposals-admin.ts";
@@ -131,6 +132,9 @@ app.route("/api/v1/engagement-mandate-drafts", engagementMandateDraftRoutes);
 app.route("/api/v1/engagement-templates", engagementTemplateRoutes);
 app.route("/api/v1/documenso-template-fields", documensoTemplateFieldRoutes);
 app.route("/api/v1/company-profiles", companyProfileRoutes);
+// Insights — the operator's live call cockpit. Brokers the offline Close "now dialing" read
+// from edge_api; the Insights tab polls /active-call and surfaces the briefing on domain change.
+app.route("/api/v1/insights", insightsAdminRoutes);
 // PUBLIC federal map/chart surface — warm in-memory snapshot, no auth (the cockpit /map
 // route is public). Read-only projections of precomputed public federal-spend data.
 app.route("/api/v1/federal", federalRoutes);
