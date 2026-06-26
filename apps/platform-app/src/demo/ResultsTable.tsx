@@ -10,7 +10,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { useMemo, useState } from "react";
 import { CommandPill, type ResultView, TerminalHeader } from "./components/TerminalChrome";
-import { industryLabel } from "./data";
+import { industryLabel, resultScopeCell } from "./data";
 import { promoteDossier } from "./dossierCache";
 import { fmtUsd } from "./format";
 import type { Company, MapQuery } from "./types";
@@ -29,6 +29,7 @@ export function ResultsTable({
   error = null,
   total,
   notApplied = [],
+  interpretedTitle = null,
   selectedId,
   onSelectCompany,
   onInvokeCommand,
@@ -44,6 +45,8 @@ export function ResultsTable({
   total?: number;
   /** NL-query constraints the compiler could not express — rendered as "not applied". */
   notApplied?: string[];
+  /** The `/ask` compiler's interpretation of an NL query — the banner's "Scope" value. */
+  interpretedTitle?: string | null;
   selectedId: string | null;
   onSelectCompany: (company: Company) => void;
   onInvokeCommand: () => void;
@@ -59,6 +62,7 @@ export function ResultsTable({
   });
 
   const awards = results.reduce((sum, c) => sum + c.totalAwarded, 0);
+  const scope = resultScopeCell(query, interpretedTitle);
 
   const sorted = useMemo(() => {
     const list = [...results];
@@ -103,7 +107,7 @@ export function ResultsTable({
         {/* Summary banner — the Map/Table toggle + Clear live in the terminal header (top-right). */}
         <div className="flex w-full max-w-[1180px] items-center gap-2 pb-3">
           <div className="flex items-stretch border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-raised)] shadow-lg shadow-black/40">
-            <BannerCell label="Vertical" value={industryLabel(query?.industry)} accent />
+            <BannerCell label={scope.label} value={scope.value} accent />
             <BannerCell
               label="Companies"
               value={

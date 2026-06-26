@@ -70,6 +70,24 @@ export function industryLabel(key: IndustryKey | undefined): string {
   return key ? (INDUSTRY_BY_KEY[key]?.label ?? key) : "All industries";
 }
 
+/**
+ * The result banner's primary cell — the axis the query actually ran on.
+ *
+ * The legacy canned-industry path resolves to the cockpit "Vertical" + its label. The NL `/ask`
+ * path resolves to "Scope" + the compiler's interpreted title (falling back to the raw sentence
+ * until it resolves), because an NL sentence can filter on ANY axis — vertical, recompete, PSC,
+ * capability — not just a vertical. Labeling those "Vertical" (and rendering the
+ * `industryLabel(undefined)` → "All industries" placeholder) contradicts the filter that ran.
+ */
+export function resultScopeCell(
+  query: MapQuery | null | undefined,
+  interpretedTitle?: string | null,
+): { label: string; value: string } {
+  const nl = query?.nl?.trim();
+  if (nl) return { label: "Scope", value: interpretedTitle?.trim() || nl };
+  return { label: "Vertical", value: industryLabel(query?.industry) };
+}
+
 // ───────────────────────────────────────────────────────────────────
 // Company seeds — the compact authored data. `buildCompany` expands each
 // into a full `Company`, deriving award-recency and assembling the
@@ -1546,6 +1564,9 @@ export async function runAsk(
     // The honesty contract: constraints the compiler could not express. The banner
     // renders them as "not applied" — the demo never implies a filter it didn't run.
     notApplied: res.unmapped ?? [],
+    // The compiler's read of the sentence — the banner's "Scope" value (vs. the misleading
+    // "Vertical: All industries" that industryLabel(undefined) yields on the NL path).
+    interpretedTitle: res.query?.title?.trim() || undefined,
   };
 }
 
@@ -1723,6 +1744,9 @@ export type QueryResult = {
   /** Present when the NL query was a breakdown/total/distribution/ranking — the cockpit
    * renders AggregateView from this instead of the map/table. Absent for row queries. */
   aggregate?: ResolvedAggregate;
+  /** The `/ask` compiler's human-readable interpretation of an NL row query — the banner's
+   * "Scope" value. Present only on the NL path; absent on the canned filter path. */
+  interpretedTitle?: string;
 };
 
 // The map plots query results; a generous page covers the densest vertical without a
