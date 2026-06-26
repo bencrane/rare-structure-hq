@@ -1330,11 +1330,17 @@ function askRowToCompany(r: AskMarketRow): Company {
     askRowStr(r.winner_uei) ??
     "Unknown";
   const id = askRowStr(r.uei) ?? askRowStr(r.winner_uei) ?? name;
-  // company rows: lifetime active obligations; winners/awards rows: window/action dollars;
-  // active (recompete) rows: current_value (the contract's current total value). The active
-  // dataset carries none of the first three keys, so without current_value its money read $0.
+  // Money read, one key per dataset (the /ask wire passes serving column names verbatim):
+  //   company  → entity_active_obligated_usd   (entity active obligations)
+  //   winners  → entity_obligated_usd          (entity window obligation rollup)
+  //   awards   → action_obligated_usd          (single prime action's obligation)
+  //   active   → contract_current_value_usd    (the contract's current total value / ceiling)
+  // The active dataset carries none of the first three keys, so its value lives in the last slot.
   const totalAwarded = askRowNum(
-    r.entity_active_obligated_usd ?? r.entity_obligated_usd ?? r.action_obligated_usd ?? r.current_value,
+    r.entity_active_obligated_usd ??
+      r.entity_obligated_usd ??
+      r.action_obligated_usd ??
+      r.contract_current_value_usd,
   );
   const contractCount = askRowNum(r.award_count);
   const hasFed =
