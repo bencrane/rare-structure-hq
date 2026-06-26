@@ -72,7 +72,7 @@ export default function Insights() {
           <div className="text-center">
             <p className="text-lg font-medium text-zinc-700">No active call</p>
             <p className="mt-1 text-sm text-zinc-400">
-              The briefing appears here the moment the Power Dialer connects.
+              The briefing appears here the moment you dial a prospect.
             </p>
           </div>
         </div>
