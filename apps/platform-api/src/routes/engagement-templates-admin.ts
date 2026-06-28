@@ -76,16 +76,20 @@ engagementTemplateRoutes.get("/", requireUser, async (c) => {
 // Render the selected template to a clean PDF (plain by default) → presigned URL. No Documenso.
 engagementTemplateRoutes.post("/render", requireUser, async (c) => {
   const body = (await c.req.json().catch(() => null)) as {
+    brand?: string;
     path?: string;
     archetype?: string;
     version?: string;
     style?: string;
   } | null;
-  if (!body?.path || !body.archetype || !body.version) {
-    throw new HTTPException(400, { message: "path, archetype, and version are required" });
+  if (!body?.brand || !body.path || !body.archetype || !body.version) {
+    throw new HTTPException(400, {
+      message: "brand, path, archetype, and version are required",
+    });
   }
   try {
     const result = await edgeRenderEngagementTemplate({
+      brand: body.brand,
       path: body.path,
       archetype: body.archetype,
       version: body.version,

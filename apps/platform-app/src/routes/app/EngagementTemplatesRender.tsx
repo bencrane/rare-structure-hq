@@ -30,6 +30,7 @@ export default function EngagementTemplatesRender() {
   const [error, setError] = useState<string | null>(null);
   const [templates, setTemplates] = useState<EngagementTemplate[]>([]);
 
+  const [brand, setBrand] = useState("");
   const [path, setPath] = useState("");
   const [archetype, setArchetype] = useState("");
   const [version, setVersion] = useState("");
@@ -60,32 +61,51 @@ export default function EngagementTemplatesRender() {
     };
   }, [token]);
 
-  // derived, cascading option lists
-  const paths = useMemo(() => [...new Set(templates.map((t) => t.path))].sort(), [templates]);
+  // derived, cascading option lists — brand is the cascade root. Two brands can share a
+  // (path, archetype, version) tuple, so brand must scope every downstream list AND the `selected`
+  // resolve; otherwise a colliding tuple is reachable only for the first brand in find-order, and
+  // the render call resolves against the wrong content root (edge_api keys on brand/path/…).
+  const brands = useMemo(() => [...new Set(templates.map((t) => t.brand))].sort(), [templates]);
+  const paths = useMemo(
+    () => [...new Set(templates.filter((t) => t.brand === brand).map((t) => t.path))].sort(),
+    [templates, brand],
+  );
   const archetypes = useMemo(
-    () => [...new Set(templates.filter((t) => t.path === path).map((t) => t.archetype))].sort(),
-    [templates, path],
+    () =>
+      [
+        ...new Set(
+          templates.filter((t) => t.brand === brand && t.path === path).map((t) => t.archetype),
+        ),
+      ].sort(),
+    [templates, brand, path],
   );
   const versions = useMemo(
     () =>
       [
         ...new Set(
           templates
-            .filter((t) => t.path === path && t.archetype === archetype)
+            .filter((t) => t.brand === brand && t.path === path && t.archetype === archetype)
             .map((t) => t.version),
         ),
       ].sort(),
-    [templates, path, archetype],
+    [templates, brand, path, archetype],
   );
   const selected = useMemo(
     () =>
       templates.find(
-        (t) => t.path === path && t.archetype === archetype && t.version === version,
+        (t) =>
+          t.brand === brand &&
+          t.path === path &&
+          t.archetype === archetype &&
+          t.version === version,
       ) ?? null,
-    [templates, path, archetype, version],
+    [templates, brand, path, archetype, version],
   );
 
   // keep each selection valid as its parent changes (and seed the first option)
+  useEffect(() => {
+    if (brands.length && !brands.includes(brand)) setBrand(brands[0]);
+  }, [brands, brand]);
   useEffect(() => {
     if (paths.length && !paths.includes(path)) setPath(paths[0]);
   }, [paths, path]);
@@ -108,6 +128,7 @@ export default function EngagementTemplatesRender() {
     setPdfUrl(null);
     setRenderError(null);
     renderEngagementTemplate(token, {
+      brand,
       path,
       archetype,
       version,
@@ -119,7 +140,7 @@ export default function EngagementTemplatesRender() {
       })
       .catch((e) => setRenderError(e instanceof Error ? e.message : "Render failed"))
       .finally(() => setRendering(false));
-  }, [token, selected, path, archetype, version, style]);
+  }, [token, selected, brand, path, archetype, version, style]);
 
   return (
     <CockpitPage
@@ -161,6 +182,19 @@ export default function EngagementTemplatesRender() {
           <Section label="Template">
             <Panel>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <Field label="Brand">
+                  <select
+                    className={selectCls}
+                    value={brand}
+                    onChange={(e) => setBrand(e.target.value)}
+                  >
+                    {brands.map((b) => (
+                      <option key={b} value={b}>
+                        {b}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
                 <Field label="Path">
                   <select
                     className={selectCls}

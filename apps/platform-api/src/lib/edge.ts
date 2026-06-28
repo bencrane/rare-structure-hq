@@ -864,6 +864,7 @@ export interface EdgeEngagementTemplateRender {
 
 /** Render the selected template to a clean PDF (plain by default). Service-token gated. No Documenso. */
 export async function edgeRenderEngagementTemplate(input: {
+  brand: string;
   path: string;
   archetype: string;
   version: string;
