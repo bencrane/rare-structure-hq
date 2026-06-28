@@ -35,6 +35,7 @@ import { EmbedDirectTemplate } from "@documenso/embed-react";
 import { useEffect, useRef, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 
+import { DirectTemplateSignedConfirmation } from "@/proposals/DirectTemplateSignedConfirmation";
 import { DocumentFrame } from "@/proposals/DocumentFrame";
 import { DocumentSummaryScaffold } from "@/proposals/DocumentSummaryScaffold";
 import { getMandateSignState } from "@/proposals/api";
@@ -125,32 +126,10 @@ export default function DirectTemplateSignPage() {
   let body: React.ReactNode;
   if (signed) {
     // Server-confirmed signed. Deliberately a simpler post-sign confirmation than DocumentSignPage's
-    // payment flow — this lane's bar is "a clean confirmation loads on signing."
-    body = (
-      <div className="flex min-h-[78vh] flex-col items-center justify-center px-6 text-center">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full border border-[color:var(--color-accent-primary)] bg-[color:var(--color-accent-soft)] text-[color:var(--color-text-accent)]">
-          <svg
-            aria-hidden="true"
-            viewBox="0 0 24 24"
-            className="h-5 w-5"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M20 6 9 17l-5-5" />
-          </svg>
-        </div>
-        <h2 className="mt-6 font-mono text-[1.25rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.2em]">
-          Agreement signed
-        </h2>
-        <p className="mt-4 max-w-[480px] font-mono text-[0.875rem] text-[color:var(--color-text-muted)] leading-relaxed tracking-[0.06em]">
-          Your engagement agreement has been signed and recorded. A fully executed copy will be sent
-          to your email.
-        </p>
-      </div>
-    );
+    // payment flow — this lane's bar is "a clean confirmation loads on signing." The confirmation-body
+    // geometry lives in `proposals/` (DirectTemplateSignedConfirmation) so this route stays
+    // content/state-only and free of the no-route-geometry lint.
+    body = <DirectTemplateSignedConfirmation />;
   } else if (state === "notfound" || !directToken) {
     body = <BodyNote>This mandate link is invalid or has expired.</BodyNote>;
   } else if (!proceed) {
