@@ -148,7 +148,7 @@ export function App() {
             }
           />
           <Route
-            path="pipeline"
+            path="applications"
             element={
               <RequireOperator>
                 <Applications />
@@ -156,17 +156,17 @@ export function App() {
             }
           />
           <Route
-            path="applications"
+            path="research"
             element={
               <RequireOperator>
                 <Research />
               </RequireOperator>
             }
           />
-          {/* Per-opportunity mandate staging — opened from an Applications row. Pick the engagement
+          {/* Per-opportunity mandate staging — opened from a Research row. Pick the engagement
               (archetype → template) and stage the per-deal values off-screen, ahead of the call. */}
           <Route
-            path="applications/:opportunityId"
+            path="research/:opportunityId"
             element={
               <RequireOperator>
                 <ApplicationStaging />
@@ -181,10 +181,10 @@ export function App() {
               </RequireOperator>
             }
           />
-          {/* Booking-meeting profile — opened from a Pipeline row. Shows the cal booking
-              now; enrichment populates the full dossier later. */}
+          {/* Application detail — opened from an Applications row by the opportunity's 8-char handle.
+              Resolves handle → opportunity → source booking for the company profile + originate. */}
           <Route
-            path="bookings/:bookingId"
+            path="applications/:opportunityId"
             element={
               <RequireOperator>
                 <Application />

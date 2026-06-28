@@ -56,10 +56,9 @@ export default function Applications() {
     refresh();
   }, [refresh]);
 
-  // Open this opportunity's company dossier via its source booking (keyed by booking id).
-  const openRow = (o: OpportunitySummary) => {
-    if (o.sourceBookingId) navigate(`/app/bookings/${encodeURIComponent(o.sourceBookingId)}`);
-  };
+  // Open this opportunity's Application detail, addressed by its 8-char handle.
+  const openRow = (o: OpportunitySummary) =>
+    navigate(`/app/applications/${encodeURIComponent(o.handle)}`);
 
   return (
     <CockpitPage

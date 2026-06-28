@@ -1,6 +1,6 @@
 /**
  * Research — the operator cockpit tab. Lists OPPORTUNITIES; opening one routes to its
- * per-opportunity mandate STAGING page (`/app/applications/:opportunityId`), where the operator picks
+ * per-opportunity mandate STAGING page (`/app/research/:opportunityId`), where the operator picks
  * the engagement (archetype → template) and enters the per-deal values off-screen, ahead of the call.
  *
  * Reuses the Pipeline tab's read-only data source (`listOpportunities`); it does NOT touch the
@@ -59,7 +59,7 @@ export default function Research() {
 
   // Open this opportunity's mandate staging page (pick engagement + enter the per-deal values).
   const openRow = (o: OpportunitySummary) =>
-    navigate(`/app/applications/${encodeURIComponent(o.opportunityId)}`);
+    navigate(`/app/research/${encodeURIComponent(o.opportunityId)}`);
 
   return (
     <CockpitPage

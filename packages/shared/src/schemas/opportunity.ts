@@ -12,6 +12,9 @@ import { isoTimestampSchema } from "./common";
  */
 export const opportunitySummarySchema = z.object({
   opportunityId: z.string(),
+  /** 8-char public handle (`LEFT(opportunityId, 8)`) — the short URL key for the Application
+   *  detail route. The full `opportunityId` (UUID) stays the server-side key for staging/originate. */
+  handle: z.string(),
   status: z.string(),
   createdAt: isoTimestampSchema,
   companyName: z.string().nullable(),

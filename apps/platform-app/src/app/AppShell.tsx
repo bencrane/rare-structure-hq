@@ -45,8 +45,8 @@ type NavItem = { to: string; label: string; icon: LucideIcon };
 const OPERATOR_NAV: NavItem[] = [
   { to: "/app/map", label: "Map", icon: Radar },
   { to: "/app/overview", label: "Overview", icon: LayoutDashboard },
-  { to: "/app/pipeline", label: "Applications", icon: Workflow },
-  { to: "/app/applications", label: "Research", icon: ClipboardList },
+  { to: "/app/applications", label: "Applications", icon: Workflow },
+  { to: "/app/research", label: "Research", icon: ClipboardList },
   { to: "/app/dossier", label: "Dossier", icon: ScanSearch },
   { to: "/app/proposals", label: "Proposals", icon: FileSignature },
   { to: "/app/calendar", label: "Calendar", icon: CalendarDays },

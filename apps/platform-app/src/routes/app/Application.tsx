@@ -1,6 +1,7 @@
 /**
- * Application — the company profile page. Opened from an Applications row; shows the
- * cal.com-derived booking we have today (prospect, company, meeting window, status). The
+ * Application — the company profile page, addressed by the opportunity's 8-char handle and
+ * resolved to its source booking. Opened from an Applications row; shows the cal.com-derived
+ * booking we have today (prospect, company, meeting window, status). The
  * richer dossier intelligence + originate land once enrichment is wired — this page is the
  * surface that will populate. Authors no geometry — composes CockpitPage.
  */
@@ -27,33 +28,38 @@ function statusTone(status: string): "info" | "warn" | "success" {
 }
 
 export default function Application() {
-  const { bookingId = "" } = useParams();
+  // The URL carries the opportunity's 8-char public handle (OpportunitySummary.handle);
+  // opportunityId is the center node. Resolve handle → opportunity → source booking.
+  const { opportunityId: handle = "" } = useParams();
   const { session } = useAuth();
   const token = session?.access_token ?? "";
 
   const [booking, setBooking] = useState<BookingDetail | null>(null);
   const [phase, setPhase] = useState<"loading" | "ready" | "notfound" | "error">("loading");
   const [error, setError] = useState<string | null>(null);
-  // The opportunity for this booking (1:1 via source_booking_id) — its id is stamped on the page.
-  const [oppId, setOppId] = useState<string | null>(null);
+  // The full opportunity UUID for the resolved handle — the key the originate/staging flow needs.
+  const [opportunityUuid, setOpportunityUuid] = useState<string | null>(null);
 
   const refresh = useCallback(() => {
-    if (!token || !bookingId) return;
+    if (!token || !handle) return;
     setPhase("loading");
     setError(null);
-    setOppId(null);
+    setOpportunityUuid(null);
     listOpportunities(token)
-      .then((opps) =>
-        setOppId(opps.find((o) => o.sourceBookingId === bookingId)?.opportunityId ?? null),
-      )
-      .catch(() => setOppId(null));
-    getBooking(token, bookingId)
-      .then((data) => {
-        setBooking(data);
-        setPhase("ready");
+      .then((opps) => {
+        const opp = opps.find((o) => o.handle === handle);
+        if (!opp?.sourceBookingId) {
+          setPhase("notfound");
+          return;
+        }
+        setOpportunityUuid(opp.opportunityId);
+        return getBooking(token, opp.sourceBookingId).then((data) => {
+          setBooking(data);
+          setPhase("ready");
+        });
       })
       .catch((e) => {
-        const msg = e instanceof Error ? e.message : "Failed to load booking";
+        const msg = e instanceof Error ? e.message : "Failed to load opportunity";
         if (/\b404\b/.test(msg)) {
           setPhase("notfound");
         } else {
@@ -61,14 +67,14 @@ export default function Application() {
           setPhase("error");
         }
       });
-  }, [token, bookingId]);
+  }, [token, handle]);
 
   useEffect(() => {
     refresh();
   }, [refresh]);
 
   const back = (
-    <Link to="/app/pipeline" className={backCls}>
+    <Link to="/app/applications" className={backCls}>
       <ChevronLeft className="size-3.5" />
       Applications
     </Link>
@@ -141,13 +147,13 @@ export default function Application() {
   return (
     <CockpitPage
       title="Application"
-      description={oppId ? oppId.slice(0, 8) : "—"}
+      description={handle || "—"}
       width="wide"
       actions={<Badge tone={statusTone(b.status)}>{b.status}</Badge>}
     >
       {back}
-      {/* key=bookingId remounts the board so it re-seeds when navigating between bookings. */}
-      <CompanyProfileBoard key={bookingId} token={token} seed={seed} opportunityId={oppId} />
+      {/* key=handle remounts the board so it re-seeds when navigating between opportunities. */}
+      <CompanyProfileBoard key={handle} token={token} seed={seed} opportunityId={opportunityUuid} />
     </CockpitPage>
   );
 }
