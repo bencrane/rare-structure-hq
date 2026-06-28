@@ -68,9 +68,9 @@ export default function EngagementTemplateToDocumenso() {
       path,
       archetype,
       version,
-      style: style || selected.defaultStyle,
+      style: style || selected.default_style,
       values: needsValues
-        ? { amount: amountNum, introductions: introNum, termDays: daysNum }
+        ? { amount: amountNum, introductions: introNum, term_days: daysNum }
         : undefined,
     })
       .then((r) => setResult(r))
@@ -167,14 +167,14 @@ export default function EngagementTemplateToDocumenso() {
                   Created
                 </span>
                 <Text size="mono-xs" mono color="subtle" className="block break-all">
-                  {result.documensoTemplateId}
-                  {result.documensoNumericId != null ? ` · #${result.documensoNumericId}` : ""}
+                  {result.documenso_template_id}
+                  {result.documenso_numeric_id != null ? ` · #${result.documenso_numeric_id}` : ""}
                 </Text>
               </output>
             )}
-            {result?.pdfUrl && (
+            {result?.pdf_url && (
               <a
-                href={result.pdfUrl}
+                href={result.pdf_url}
                 target="_blank"
                 rel="noreferrer noopener"
                 className="inline-flex items-center gap-1.5 font-mono text-[color:var(--color-text-accent)] text-mono-xs uppercase tracking-[0.14em]"
