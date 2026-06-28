@@ -1,20 +1,20 @@
 /**
- * Research — the operator cockpit tab. Lists OPPORTUNITIES; opening one routes to its Application
+ * Research — the operator cockpit tab. Lists DEALS; opening one routes to its Application
  * company-profile page (`/app/applications/:handle`).
  *
- * Reuses the Pipeline tab's read-only data source (`listOpportunities`); it does NOT touch the
+ * Reuses the Pipeline tab's read-only data source (`listDeals`); it does NOT touch the
  * Pipeline table — this is an independent table on its own surface.
  */
 import { ChevronRight, ClipboardList } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import type { OpportunitySummary } from "@rare-structure-hq/shared";
+import type { DealSummary } from "@rare-structure-hq/shared";
 import { Badge, Text } from "@rare-structure-hq/ui";
 
 import { CockpitPage, EmptyState, Panel, Section } from "@/app/cockpit";
 import { useAuth } from "@/lib/auth";
-import { listOpportunities } from "@/pipeline/api";
+import { listDeals } from "@/pipeline/api";
 
 const DATE = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" });
 
@@ -24,7 +24,7 @@ function formatDate(iso: string | null): string {
   return Number.isNaN(d.getTime()) ? "—" : DATE.format(d);
 }
 
-function fullName(o: OpportunitySummary): string {
+function fullName(o: DealSummary): string {
   const n = [o.firstName, o.lastName].filter(Boolean).join(" ").trim();
   return n || "—";
 }
@@ -40,37 +40,37 @@ export default function Research() {
   const { session } = useAuth();
   const token = session?.access_token ?? "";
 
-  const [list, setList] = useState<OpportunitySummary[] | null>(null);
+  const [list, setList] = useState<DealSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(() => {
     if (!token) return;
     setError(null);
     setList(null);
-    listOpportunities(token)
+    listDeals(token)
       .then(setList)
-      .catch((e) => setError(e instanceof Error ? e.message : "Failed to load opportunities"));
+      .catch((e) => setError(e instanceof Error ? e.message : "Failed to load deals"));
   }, [token]);
 
   useEffect(() => {
     refresh();
   }, [refresh]);
 
-  // Open this opportunity's Application company-profile page (by its 8-char handle).
-  const openRow = (o: OpportunitySummary) =>
+  // Open this deal's Application company-profile page (by its 8-char handle).
+  const openRow = (o: DealSummary) =>
     navigate(`/app/applications/${encodeURIComponent(o.handle)}`);
 
   return (
     <CockpitPage
       title="Research"
-      description="Opportunities advancing toward an engagement. Open one to review its company profile."
+      description="Deals advancing toward an engagement. Open one to review its company profile."
     >
-      <Section label="Opportunities">
+      <Section label="Deals">
         <Panel padded={false}>
           {error ? (
             <div className="flex flex-col items-center gap-3 px-5 py-16 text-center">
               <Text size="body-sm" color="default">
-                Couldn’t load opportunities
+                Couldn’t load deals
               </Text>
               <Text size="mono-xs" mono color="subtle" className="max-w-md break-words">
                 {error}
@@ -86,21 +86,21 @@ export default function Research() {
           ) : list.length === 0 ? (
             <EmptyState
               icon={ClipboardList}
-              title="No opportunities yet"
-              description="Opportunities you advance in the pipeline land here."
+              title="No deals yet"
+              description="Deals you advance in the pipeline land here."
             />
           ) : (
             <>
               <div className="border-[color:var(--color-border-subtle)] border-b px-4 py-2.5">
                 <Text size="mono-xs" mono color="subtle">
-                  {list.length} opportunit{list.length === 1 ? "y" : "ies"}
+                  {list.length} deal{list.length === 1 ? "" : "s"}
                 </Text>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse text-left">
                   <thead>
                     <tr className="border-[color:var(--color-border-subtle)] border-b">
-                      <Th>Opportunity ID</Th>
+                      <Th>Deal ID</Th>
                       <Th>Prospect</Th>
                       <Th>Company</Th>
                       <Th>Title</Th>
@@ -112,7 +112,7 @@ export default function Research() {
                   <tbody className="divide-y divide-[color:var(--color-border-subtle)]">
                     {list.map((o) => (
                       <tr
-                        key={o.opportunityId}
+                        key={o.dealId}
                         onClick={() => openRow(o)}
                         onKeyDown={(e) => {
                           if (e.key === "Enter" || e.key === " ") {
@@ -130,9 +130,9 @@ export default function Research() {
                             mono
                             color="subtle"
                             className="block max-w-[18ch] truncate"
-                            title={o.opportunityId}
+                            title={o.dealId}
                           >
-                            {o.opportunityId}
+                            {o.dealId}
                           </Text>
                         </td>
                         <td className="px-4 py-3">

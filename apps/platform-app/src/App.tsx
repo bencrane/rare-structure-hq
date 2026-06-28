@@ -173,10 +173,10 @@ export function App() {
               </RequireOperator>
             }
           />
-          {/* Application detail — opened from an Applications row by the opportunity's 8-char handle.
-              Resolves handle → opportunity → source booking for the company profile + originate. */}
+          {/* Application detail — opened from an Applications row by the deal's 8-char handle.
+              Resolves handle → deal → last booking for the company profile + originate. */}
           <Route
-            path="applications/:opportunityId"
+            path="applications/:handle"
             element={
               <RequireOperator>
                 <Application />
