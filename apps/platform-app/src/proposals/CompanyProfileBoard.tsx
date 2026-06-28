@@ -1,5 +1,5 @@
 /**
- * ProspectDossierBoard — the "verify the prospect, then originate" surface (the Dossier tab).
+ * CompanyProfileBoard — the "verify the prospect, then originate" surface (the Company Profile board).
  *
  * A research-driven alternative to the bare intake form: the operator lands in what reads as the
  * prospect's profile (firmographics + focus areas the operator pulled via Parallel/Exa out of band),
@@ -72,7 +72,7 @@ export type DossierSeed = {
   verified?: Partial<Record<SectionKey, boolean>>;
 };
 
-export function ProspectDossierBoard({
+export function CompanyProfileBoard({
   token,
   seed,
   opportunityId,
@@ -218,7 +218,7 @@ export function ProspectDossierBoard({
             <div className="mb-6 flex items-start justify-between gap-4">
               <div className="flex items-center gap-3 font-mono text-[0.5625rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.2em]">
                 <Building2 className="size-3.5" />
-                Prospect Dossier
+                Company Profile
               </div>
               <span className="font-mono text-[0.5rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.16em]">
                 {verifiedCount}/6 verified

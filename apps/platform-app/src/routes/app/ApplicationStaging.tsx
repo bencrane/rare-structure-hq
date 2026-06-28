@@ -115,7 +115,7 @@ export default function ApplicationStaging() {
     >
       <button type="button" onClick={() => navigate("/app/applications")} className={backCls}>
         <ArrowLeft className="size-3.5" />
-        Applications
+        Research
       </button>
 
       {/* Opportunity-id stamp — the staging context the originate flow carries through (the draft is
