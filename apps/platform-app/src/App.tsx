@@ -31,10 +31,10 @@ import { AuthProvider, useAuth } from "./lib/auth";
 // import MapDemo from "./routes/MapDemo";
 import SignIn from "./routes/SignIn";
 import Account from "./routes/app/Account";
+import Application from "./routes/app/Application";
 import ApplicationStaging from "./routes/app/ApplicationStaging";
 import Applications from "./routes/app/Applications";
 import Calendar from "./routes/app/Calendar";
-import CompanyProfile from "./routes/app/CompanyProfile";
 import DocumensoTemplatesEditor from "./routes/app/DocumensoTemplatesEditor";
 import Dossier from "./routes/app/Dossier";
 import EngagementTemplatesRender from "./routes/app/EngagementTemplatesRender";
@@ -42,9 +42,9 @@ import Insights from "./routes/app/Insights";
 import Mandate from "./routes/app/Mandate";
 import MapTab from "./routes/app/MapTab";
 import Overview from "./routes/app/Overview";
-import Pipeline from "./routes/app/Pipeline";
 import Preferences from "./routes/app/Preferences";
 import Proposals from "./routes/app/Proposals";
+import Research from "./routes/app/Research";
 import Settings from "./routes/app/Settings";
 import SettingsDocumenso from "./routes/app/SettingsDocumenso";
 import SettingsEngagement from "./routes/app/SettingsEngagement";
@@ -151,7 +151,7 @@ export function App() {
             path="pipeline"
             element={
               <RequireOperator>
-                <Pipeline />
+                <Applications />
               </RequireOperator>
             }
           />
@@ -159,7 +159,7 @@ export function App() {
             path="applications"
             element={
               <RequireOperator>
-                <Applications />
+                <Research />
               </RequireOperator>
             }
           />
@@ -187,7 +187,7 @@ export function App() {
             path="bookings/:bookingId"
             element={
               <RequireOperator>
-                <CompanyProfile />
+                <Application />
               </RequireOperator>
             }
           />

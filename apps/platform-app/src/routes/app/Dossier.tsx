@@ -7,7 +7,7 @@
  */
 import { CockpitPage } from "@/app/cockpit";
 import { useAuth } from "@/lib/auth";
-import { ProspectDossierBoard } from "@/proposals/ProspectDossierBoard";
+import { CompanyProfileBoard } from "@/proposals/CompanyProfileBoard";
 
 export default function Dossier() {
   const { session } = useAuth();
@@ -19,7 +19,7 @@ export default function Dossier() {
       description="Pull the prospect, verify the intelligence on the call, then originate — the agreement materializes on save."
       width="wide"
     >
-      <ProspectDossierBoard token={token} />
+      <CompanyProfileBoard token={token} />
     </CockpitPage>
   );
 }

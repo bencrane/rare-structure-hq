@@ -1,11 +1,12 @@
 /**
- * Pipeline — the operator cockpit tab. Lists pipeline OPPORTUNITIES advancing from
- * catalyst signal toward an engagement. Each row is an opportunity (materialized on a
- * booking, the first-class object that gets associated with a Deal); opening one routes
- * to that company's dossier via its source booking. Loads the live list from the BFF
- * (/api/v1/opportunities → edge_api → business.opportunities). Composes CockpitPage.
+ * Research — the operator cockpit tab. Lists OPPORTUNITIES; opening one routes to its
+ * per-opportunity mandate STAGING page (`/app/applications/:opportunityId`), where the operator picks
+ * the engagement (archetype → template) and enters the per-deal values off-screen, ahead of the call.
+ *
+ * Reuses the Pipeline tab's read-only data source (`listOpportunities`); it does NOT touch the
+ * Pipeline table — this is an independent table on its own surface.
  */
-import { ChevronRight, Workflow } from "lucide-react";
+import { ChevronRight, ClipboardList } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -35,7 +36,7 @@ function statusTone(status: string): "info" | "warn" | "success" {
   return "success";
 }
 
-export default function Pipeline() {
+export default function Research() {
   const navigate = useNavigate();
   const { session } = useAuth();
   const token = session?.access_token ?? "";
@@ -56,13 +57,15 @@ export default function Pipeline() {
     refresh();
   }, [refresh]);
 
-  // Open this opportunity's company dossier via its source booking (keyed by booking id).
-  const openRow = (o: OpportunitySummary) => {
-    if (o.sourceBookingId) navigate(`/app/bookings/${encodeURIComponent(o.sourceBookingId)}`);
-  };
+  // Open this opportunity's mandate staging page (pick engagement + enter the per-deal values).
+  const openRow = (o: OpportunitySummary) =>
+    navigate(`/app/applications/${encodeURIComponent(o.opportunityId)}`);
 
   return (
-    <CockpitPage title="Pipeline" description="Deals advancing from catalyst signal to engagement.">
+    <CockpitPage
+      title="Research"
+      description="Select an opportunity to stage its engagement mandate — pick the engagement and lock the price + term."
+    >
       <Section label="Opportunities">
         <Panel padded={false}>
           {error ? (
@@ -83,9 +86,9 @@ export default function Pipeline() {
             </div>
           ) : list.length === 0 ? (
             <EmptyState
-              icon={Workflow}
-              title="No opportunities in pipeline"
-              description="Bookings you advance materialize here as opportunities moving toward an engagement."
+              icon={ClipboardList}
+              title="No opportunities yet"
+              description="Opportunities you advance in the pipeline land here to be staged into an engagement mandate."
             />
           ) : (
             <>
@@ -119,7 +122,7 @@ export default function Pipeline() {
                           }
                         }}
                         tabIndex={0}
-                        aria-label={`Open dossier for ${o.companyName ?? fullName(o)}`}
+                        aria-label={`Stage mandate for ${o.companyName ?? fullName(o)}`}
                         className="group cursor-pointer outline-none transition-colors hover:bg-[color:var(--color-surface-raised)] focus-visible:bg-[color:var(--color-surface-raised)]"
                       >
                         <td className="px-4 py-3">

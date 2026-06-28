@@ -1,5 +1,5 @@
 /**
- * CompanyProfile — the company dossier page. Opened from a Pipeline row; shows the
+ * Application — the company profile page. Opened from an Applications row; shows the
  * cal.com-derived booking we have today (prospect, company, meeting window, status). The
  * richer dossier intelligence + originate land once enrichment is wired — this page is the
  * surface that will populate. Authors no geometry — composes CockpitPage.
@@ -14,7 +14,7 @@ import { Badge, Text } from "@rare-structure-hq/ui";
 import { CockpitPage, Panel } from "@/app/cockpit";
 import { useAuth } from "@/lib/auth";
 import { getBooking, listOpportunities } from "@/pipeline/api";
-import { type DossierSeed, ProspectDossierBoard } from "@/proposals/ProspectDossierBoard";
+import { CompanyProfileBoard, type DossierSeed } from "@/proposals/CompanyProfileBoard";
 
 function fullName(b: BookingDetail): string {
   const n = [b.firstName, b.lastName].filter(Boolean).join(" ").trim();
@@ -26,7 +26,7 @@ function statusTone(status: string): "info" | "warn" | "success" {
   return status === "booked" ? "info" : "success";
 }
 
-export default function CompanyProfile() {
+export default function Application() {
   const { bookingId = "" } = useParams();
   const { session } = useAuth();
   const token = session?.access_token ?? "";
@@ -70,7 +70,7 @@ export default function CompanyProfile() {
   const back = (
     <Link to="/app/pipeline" className={backCls}>
       <ChevronLeft className="size-3.5" />
-      Pipeline
+      Applications
     </Link>
   );
 
@@ -105,7 +105,7 @@ export default function CompanyProfile() {
   const name = fullName(b);
   // The operator's LATEST saved snapshot wins when present (a superset — incl. Main Contact + the
   // Verified map). Otherwise: identity/contact from the cal booking, firmographics + tags from the
-  // company dossier (`profile`) resolved by domain. This page IS the Dossier.
+  // company dossier (`profile`) resolved by domain. This page IS the Application.
   const p = b.profile;
   const s = b.latestSnapshot;
   const seed: DossierSeed = s
@@ -140,14 +140,14 @@ export default function CompanyProfile() {
       };
   return (
     <CockpitPage
-      title="Dossier"
+      title="Application"
       description={oppId ? oppId.slice(0, 8) : "—"}
       width="wide"
       actions={<Badge tone={statusTone(b.status)}>{b.status}</Badge>}
     >
       {back}
       {/* key=bookingId remounts the board so it re-seeds when navigating between bookings. */}
-      <ProspectDossierBoard key={bookingId} token={token} seed={seed} opportunityId={oppId} />
+      <CompanyProfileBoard key={bookingId} token={token} seed={seed} opportunityId={oppId} />
     </CockpitPage>
   );
 }
