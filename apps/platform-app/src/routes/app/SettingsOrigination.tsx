@@ -110,7 +110,7 @@ function OriginationModeCard() {
           </Text>
         </Stack>
 
-        <Inline gap="3">
+        <Inline gap="3" align="stretch">
           {ORIGINATION_OPTIONS.map((opt) => {
             const active = selected === opt.value;
             return (
@@ -158,7 +158,7 @@ function OriginationModeCard() {
                 Documenso.
               </Text>
             </Stack>
-            <Inline gap="3">
+            <Inline gap="3" align="stretch">
               {DIRECT_TO_DOCUMENSO_LANE_OPTIONS.map((opt) => {
                 const active = selectedLane === opt.value;
                 return (
@@ -207,7 +207,7 @@ function OriginationModeCard() {
               a real charge; Live for real engagements.
             </Text>
           </Stack>
-          <Inline gap="3">
+          <Inline gap="3" align="stretch">
             {STRIPE_MODE_OPTIONS.map((opt) => {
               const active = selectedStripeMode === opt.value;
               return (
