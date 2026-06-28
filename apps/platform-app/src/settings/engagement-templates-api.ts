@@ -45,7 +45,7 @@ export async function listEngagementTemplates(token: string): Promise<Engagement
 /** Render the selected template to a clean PDF (plain by default) → presigned URL. No Documenso. */
 export async function renderEngagementTemplate(
   token: string,
-  input: { path: string; archetype: string; version: string; style?: string },
+  input: { brand: string; path: string; archetype: string; version: string; style?: string },
 ): Promise<EngagementTemplateRender> {
   const res = await fetch(`${API_BASE}${BASE}/render`, {
     method: "POST",
