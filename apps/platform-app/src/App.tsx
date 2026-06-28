@@ -36,6 +36,7 @@ import ApplicationStaging from "./routes/app/ApplicationStaging";
 import Applications from "./routes/app/Applications";
 import Calendar from "./routes/app/Calendar";
 import DocumensoTemplatesEditor from "./routes/app/DocumensoTemplatesEditor";
+import DocumensoTemplatesManage from "./routes/app/DocumensoTemplatesManage";
 import Dossier from "./routes/app/Dossier";
 import EngagementTemplatesRender from "./routes/app/EngagementTemplatesRender";
 import Insights from "./routes/app/Insights";
@@ -255,6 +256,14 @@ export function App() {
             element={
               <RequireOperator>
                 <SettingsDocumenso />
+              </RequireOperator>
+            }
+          />
+          <Route
+            path="settings/documenso/templates"
+            element={
+              <RequireOperator>
+                <DocumensoTemplatesManage />
               </RequireOperator>
             }
           />

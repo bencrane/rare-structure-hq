@@ -5,6 +5,8 @@
  * the read/write to core-x edge_api, which reads/writes the LIVE Documenso template's fields. The
  * field set + current defaults come straight from Documenso, so the editor never drifts.
  */
+import type { DocumensoTemplateSummary } from "@rare-structure-hq/shared";
+
 const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "";
 
 function authHeaders(token: string): HeadersInit {
@@ -12,6 +14,14 @@ function authHeaders(token: string): HeadersInit {
 }
 
 const BASE = "/api/v1/documenso-template-fields";
+const TEMPLATES = "/api/v1/documenso-templates";
+
+/** Every documenso_template for the operator's org (active + archived) — the Manage Templates table. */
+export async function listDocumensoTemplates(token: string): Promise<DocumensoTemplateSummary[]> {
+  const res = await fetch(`${API_BASE}${TEMPLATES}`, { headers: authHeaders(token) });
+  if (!res.ok) throw new Error(`documenso templates failed: ${res.status} ${await res.text()}`);
+  return (await res.json()).data as DocumensoTemplateSummary[];
+}
 
 /** An editable Documenso template field + its current baked-in default. */
 export interface DocumensoTemplateField {

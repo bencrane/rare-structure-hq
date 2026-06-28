@@ -29,6 +29,7 @@ import { bookingAdminRoutes } from "./routes/bookings-admin.ts";
 import { companyProfileRoutes } from "./routes/company-profiles-admin.ts";
 import { documensoPublicRoutes } from "./routes/documenso-public.ts";
 import { documensoTemplateFieldRoutes } from "./routes/documenso-template-fields-admin.ts";
+import { documensoTemplateRoutes } from "./routes/documenso-templates-admin.ts";
 import { engagementMandateDraftRoutes } from "./routes/engagement-mandate-drafts-admin.ts";
 import { engagementMappingRoutes } from "./routes/engagement-mappings-admin.ts";
 import { engagementTemplateRoutes } from "./routes/engagement-templates-admin.ts";
@@ -121,6 +122,9 @@ app.route("/api/v1/award-profile", awardProfileRoutes);
 app.route("/api/v1/bookings", bookingAdminRoutes);
 app.route("/api/v1/opportunities", opportunityAdminRoutes);
 app.route("/api/v1/engagement-mappings", engagementMappingRoutes);
+// Manage Templates table — every documenso_template for the org (active + archived). Registered
+// before the `/api/v1/documenso` mount; the segment differs so there is no prefix collision.
+app.route("/api/v1/documenso-templates", documensoTemplateRoutes);
 // Direct-to-documenso public prospect surface (sign token/state + ACH payment). Mirrors edge_api's
 // own `documenso/*` namespace. Also mounted under the legacy `engagement-mandate-drafts` prefix below
 // as a transitional alias so an in-flight SPA bundle on the old path keeps working across the
