@@ -245,6 +245,7 @@ export interface EdgeDocumensoTemplateSummary {
   name: string;
   slug: string | null;
   status: string;
+  is_default: boolean;
   archetype_name: string | null;
 }
 
@@ -258,6 +259,19 @@ export async function edgeListDocumensoTemplates(
   });
   if (!res.ok) throw new EdgeError(`edge documenso-templates list failed: ${res.status}`);
   return (await res.json()) as EdgeDocumensoTemplateSummary[];
+}
+
+// Mark one template as the org's Confirm & Originate default (active-only, enforced edge-side).
+export async function edgeSetDefaultDocumensoTemplate(
+  orgDomain: string,
+  documensoTemplateId: string,
+): Promise<void> {
+  const res = await fetch(`${base()}/api/v1/documenso-templates/default`, {
+    method: "POST",
+    headers: serviceHeaders(),
+    body: JSON.stringify({ org_domain: orgDomain, documenso_template_id: documensoTemplateId }),
+  });
+  if (!res.ok) throw new EdgeError(`edge documenso-templates set-default failed: ${res.status}`);
 }
 
 export interface EdgeMandateDraftCreated {

@@ -23,6 +23,19 @@ export async function listDocumensoTemplates(token: string): Promise<DocumensoTe
   return (await res.json()).data as DocumensoTemplateSummary[];
 }
 
+/** Mark a template as the org's Confirm & Originate default (active templates only). */
+export async function setDefaultDocumensoTemplate(
+  token: string,
+  documensoTemplateId: string,
+): Promise<void> {
+  const res = await fetch(`${API_BASE}${TEMPLATES}/default`, {
+    method: "POST",
+    headers: authHeaders(token),
+    body: JSON.stringify({ documensoTemplateId }),
+  });
+  if (!res.ok) throw new Error(`set default failed: ${res.status} ${await res.text()}`);
+}
+
 /** An editable Documenso template field + its current baked-in default. */
 export interface DocumensoTemplateField {
   /** The Documenso field id — the key a default is written against. */
