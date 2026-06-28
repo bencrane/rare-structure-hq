@@ -1,10 +1,12 @@
 /**
- * Opportunities — the operator Pipeline list surface.
+ * Applications / Research list surface — now sourced from DEALS (`business.deals`).
  *
- *   GET /api/v1/opportunities   (operator)  pipeline opportunities, most recent first
+ *   GET /api/v1/opportunities   (operator)  pipeline list, most recent first
  *
- * Opportunities are materialized on a booking in core-x (`business.opportunities`);
- * this BFF only brokers the operator-scoped read across the auth boundary to edge_api.
+ * The route name is retained for SPA + signing-surface compatibility, but the data is brokered
+ * from the core-x deals surface (edge_api `GET /api/v1/deals`) and mapped onto the existing
+ * OpportunitySummary shape (deal_id->opportunityId, deal_handle->handle,
+ * last_booking_id->sourceBookingId), so the SPA and the prospect-facing routes are unchanged.
  */
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
@@ -12,7 +14,7 @@ import { HTTPException } from "hono/http-exception";
 import type { OpportunitySummary } from "@rare-structure-hq/shared";
 
 import { type AuthVariables, requireUser } from "../auth.ts";
-import { EdgeError, edgeListOpportunities } from "../lib/edge.ts";
+import { EdgeError, edgeListDeals } from "../lib/edge.ts";
 
 export const opportunityAdminRoutes = new Hono<{ Variables: AuthVariables }>();
 
@@ -20,11 +22,12 @@ export const opportunityAdminRoutes = new Hono<{ Variables: AuthVariables }>();
 // Auth-gated. Delegates to the engine (edge_api → business.opportunities).
 opportunityAdminRoutes.get("/", requireUser, async (c) => {
   try {
-    const rows = await edgeListOpportunities();
+    const rows = await edgeListDeals();
     const list: OpportunitySummary[] = rows.map((r) => ({
-      opportunityId: r.opportunity_id,
-      // 8-char public handle (LEFT(uuid,8)) — the short URL key the Application detail route uses.
-      handle: r.opportunity_id.slice(0, 8),
+      // Deals are the list source now. Map onto the existing OpportunitySummary shape:
+      opportunityId: r.deal_id,
+      // deal_handle is already the public 8-char key (LEFT(id,8)) — no slice needed.
+      handle: r.deal_handle,
       status: r.status,
       createdAt: r.created_at ?? new Date().toISOString(),
       companyName: r.company_name,
@@ -33,7 +36,8 @@ opportunityAdminRoutes.get("/", requireUser, async (c) => {
       lastName: r.last_name,
       email: r.email,
       title: r.title,
-      sourceBookingId: r.source_booking_id,
+      // The deal's most-recent booking — the detail page resolves handle -> booking -> company profile.
+      sourceBookingId: r.last_booking_id,
       bookedAt: r.booked_at,
     }));
     return c.json({ data: list });

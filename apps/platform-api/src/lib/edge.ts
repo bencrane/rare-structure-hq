@@ -218,6 +218,31 @@ export async function edgeListOpportunities(): Promise<EdgeOpportunitySummary[]>
   return (await res.json()) as EdgeOpportunitySummary[];
 }
 
+// Deals — the first-class pipeline entity (business.deals, one per account) that replaces the
+// booking->opportunity projection as the cockpit's Applications/Research list source. Mapped onto
+// the existing OpportunitySummary shape by the BFF route (deal_id->opportunityId,
+// deal_handle->handle, last_booking_id->sourceBookingId), so the SPA is unchanged.
+export interface EdgeDealSummary {
+  deal_id: string;
+  deal_handle: string;
+  status: string;
+  created_at: string | null;
+  company_name: string | null;
+  domain: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  email: string | null;
+  title: string | null;
+  last_booking_id: string | null;
+  booked_at: string | null;
+}
+
+export async function edgeListDeals(): Promise<EdgeDealSummary[]> {
+  const res = await fetch(`${base()}/api/v1/deals`, { headers: serviceHeaders(false) });
+  if (!res.ok) throw new EdgeError(`edge deals list failed: ${res.status}`);
+  return (await res.json()) as EdgeDealSummary[];
+}
+
 export interface EdgeEngagementMappingOption {
   id: string;
   label: string;
