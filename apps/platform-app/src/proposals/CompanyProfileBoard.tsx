@@ -32,14 +32,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { useOriginationMode } from "@/settings/originationMode";
-
-import {
-  createMandateDraft,
-  createProposal,
-  listEngagementMappings,
-  saveDossierSnapshot,
-} from "./api";
+import { createProposal, listEngagementMappings, saveDossierSnapshot } from "./api";
 
 type SectionKey = "identity" | "signer" | "overview" | "focus" | "industries" | "geographies";
 
@@ -72,11 +65,7 @@ export type DossierSeed = {
   verified?: Partial<Record<SectionKey, boolean>>;
 };
 
-export function CompanyProfileBoard({
-  token,
-  seed,
-  opportunityId,
-}: { token: string; seed?: DossierSeed; opportunityId?: string | null }) {
+export function CompanyProfileBoard({ token, seed }: { token: string; seed?: DossierSeed }) {
   // Identity + the only fields that drive the create.
   const [company, setCompany] = useState(seed?.company ?? "");
   const [domain, setDomain] = useState(seed?.domain ?? "");
@@ -105,7 +94,6 @@ export function CompanyProfileBoard({
   const [templates, setTemplates] = useState<ProposalTemplateMeta[] | null>(null);
   const [templateId, setTemplateId] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const { renderMode } = useOriginationMode();
   const [error, setError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [justSaved, setJustSaved] = useState(false);
@@ -166,29 +154,13 @@ export function CompanyProfileBoard({
   }
 
   const identityName = company.trim() || signerName.trim();
-  const canOriginate =
-    !!templateId &&
-    !submitting &&
-    (renderMode === "direct-to-documenso" ? !!opportunityId : !!identityName);
+  const canOriginate = !!templateId && !submitting && !!identityName;
 
   async function originate() {
     if (!canOriginate) return;
     setSubmitting(true);
     setError(null);
     try {
-      if (renderMode === "direct-to-documenso") {
-        // Direct-to-documenso: stamp (opportunity, documenso template) into the mandate draft
-        // table — no proposal row, no DocRaptor. `templateId` IS the documenso_template_id here.
-        if (!opportunityId) throw new Error("No opportunity for this prospect");
-        const res = await createMandateDraft(token, {
-          opportunityId,
-          documensoTemplateId: templateId,
-        });
-        // Land on the mandate page keyed by the FULL draft id — "Confirm & originate" posts it back
-        // to /engagement-mandate-drafts/:id/confirm, so the page needs the whole id, not a prefix.
-        navigate(`/app/m/${res.id}`);
-        return;
-      }
       const res = await createProposal(token, {
         templateId,
         client: {

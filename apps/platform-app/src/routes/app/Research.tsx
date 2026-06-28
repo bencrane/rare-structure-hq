@@ -1,7 +1,6 @@
 /**
- * Research — the operator cockpit tab. Lists OPPORTUNITIES; opening one routes to its
- * per-opportunity mandate STAGING page (`/app/research/:opportunityId`), where the operator picks
- * the engagement (archetype → template) and enters the per-deal values off-screen, ahead of the call.
+ * Research — the operator cockpit tab. Lists OPPORTUNITIES; opening one routes to its Application
+ * company-profile page (`/app/applications/:handle`).
  *
  * Reuses the Pipeline tab's read-only data source (`listOpportunities`); it does NOT touch the
  * Pipeline table — this is an independent table on its own surface.
@@ -57,14 +56,14 @@ export default function Research() {
     refresh();
   }, [refresh]);
 
-  // Open this opportunity's mandate staging page (pick engagement + enter the per-deal values).
+  // Open this opportunity's Application company-profile page (by its 8-char handle).
   const openRow = (o: OpportunitySummary) =>
-    navigate(`/app/research/${encodeURIComponent(o.opportunityId)}`);
+    navigate(`/app/applications/${encodeURIComponent(o.handle)}`);
 
   return (
     <CockpitPage
       title="Research"
-      description="Select an opportunity to stage its engagement mandate — pick the engagement and lock the price + term."
+      description="Opportunities advancing toward an engagement. Open one to review its company profile."
     >
       <Section label="Opportunities">
         <Panel padded={false}>
@@ -88,7 +87,7 @@ export default function Research() {
             <EmptyState
               icon={ClipboardList}
               title="No opportunities yet"
-              description="Opportunities you advance in the pipeline land here to be staged into an engagement mandate."
+              description="Opportunities you advance in the pipeline land here."
             />
           ) : (
             <>
@@ -122,7 +121,7 @@ export default function Research() {
                           }
                         }}
                         tabIndex={0}
-                        aria-label={`Stage mandate for ${o.companyName ?? fullName(o)}`}
+                        aria-label={`Open ${o.companyName ?? fullName(o)}`}
                         className="group cursor-pointer outline-none transition-colors hover:bg-[color:var(--color-surface-raised)] focus-visible:bg-[color:var(--color-surface-raised)]"
                       >
                         <td className="px-4 py-3">

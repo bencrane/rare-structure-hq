@@ -30,7 +30,6 @@ import { companyProfileRoutes } from "./routes/company-profiles-admin.ts";
 import { documensoPublicRoutes } from "./routes/documenso-public.ts";
 import { documensoTemplateFieldRoutes } from "./routes/documenso-template-fields-admin.ts";
 import { documensoTemplateRoutes } from "./routes/documenso-templates-admin.ts";
-import { engagementMandateDraftRoutes } from "./routes/engagement-mandate-drafts-admin.ts";
 import { engagementMappingRoutes } from "./routes/engagement-mappings-admin.ts";
 import { engagementTemplateRoutes } from "./routes/engagement-templates-admin.ts";
 import { federalRoutes } from "./routes/federal.ts";
@@ -125,14 +124,8 @@ app.route("/api/v1/engagement-mappings", engagementMappingRoutes);
 // Manage Templates table — every documenso_template for the org (active + archived). Registered
 // before the `/api/v1/documenso` mount; the segment differs so there is no prefix collision.
 app.route("/api/v1/documenso-templates", documensoTemplateRoutes);
-// Direct-to-documenso public prospect surface (sign token/state + ACH payment). Mirrors edge_api's
-// own `documenso/*` namespace. Also mounted under the legacy `engagement-mandate-drafts` prefix below
-// as a transitional alias so an in-flight SPA bundle on the old path keeps working across the
-// independent platform-app / platform-api deploys — drop that alias once the new bundle is fully live.
+// Direct-to-documenso public prospect surface (sign token/state + ACH payment).
 app.route("/api/v1/documenso", documensoPublicRoutes);
-app.route("/api/v1/engagement-mandate-drafts", documensoPublicRoutes);
-// Operator-authenticated mandate-DRAFT CRUD.
-app.route("/api/v1/engagement-mandate-drafts", engagementMandateDraftRoutes);
 app.route("/api/v1/engagement-templates", engagementTemplateRoutes);
 app.route("/api/v1/documenso-template-fields", documensoTemplateFieldRoutes);
 app.route("/api/v1/company-profiles", companyProfileRoutes);
