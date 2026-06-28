@@ -14,6 +14,8 @@ function authHeaders(token: string): HeadersInit {
 
 const BASE = "/api/v1/engagement-templates";
 
+// Shapes mirror edge_api verbatim (snake_case) — the BFF is a pass-through and renames nothing.
+
 /** A selectable template — one (path, archetype, version) triple under the content tree. */
 export interface EngagementTemplate {
   brand: string;
@@ -21,20 +23,20 @@ export interface EngagementTemplate {
   archetype: string;
   version: string;
   name: string;
-  defaultStyle: string;
-  stylesAvailable: string[];
+  default_style: string;
+  styles_available: string[];
   /** Operator-entered values this template bakes in at render time (empty = none). */
   inputs: string[];
 }
 
 export interface EngagementTemplateRender {
-  pdfUrl: string;
-  expiresSeconds: number;
+  pdf_url: string;
+  expires_seconds: number;
   path: string;
   archetype: string;
   version: string;
   style: string;
-  pdfBytes: number;
+  pdf_bytes: number;
 }
 
 /** The selectable templates for the path → archetype → version dropdowns. */
@@ -60,16 +62,16 @@ export async function renderEngagementTemplate(
 
 /** The render-push result — a freshly created Documenso template from the rendered PDF. */
 export interface EngagementTemplateRenderPush {
-  documensoTemplateId: string;
-  documensoNumericId: number | null;
+  documenso_template_id: string;
+  documenso_numeric_id: number | null;
   brand: string;
   path: string;
   archetype: string;
   version: string;
   style: string;
-  sourceKind: string;
-  pdfBytes: number;
-  pdfUrl: string | null;
+  source_kind: string;
+  pdf_bytes: number;
+  pdf_url: string | null;
 }
 
 /**
@@ -85,7 +87,7 @@ export async function renderPushTemplate(
     version: string;
     style?: string;
     /** Operator inputs a tokenized template bakes in; edge_api derives price-per-introduction. */
-    values?: { amount: number; introductions: number; termDays: number };
+    values?: { amount: number; introductions: number; term_days: number };
   },
 ): Promise<EngagementTemplateRenderPush> {
   // Heavy multi-hop call (BFF → edge_api → DocRaptor + Documenso). Bound it so a wedged upstream

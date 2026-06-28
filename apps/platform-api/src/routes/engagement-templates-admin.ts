@@ -1,20 +1,20 @@
 /**
  * Engagement templates — the Settings "Engagement Templates" render surface's BFF.
  *
- *   GET  /api/v1/engagement-templates           selectable (path, archetype, version)
- *   POST /api/v1/engagement-templates/render    render plain (default) → presigned PDF URL
+ *   GET  /api/v1/engagement-templates              selectable (brand, path, archetype, version)
+ *   POST /api/v1/engagement-templates/render       render plain (default) → presigned PDF URL
+ *   POST /api/v1/engagement-templates/render-push  render + create a Documenso template
  *
- * Operator-scoped (requireUser). edge_api owns the repo-resident template tree + the DocRaptor render
- * (NO Documenso); this BFF brokers the service-token call and normalizes the shape (snake → camel).
+ * Thin operator-scoped broker (requireUser): authenticate the operator, attach the edge_api service
+ * token, forward verbatim. edge_api owns the shape and ALL logic — this layer does NO field mapping,
+ * so every field edge_api returns (and every field the SPA sends) flows straight through. The SPA
+ * consumes edge_api's snake_case shape directly.
  */
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 
 import { type AuthVariables, requireUser } from "../auth.ts";
 import {
-  type EdgeEngagementTemplate,
-  type EdgeEngagementTemplateRender,
-  type EdgeEngagementTemplateRenderPush,
   EdgeError,
   edgeListEngagementTemplates,
   edgeRenderEngagementTemplate,
@@ -23,122 +23,41 @@ import {
 
 export const engagementTemplateRoutes = new Hono<{ Variables: AuthVariables }>();
 
-function toClient(t: EdgeEngagementTemplate) {
-  return {
-    brand: t.brand,
-    path: t.path,
-    archetype: t.archetype,
-    version: t.version,
-    name: t.name,
-    defaultStyle: t.default_style,
-    stylesAvailable: t.styles_available,
-    inputs: t.inputs,
-  };
+function edge502(e: unknown): never {
+  if (e instanceof EdgeError) throw new HTTPException(502, { message: e.message });
+  throw e;
 }
 
-function toRenderClient(r: EdgeEngagementTemplateRender) {
-  return {
-    pdfUrl: r.pdf_url,
-    expiresSeconds: r.expires_seconds,
-    path: r.path,
-    archetype: r.archetype,
-    version: r.version,
-    style: r.style,
-    pdfBytes: r.pdf_bytes,
-  };
-}
-
-function toRenderPushClient(r: EdgeEngagementTemplateRenderPush) {
-  return {
-    documensoTemplateId: r.documenso_template_id,
-    documensoNumericId: r.documenso_numeric_id,
-    brand: r.brand,
-    path: r.path,
-    archetype: r.archetype,
-    version: r.version,
-    style: r.style,
-    sourceKind: r.source_kind,
-    pdfBytes: r.pdf_bytes,
-    pdfUrl: r.pdf_url,
-  };
-}
-
-// Selectable templates for the Settings dropdowns (path → archetype → version).
+// Selectable templates for the Settings dropdowns (brand → path → archetype → version).
 engagementTemplateRoutes.get("/", requireUser, async (c) => {
   try {
-    const rows = await edgeListEngagementTemplates();
-    return c.json({ data: rows.map(toClient) });
+    return c.json({ data: await edgeListEngagementTemplates() });
   } catch (e) {
-    if (e instanceof EdgeError) throw new HTTPException(502, { message: e.message });
-    throw e;
+    edge502(e);
   }
 });
 
 // Render the selected template to a clean PDF (plain by default) → presigned URL. No Documenso.
 engagementTemplateRoutes.post("/render", requireUser, async (c) => {
-  const body = (await c.req.json().catch(() => null)) as {
-    brand?: string;
-    path?: string;
-    archetype?: string;
-    version?: string;
-    style?: string;
-  } | null;
-  if (!body?.brand || !body.path || !body.archetype || !body.version) {
-    throw new HTTPException(400, {
-      message: "brand, path, archetype, and version are required",
-    });
-  }
+  const body = (await c.req.json().catch(() => ({}))) as Parameters<
+    typeof edgeRenderEngagementTemplate
+  >[0];
   try {
-    const result = await edgeRenderEngagementTemplate({
-      brand: body.brand,
-      path: body.path,
-      archetype: body.archetype,
-      version: body.version,
-      style: body.style,
-    });
-    return c.json({ data: toRenderClient(result) });
+    return c.json({ data: await edgeRenderEngagementTemplate(body) });
   } catch (e) {
-    if (e instanceof EdgeError) throw new HTTPException(502, { message: e.message });
-    throw e;
+    edge502(e);
   }
 });
 
-// Render the selected template AND create a Documenso template from the PDF. No Documenso fields are
-// placed — the operator affixes them in the editor afterward (the /internal Trigger.dev lane is the
-// automation sibling; this is the operator-driven one, service-token brokered).
+// Render the selected template AND create a Documenso template from the PDF. A tokenized template's
+// operator values ride in `body.values` and are forwarded as-is; edge_api derives + bakes them.
 engagementTemplateRoutes.post("/render-push", requireUser, async (c) => {
-  const body = (await c.req.json().catch(() => null)) as {
-    brand?: string;
-    path?: string;
-    archetype?: string;
-    version?: string;
-    style?: string;
-    values?: { amount?: number; introductions?: number; termDays?: number };
-  } | null;
-  if (!body?.brand || !body.path || !body.archetype || !body.version) {
-    throw new HTTPException(400, {
-      message: "brand, path, archetype, and version are required",
-    });
-  }
-  // A tokenized template (manifest `inputs`) carries the operator's values; map camel → snake for
-  // edge_api, which formats + derives (price-per-introduction) and bakes them into the PDF.
-  const v = body.values;
-  const values =
-    v && v.amount != null && v.introductions != null && v.termDays != null
-      ? { amount: v.amount, introductions: v.introductions, term_days: v.termDays }
-      : undefined;
+  const body = (await c.req.json().catch(() => ({}))) as Parameters<
+    typeof edgeRenderPushTemplate
+  >[0];
   try {
-    const result = await edgeRenderPushTemplate({
-      brand: body.brand,
-      path: body.path,
-      archetype: body.archetype,
-      version: body.version,
-      style: body.style,
-      values,
-    });
-    return c.json({ data: toRenderPushClient(result) });
+    return c.json({ data: await edgeRenderPushTemplate(body) });
   } catch (e) {
-    if (e instanceof EdgeError) throw new HTTPException(502, { message: e.message });
-    throw e;
+    edge502(e);
   }
 });

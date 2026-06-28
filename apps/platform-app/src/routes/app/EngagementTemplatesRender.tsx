@@ -42,11 +42,11 @@ export default function EngagementTemplatesRender() {
       path,
       archetype,
       version,
-      style: style || selected.defaultStyle,
+      style: style || selected.default_style,
     })
       .then((r) => {
-        setPdfUrl(r.pdfUrl);
-        window.open(r.pdfUrl, "_blank", "noopener");
+        setPdfUrl(r.pdf_url);
+        window.open(r.pdf_url, "_blank", "noopener");
       })
       .catch((e) => setRenderError(e instanceof Error ? e.message : "Render failed"))
       .finally(() => setRendering(false));

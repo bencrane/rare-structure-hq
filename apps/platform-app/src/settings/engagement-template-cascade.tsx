@@ -135,7 +135,7 @@ export function useEngagementTemplateCascade(): EngagementTemplateCascade {
   useEffect(() => {
     // default the style to the template's default (plain) whenever the selection changes
     if (selected) {
-      setStyle((s) => (selected.stylesAvailable.includes(s) ? s : selected.defaultStyle));
+      setStyle((s) => (selected.styles_available.includes(s) ? s : selected.default_style));
     }
   }, [selected]);
 
@@ -277,9 +277,9 @@ export function EngagementTemplateCascadeFields({
           </Field>
           <Field label="Style">
             <select className={selectCls} value={style} onChange={(e) => setStyle(e.target.value)}>
-              {(selected?.stylesAvailable ?? []).map((s) => (
+              {(selected?.styles_available ?? []).map((s) => (
                 <option key={s} value={s}>
-                  {s === selected?.defaultStyle ? `${s} (default)` : s}
+                  {s === selected?.default_style ? `${s} (default)` : s}
                 </option>
               ))}
             </select>

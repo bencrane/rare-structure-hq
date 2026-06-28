@@ -214,9 +214,9 @@ export default function SettingsRenderPush() {
                               Created
                             </span>
                             <Text size="mono-xs" mono color="subtle" className="block break-all">
-                              {result.documensoTemplateId}
-                              {result.documensoNumericId != null
-                                ? ` · #${result.documensoNumericId}`
+                              {result.documenso_template_id}
+                              {result.documenso_numeric_id != null
+                                ? ` · #${result.documenso_numeric_id}`
                                 : ""}
                             </Text>
                           </output>
