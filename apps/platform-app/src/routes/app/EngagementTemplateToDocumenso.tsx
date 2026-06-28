@@ -4,16 +4,19 @@
  *
  * Same brand → path → archetype → version → style cascade as the "Create a PDF" surface, but the
  * action runs the render-push lane: compile the template's HTML, render the PDF via DocRaptor, and
- * create it in Documenso as a reusable TEMPLATE. No Documenso fields are placed — the operator
- * affixes the signature/date/value fields in the Documenso editor afterward. The created documenso
- * template id appears inline on success.
+ * create it in Documenso as a reusable TEMPLATE. No Documenso fields are placed — the operator affixes
+ * the signature/date/value fields in the Documenso editor afterward.
+ *
+ * A tokenized template (one whose catalog entry declares `inputs`, e.g. government-contracted
+ * prepaid-introductions) shows a Values form: the operator enters amount / # introductions / # days;
+ * those are baked into the PDF text at render time (price-per-introduction is derived server-side).
  */
 import { Check, ExternalLink, FileSignature } from "lucide-react";
-import { useCallback, useState } from "react";
+import { type ReactNode, useCallback, useState } from "react";
 
-import { Text } from "@rare-structure-hq/ui";
+import { Stack, Text } from "@rare-structure-hq/ui";
 
-import { BackLink, CockpitPage } from "@/app/cockpit";
+import { BackLink, CockpitPage, Panel, Section } from "@/app/cockpit";
 import { useAuth } from "@/lib/auth";
 import {
   EngagementTemplateCascadeFields,
@@ -31,13 +34,31 @@ export default function EngagementTemplateToDocumenso() {
 
   const cascade = useEngagementTemplateCascade();
   const { selected, brand, path, archetype, version, style } = cascade;
+  const needsValues = (selected?.inputs?.length ?? 0) > 0;
+
+  const [amount, setAmount] = useState("");
+  const [introductions, setIntroductions] = useState("");
+  const [termDays, setTermDays] = useState("");
+
+  const amountNum = Number.parseFloat(amount);
+  const introNum = Number.parseFloat(introductions);
+  const daysNum = Number.parseFloat(termDays);
+  const valuesValid =
+    Number.isFinite(amountNum) &&
+    amountNum > 0 &&
+    Number.isInteger(introNum) &&
+    introNum > 0 &&
+    Number.isInteger(daysNum) &&
+    daysNum > 0;
+  // Live preview only — edge_api does the authoritative derivation + formatting.
+  const ppiPreview = valuesValid ? formatUsd(amountNum / introNum) : "—";
 
   const [creating, setCreating] = useState(false);
   const [result, setResult] = useState<EngagementTemplateRenderPush | null>(null);
   const [createError, setCreateError] = useState<string | null>(null);
 
   const create = useCallback(() => {
-    if (!selected) return;
+    if (!selected || (needsValues && !valuesValid)) return;
     setCreating(true);
     setResult(null);
     setCreateError(null);
@@ -48,11 +69,27 @@ export default function EngagementTemplateToDocumenso() {
       archetype,
       version,
       style: style || selected.defaultStyle,
+      values: needsValues
+        ? { amount: amountNum, introductions: introNum, termDays: daysNum }
+        : undefined,
     })
       .then((r) => setResult(r))
       .catch((e) => setCreateError(e instanceof Error ? e.message : "Create failed"))
       .finally(() => setCreating(false));
-  }, [token, selected, brand, path, archetype, version, style]);
+  }, [
+    token,
+    selected,
+    brand,
+    path,
+    archetype,
+    version,
+    style,
+    needsValues,
+    valuesValid,
+    amountNum,
+    introNum,
+    daysNum,
+  ]);
 
   return (
     <CockpitPage
@@ -65,11 +102,59 @@ export default function EngagementTemplateToDocumenso() {
         <div className="flex flex-col gap-6">
           <EngagementTemplateCascadeFields cascade={cascade} />
 
+          {needsValues && (
+            <Section label="Values">
+              <Panel>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                  <ValueField label="Amount paid (USD)">
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      inputMode="decimal"
+                      placeholder="25000"
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
+                      className={numCls}
+                    />
+                  </ValueField>
+                  <ValueField label="# of introductions">
+                    <input
+                      type="number"
+                      min="1"
+                      step="1"
+                      inputMode="numeric"
+                      placeholder="25"
+                      value={introductions}
+                      onChange={(e) => setIntroductions(e.target.value)}
+                      className={numCls}
+                    />
+                  </ValueField>
+                  <ValueField label="# of days">
+                    <input
+                      type="number"
+                      min="1"
+                      step="1"
+                      inputMode="numeric"
+                      placeholder="90"
+                      value={termDays}
+                      onChange={(e) => setTermDays(e.target.value)}
+                      className={numCls}
+                    />
+                  </ValueField>
+                </div>
+                <Text size="mono-xs" mono color="subtle" className="mt-3 block">
+                  Price per introduction (derived): {ppiPreview}
+                </Text>
+              </Panel>
+            </Section>
+          )}
+
           <div className="flex items-center gap-4">
             <button
               type="button"
               onClick={create}
-              disabled={creating || !selected}
+              disabled={creating || !selected || (needsValues && !valuesValid)}
               className={renderCls}
             >
               <FileSignature className="size-3.5" />
@@ -109,6 +194,33 @@ export default function EngagementTemplateToDocumenso() {
     </CockpitPage>
   );
 }
+
+function ValueField({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <Stack gap="2">
+      <span className={labelCls}>{label}</span>
+      {children}
+    </Stack>
+  );
+}
+
+/** Plain-USD preview, mirroring edge_api's formatter: quantize to cents first (HALF_UP, matching the
+ *  server), then drop the cents when the rounded value is whole. */
+function formatUsd(n: number): string {
+  const r = Math.round(n * 100) / 100;
+  return r.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: Number.isInteger(r) ? 0 : 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+const labelCls =
+  "flex items-center gap-2 font-mono text-[color:var(--color-text-subtle)] text-mono-xs uppercase tracking-[0.14em]";
+
+const numCls =
+  "mt-1.5 w-full border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-raised)] px-3 py-2 font-sans text-[color:var(--color-text-primary)] text-body-sm outline-none transition-colors focus:border-[color:var(--color-text-accent)]";
 
 const renderCls =
   "inline-flex items-center justify-center gap-2 border border-[color:var(--color-accent-primary)] bg-[color:var(--color-accent-soft)] px-5 py-2.5 font-mono text-[color:var(--color-text-accent)] text-mono-xs uppercase tracking-[0.18em] transition-colors hover:bg-[color:var(--color-accent-primary)] hover:text-[color:var(--color-text-onAccent)] disabled:cursor-not-allowed disabled:opacity-50";

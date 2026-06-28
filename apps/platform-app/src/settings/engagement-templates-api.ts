@@ -23,6 +23,8 @@ export interface EngagementTemplate {
   name: string;
   defaultStyle: string;
   stylesAvailable: string[];
+  /** Operator-entered values this template bakes in at render time (empty = none). */
+  inputs: string[];
 }
 
 export interface EngagementTemplateRender {
@@ -76,7 +78,15 @@ export interface EngagementTemplateRenderPush {
  */
 export async function renderPushTemplate(
   token: string,
-  input: { brand: string; path: string; archetype: string; version: string; style?: string },
+  input: {
+    brand: string;
+    path: string;
+    archetype: string;
+    version: string;
+    style?: string;
+    /** Operator inputs a tokenized template bakes in; edge_api derives price-per-introduction. */
+    values?: { amount: number; introductions: number; termDays: number };
+  },
 ): Promise<EngagementTemplateRenderPush> {
   // Heavy multi-hop call (BFF → edge_api → DocRaptor + Documenso). Bound it so a wedged upstream
   // rejects instead of leaving the row's in-flight state (and the table's single-flight lock) stuck.
