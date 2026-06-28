@@ -11,6 +11,7 @@ export const documensoTemplateSummarySchema = z.object({
   name: z.string(),
   slug: z.string().nullable(),
   status: z.string(),
+  isDefault: z.boolean(),
   archetypeName: z.string().nullable(),
 });
 export type DocumensoTemplateSummary = z.infer<typeof documensoTemplateSummarySchema>;
