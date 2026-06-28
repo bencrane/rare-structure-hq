@@ -34,7 +34,7 @@ import { engagementMappingRoutes } from "./routes/engagement-mappings-admin.ts";
 import { engagementTemplateRoutes } from "./routes/engagement-templates-admin.ts";
 import { federalRoutes } from "./routes/federal.ts";
 import { insightsAdminRoutes } from "./routes/insights-admin.ts";
-import { opportunityAdminRoutes } from "./routes/opportunities-admin.ts";
+import { dealAdminRoutes } from "./routes/deals-admin.ts";
 import { proposalTemplateEditorRoutes } from "./routes/proposal-templates-admin.ts";
 import { proposalTemplateRoutes } from "./routes/proposals-admin.ts";
 import { settingsRoutes } from "./routes/settings.ts";
@@ -119,7 +119,7 @@ app.route("/api/v1/proposal-templates/manage", proposalTemplateEditorRoutes);
 app.route("/api/v1/proposal-templates", proposalTemplateRoutes);
 app.route("/api/v1/award-profile", awardProfileRoutes);
 app.route("/api/v1/bookings", bookingAdminRoutes);
-app.route("/api/v1/opportunities", opportunityAdminRoutes);
+app.route("/api/v1/deals", dealAdminRoutes);
 app.route("/api/v1/engagement-mappings", engagementMappingRoutes);
 // Manage Templates table — every documenso_template for the org (active + archived). Registered
 // before the `/api/v1/documenso` mount; the segment differs so there is no prefix collision.

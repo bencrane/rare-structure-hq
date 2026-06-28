@@ -1,6 +1,6 @@
 /**
- * Application — the company profile page, addressed by the opportunity's 8-char handle and
- * resolved to its source booking. Opened from an Applications row; shows the cal.com-derived
+ * Application — the company profile page, addressed by the deal's 8-char handle and
+ * resolved to its last booking. Opened from an Applications row; shows the cal.com-derived
  * booking we have today (prospect, company, meeting window, status). The
  * richer dossier intelligence + originate land once enrichment is wired — this page is the
  * surface that will populate. Authors no geometry — composes CockpitPage.
@@ -14,7 +14,7 @@ import { Badge, Text } from "@rare-structure-hq/ui";
 
 import { CockpitPage, Panel } from "@/app/cockpit";
 import { useAuth } from "@/lib/auth";
-import { getBooking, listOpportunities } from "@/pipeline/api";
+import { getBooking, listDeals } from "@/pipeline/api";
 import { CompanyProfileBoard, type DossierSeed } from "@/proposals/CompanyProfileBoard";
 
 function fullName(b: BookingDetail): string {
@@ -28,9 +28,9 @@ function statusTone(status: string): "info" | "warn" | "success" {
 }
 
 export default function Application() {
-  // The URL carries the opportunity's 8-char public handle (OpportunitySummary.handle);
-  // opportunityId is the center node. Resolve handle → opportunity → source booking.
-  const { opportunityId: handle = "" } = useParams();
+  // The URL carries the deal's 8-char public handle (DealSummary.handle);
+  // dealId is the center node. Resolve handle → deal → last booking.
+  const { handle = "" } = useParams();
   const { session } = useAuth();
   const token = session?.access_token ?? "";
 
@@ -42,20 +42,20 @@ export default function Application() {
     if (!token || !handle) return;
     setPhase("loading");
     setError(null);
-    listOpportunities(token)
-      .then((opps) => {
-        const opp = opps.find((o) => o.handle === handle);
-        if (!opp?.sourceBookingId) {
+    listDeals(token)
+      .then((deals) => {
+        const deal = deals.find((o) => o.handle === handle);
+        if (!deal?.lastBookingId) {
           setPhase("notfound");
           return;
         }
-        return getBooking(token, opp.sourceBookingId).then((data) => {
+        return getBooking(token, deal.lastBookingId).then((data) => {
           setBooking(data);
           setPhase("ready");
         });
       })
       .catch((e) => {
-        const msg = e instanceof Error ? e.message : "Failed to load opportunity";
+        const msg = e instanceof Error ? e.message : "Failed to load deal";
         if (/\b404\b/.test(msg)) {
           setPhase("notfound");
         } else {
@@ -148,7 +148,7 @@ export default function Application() {
       actions={<Badge tone={statusTone(b.status)}>{b.status}</Badge>}
     >
       {back}
-      {/* key=handle remounts the board so it re-seeds when navigating between opportunities. */}
+      {/* key=handle remounts the board so it re-seeds when navigating between deals. */}
       <CompanyProfileBoard key={handle} token={token} seed={seed} />
     </CockpitPage>
   );
