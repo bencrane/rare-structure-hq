@@ -240,6 +240,26 @@ export async function edgeListEngagementMappings(
   return (await res.json()) as EdgeEngagementMappingOption[];
 }
 
+export interface EdgeDocumensoTemplateSummary {
+  id: string;
+  name: string;
+  slug: string | null;
+  status: string;
+  archetype_name: string | null;
+}
+
+// Every documenso_template for the operator's org (active + archived) — the Manage Templates table.
+export async function edgeListDocumensoTemplates(
+  orgDomain: string,
+): Promise<EdgeDocumensoTemplateSummary[]> {
+  const qs = new URLSearchParams({ org_domain: orgDomain }).toString();
+  const res = await fetch(`${base()}/api/v1/documenso-templates?${qs}`, {
+    headers: serviceHeaders(false),
+  });
+  if (!res.ok) throw new EdgeError(`edge documenso-templates list failed: ${res.status}`);
+  return (await res.json()) as EdgeDocumensoTemplateSummary[];
+}
+
 export interface EdgeMandateDraftCreated {
   id: string;
 }

@@ -1,5 +1,6 @@
 export * from "./common";
 export * from "./booking";
+export * from "./documenso-template";
 export * from "./opportunity";
 export * from "./catalyst-event";
 export * from "./federal";

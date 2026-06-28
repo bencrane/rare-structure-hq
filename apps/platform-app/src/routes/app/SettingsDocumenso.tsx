@@ -5,7 +5,7 @@
  * field values that bake onto every document created from a template — lives under
  * `/app/settings/documenso-templates`.
  */
-import { FileSignature } from "lucide-react";
+import { FileSignature, Table2 } from "lucide-react";
 
 import { Grid } from "@rare-structure-hq/ui";
 
@@ -25,6 +25,13 @@ export default function SettingsDocumenso() {
           description="Open a Documenso template and set default values on its fields. Defaults bake onto the template — every document created from it inherits them."
           cta="Open editor"
           to="/app/settings/documenso-templates"
+        />
+        <HubCard
+          icon={Table2}
+          title="Manage Templates"
+          description="Browse every Documenso template registered for your org — active and archived — in one table."
+          cta="Open table"
+          to="/app/settings/documenso/templates"
         />
       </Grid>
     </CockpitPage>
