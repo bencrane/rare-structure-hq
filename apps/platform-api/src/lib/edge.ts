@@ -834,6 +834,7 @@ export async function edgeTemplatePublish(
 // BFF only brokers the service token across the auth boundary.
 
 export interface EdgeEngagementTemplate {
+  brand: string;
   path: string;
   archetype: string;
   version: string;
@@ -878,4 +879,37 @@ export async function edgeRenderEngagementTemplate(input: {
       `edge engagement-template render failed: ${res.status} ${await res.text()}`,
     );
   return (await res.json()) as EdgeEngagementTemplateRender;
+}
+
+export interface EdgeEngagementTemplateRenderPush {
+  documenso_template_id: string;
+  documenso_numeric_id: number | null;
+  brand: string;
+  path: string;
+  archetype: string;
+  version: string;
+  style: string;
+  source_kind: string;
+  pdf_bytes: number;
+  pdf_url: string | null;
+}
+
+/** Render the selected template AND create a Documenso template from the PDF. Service-token gated. */
+export async function edgeRenderPushTemplate(input: {
+  brand: string;
+  path: string;
+  archetype: string;
+  version: string;
+  style?: string;
+}): Promise<EdgeEngagementTemplateRenderPush> {
+  const res = await fetch(`${base()}/api/v1/engagement-templates/render-push`, {
+    method: "POST",
+    headers: serviceHeaders(),
+    body: JSON.stringify(input),
+  });
+  if (!res.ok)
+    throw new EdgeError(
+      `edge engagement-template render-push failed: ${res.status} ${await res.text()}`,
+    );
+  return (await res.json()) as EdgeEngagementTemplateRenderPush;
 }

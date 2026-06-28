@@ -1,12 +1,12 @@
 /**
  * Settings — the operator configuration hub.
  *
- * Pure navigation: a 2×2 grid of category cards, one per configuration area. Each
+ * Pure navigation: a responsive grid of category cards, one per configuration area. Each
  * routes to its own child surface (`/app/settings/<area>`) that holds that area's
- * controls. This file owns no data and no geometry — just the four entry points.
+ * controls. This file owns no data and no geometry — just the entry points.
  * The card primitive (sizing, equal heights, CTA placement) lives in `@/app/cockpit`.
  */
-import { FileCog, FileDown, FileSignature, Route } from "lucide-react";
+import { FileCog, FileDown, FileOutput, FileSignature, Route } from "lucide-react";
 
 import { Grid } from "@rare-structure-hq/ui";
 
@@ -46,6 +46,13 @@ export default function Settings() {
           description="Render repo-resident engagement templates to clean PDFs via DocRaptor."
           cta="Open"
           to="/app/settings/engagement"
+        />
+        <HubCard
+          icon={FileOutput}
+          title="Create Documenso Template via Render-Push"
+          description="Compile a repo-resident template's HTML, render the PDF via DocRaptor, and create it in Documenso as a template."
+          cta="Open"
+          to="/app/settings/render-push"
         />
       </Grid>
     </CockpitPage>

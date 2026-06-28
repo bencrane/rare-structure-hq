@@ -16,6 +16,7 @@ const BASE = "/api/v1/engagement-templates";
 
 /** A selectable template — one (path, archetype, version) triple under the content tree. */
 export interface EngagementTemplate {
+  brand: string;
   path: string;
   archetype: string;
   version: string;
@@ -53,4 +54,49 @@ export async function renderEngagementTemplate(
   });
   if (!res.ok) throw new Error(`render failed: ${res.status} ${await res.text()}`);
   return (await res.json()).data as EngagementTemplateRender;
+}
+
+/** The render-push result — a freshly created Documenso template from the rendered PDF. */
+export interface EngagementTemplateRenderPush {
+  documensoTemplateId: string;
+  documensoNumericId: number | null;
+  brand: string;
+  path: string;
+  archetype: string;
+  version: string;
+  style: string;
+  sourceKind: string;
+  pdfBytes: number;
+  pdfUrl: string | null;
+}
+
+/**
+ * Render the selected catalog template and create a Documenso template from the PDF. Returns the
+ * created documensoTemplateId (and numeric id). Bearer-gated; the BFF brokers the service-token call.
+ */
+export async function renderPushTemplate(
+  token: string,
+  input: { brand: string; path: string; archetype: string; version: string; style?: string },
+): Promise<EngagementTemplateRenderPush> {
+  // Heavy multi-hop call (BFF → edge_api → DocRaptor + Documenso). Bound it so a wedged upstream
+  // rejects instead of leaving the row's in-flight state (and the table's single-flight lock) stuck.
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 120_000);
+  try {
+    const res = await fetch(`${API_BASE}${BASE}/render-push`, {
+      method: "POST",
+      headers: authHeaders(token),
+      body: JSON.stringify(input),
+      signal: controller.signal,
+    });
+    if (!res.ok) throw new Error(`render-push failed: ${res.status} ${await res.text()}`);
+    return (await res.json()).data as EngagementTemplateRenderPush;
+  } catch (e) {
+    if (e instanceof DOMException && e.name === "AbortError") {
+      throw new Error("render-push timed out after 120s");
+    }
+    throw e;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
