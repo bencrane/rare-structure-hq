@@ -1,5 +1,5 @@
 /**
- * ApplicationStaging — the per-opportunity mandate prep page (`/app/applications/:opportunityId`).
+ * ApplicationStaging — the per-opportunity mandate prep page (`/app/research/:opportunityId`).
  *
  * Reached by opening an opportunity on the Applications tab. The operator stages the mandate here,
  * off-screen, ahead of the call: pick the engagement (the archetype's template) and enter the
@@ -113,7 +113,7 @@ export default function ApplicationStaging() {
           : `Opportunity ${opportunityId}`
       }
     >
-      <button type="button" onClick={() => navigate("/app/applications")} className={backCls}>
+      <button type="button" onClick={() => navigate("/app/research")} className={backCls}>
         <ArrowLeft className="size-3.5" />
         Research
       </button>

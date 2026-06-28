@@ -23,6 +23,8 @@ opportunityAdminRoutes.get("/", requireUser, async (c) => {
     const rows = await edgeListOpportunities();
     const list: OpportunitySummary[] = rows.map((r) => ({
       opportunityId: r.opportunity_id,
+      // 8-char public handle (LEFT(uuid,8)) — the short URL key the Application detail route uses.
+      handle: r.opportunity_id.slice(0, 8),
       status: r.status,
       createdAt: r.created_at ?? new Date().toISOString(),
       companyName: r.company_name,
