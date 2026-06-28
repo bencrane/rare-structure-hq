@@ -32,3 +32,24 @@ engagementMappingRoutes.get("/", requireUser, async (c) => {
     return c.json({ data: [] });
   }
 });
+
+// Engagement options for the picker — the operator-org's visible templates, each annotated with its
+// archetype (the form's shape) and text_fields (the form's inputs). Empty on any failure. Consumed by
+// the Documenso field-defaults editor. (Relocated here from the removed engagement-mandate-drafts router.)
+engagementMappingRoutes.get("/options", requireUser, async (c) => {
+  const domain = c.get("user").email.split("@")[1]?.toLowerCase() ?? "";
+  try {
+    const rows = await edgeListEngagementMappings(domain);
+    const data = rows.map((r) => ({
+      id: r.id,
+      label: r.label,
+      archetypeKey: r.archetype_key,
+      archetypeName: r.archetype_name,
+      performanceFeeBasis: r.performance_fee_basis,
+      textFields: r.text_fields,
+    }));
+    return c.json({ data });
+  } catch {
+    return c.json({ data: [] });
+  }
+});

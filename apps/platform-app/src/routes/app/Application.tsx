@@ -37,14 +37,11 @@ export default function Application() {
   const [booking, setBooking] = useState<BookingDetail | null>(null);
   const [phase, setPhase] = useState<"loading" | "ready" | "notfound" | "error">("loading");
   const [error, setError] = useState<string | null>(null);
-  // The full opportunity UUID for the resolved handle — the key the originate/staging flow needs.
-  const [opportunityUuid, setOpportunityUuid] = useState<string | null>(null);
 
   const refresh = useCallback(() => {
     if (!token || !handle) return;
     setPhase("loading");
     setError(null);
-    setOpportunityUuid(null);
     listOpportunities(token)
       .then((opps) => {
         const opp = opps.find((o) => o.handle === handle);
@@ -52,7 +49,6 @@ export default function Application() {
           setPhase("notfound");
           return;
         }
-        setOpportunityUuid(opp.opportunityId);
         return getBooking(token, opp.sourceBookingId).then((data) => {
           setBooking(data);
           setPhase("ready");
@@ -153,7 +149,7 @@ export default function Application() {
     >
       {back}
       {/* key=handle remounts the board so it re-seeds when navigating between opportunities. */}
-      <CompanyProfileBoard key={handle} token={token} seed={seed} opportunityId={opportunityUuid} />
+      <CompanyProfileBoard key={handle} token={token} seed={seed} />
     </CockpitPage>
   );
 }
