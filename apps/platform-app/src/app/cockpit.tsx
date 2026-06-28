@@ -8,10 +8,11 @@
  * Lives under `src/app/` (not `src/routes/`) so it may own geometry; the route
  * files that compose it stay geometry-free and pass `no-route-geometry`.
  */
-import type { LucideIcon } from "lucide-react";
+import { ArrowLeft, ChevronRight, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
+import { Link } from "react-router-dom";
 
-import { Card, Page, type PageVariantProp, Stack, Text, cx } from "@rare-structure-hq/ui";
+import { Card, Inline, Page, type PageVariantProp, Stack, Text, cx } from "@rare-structure-hq/ui";
 
 // ── Tile — the recurring bordered square (brand mark, avatar, empty-state icon).
 export function Tile({
@@ -185,5 +186,74 @@ export function EmptyState({
         {description}
       </Text>
     </Stack>
+  );
+}
+
+// ── HubCard — a clickable navigation card rendered as a react-router <Link>, so it
+//    carries a real URL (cmd-click / new-tab) and is announced as a link. Stretches
+//    to fill its grid cell (`h-full`) with the CTA pinned to the bottom (`mt-auto`),
+//    so a row of cards reads as one consistent block regardless of copy length. This
+//    is THE card primitive for every hub/category surface — sizing lives here once.
+export function HubCard({
+  icon: Icon,
+  title,
+  description,
+  cta,
+  to,
+  tone = "default",
+}: {
+  icon: LucideIcon;
+  title: string;
+  description: string;
+  cta: string;
+  to: string;
+  tone?: "default" | "accent";
+}) {
+  return (
+    <Link to={to} className="group block h-full outline-none">
+      <Card
+        interactive
+        className="flex h-full flex-col gap-4 p-5 group-focus-visible:border-[color:var(--color-border-accent)]"
+      >
+        <Tile size="10" tone={tone}>
+          <Icon
+            className={cx(
+              "size-5",
+              tone === "accent"
+                ? "text-[color:var(--color-text-accent)]"
+                : "text-[color:var(--color-text-default)]",
+            )}
+          />
+        </Tile>
+        <Stack gap="2">
+          <Text size="body-md" color="strong">
+            {title}
+          </Text>
+          <Text size="body-sm" color="muted">
+            {description}
+          </Text>
+        </Stack>
+        <Inline gap="1" align="center" unsafe_className="mt-auto">
+          <Text size="mono-xs" mono color="accent">
+            {cta}
+          </Text>
+          <ChevronRight className="size-3.5 text-[color:var(--color-text-accent)]" />
+        </Inline>
+      </Card>
+    </Link>
+  );
+}
+
+// ── BackLink — the one back-affordance for a child surface: arrow + parent label,
+//    routing up one level. Sits as the first child under CockpitPage's title.
+export function BackLink({ to, label }: { to: string; label: string }) {
+  return (
+    <Link
+      to={to}
+      className="inline-flex w-fit items-center gap-1.5 font-mono text-[color:var(--color-text-subtle)] text-mono-xs uppercase tracking-[0.12em] transition-colors hover:text-[color:var(--color-text-accent)]"
+    >
+      <ArrowLeft className="size-3.5" />
+      {label}
+    </Link>
   );
 }

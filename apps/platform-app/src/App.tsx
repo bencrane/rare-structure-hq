@@ -46,6 +46,10 @@ import Pipeline from "./routes/app/Pipeline";
 import Preferences from "./routes/app/Preferences";
 import Proposals from "./routes/app/Proposals";
 import Settings from "./routes/app/Settings";
+import SettingsDocumenso from "./routes/app/SettingsDocumenso";
+import SettingsEngagement from "./routes/app/SettingsEngagement";
+import SettingsOrigination from "./routes/app/SettingsOrigination";
+import SettingsProposalTemplates from "./routes/app/SettingsProposalTemplates";
 import TemplateEditor from "./routes/app/TemplateEditor";
 import TemplatesTable from "./routes/app/TemplatesTable";
 import DirectTemplateSignPage from "./routes/p/DirectTemplateSignPage";
@@ -227,6 +231,38 @@ export function App() {
             element={
               <RequireOperator>
                 <Settings />
+              </RequireOperator>
+            }
+          />
+          <Route
+            path="settings/proposal-templates"
+            element={
+              <RequireOperator>
+                <SettingsProposalTemplates />
+              </RequireOperator>
+            }
+          />
+          <Route
+            path="settings/origination"
+            element={
+              <RequireOperator>
+                <SettingsOrigination />
+              </RequireOperator>
+            }
+          />
+          <Route
+            path="settings/documenso"
+            element={
+              <RequireOperator>
+                <SettingsDocumenso />
+              </RequireOperator>
+            }
+          />
+          <Route
+            path="settings/engagement"
+            element={
+              <RequireOperator>
+                <SettingsEngagement />
               </RequireOperator>
             }
           />

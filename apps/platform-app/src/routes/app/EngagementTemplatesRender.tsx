@@ -126,9 +126,13 @@ export default function EngagementTemplatesRender() {
       title="Engagement Templates"
       description="Render a repo-resident engagement template to a clean PDF via DocRaptor. The PDF opens in a new tab — affix the Documenso fields in the editor afterward."
     >
-      <button type="button" onClick={() => navigate("/app/settings")} className={backCls}>
+      <button
+        type="button"
+        onClick={() => navigate("/app/settings/engagement")}
+        className={backCls}
+      >
         <ArrowLeft className="size-3.5" />
-        Settings
+        Engagement Templates
       </button>
 
       {state === "loading" ? (

@@ -118,9 +118,9 @@ export default function DocumensoTemplatesEditor() {
       title="Documenso Templates"
       description="Set default values on a Documenso template's fields. Defaults are baked onto the template — every document created from it inherits them; per-deal values still override."
     >
-      <button type="button" onClick={() => navigate("/app/settings")} className={backCls}>
+      <button type="button" onClick={() => navigate("/app/settings/documenso")} className={backCls}>
         <ArrowLeft className="size-3.5" />
-        Settings
+        Documenso
       </button>
 
       {state === "loading" ? (
