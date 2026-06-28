@@ -713,6 +713,7 @@ export interface EdgeEngagementTemplate {
   name: string;
   default_style: string;
   styles_available: string[];
+  inputs: string[];
 }
 
 /** The selectable (path, archetype, version) templates — for the Settings dropdowns. */
@@ -767,13 +768,15 @@ export interface EdgeEngagementTemplateRenderPush {
   pdf_url: string | null;
 }
 
-/** Render the selected template AND create a Documenso template from the PDF. Service-token gated. */
+/** Render the selected template AND create a Documenso template from the PDF. Service-token gated.
+ *  ``values`` carries the operator inputs a tokenized template bakes in (edge_api derives the rest). */
 export async function edgeRenderPushTemplate(input: {
   brand: string;
   path: string;
   archetype: string;
   version: string;
   style?: string;
+  values?: { amount: number; introductions: number; term_days: number };
 }): Promise<EdgeEngagementTemplateRenderPush> {
   const res = await fetch(`${base()}/api/v1/engagement-templates/render-push`, {
     method: "POST",

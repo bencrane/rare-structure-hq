@@ -32,6 +32,7 @@ function toClient(t: EdgeEngagementTemplate) {
     name: t.name,
     defaultStyle: t.default_style,
     stylesAvailable: t.styles_available,
+    inputs: t.inputs,
   };
 }
 
@@ -112,12 +113,20 @@ engagementTemplateRoutes.post("/render-push", requireUser, async (c) => {
     archetype?: string;
     version?: string;
     style?: string;
+    values?: { amount?: number; introductions?: number; termDays?: number };
   } | null;
   if (!body?.brand || !body.path || !body.archetype || !body.version) {
     throw new HTTPException(400, {
       message: "brand, path, archetype, and version are required",
     });
   }
+  // A tokenized template (manifest `inputs`) carries the operator's values; map camel → snake for
+  // edge_api, which formats + derives (price-per-introduction) and bakes them into the PDF.
+  const v = body.values;
+  const values =
+    v && v.amount != null && v.introductions != null && v.termDays != null
+      ? { amount: v.amount, introductions: v.introductions, term_days: v.termDays }
+      : undefined;
   try {
     const result = await edgeRenderPushTemplate({
       brand: body.brand,
@@ -125,6 +134,7 @@ engagementTemplateRoutes.post("/render-push", requireUser, async (c) => {
       archetype: body.archetype,
       version: body.version,
       style: body.style,
+      values,
     });
     return c.json({ data: toRenderPushClient(result) });
   } catch (e) {
