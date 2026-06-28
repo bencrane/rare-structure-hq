@@ -68,11 +68,11 @@ export default function TemplatesTable() {
       }
     >
       <Link
-        to="/app/settings"
+        to="/app/settings/proposal-templates"
         className="inline-flex w-fit items-center gap-1.5 font-mono text-[color:var(--color-text-subtle)] text-mono-xs uppercase tracking-[0.12em] transition-colors hover:text-[color:var(--color-text-accent)]"
       >
         <ChevronLeft className="size-3.5" />
-        Settings
+        Proposal Templates
       </Link>
 
       <Section label="Register">
