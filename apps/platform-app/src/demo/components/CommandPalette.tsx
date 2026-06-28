@@ -16,7 +16,8 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { BarChart3, CornerDownLeft, MapPin, Search, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { COMMANDS } from "../data";
-import type { Command } from "../types";
+import type { Command, MapQuery } from "../types";
+import { CompactDatasetToggle } from "./TerminalChrome";
 
 export function CommandPalette({
   open,
@@ -30,6 +31,9 @@ export function CommandPalette({
   const reduced = !!useReducedMotion();
   const [queryText, setQueryText] = useState("");
   const [selected, setSelected] = useState(0);
+  // The serving table the free-typed query runs against. "auto" lets edge_api's router pick;
+  // pinning (e.g. Contracts) overrides it. Sticky across ⌘K opens so a chosen lens persists.
+  const [dataset, setDataset] = useState<NonNullable<MapQuery["dataset"]>>("auto");
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Reset state and focus the input each time the palette opens.
@@ -60,10 +64,10 @@ export function CommandPalette({
       id: "__ask__",
       kind: "map-query",
       label: trimmed,
-      query: { nl: trimmed, minAward: 0 },
+      query: { nl: trimmed, minAward: 0, dataset },
     };
     return [ask, ...filtered];
-  }, [queryText, filtered]);
+  }, [queryText, filtered, dataset]);
 
   // Keep the selection in range as the list narrows.
   useEffect(() => {
@@ -127,6 +131,15 @@ export function CommandPalette({
               <kbd className="border border-[color:var(--color-border-default)] px-1.5 py-0.5 font-mono text-[color:var(--color-text-muted)] text-mono-xs leading-none">
                 esc
               </kbd>
+            </div>
+
+            {/* Serving-table selector — pins the free-typed "Ask the market" query to one table
+                (Contracts = single-contract $ rollup), overriding edge_api's auto-router. */}
+            <div className="flex items-center gap-3 border-[color:var(--color-border-subtle)] border-b px-5 py-2.5">
+              <span className="shrink-0 font-mono text-[color:var(--color-text-subtle)] text-mono-xs uppercase">
+                Dataset
+              </span>
+              <CompactDatasetToggle value={dataset} onChange={setDataset} />
             </div>
 
             {/* Command list */}
