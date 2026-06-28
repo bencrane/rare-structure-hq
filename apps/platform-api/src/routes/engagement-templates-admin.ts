@@ -14,15 +14,18 @@ import { type AuthVariables, requireUser } from "../auth.ts";
 import {
   type EdgeEngagementTemplate,
   type EdgeEngagementTemplateRender,
+  type EdgeEngagementTemplateRenderPush,
   EdgeError,
   edgeListEngagementTemplates,
   edgeRenderEngagementTemplate,
+  edgeRenderPushTemplate,
 } from "../lib/edge.ts";
 
 export const engagementTemplateRoutes = new Hono<{ Variables: AuthVariables }>();
 
 function toClient(t: EdgeEngagementTemplate) {
   return {
+    brand: t.brand,
     path: t.path,
     archetype: t.archetype,
     version: t.version,
@@ -41,6 +44,21 @@ function toRenderClient(r: EdgeEngagementTemplateRender) {
     version: r.version,
     style: r.style,
     pdfBytes: r.pdf_bytes,
+  };
+}
+
+function toRenderPushClient(r: EdgeEngagementTemplateRenderPush) {
+  return {
+    documensoTemplateId: r.documenso_template_id,
+    documensoNumericId: r.documenso_numeric_id,
+    brand: r.brand,
+    path: r.path,
+    archetype: r.archetype,
+    version: r.version,
+    style: r.style,
+    sourceKind: r.source_kind,
+    pdfBytes: r.pdf_bytes,
+    pdfUrl: r.pdf_url,
   };
 }
 
@@ -74,6 +92,37 @@ engagementTemplateRoutes.post("/render", requireUser, async (c) => {
       style: body.style,
     });
     return c.json({ data: toRenderClient(result) });
+  } catch (e) {
+    if (e instanceof EdgeError) throw new HTTPException(502, { message: e.message });
+    throw e;
+  }
+});
+
+// Render the selected template AND create a Documenso template from the PDF. No Documenso fields are
+// placed — the operator affixes them in the editor afterward (the /internal Trigger.dev lane is the
+// automation sibling; this is the operator-driven one, service-token brokered).
+engagementTemplateRoutes.post("/render-push", requireUser, async (c) => {
+  const body = (await c.req.json().catch(() => null)) as {
+    brand?: string;
+    path?: string;
+    archetype?: string;
+    version?: string;
+    style?: string;
+  } | null;
+  if (!body?.brand || !body.path || !body.archetype || !body.version) {
+    throw new HTTPException(400, {
+      message: "brand, path, archetype, and version are required",
+    });
+  }
+  try {
+    const result = await edgeRenderPushTemplate({
+      brand: body.brand,
+      path: body.path,
+      archetype: body.archetype,
+      version: body.version,
+      style: body.style,
+    });
+    return c.json({ data: toRenderPushClient(result) });
   } catch (e) {
     if (e instanceof EdgeError) throw new HTTPException(502, { message: e.message });
     throw e;
