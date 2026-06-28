@@ -136,7 +136,8 @@ federalRoutes.get("/ask", async (c) => {
     requested === "winners" ||
     requested === "company" ||
     requested === "awards" ||
-    requested === "active"
+    requested === "active" ||
+    requested === "contracts"
       ? requested
       : "auto";
   try {

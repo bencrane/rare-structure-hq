@@ -7,6 +7,10 @@
 import { motion } from "framer-motion";
 import { Crosshair, type LucideIcon, Map as MapIcon, Table2 as TableIcon, X } from "lucide-react";
 import { TRACKED_ENTITIES } from "../data";
+import type { MapQuery } from "../types";
+
+/** The dataset the NL /ask query targets, as a non-optional selectable value. */
+type DatasetValue = NonNullable<MapQuery["dataset"]> | "auto";
 
 /** The result-view selector value — flips a map-query result between the geographic dot map
  * and the full results table. The control lives in the terminal header's top-right corner. */
@@ -74,6 +78,72 @@ function CompactViewToggleButton({
     >
       <Icon className="size-3.5" />
     </button>
+  );
+}
+
+/** The compact, text-labeled dataset selector for NL /ask results. Mirrors CompactViewToggle's
+ * bordered segmented row, but each segment carries a text label and pins the serving table the
+ * sentence is routed to (overriding edge_api's "auto" router). */
+const DATASET_SEGMENTS: { label: string; value: DatasetValue }[] = [
+  { label: "Auto", value: "auto" },
+  { label: "Companies", value: "company" },
+  { label: "Contracts", value: "contracts" },
+  { label: "Actions", value: "awards" },
+  { label: "Recompete", value: "active" },
+];
+
+export function CompactDatasetToggle({
+  value,
+  onChange,
+}: {
+  value: DatasetValue;
+  onChange: (d: DatasetValue) => void;
+}) {
+  return (
+    <div className="flex items-stretch border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-raised)]">
+      {DATASET_SEGMENTS.map((seg, i) => (
+        <CompactDatasetToggleButton
+          key={seg.value}
+          active={value === seg.value}
+          onClick={() => onChange(seg.value)}
+          label={seg.label}
+          showDivider={i > 0}
+        />
+      ))}
+    </div>
+  );
+}
+
+function CompactDatasetToggleButton({
+  active,
+  onClick,
+  label,
+  showDivider,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  showDivider: boolean;
+}) {
+  const desc = `Route the query to the ${label} dataset`;
+  return (
+    <>
+      {showDivider && <span className="w-px self-stretch bg-[color:var(--color-border-subtle)]" />}
+      <button
+        type="button"
+        onClick={onClick}
+        aria-pressed={active}
+        aria-label={desc}
+        title={desc}
+        className={`text-mono-xs uppercase px-2 py-1.5 transition-colors ${
+          active
+            ? "bg-[color:var(--color-accent-soft)] text-[color:var(--color-text-accent)]"
+            : "text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text-primary)]"
+        }`}
+      >
+        {label}
+      </button>
+    </>
   );
 }
 
