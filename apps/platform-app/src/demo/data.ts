@@ -1335,12 +1335,15 @@ function askRowToCompany(r: AskMarketRow): Company {
   //   winners  → entity_obligated_usd          (entity window obligation rollup)
   //   awards   → action_obligated_usd          (single prime action's obligation)
   //   active   → contract_current_value_usd    (the contract's current total value / ceiling)
+  //   contracts → contract_obligated_usd (obligated to date; ceiling as fallback)
   // The active dataset carries none of the first three keys, so its value lives in the last slot.
   const totalAwarded = askRowNum(
     r.entity_active_obligated_usd ??
       r.entity_obligated_usd ??
       r.action_obligated_usd ??
-      r.contract_current_value_usd,
+      r.contract_current_value_usd ??
+      r.contract_obligated_usd ??
+      r.contract_ceiling_usd,
   );
   const contractCount = askRowNum(r.award_count);
   const hasFed =
@@ -1539,7 +1542,7 @@ export function resolveAggregate(
  * the query asked for a breakdown/total/distribution/ranking, a result carrying an `aggregate`. */
 export async function runAsk(
   nl: string,
-  dataset: "company" | "winners" | "awards" | "active" | "auto" = "auto",
+  dataset: "company" | "winners" | "awards" | "active" | "contracts" | "auto" = "auto",
 ): Promise<QueryResult> {
   const res = await askMap(nl, dataset);
   // Aggregate intent → a chart, not pins. companies stays empty; the view routes on `aggregate`.

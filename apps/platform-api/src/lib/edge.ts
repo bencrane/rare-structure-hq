@@ -45,9 +45,9 @@ function serviceHeaders(json = true): Record<string, string> {
 /** Requestable dataset: a concrete serving table, or "auto" — edge_api's router picks
  * the table from the sentence ("won an award over $X" → awards; lifetime-obligation /
  * firmographic phrasing → company). */
-export type AskMarketDataset = "company" | "winners" | "awards" | "active" | "auto";
+export type AskMarketDataset = "company" | "winners" | "awards" | "active" | "contracts" | "auto";
 /** The dataset that actually EXECUTED (echoed back by catalyst; never "auto"). */
-export type AskMarketExecutedDataset = "company" | "winners" | "awards" | "active";
+export type AskMarketExecutedDataset = "company" | "winners" | "awards" | "active" | "contracts";
 
 export interface AskMarketRow {
   [key: string]: unknown;

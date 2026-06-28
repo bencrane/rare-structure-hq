@@ -9,7 +9,12 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import { useMemo, useState } from "react";
-import { CommandPill, type ResultView, TerminalHeader } from "./components/TerminalChrome";
+import {
+  CommandPill,
+  CompactDatasetToggle,
+  type ResultView,
+  TerminalHeader,
+} from "./components/TerminalChrome";
 import { industryLabel, resultScopeCell } from "./data";
 import { promoteDossier } from "./dossierCache";
 import { fmtUsd } from "./format";
@@ -37,6 +42,7 @@ export function ResultsTable({
   embedded = false,
   resultView,
   onResultView,
+  onDataset,
 }: {
   query: MapQuery | null;
   results: Company[];
@@ -54,6 +60,8 @@ export function ResultsTable({
   embedded?: boolean;
   resultView: ResultView;
   onResultView: (v: ResultView) => void;
+  /** Flip the serving table the NL /ask query is routed to (only meaningful for `query.nl`). */
+  onDataset?: (d: NonNullable<MapQuery["dataset"]>) => void;
 }) {
   const reduced = !!useReducedMotion();
   const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" }>({
@@ -124,6 +132,10 @@ export function ResultsTable({
             <div className="border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-raised)] px-3 py-1.5 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase shadow-lg shadow-black/40">
               Not applied: {notApplied.join(" · ")}
             </div>
+          )}
+          {/* The dataset toggle only affects NL /ask queries — canned commands never set query.nl. */}
+          {query?.nl && onDataset && (
+            <CompactDatasetToggle value={query.dataset ?? "auto"} onChange={onDataset} />
           )}
         </div>
 

@@ -156,7 +156,7 @@ export type MapQuery = {
    */
   nl?: string;
   /** Serving table the NL query targets. Defaults to "auto" (sentence-routed). */
-  dataset?: "company" | "winners" | "awards" | "active" | "auto";
+  dataset?: "company" | "winners" | "awards" | "active" | "contracts" | "auto";
 };
 
 /** An aggregate command — collapses the market into one chart. */

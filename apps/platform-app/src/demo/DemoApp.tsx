@@ -90,6 +90,13 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
     [defaultView],
   );
 
+  // Flip the serving dataset on the current NL query — re-fires the query-watching effect
+  // (which keys on `query`) so the result re-resolves against the newly pinned table.
+  const handleDataset = useCallback(
+    (dataset: NonNullable<MapQuery["dataset"]>) => setQuery((q) => (q ? { ...q, dataset } : q)),
+    [],
+  );
+
   // Fetch the live result set whenever the map-query changes. Guarded against a stale
   // resolve clobbering a newer query (the classic out-of-order fetch race).
   useEffect(() => {
@@ -159,6 +166,7 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
             embedded={embedded}
             resultView={resultView}
             onResultView={setResultView}
+            onDataset={handleDataset}
           />
         ) : (
           <MapView
@@ -178,6 +186,7 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
             embedded={embedded}
             resultView={resultView}
             onResultView={setResultView}
+            onDataset={handleDataset}
             defaultView={defaultView}
             onDefaultView={setDefaultView}
           />
