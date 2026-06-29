@@ -30,9 +30,8 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
 
-import { createProposal, listEngagementMappings, saveDossierSnapshot } from "./api";
+import { listEngagementMappings, saveDossierSnapshot } from "./api";
 
 type SectionKey = "identity" | "signer" | "overview" | "focus" | "industries" | "geographies";
 
@@ -93,12 +92,10 @@ export function CompanyProfileBoard({ token, seed }: { token: string; seed?: Dos
 
   const [templates, setTemplates] = useState<ProposalTemplateMeta[] | null>(null);
   const [templateId, setTemplateId] = useState("");
-  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [justSaved, setJustSaved] = useState(false);
   const [saving, setSaving] = useState(false);
-  const navigate = useNavigate();
 
   useEffect(() => {
     let active = true;
@@ -154,31 +151,6 @@ export function CompanyProfileBoard({ token, seed }: { token: string; seed?: Dos
   }
 
   const identityName = company.trim() || signerName.trim();
-  const canOriginate = !!templateId && !submitting && !!identityName;
-
-  async function originate() {
-    if (!canOriginate) return;
-    setSubmitting(true);
-    setError(null);
-    try {
-      const res = await createProposal(token, {
-        templateId,
-        client: {
-          name: identityName,
-          email: email.trim() || undefined,
-          title: title.trim() || undefined,
-        },
-        fieldValues: {},
-      });
-      // Land the operator in their portal mandate page (/app/m/:ref) — a native cockpit page,
-      // sidebar from the app shell. NOT the public client surface (/p/:ref).
-      navigate(`/app/m/${res.ref}`);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not originate the mandate");
-    } finally {
-      setSubmitting(false);
-    }
-  }
 
   return (
     <div className="pb-16 md:pb-24">
@@ -365,21 +337,6 @@ export function CompanyProfileBoard({ token, seed }: { token: string; seed?: Dos
 
             {error && (
               <p className="mb-3 text-[color:var(--color-state-warn)] text-mono-xs">{error}</p>
-            )}
-
-            {/* Originate */}
-            <button
-              type="button"
-              onClick={originate}
-              disabled={!canOriginate}
-              className="flex w-full items-center justify-center gap-2 border border-[color:var(--color-accent-primary)] bg-[color:var(--color-accent-soft)] py-3 font-mono text-[color:var(--color-text-accent)] text-mono-xs uppercase tracking-[0.16em] transition-colors hover:bg-[color:var(--color-accent-primary)] hover:text-[color:var(--color-text-onAccent)] disabled:opacity-40"
-            >
-              {submitting ? "Originating…" : "Originate Mandate →"}
-            </button>
-            {!identityName && (
-              <p className="mt-2 text-center font-mono text-[0.5rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
-                Add the prospect to originate
-              </p>
             )}
           </div>
         </aside>
