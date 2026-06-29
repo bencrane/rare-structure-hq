@@ -80,3 +80,26 @@ export async function updateDealDetails(
   if (!res.ok) throw new Error(`save failed: ${res.status} ${await res.text()}`);
   return (await res.json()).data as DealDetails;
 }
+
+// The originate result — a prefilled, PENDING Documenso document minted from the deal's attached
+// template. `signLink` is the relative /p/m/{dealHandle}/{documentId} prospect signing path.
+export interface DealOriginated {
+  envelopeId: string;
+  documentId: number | null;
+  dealHandle: string;
+  signingToken: string | null;
+  signLink: string;
+  status: string;
+  documensoHost: string;
+}
+
+// POST /api/v1/deals/:handle/originate — mint the prospect signing document for the deal. No body;
+// the signatory + template resolve server-side off the deal. Returns the sign link to surface.
+export async function originateDeal(token: string, handle: string): Promise<DealOriginated> {
+  const res = await fetch(`${API_BASE}/api/v1/deals/${encodeURIComponent(handle)}/originate`, {
+    method: "POST",
+    headers: authHeaders(token),
+  });
+  if (!res.ok) throw new Error(`originate failed: ${res.status} ${await res.text()}`);
+  return (await res.json()).data as DealOriginated;
+}

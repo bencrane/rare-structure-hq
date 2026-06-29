@@ -14,9 +14,11 @@ import type { DealSummary } from "@rare-structure-hq/shared";
 import { type AuthVariables, requireUser } from "../auth.ts";
 import {
   type EdgeDealDetails,
+  type EdgeDealOriginated,
   EdgeError,
   edgeGetDealDetails,
   edgeListDeals,
+  edgeOriginateDeal,
   edgeSaveDealDetails,
 } from "../lib/edge.ts";
 
@@ -109,6 +111,32 @@ dealAdminRoutes.put("/:handle/details", requireUser, async (c) => {
         typeof body.defaultTemplateUuid === "string" ? body.defaultTemplateUuid : null,
     });
     return c.json({ data: toDealDetails(r) });
+  } catch (e) {
+    if (e instanceof EdgeError) throw new HTTPException(502, { message: e.message });
+    throw e;
+  }
+});
+
+// Map the edge originate result (snake_case) onto the SPA shape (camelCase).
+function toDealOriginated(r: EdgeDealOriginated) {
+  return {
+    envelopeId: r.envelope_id,
+    documentId: r.document_id,
+    dealHandle: r.deal_handle,
+    signingToken: r.signing_token,
+    signLink: r.sign_link,
+    status: r.status,
+    documensoHost: r.documenso_host,
+  };
+}
+
+// POST /api/v1/deals/:handle/originate — mint a prefilled, PENDING Documenso document for the deal
+// from its attached template (edge resolves the signatory + template off the deal). Returns the
+// /p/m/{deal_handle}/{document_id} sign link. No request body; payment is a later phase.
+dealAdminRoutes.post("/:handle/originate", requireUser, async (c) => {
+  try {
+    const r = await edgeOriginateDeal(c.req.param("handle"));
+    return c.json({ data: toDealOriginated(r) });
   } catch (e) {
     if (e instanceof EdgeError) throw new HTTPException(502, { message: e.message });
     throw e;

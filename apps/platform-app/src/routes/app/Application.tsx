@@ -5,7 +5,7 @@
  * richer dossier intelligence + originate land once enrichment is wired — this page is the
  * surface that will populate. Authors no geometry — composes CockpitPage.
  */
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, FileSignature } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
@@ -145,7 +145,15 @@ export default function Application() {
       title="Application"
       description={handle || "—"}
       width="wide"
-      actions={<Badge tone={statusTone(b.status)}>{b.status}</Badge>}
+      actions={
+        <div className="flex items-center gap-3">
+          <Link to={`/app/m/${handle}`} className={originateCls}>
+            <FileSignature className="size-3.5" />
+            Originate Mandate
+          </Link>
+          <Badge tone={statusTone(b.status)}>{b.status}</Badge>
+        </div>
+      }
     >
       {back}
       {/* key=handle remounts the board so it re-seeds when navigating between deals. */}
@@ -156,3 +164,6 @@ export default function Application() {
 
 const backCls =
   "inline-flex w-fit items-center gap-1.5 font-mono text-[color:var(--color-text-subtle)] text-mono-xs uppercase tracking-[0.12em] transition-colors hover:text-[color:var(--color-text-accent)]";
+
+const originateCls =
+  "inline-flex items-center gap-1.5 border border-[color:var(--color-border-default)] px-3 py-1.5 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase tracking-[0.12em] transition-colors hover:border-[color:var(--color-text-accent)] hover:text-[color:var(--color-text-accent)]";

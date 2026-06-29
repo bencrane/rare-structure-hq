@@ -41,6 +41,7 @@ import Dossier from "./routes/app/Dossier";
 import EngagementTemplateToDocumenso from "./routes/app/EngagementTemplateToDocumenso";
 import EngagementTemplatesRender from "./routes/app/EngagementTemplatesRender";
 import Insights from "./routes/app/Insights";
+import Mandate from "./routes/app/Mandate";
 import MapTab from "./routes/app/MapTab";
 import Overview from "./routes/app/Overview";
 import Preferences from "./routes/app/Preferences";
@@ -180,6 +181,16 @@ export function App() {
             element={
               <RequireOperator>
                 <DealDetails />
+              </RequireOperator>
+            }
+          />
+          {/* Mandate editor — opened from an Application by the deal's 8-char handle. Shows the
+              attached template + signatory and originates a prefilled Documenso doc (the /p/m link). */}
+          <Route
+            path="m/:handle"
+            element={
+              <RequireOperator>
+                <Mandate />
               </RequireOperator>
             }
           />
