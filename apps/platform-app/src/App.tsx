@@ -35,6 +35,7 @@ import Application from "./routes/app/Application";
 import Applications from "./routes/app/Applications";
 import DealDetails from "./routes/app/DealDetails";
 import Calendar from "./routes/app/Calendar";
+import DocumensoTemplateMirror from "./routes/app/DocumensoTemplateMirror";
 import DocumensoTemplatesEditor from "./routes/app/DocumensoTemplatesEditor";
 import DocumensoTemplatesManage from "./routes/app/DocumensoTemplatesManage";
 import Dossier from "./routes/app/Dossier";
@@ -246,6 +247,14 @@ export function App() {
             element={
               <RequireOperator>
                 <DocumensoTemplatesManage />
+              </RequireOperator>
+            }
+          />
+          <Route
+            path="settings/documenso-template-mirror"
+            element={
+              <RequireOperator>
+                <DocumensoTemplateMirror />
               </RequireOperator>
             }
           />
