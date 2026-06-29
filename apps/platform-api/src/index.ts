@@ -30,6 +30,7 @@ import { companyProfileRoutes } from "./routes/company-profiles-admin.ts";
 import { documensoPublicRoutes } from "./routes/documenso-public.ts";
 import { documensoTemplateFieldRoutes } from "./routes/documenso-template-fields-admin.ts";
 import { documensoTemplateMirrorRoutes } from "./routes/documenso-template-mirror.ts";
+import { documensoTemplatePrefillRoutes } from "./routes/documenso-template-prefill.ts";
 import { documensoTemplateRoutes } from "./routes/documenso-templates-admin.ts";
 import { engagementMappingRoutes } from "./routes/engagement-mappings-admin.ts";
 import { engagementTemplateRoutes } from "./routes/engagement-templates-admin.ts";
@@ -132,6 +133,10 @@ app.route("/api/v1/documenso-template-fields", documensoTemplateFieldRoutes);
 // Documenso template mirror — projected envelope rows + on-demand re-grab (through the existing
 // projector). Distinct segment from the `/api/v1/documenso` mount, so no prefix collision.
 app.route("/api/v1/documenso-template-mirror", documensoTemplateMirrorRoutes);
+// Manage Documenso Templates — operator-owned per-template field_settings prefill config (the ONLY
+// writer of business.documenso_template_document_prefill_configs). Distinct segment from the
+// `/api/v1/documenso` mount, so no prefix collision.
+app.route("/api/v1/documenso-template-prefill", documensoTemplatePrefillRoutes);
 app.route("/api/v1/company-profiles", companyProfileRoutes);
 // Insights — the operator's live call cockpit. Brokers the offline Close "now dialing" read
 // from edge_api; the Insights tab polls /active-call and surfaces the briefing on domain change.
