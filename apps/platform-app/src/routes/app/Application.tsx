@@ -5,9 +5,9 @@
  * richer dossier intelligence + originate land once enrichment is wired — this page is the
  * surface that will populate. Authors no geometry — composes CockpitPage.
  */
-import { ChevronLeft, FileSignature } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
 import type { BookingDetail } from "@rare-structure-hq/shared";
 import { Badge, Text } from "@rare-structure-hq/ui";
@@ -31,6 +31,7 @@ export default function Application() {
   // The URL carries the deal's 8-char public handle (DealSummary.handle);
   // dealId is the center node. Resolve handle → deal → last booking.
   const { handle = "" } = useParams();
+  const navigate = useNavigate();
   const { session } = useAuth();
   const token = session?.access_token ?? "";
 
@@ -145,25 +146,20 @@ export default function Application() {
       title="Application"
       description={handle || "—"}
       width="wide"
-      actions={
-        <div className="flex items-center gap-3">
-          <Link to={`/app/m/${handle}`} className={originateCls}>
-            <FileSignature className="size-3.5" />
-            Originate Mandate
-          </Link>
-          <Badge tone={statusTone(b.status)}>{b.status}</Badge>
-        </div>
-      }
+      actions={<Badge tone={statusTone(b.status)}>{b.status}</Badge>}
     >
       {back}
-      {/* key=handle remounts the board so it re-seeds when navigating between deals. */}
-      <CompanyProfileBoard key={handle} token={token} seed={seed} />
+      {/* key=handle remounts the board so it re-seeds when navigating between deals. The board's
+          "Generate Mandate" button routes to the deal-keyed Mandate editor (routing owned here). */}
+      <CompanyProfileBoard
+        key={handle}
+        token={token}
+        seed={seed}
+        onGenerateMandate={() => navigate(`/app/m/${handle}`)}
+      />
     </CockpitPage>
   );
 }
 
 const backCls =
   "inline-flex w-fit items-center gap-1.5 font-mono text-[color:var(--color-text-subtle)] text-mono-xs uppercase tracking-[0.12em] transition-colors hover:text-[color:var(--color-text-accent)]";
-
-const originateCls =
-  "inline-flex items-center gap-1.5 border border-[color:var(--color-border-default)] px-3 py-1.5 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase tracking-[0.12em] transition-colors hover:border-[color:var(--color-text-accent)] hover:text-[color:var(--color-text-accent)]";
