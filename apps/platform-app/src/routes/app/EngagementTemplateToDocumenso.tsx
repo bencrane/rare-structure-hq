@@ -36,6 +36,7 @@ export default function EngagementTemplateToDocumenso() {
   const { selected, brand, path, archetype, version, style } = cascade;
   const needsValues = (selected?.inputs?.length ?? 0) > 0;
 
+  const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
   const [introductions, setIntroductions] = useState("");
   const [termDays, setTermDays] = useState("");
@@ -63,12 +64,14 @@ export default function EngagementTemplateToDocumenso() {
     setResult(null);
     setCreateError(null);
     // Heavy multi-hop (BFF → edge_api → DocRaptor + Documenso); renderPushTemplate bounds it at 120s.
+    const trimmedName = name.trim();
     renderPushTemplate(token, {
       brand,
       path,
       archetype,
       version,
       style: style || selected.default_style,
+      name: trimmedName || undefined,
       values: needsValues
         ? { amount: amountNum, introductions: introNum, term_days: daysNum }
         : undefined,
@@ -84,6 +87,7 @@ export default function EngagementTemplateToDocumenso() {
     archetype,
     version,
     style,
+    name,
     needsValues,
     valuesValid,
     amountNum,
@@ -101,6 +105,20 @@ export default function EngagementTemplateToDocumenso() {
       <EngagementTemplateCascadeGate cascade={cascade}>
         <div className="flex flex-col gap-6">
           <EngagementTemplateCascadeFields cascade={cascade} />
+
+          <Section label="Template Name">
+            <Panel>
+              <ValueField label="Documenso template name (optional)">
+                <input
+                  type="text"
+                  placeholder={selected?.name ?? "Engagement Template"}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className={numCls}
+                />
+              </ValueField>
+            </Panel>
+          </Section>
 
           {needsValues && (
             <Section label="Values">

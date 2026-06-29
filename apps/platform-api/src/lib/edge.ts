@@ -849,6 +849,8 @@ export async function edgeRenderPushTemplate(input: {
   archetype: string;
   version: string;
   style?: string;
+  /** Operator-set name for the created Documenso template (omit to let edge_api default it). */
+  name?: string;
   values?: { amount: number; introductions: number; term_days: number };
 }): Promise<EdgeEngagementTemplateRenderPush> {
   const res = await fetch(`${base()}/api/v1/engagement-templates/render-push`, {
