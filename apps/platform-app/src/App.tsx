@@ -51,7 +51,6 @@ import SettingsDocumenso from "./routes/app/SettingsDocumenso";
 import SettingsEngagement from "./routes/app/SettingsEngagement";
 import SettingsOrigination from "./routes/app/SettingsOrigination";
 import SettingsProposalTemplates from "./routes/app/SettingsProposalTemplates";
-import SettingsRenderPush from "./routes/app/SettingsRenderPush";
 import TemplateEditor from "./routes/app/TemplateEditor";
 import TemplatesTable from "./routes/app/TemplatesTable";
 import DirectTemplateSignPage from "./routes/p/DirectTemplateSignPage";
@@ -303,14 +302,6 @@ export function App() {
             element={
               <RequireOperator>
                 <EngagementTemplateToDocumenso />
-              </RequireOperator>
-            }
-          />
-          <Route
-            path="settings/render-push"
-            element={
-              <RequireOperator>
-                <SettingsRenderPush />
               </RequireOperator>
             }
           />
