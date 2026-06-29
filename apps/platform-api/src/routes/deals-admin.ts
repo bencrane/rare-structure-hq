@@ -51,7 +51,8 @@ dealAdminRoutes.get("/", requireUser, async (c) => {
 });
 
 // Map the edge deal_details (snake_case) onto the SPA shape (camelCase). The `contacts` jsonb array
-// passes through verbatim (free-form {contact_id, full_name, email, title} objects).
+// passes through verbatim (deal_contacts junction rows: {contact_id, full_name, email, title,
+// is_signatory}); `available_contacts` is the add pool (account contacts not yet on the deal).
 function toDealDetails(r: EdgeDealDetails) {
   return {
     dealId: r.deal_id,
@@ -59,7 +60,13 @@ function toDealDetails(r: EdgeDealDetails) {
     companyName: r.company_name,
     companyDomain: r.company_domain,
     contacts: r.contacts,
-    content: r.content,
+    availableContacts: (r.available_contacts ?? []).map((a) => ({
+      contactId: a.contact_id,
+      fullName: a.full_name,
+      email: a.email,
+      title: a.title,
+    })),
+    fieldValues: r.field_values,
     defaultTemplateUuid: r.default_template_uuid,
     templateOrigin: r.template_origin,
     availableTemplates: (r.available_templates ?? []).map((t) => ({
@@ -82,19 +89,21 @@ dealAdminRoutes.get("/:handle/details", requireUser, async (c) => {
   }
 });
 
-// PUT /api/v1/deals/:handle/details — upsert deal_details (contacts + content + attached template).
+// PUT /api/v1/deals/:handle/details — reconcile the deal_contacts junction (by contact_id +
+// is_signatory) + field_values + attached template. Person identity is NOT edited via this PUT;
+// `contacts` is an array of {contact_id, is_signatory} and passes through to edge as-is.
 dealAdminRoutes.put("/:handle/details", requireUser, async (c) => {
   const body = (await c.req.json().catch(() => ({}))) as {
     contacts?: unknown;
-    content?: unknown;
+    fieldValues?: unknown;
     defaultTemplateUuid?: unknown;
   };
   try {
     const r = await edgeSaveDealDetails(c.req.param("handle"), {
       contacts: Array.isArray(body.contacts) ? body.contacts : [],
-      content:
-        body.content && typeof body.content === "object" && !Array.isArray(body.content)
-          ? (body.content as Record<string, unknown>)
+      field_values:
+        body.fieldValues && typeof body.fieldValues === "object" && !Array.isArray(body.fieldValues)
+          ? (body.fieldValues as Record<string, unknown>)
           : {},
       default_template_uuid:
         typeof body.defaultTemplateUuid === "string" ? body.defaultTemplateUuid : null,
