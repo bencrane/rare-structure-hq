@@ -1,11 +1,13 @@
 /**
- * Deal Details API client — the editor opened from a Research row.
+ * Deal API client — the Deal Details editor (from Research) and the Mandate editor (from Application).
  *
- *   GET /api/v1/deals/:handle/details   load the deal's deal_details + the org's templates
- *   PUT /api/v1/deals/:handle/details   save the edited contacts + content + attached template
+ *   GET  /api/v1/deals/:handle/details    load field_values + the org's templates + the deal's contacts
+ *   PUT  /api/v1/deals/:handle/details    save field_values + attached template + reconcile contacts
+ *   POST /api/v1/deals/:handle/originate  mint the prospect signing document from the attached template
  *
- * Brokered by the platform-api BFF to core-x (business.deal_details). The `contacts` array is the
- * free-form deal_details.contacts jsonb (snake_case keys); it passes through verbatim.
+ * Brokered by the platform-api BFF to core-x. The `contacts` array is the business.deal_contacts
+ * junction (membership + is_signatory, person fields joined read-only from business.contacts) — NOT a
+ * deal_details column. The PUT reconciles that junction by {contact_id, is_signatory}.
  */
 const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "";
 
