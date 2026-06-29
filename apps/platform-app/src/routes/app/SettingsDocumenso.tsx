@@ -5,7 +5,7 @@
  * field values that bake onto every document created from a template — lives under
  * `/app/settings/documenso-templates`.
  */
-import { FileSignature, Table2 } from "lucide-react";
+import { FileSignature, RefreshCw, Table2 } from "lucide-react";
 
 import { Grid } from "@rare-structure-hq/ui";
 
@@ -32,6 +32,13 @@ export default function SettingsDocumenso() {
           description="Browse every Documenso template registered for your org — active and archived — in one table."
           cta="Open table"
           to="/app/settings/documenso/templates"
+        />
+        <HubCard
+          icon={RefreshCw}
+          title="Template Mirror"
+          description="Inspect the projected mirror of your live Documenso template envelopes — fields, recipients, status — and re-grab any of them on demand."
+          cta="Open mirror"
+          to="/app/settings/documenso-template-mirror"
         />
       </Grid>
     </CockpitPage>

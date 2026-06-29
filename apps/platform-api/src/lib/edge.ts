@@ -864,3 +864,63 @@ export async function edgeRenderPushTemplate(input: {
     );
   return (await res.json()) as EdgeEngagementTemplateRenderPush;
 }
+
+// ── Documenso template mirror (Settings "Documenso Templates" mirror + on-demand re-sync) ──────────
+// edge_api owns the projected mirror of the live Documenso templates (one row per envelope in
+// business.documenso_envelopes). The list reads the mirror; re-sync re-pulls a single envelope (or all)
+// through the EXISTING projector (documenso_client.get_envelope → queries.upsert_envelope) — verbatim
+// semantics, never touching business.documenso_template_configs. This BFF only brokers the service
+// token across the auth boundary; edge_api owns the shape and all logic (snake_case passes through).
+
+export interface EdgeTemplateMirrorRow {
+  documenso_id: number;
+  title: string | null;
+  status: string | null;
+  field_count: number;
+  recipient_count: number;
+  synced_at: string | null;
+}
+
+/** The projected mirror of every Documenso template envelope — the Settings table source. */
+export async function edgeListTemplateMirror(): Promise<EdgeTemplateMirrorRow[]> {
+  const res = await fetch(`${base()}/api/v1/documenso-envelopes/templates`, {
+    headers: serviceHeaders(false),
+  });
+  if (!res.ok) throw new EdgeError(`edge template-mirror list failed: ${res.status}`);
+  return (await res.json()) as EdgeTemplateMirrorRow[];
+}
+
+export interface EdgeTemplateResyncResult {
+  documenso_id: number;
+  field_count: number;
+  synced: boolean;
+  error?: string;
+}
+
+/** Re-pull ONE template envelope through the existing projector (get_envelope → upsert_envelope). */
+export async function edgeResyncTemplate(documensoId: number): Promise<EdgeTemplateResyncResult> {
+  const res = await fetch(
+    `${base()}/api/v1/documenso-envelopes/${encodeURIComponent(documensoId)}/resync`,
+    { method: "POST", headers: serviceHeaders(false) },
+  );
+  if (!res.ok)
+    throw new EdgeError(`edge template-mirror resync failed: ${res.status} ${await res.text()}`);
+  return (await res.json()) as EdgeTemplateResyncResult;
+}
+
+export interface EdgeTemplateResyncAllResult {
+  requested: number;
+  synced: number;
+  results: EdgeTemplateResyncResult[];
+}
+
+/** Re-pull EVERY template envelope through the existing projector. */
+export async function edgeResyncAllTemplates(): Promise<EdgeTemplateResyncAllResult> {
+  const res = await fetch(`${base()}/api/v1/documenso-envelopes/resync-all`, {
+    method: "POST",
+    headers: serviceHeaders(false),
+  });
+  if (!res.ok)
+    throw new EdgeError(`edge template-mirror resync-all failed: ${res.status} ${await res.text()}`);
+  return (await res.json()) as EdgeTemplateResyncAllResult;
+}
