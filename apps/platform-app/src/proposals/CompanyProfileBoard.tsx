@@ -22,6 +22,7 @@ import {
   Building2,
   Check,
   ChevronDown,
+  FileSignature,
   MapPin,
   Plus,
   Save,
@@ -64,7 +65,18 @@ export type DossierSeed = {
   verified?: Partial<Record<SectionKey, boolean>>;
 };
 
-export function CompanyProfileBoard({ token, seed }: { token: string; seed?: DossierSeed }) {
+export function CompanyProfileBoard({
+  token,
+  seed,
+  onGenerateMandate,
+}: {
+  token: string;
+  seed?: DossierSeed;
+  // Navigate to the deal-keyed Mandate editor. Supplied by the routing-owning parent so the board
+  // stays router-free; the engagement picker above is performative — the editor resolves the template
+  // off the deal's deal_details.default_template_uuid, so only the deal handle is keyed.
+  onGenerateMandate?: () => void;
+}) {
   // Identity + the only fields that drive the create.
   const [company, setCompany] = useState(seed?.company ?? "");
   const [domain, setDomain] = useState(seed?.domain ?? "");
@@ -334,6 +346,19 @@ export function CompanyProfileBoard({ token, seed }: { token: string; seed?: Dos
               </span>
               <EngagementSelect templates={templates} value={templateId} onChange={setTemplateId} />
             </div>
+
+            {/* Generate Mandate — navigates to the deal-keyed Mandate editor (where the document is
+                actually originated). Deal-keyed only; the editor reads the attached template. */}
+            {onGenerateMandate ? (
+              <button
+                type="button"
+                onClick={onGenerateMandate}
+                className="mb-3 flex w-full items-center justify-center gap-2 border border-[color:var(--color-border-default)] px-4 py-2.5 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase tracking-[0.14em] transition-colors hover:border-[color:var(--color-text-accent)] hover:text-[color:var(--color-text-accent)]"
+              >
+                <FileSignature className="size-3.5" />
+                Generate Mandate
+              </button>
+            ) : null}
 
             {error && (
               <p className="mb-3 text-[color:var(--color-state-warn)] text-mono-xs">{error}</p>
