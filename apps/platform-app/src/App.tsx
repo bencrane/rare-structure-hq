@@ -41,11 +41,9 @@ import Dossier from "./routes/app/Dossier";
 import EngagementTemplateToDocumenso from "./routes/app/EngagementTemplateToDocumenso";
 import EngagementTemplatesRender from "./routes/app/EngagementTemplatesRender";
 import Insights from "./routes/app/Insights";
-import Mandate from "./routes/app/Mandate";
 import MapTab from "./routes/app/MapTab";
 import Overview from "./routes/app/Overview";
 import Preferences from "./routes/app/Preferences";
-import Proposals from "./routes/app/Proposals";
 import Research from "./routes/app/Research";
 import Settings from "./routes/app/Settings";
 import SettingsDocumenso from "./routes/app/SettingsDocumenso";
@@ -58,9 +56,6 @@ import TemplatesTable from "./routes/app/TemplatesTable";
 import DirectTemplateSignPage from "./routes/p/DirectTemplateSignPage";
 import DocumentPaymentPage from "./routes/p/DocumentPaymentPage";
 import DocumentSignPage from "./routes/p/DocumentSignPage";
-import PaymentPage from "./routes/p/PaymentPage";
-import SignPage from "./routes/p/SignPage";
-import SummaryPage from "./routes/p/SummaryPage";
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const { session, loading } = useAuth();
@@ -101,8 +96,6 @@ export function App() {
         {/* `/map` is un-hosted. Restore the MapDemo import above and swap the
             element back to `<MapDemo />` to re-enable. */}
         <Route path="/map" element={<Navigate to="/signin" replace />} />
-        {/* Engagement proposal summary — the ref is its own credential. */}
-        <Route path="/p/:ref" element={<SummaryPage />} />
         {/* Direct-to-documenso prospect signing — the opportunity UUID is the unguessable access
             capability, the numeric document id a disambiguator behind it. The static `/p/m/` segment
             ranks above the dynamic `/p/:ref`, so there is no collision. */}
@@ -116,10 +109,6 @@ export function App() {
         {/* Direct-to-documenso ACH payment — same (opportunity, document) pair; reached from the
             signed-confirmation "Continue to payment" CTA. Ranks above the dynamic /p/:ref/pay. */}
         <Route path="/p/m/:opportunityId/:documentId/pay" element={<DocumentPaymentPage />} />
-        {/* Full-page signing view — Documenso two-column embed, on our domain. */}
-        <Route path="/p/:ref/sign" element={<SignPage />} />
-        {/* ACH payment view — Stripe Elements, on our domain, after signing. */}
-        <Route path="/p/:ref/pay" element={<PaymentPage />} />
 
         {/* Email + password gate. */}
         <Route path="/signin" element={<SignIn />} />
@@ -191,25 +180,6 @@ export function App() {
             element={
               <RequireOperator>
                 <DealDetails />
-              </RequireOperator>
-            }
-          />
-          <Route
-            path="proposals"
-            element={
-              <RequireOperator>
-                <Proposals />
-              </RequireOperator>
-            }
-          />
-          {/* Operator's portal view of a minted mandate — a NATIVE cockpit page (sidebar from the
-              app shell), keyed to the proposal's template + prospect. Originate lands here; the
-              client-facing link stays the public `/p/:ref`. */}
-          <Route
-            path="m/:ref"
-            element={
-              <RequireOperator>
-                <Mandate />
               </RequireOperator>
             }
           />

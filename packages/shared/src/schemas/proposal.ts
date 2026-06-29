@@ -15,13 +15,11 @@ import { isoTimestampSchema } from "./common";
  * with what was bound at instantiation and immune to later registry edits.
  */
 
-/** Lifecycle of a proposal record. */
-export const proposalStatusSchema = z.enum(["created", "sent", "signed", "paid"]);
-export type ProposalStatus = z.infer<typeof proposalStatusSchema>;
+/** Lifecycle of a proposal record. Internal — nested inside `proposalShellSchema`. */
+const proposalStatusSchema = z.enum(["created", "sent", "signed", "paid"]);
 
-/** Input kind of an operator-filled dynamic var. */
-export const proposalFieldKindSchema = z.enum(["text", "email", "longtext"]);
-export type ProposalFieldKind = z.infer<typeof proposalFieldKindSchema>;
+/** Input kind of an operator-filled dynamic var. Internal — nested inside `proposalTemplateFieldSchema`. */
+const proposalFieldKindSchema = z.enum(["text", "email", "longtext"]);
 
 /**
  * One operator-filled dynamic var for a template. The form a template renders is
@@ -50,77 +48,22 @@ export const proposalTemplateMetaSchema = z.object({
 });
 export type ProposalTemplateMeta = z.infer<typeof proposalTemplateMetaSchema>;
 
-/** Operator → BFF: instantiate a proposal record. */
-export const createProposalInputSchema = z.object({
-  templateId: z.string().min(1),
-  client: z.object({
-    name: z.string().min(1),
-    email: z.string().email().optional(),
-    title: z.string().optional(),
-  }),
-  /** Any extra dynamic vars beyond client identity (template-specific). */
-  fieldValues: z.record(z.string()).default({}),
-});
-export type CreateProposalInput = z.infer<typeof createProposalInputSchema>;
-
-/** BFF → operator: result of instantiating a proposal. */
-export const createProposalResultSchema = z.object({
-  ref: z.string(),
-  /** Path only — the client prepends its own origin to form the shareable link. */
-  path: z.string(),
-});
-export type CreateProposalResult = z.infer<typeof createProposalResultSchema>;
-
-/** How the infrastructure fee is invoiced (mirrors edge_api). */
-export const billingCadenceSchema = z.enum(["upfront_in_full", "monthly", "quarterly"]);
-export type BillingCadence = z.infer<typeof billingCadenceSchema>;
-
-/** One success-fee tier — label + display rate (e.g. "5.0%"). */
-export const successFeeTierSchema = z.object({ tier: z.string(), rate: z.string() });
-export type SuccessFeeTier = z.infer<typeof successFeeTierSchema>;
+/** One success-fee tier — label + display rate (e.g. "5.0%"). Internal — nested inside `proposalPricingSchema`. */
+const successFeeTierSchema = z.object({ tier: z.string(), rate: z.string() });
 
 /**
  * The STRUCTURED pricing the mandate editor binds to: seeded from the shell, edited (or not), and
  * sent back on Confirm. `billingCadence` is permissive on read (never breaks the shell parse).
  */
-export const proposalPricingSchema = z.object({
+const proposalPricingSchema = z.object({
   monthlyFeeCents: z.number().int().nonnegative(),
   durationMonths: z.number().int().positive(),
   billingCadence: z.string(),
   successFeeTiers: z.array(successFeeTierSchema),
 });
-export type ProposalPricing = z.infer<typeof proposalPricingSchema>;
 
-/**
- * Operator → BFF: the values LOCKED IN on the mandate editor ("Confirm & originate"). Every field
- * optional — an omitted value keeps the draft's current actual, so a zero-edit Confirm re-stamps
- * the seed defaults. Confirm stamps these onto the proposal instance, then renders the PDF + creates
- * the signing envelope.
- */
-export const confirmProposalInputSchema = z.object({
-  monthlyFeeCents: z.number().int().positive().optional(),
-  durationMonths: z.number().int().positive().optional(),
-  // Permissive (string, not the enum) to match the read side — the engine normalizes cadence, and a
-  // template seeded with a non-enum cadence must still be confirmable rather than 400-ing.
-  billingCadence: z.string().optional(),
-  successFeeTiers: z.array(successFeeTierSchema).optional(),
-  effectiveDate: z.string().optional(),
-});
-export type ConfirmProposalInput = z.infer<typeof confirmProposalInputSchema>;
-
-/** BFF → operator: the originate result. `signingToken` present once the envelope is created. */
-export const confirmProposalResultSchema = z.object({
-  ref: z.string(),
-  status: proposalStatusSchema,
-  provisioned: z.boolean(),
-  signingToken: z.string().optional(),
-  provisionError: z.string().nullable().optional(),
-});
-export type ConfirmProposalResult = z.infer<typeof confirmProposalResultSchema>;
-
-/** One grok-at-a-glance term row shown on the shell. */
-export const headlineRowSchema = z.object({ label: z.string(), value: z.string() });
-export type HeadlineRow = z.infer<typeof headlineRowSchema>;
+/** One grok-at-a-glance term row shown on the shell. Internal — nested inside `proposalShellSchema`. */
+const headlineRowSchema = z.object({ label: z.string(), value: z.string() });
 
 /**
  * BFF → client shell: the lean public projection of a proposal. No internal cast
@@ -152,55 +95,3 @@ export const proposalShellSchema = z.object({
   effectiveDate: z.string().optional(),
 });
 export type ProposalShell = z.infer<typeof proposalShellSchema>;
-
-/** BFF → operator: one row in the proposals list (the cockpit tab). */
-export const proposalSummarySchema = z.object({
-  ref: z.string(),
-  clientName: z.string(),
-  templateLabel: z.string(),
-  status: proposalStatusSchema,
-  createdAt: isoTimestampSchema,
-});
-export type ProposalSummary = z.infer<typeof proposalSummarySchema>;
-
-// ── Payments (Stripe ACH) ─────────────────────────────────────────────────────
-// The post-signature step: the client authorizes a single ACH debit of the quarterly fee.
-// Mirrors edge_api's payment projections. Money is integer minor units (cents). Card is never
-// offered — the PaymentIntent is created with us_bank_account only.
-
-/** Stripe ACH PaymentIntent lifecycle, mirrored from edge_api. */
-export const paymentStatusSchema = z.enum([
-  "none",
-  "requires_payment",
-  "processing",
-  "succeeded",
-  "failed",
-  "canceled",
-]);
-export type PaymentStatus = z.infer<typeof paymentStatusSchema>;
-
-/**
- * BFF → pay page: everything the browser needs to mount the ACH PaymentElement. `clientSecret` is a
- * per-intent capability; `publishableKey` is public by design. No secret key crosses this boundary.
- */
-export const paymentInitSchema = z.object({
-  clientSecret: z.string(),
-  publishableKey: z.string(),
-  amountCents: z.number().int(),
-  currency: z.string().default("usd"),
-  paymentStatus: paymentStatusSchema,
-});
-export type PaymentInit = z.infer<typeof paymentInitSchema>;
-
-/**
- * BFF → pay page: the authoritative (webhook-driven) payment state the page polls after confirm.
- * ACH settles asynchronously, so this — not the client confirm result — is how the page learns the
- * funds actually settled.
- */
-export const paymentStateSchema = z.object({
-  paymentStatus: paymentStatusSchema,
-  amountCents: z.number().int().nullable(),
-  currency: z.string().default("usd"),
-  paidAt: z.string().nullable().optional(),
-});
-export type PaymentState = z.infer<typeof paymentStateSchema>;
