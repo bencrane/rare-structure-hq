@@ -1,6 +1,6 @@
 /**
- * Research — the operator cockpit tab. Lists DEALS; opening one routes to its Application
- * company-profile page (`/app/applications/:handle`).
+ * Research — the operator cockpit tab. Lists DEALS; opening one routes to its Deal Details
+ * editor (`/app/deals/:handle`) where deal_details (contacts + attached template) are editable.
  *
  * Reuses the Pipeline tab's read-only data source (`listDeals`); it does NOT touch the
  * Pipeline table — this is an independent table on its own surface.
@@ -56,9 +56,9 @@ export default function Research() {
     refresh();
   }, [refresh]);
 
-  // Open this deal's Application company-profile page (by its 8-char handle).
+  // Open this deal's Deal Details editor (by its 8-char handle).
   const openRow = (o: DealSummary) =>
-    navigate(`/app/applications/${encodeURIComponent(o.handle)}`);
+    navigate(`/app/deals/${encodeURIComponent(o.handle)}`);
 
   return (
     <CockpitPage

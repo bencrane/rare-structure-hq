@@ -12,7 +12,13 @@ import { HTTPException } from "hono/http-exception";
 import type { DealSummary } from "@rare-structure-hq/shared";
 
 import { type AuthVariables, requireUser } from "../auth.ts";
-import { EdgeError, edgeListDeals } from "../lib/edge.ts";
+import {
+  type EdgeDealDetails,
+  EdgeError,
+  edgeGetDealDetails,
+  edgeListDeals,
+  edgeSaveDealDetails,
+} from "../lib/edge.ts";
 
 export const dealAdminRoutes = new Hono<{ Variables: AuthVariables }>();
 
@@ -38,6 +44,62 @@ dealAdminRoutes.get("/", requireUser, async (c) => {
       bookedAt: r.booked_at,
     }));
     return c.json({ data: list });
+  } catch (e) {
+    if (e instanceof EdgeError) throw new HTTPException(502, { message: e.message });
+    throw e;
+  }
+});
+
+// Map the edge deal_details (snake_case) onto the SPA shape (camelCase). The `contacts` jsonb array
+// passes through verbatim (free-form {contact_id, full_name, email, title} objects).
+function toDealDetails(r: EdgeDealDetails) {
+  return {
+    dealId: r.deal_id,
+    dealHandle: r.deal_handle,
+    companyName: r.company_name,
+    companyDomain: r.company_domain,
+    contacts: r.contacts,
+    content: r.content,
+    defaultTemplateUuid: r.default_template_uuid,
+    templateOrigin: r.template_origin,
+    availableTemplates: (r.available_templates ?? []).map((t) => ({
+      templateUuid: t.template_uuid,
+      documensoTemplateId: t.documenso_template_id,
+      name: t.name,
+      isDefault: t.is_default,
+    })),
+  };
+}
+
+// GET /api/v1/deals/:handle/details — the deal's editable deal_details + the deal-org's templates.
+dealAdminRoutes.get("/:handle/details", requireUser, async (c) => {
+  try {
+    const r = await edgeGetDealDetails(c.req.param("handle"));
+    return c.json({ data: toDealDetails(r) });
+  } catch (e) {
+    if (e instanceof EdgeError) throw new HTTPException(502, { message: e.message });
+    throw e;
+  }
+});
+
+// PUT /api/v1/deals/:handle/details — upsert deal_details (contacts + content + attached template).
+dealAdminRoutes.put("/:handle/details", requireUser, async (c) => {
+  const body = (await c.req.json().catch(() => ({}))) as {
+    contacts?: unknown;
+    content?: unknown;
+    defaultTemplateUuid?: unknown;
+  };
+  try {
+    const r = await edgeSaveDealDetails(c.req.param("handle"), {
+      contacts: Array.isArray(body.contacts) ? body.contacts : [],
+      content:
+        body.content && typeof body.content === "object" && !Array.isArray(body.content)
+          ? (body.content as Record<string, unknown>)
+          : {},
+      default_template_uuid:
+        typeof body.defaultTemplateUuid === "string" ? body.defaultTemplateUuid : null,
+    });
+    return c.json({ data: toDealDetails(r) });
   } catch (e) {
     if (e instanceof EdgeError) throw new HTTPException(502, { message: e.message });
     throw e;
