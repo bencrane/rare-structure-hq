@@ -222,6 +222,46 @@ export async function edgeListDeals(): Promise<EdgeDealSummary[]> {
   return (await res.json()) as EdgeDealSummary[];
 }
 
+// Deal details — the editable deal_details (contacts + content + attached Documenso template) and the
+// deal-org's selectable templates. Backs the Deal Details editor (opened from a Research row).
+export interface EdgeDealDetails {
+  deal_id: string;
+  deal_handle: string;
+  company_name: string | null;
+  company_domain: string | null;
+  contacts: unknown[];
+  content: Record<string, unknown>;
+  default_template_uuid: string | null;
+  template_origin: string;
+  available_templates: {
+    template_uuid: string;
+    documenso_template_id: string;
+    name: string | null;
+    is_default: boolean;
+  }[];
+}
+
+export async function edgeGetDealDetails(handle: string): Promise<EdgeDealDetails> {
+  const res = await fetch(`${base()}/api/v1/deals/${encodeURIComponent(handle)}/details`, {
+    headers: serviceHeaders(false),
+  });
+  if (!res.ok) throw new EdgeError(`edge deal details get failed: ${res.status}`);
+  return (await res.json()) as EdgeDealDetails;
+}
+
+export async function edgeSaveDealDetails(
+  handle: string,
+  body: { contacts: unknown[]; content: Record<string, unknown>; default_template_uuid: string | null },
+): Promise<EdgeDealDetails> {
+  const res = await fetch(`${base()}/api/v1/deals/${encodeURIComponent(handle)}/details`, {
+    method: "PUT",
+    headers: serviceHeaders(),
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new EdgeError(`edge deal details save failed: ${res.status} ${await res.text()}`);
+  return (await res.json()) as EdgeDealDetails;
+}
+
 export interface EdgeEngagementMappingOption {
   id: string;
   label: string;

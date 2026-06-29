@@ -33,6 +33,7 @@ import SignIn from "./routes/SignIn";
 import Account from "./routes/app/Account";
 import Application from "./routes/app/Application";
 import Applications from "./routes/app/Applications";
+import DealDetails from "./routes/app/DealDetails";
 import Calendar from "./routes/app/Calendar";
 import DocumensoTemplatesEditor from "./routes/app/DocumensoTemplatesEditor";
 import DocumensoTemplatesManage from "./routes/app/DocumensoTemplatesManage";
@@ -180,6 +181,16 @@ export function App() {
             element={
               <RequireOperator>
                 <Application />
+              </RequireOperator>
+            }
+          />
+          {/* Deal Details editor — opened from a Research row by the deal's 8-char handle.
+              Editable deal_details (contacts + attached Documenso template), saved to business.deal_details. */}
+          <Route
+            path="deals/:handle"
+            element={
+              <RequireOperator>
+                <DealDetails />
               </RequireOperator>
             }
           />
