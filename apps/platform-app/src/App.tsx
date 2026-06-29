@@ -42,6 +42,7 @@ import Dossier from "./routes/app/Dossier";
 import EngagementTemplateToDocumenso from "./routes/app/EngagementTemplateToDocumenso";
 import EngagementTemplatesRender from "./routes/app/EngagementTemplatesRender";
 import Insights from "./routes/app/Insights";
+import ManageDocumensoTemplates from "./routes/app/ManageDocumensoTemplates";
 import Mandate from "./routes/app/Mandate";
 import MapTab from "./routes/app/MapTab";
 import Overview from "./routes/app/Overview";
@@ -255,6 +256,14 @@ export function App() {
             element={
               <RequireOperator>
                 <DocumensoTemplateMirror />
+              </RequireOperator>
+            }
+          />
+          <Route
+            path="settings/manage-documenso-templates"
+            element={
+              <RequireOperator>
+                <ManageDocumensoTemplates />
               </RequireOperator>
             }
           />

@@ -924,3 +924,60 @@ export async function edgeResyncAllTemplates(): Promise<EdgeTemplateResyncAllRes
     throw new EdgeError(`edge template-mirror resync-all failed: ${res.status} ${await res.text()}`);
   return (await res.json()) as EdgeTemplateResyncAllResult;
 }
+
+// ── Documenso template prefill config (the OPERATOR-OWNED per-template prefill editor) ──────────────
+// business.documenso_template_document_prefill_configs is operator-owned; this editor is its ONLY
+// writer. The webhook projector / mirror resync NEVER touch it. The field SET comes from the MIRROR
+// (business.documenso_envelopes, type='template') — NOT the legacy registry. `field_settings` is keyed
+// by field LABEL and stores an ARBITRARY object per label (Phase 2 adds "source" to the same entries);
+// edge_api stores whatever dict is sent. The default lives HERE in our config and is applied at
+// originate LATER (model B: deal override ?? default) — it is NOT baked onto the Documenso template.
+// This BFF only brokers the service token across the auth boundary.
+
+export interface EdgeTemplatePrefillField {
+  label: string;
+  type: string;
+  required: boolean;
+  read_only: boolean;
+  recipient_id: number | null;
+}
+
+export interface EdgeTemplatePrefillConfig {
+  documenso_id: number;
+  fields: EdgeTemplatePrefillField[];
+  field_settings: Record<string, Record<string, unknown>>;
+}
+
+/** Read one template's mirror-sourced fields + the operator-owned field_settings config. */
+export async function edgeGetTemplatePrefillConfig(
+  documensoId: number,
+): Promise<EdgeTemplatePrefillConfig> {
+  const res = await fetch(
+    `${base()}/api/v1/documenso-template-prefill/${encodeURIComponent(documensoId)}`,
+    { headers: serviceHeaders(false) },
+  );
+  if (!res.ok)
+    throw new EdgeError(`edge template-prefill get failed: ${res.status} ${await res.text()}`);
+  return (await res.json()) as EdgeTemplatePrefillConfig;
+}
+
+/** Write the operator-owned field_settings (label → arbitrary dict) for one template. */
+export async function edgePutTemplatePrefillConfig(
+  documensoId: number,
+  fieldSettings: Record<string, unknown>,
+): Promise<{ documenso_id: number; field_settings: Record<string, Record<string, unknown>> }> {
+  const res = await fetch(
+    `${base()}/api/v1/documenso-template-prefill/${encodeURIComponent(documensoId)}`,
+    {
+      method: "PUT",
+      headers: serviceHeaders(),
+      body: JSON.stringify({ field_settings: fieldSettings }),
+    },
+  );
+  if (!res.ok)
+    throw new EdgeError(`edge template-prefill put failed: ${res.status} ${await res.text()}`);
+  return (await res.json()) as {
+    documenso_id: number;
+    field_settings: Record<string, Record<string, unknown>>;
+  };
+}
