@@ -9,7 +9,7 @@
  * so only the deal handle is keyed. Per-deal pricing edits are a later phase (the price is baked into
  * the template document, not an editable field), so the terms render read-only here.
  */
-import { Check, Copy, ExternalLink, FileSignature } from "lucide-react";
+import { Check, Copy, ExternalLink, FileSignature, Lock, LockOpen } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
@@ -35,6 +35,12 @@ export default function Mandate() {
   const [originating, setOriginating] = useState(false);
   const [originated, setOriginated] = useState<DealOriginated | null>(null);
   const [originateError, setOriginateError] = useState<string | null>(null);
+
+  // Lock/edit: the header lock toggles the engagement values between read-only and editable. Edits are
+  // local-only for now (no persistence wired) — overrides null until the operator types into a field.
+  const [locked, setLocked] = useState(true);
+  const [mandateOverride, setMandateOverride] = useState<string | null>(null);
+  const [termsOverride, setTermsOverride] = useState<string | null>(null);
 
   const refresh = useCallback(() => {
     if (!token || !handle) return;
@@ -85,6 +91,9 @@ export default function Mandate() {
   // The template label encodes the engagement + its terms ("… — $30,000 / 2.0%"); split on the em dash
   // for a headline/terms pair, degrading to the whole label when there is no separator.
   const [engagementTitle, engagementTerms] = splitEngagement(attached?.name ?? null);
+  // Displayed values fall back to the derived template values until the operator edits them.
+  const mandateValue = mandateOverride ?? engagementTitle ?? "";
+  const termsValue = termsOverride ?? engagementTerms ?? "";
 
   // Mirror the edge 422 preconditions so the action explains itself instead of round-tripping a 422.
   const blockReason = !data.defaultTemplateUuid
@@ -100,7 +109,7 @@ export default function Mandate() {
     <DocumentFrame
       title="Engagement Agreement"
       housing="cockpit"
-      headerAccessory={<StatePill originated={!!originated} blocked={!canOriginate} />}
+      headerAccessory={<LockToggle locked={locked} onToggle={() => setLocked((l) => !l)} />}
     >
       <div className="px-6 pt-10 pb-14 md:px-10 md:pt-12 md:pb-16">
         <Link to={`/app/applications/${handle}`} className={backCls}>
@@ -126,11 +135,27 @@ export default function Mandate() {
         <div className="mb-10">
           <Eyebrow accent>Engagement</Eyebrow>
           <TermRow label="Mandate">
-            <TermVal>{engagementTitle ?? "None attached"}</TermVal>
+            {locked ? (
+              <TermVal>{mandateValue || "None attached"}</TermVal>
+            ) : (
+              <input
+                value={mandateValue}
+                onChange={(e) => setMandateOverride(e.target.value)}
+                className={editCls}
+              />
+            )}
           </TermRow>
-          {engagementTerms ? (
+          {termsValue || !locked ? (
             <TermRow label="Terms">
-              <TermVal>{engagementTerms}</TermVal>
+              {locked ? (
+                <TermVal>{termsValue}</TermVal>
+              ) : (
+                <input
+                  value={termsValue}
+                  onChange={(e) => setTermsOverride(e.target.value)}
+                  className={editCls}
+                />
+              )}
             </TermRow>
           ) : null}
           <TermRow label="Template">
@@ -194,18 +219,21 @@ function Note({ children }: { children: React.ReactNode }) {
   );
 }
 
-// Header lifecycle chip — mirrors the document state on the frame header.
-function StatePill({ originated, blocked }: { originated: boolean; blocked: boolean }) {
-  const label = originated ? "Pending signature" : blocked ? "Incomplete" : "Draft";
-  const tone = originated
-    ? "border-[color:var(--color-border-accent)] bg-[color:var(--color-accent-soft)] text-[color:var(--color-text-accent)]"
-    : "border-[color:var(--color-border-default)] text-[color:var(--color-text-muted)]";
+// Header lock — toggles the engagement values between read-only and editable. Locked by default.
+function LockToggle({ locked, onToggle }: { locked: boolean; onToggle: () => void }) {
   return (
-    <span
-      className={`shrink-0 border px-2.5 py-1 font-mono text-[0.5rem] uppercase tracking-[0.16em] ${tone}`}
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-label={locked ? "Unlock to edit" : "Lock"}
+      className={`flex shrink-0 items-center justify-center border px-2.5 py-1 transition-colors ${
+        locked
+          ? "border-[color:var(--color-border-default)] text-[color:var(--color-text-subtle)] hover:text-[color:var(--color-text-accent)]"
+          : "border-[color:var(--color-border-accent)] bg-[color:var(--color-accent-soft)] text-[color:var(--color-text-accent)]"
+      }`}
     >
-      {label}
-    </span>
+      {locked ? <Lock className="size-3" /> : <LockOpen className="size-3" />}
+    </button>
   );
 }
 
@@ -299,6 +327,11 @@ function ReadyBar({
 
 const backCls =
   "inline-flex w-fit items-center font-mono text-[0.625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.16em] transition-colors hover:text-[color:var(--color-text-accent)]";
+
+// Inline editable value — matches TermVal typography, right-aligned, faint surface for affordance,
+// NO border/underline (per the operator: no underscore under the field when it becomes editable).
+const editCls =
+  "flex-1 bg-[color:var(--color-surface-raised)] px-2 py-0.5 text-right text-[0.9375rem] text-[color:var(--color-text-primary)] outline-none";
 
 // "Engagement Title — $terms" → [title, terms]; no separator → [whole, null].
 function splitEngagement(name: string | null): [string | null, string | null] {
