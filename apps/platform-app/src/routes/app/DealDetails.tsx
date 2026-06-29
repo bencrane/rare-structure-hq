@@ -3,7 +3,7 @@
  * Shows the deal's contacts (name / email / title) and the attached Documenso template as modifiable
  * fields and saves them back to business.deal_details. Authors no geometry — composes CockpitPage.
  */
-import { Check, ChevronLeft, Plus, Save, Trash2 } from "lucide-react";
+import { Check, ChevronLeft, Plus, Save, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
@@ -42,7 +42,7 @@ export default function DealDetails() {
     getDealDetails(token, handle)
       .then((d) => {
         setData(d);
-        setContacts(d.contacts ?? []);
+        setContacts(withSignatoryDefault(d.contacts));
         setTemplateUuid(d.defaultTemplateUuid ?? "");
         setPhase("ready");
       })
@@ -62,8 +62,8 @@ export default function DealDetails() {
 
   const setContact = (i: number, patch: Partial<DealContact>) =>
     setContacts((cs) => cs.map((c, j) => (j === i ? { ...c, ...patch } : c)));
-  const removeContact = (i: number) => setContacts((cs) => cs.filter((_, j) => j !== i));
-  const addContact = () => setContacts((cs) => [...cs, { full_name: "", email: "", title: "" }]);
+  const addContact = () =>
+    setContacts((cs) => [...cs, { full_name: "", email: "", title: "", is_signatory: true }]);
 
   async function save() {
     setSaving(true);
@@ -75,7 +75,7 @@ export default function DealDetails() {
         defaultTemplateUuid: templateUuid || null,
       });
       setData(fresh);
-      setContacts(fresh.contacts ?? []);
+      setContacts(withSignatoryDefault(fresh.contacts));
       setTemplateUuid(fresh.defaultTemplateUuid ?? "");
       setJustSaved(true);
       setTimeout(() => setJustSaved(false), 1800);
@@ -119,6 +119,12 @@ export default function DealDetails() {
       </CockpitPage>
     );
   }
+
+  const nameFor = (uuid: string | null) =>
+    data.availableTemplates.find((t) => t.templateUuid === uuid)?.name ?? null;
+  const currentTemplateName = nameFor(data.defaultTemplateUuid); // the SAVED attachment
+  const pendingTemplateName = nameFor(templateUuid || null); // the dropdown's working selection
+  const templateDirty = templateUuid !== (data.defaultTemplateUuid ?? "");
 
   return (
     <CockpitPage
@@ -180,14 +186,17 @@ export default function DealDetails() {
                       placeholder="Title"
                     />
                   </Field>
-                  <button
-                    type="button"
-                    onClick={() => removeContact(i)}
-                    aria-label="Remove contact"
-                    className="flex size-[42px] items-center justify-center border border-[color:var(--color-border-default)] text-[color:var(--color-text-subtle)] transition-colors hover:border-[color:var(--color-text-accent)] hover:text-[color:var(--color-text-accent)]"
-                  >
-                    <Trash2 className="size-4" />
-                  </button>
+                  <Field label="Signatory">
+                    <button
+                      type="button"
+                      onClick={() => setContact(i, { is_signatory: !(c.is_signatory ?? true) })}
+                      aria-pressed={c.is_signatory ?? true}
+                      className={signatoryToggleCls(c.is_signatory ?? true)}
+                    >
+                      {c.is_signatory ?? true ? <Check className="size-3.5" /> : <X className="size-3.5" />}
+                      {c.is_signatory ?? true ? "Yes" : "No"}
+                    </button>
+                  </Field>
                 </div>
               ))
             )}
@@ -201,20 +210,43 @@ export default function DealDetails() {
 
       <Section label="Documenso template">
         <Panel>
-          <Field label="Attached template">
-            <select
-              value={templateUuid}
-              onChange={(e) => setTemplateUuid(e.target.value)}
-              className="w-full border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-sunken)] px-3 py-2.5 text-[color:var(--color-text-primary)] text-body-sm outline-none focus:border-[color:var(--color-text-accent)]"
-            >
-              <option value="">— None —</option>
-              {data.availableTemplates.map((t) => (
-                <option key={t.templateUuid} value={t.templateUuid}>
-                  {(t.name ?? t.documensoTemplateId) + (t.isDefault ? "  ·  org default" : "")}
-                </option>
-              ))}
-            </select>
-          </Field>
+          <div className="flex flex-col gap-4">
+            {/* Currently attached — the SAVED template on this deal_details (not the dropdown's
+                working selection), so it stays a stable source of truth while you browse options. */}
+            <Field label="Currently attached">
+              <div className="flex items-center justify-between gap-3 border border-[color:var(--color-border-subtle)] bg-[color:var(--color-surface-sunken)] px-3 py-2.5">
+                <Text size="body-sm" color={currentTemplateName ? "primary" : "subtle"} className="truncate">
+                  {currentTemplateName ?? "None attached"}
+                </Text>
+                {currentTemplateName ? (
+                  <Badge tone={data.templateOrigin === "operator" ? "warn" : "info"}>
+                    {data.templateOrigin === "operator" ? "Custom" : "Org default"}
+                  </Badge>
+                ) : null}
+              </div>
+            </Field>
+
+            <Field label="Change template">
+              <select
+                value={templateUuid}
+                onChange={(e) => setTemplateUuid(e.target.value)}
+                className="w-full border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-sunken)] px-3 py-2.5 text-[color:var(--color-text-primary)] text-body-sm outline-none focus:border-[color:var(--color-text-accent)]"
+              >
+                <option value="">— None —</option>
+                {data.availableTemplates.map((t) => (
+                  <option key={t.templateUuid} value={t.templateUuid}>
+                    {(t.name ?? t.documensoTemplateId) + (t.isDefault ? "  ·  org default" : "")}
+                  </option>
+                ))}
+              </select>
+            </Field>
+
+            {templateDirty ? (
+              <Text size="mono-xs" mono color="subtle">
+                Unsaved — “Save details” to attach {pendingTemplateName ?? "None"}.
+              </Text>
+            ) : null}
+          </div>
         </Panel>
       </Section>
 
@@ -279,6 +311,20 @@ const backCls =
 
 const secondaryBtnCls =
   "flex w-fit items-center justify-center gap-2 border border-[color:var(--color-border-default)] px-4 py-2.5 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase tracking-[0.14em] transition-colors hover:border-[color:var(--color-text-accent)] hover:text-[color:var(--color-text-accent)]";
+
+// Contacts are not deleted — each carries an is_signatory flag (default true: all are signatories
+// until toggled off). Normalize on load/save so the persisted jsonb always carries an explicit boolean.
+function withSignatoryDefault(contacts: DealContact[] | undefined): DealContact[] {
+  return (contacts ?? []).map((c) => ({ ...c, is_signatory: c.is_signatory ?? true }));
+}
+
+function signatoryToggleCls(on: boolean): string {
+  return `flex h-[42px] w-full items-center justify-center gap-1.5 border px-3 font-mono text-mono-xs uppercase tracking-[0.12em] transition-colors ${
+    on
+      ? "border-[color:var(--color-text-accent)] text-[color:var(--color-text-accent)]"
+      : "border-[color:var(--color-border-default)] text-[color:var(--color-text-subtle)] hover:border-[color:var(--color-text-muted)]"
+  }`;
+}
 
 function saveBtnCls(justSaved: boolean): string {
   return `flex shrink-0 items-center justify-center gap-2 border px-6 py-2.5 font-mono text-mono-xs uppercase tracking-[0.14em] transition-colors disabled:opacity-50 ${

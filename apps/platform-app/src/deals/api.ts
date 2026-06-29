@@ -18,6 +18,9 @@ export interface DealContact {
   full_name?: string;
   email?: string;
   title?: string;
+  // Whether this contact signs the deal's document. Defaults to true (all contacts are signatories
+  // until toggled off). Lives in the deal_details.contacts jsonb (opaque to the BFF/edge).
+  is_signatory?: boolean;
 }
 
 export interface TemplateOption {
