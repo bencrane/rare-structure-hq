@@ -14,13 +14,22 @@ function authHeaders(token: string): HeadersInit {
 }
 
 export interface DealContact {
+  // Person identity (display-only — sourced from business.contacts via the deal_contacts junction).
   contact_id?: string;
-  full_name?: string;
-  email?: string;
-  title?: string;
+  full_name?: string | null;
+  email?: string | null;
+  title?: string | null;
   // Whether this contact signs the deal's document. Defaults to true (all contacts are signatories
-  // until toggled off). Lives in the deal_details.contacts jsonb (opaque to the BFF/edge).
+  // until toggled off). Lives in the deal_contacts junction (reconciled by the PUT, not opaque jsonb).
   is_signatory?: boolean;
+}
+
+// An account contact NOT yet on the deal — the "Add contact" pool.
+export interface AvailableContact {
+  contactId: string;
+  fullName: string | null;
+  email: string | null;
+  title: string | null;
 }
 
 export interface TemplateOption {
@@ -36,15 +45,17 @@ export interface DealDetails {
   companyName: string | null;
   companyDomain: string | null;
   contacts: DealContact[];
-  content: Record<string, unknown>;
+  availableContacts: AvailableContact[];
+  fieldValues: Record<string, unknown>;
   defaultTemplateUuid: string | null;
   templateOrigin: string;
   availableTemplates: TemplateOption[];
 }
 
 export interface DealDetailsInput {
-  contacts: DealContact[];
-  content: Record<string, unknown>;
+  // Junction reconciliation payload — only the resolution key + signatory flag (no person fields).
+  contacts: { contact_id: string; is_signatory: boolean }[];
+  fieldValues: Record<string, unknown>;
   defaultTemplateUuid: string | null;
 }
 

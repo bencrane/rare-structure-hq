@@ -3,7 +3,7 @@
  * Shows the deal's contacts (name / email / title) and the attached Documenso template as modifiable
  * fields and saves them back to business.deal_details. Authors no geometry — composes CockpitPage.
  */
-import { Check, ChevronLeft, Plus, Save, X } from "lucide-react";
+import { Check, ChevronLeft, Save, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
@@ -11,6 +11,7 @@ import { Badge, Text } from "@rare-structure-hq/ui";
 
 import { CockpitPage, Panel, Section } from "@/app/cockpit";
 import {
+  type AvailableContact,
   type DealContact,
   type DealDetails as DealDetailsData,
   getDealDetails,
@@ -30,6 +31,8 @@ export default function DealDetails() {
 
   // Editable working copy.
   const [contacts, setContacts] = useState<DealContact[]>([]);
+  // The add pool — account contacts not yet on the deal (mutated locally as we add/unlink).
+  const [available, setAvailable] = useState<AvailableContact[]>([]);
   const [templateUuid, setTemplateUuid] = useState<string>("");
   const [saving, setSaving] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
@@ -43,6 +46,7 @@ export default function DealDetails() {
       .then((d) => {
         setData(d);
         setContacts(withSignatoryDefault(d.contacts));
+        setAvailable(d.availableContacts ?? []);
         setTemplateUuid(d.defaultTemplateUuid ?? "");
         setPhase("ready");
       })
@@ -60,22 +64,63 @@ export default function DealDetails() {
     refresh();
   }, [refresh]);
 
-  const setContact = (i: number, patch: Partial<DealContact>) =>
-    setContacts((cs) => cs.map((c, j) => (j === i ? { ...c, ...patch } : c)));
-  const addContact = () =>
-    setContacts((cs) => [...cs, { full_name: "", email: "", title: "", is_signatory: true }]);
+  // Person fields are display-only; only is_signatory is editable on a linked contact.
+  const setSignatory = (i: number, on: boolean) =>
+    setContacts((cs) => cs.map((c, j) => (j === i ? { ...c, is_signatory: on } : c)));
+  // Unlink = remove from this deal: drop from the local contacts array (and return to the add pool).
+  const unlinkContact = (i: number) =>
+    setContacts((cs) => {
+      const removed = cs[i];
+      const removedId = removed?.contact_id;
+      if (removedId) {
+        setAvailable((av) =>
+          av.some((a) => a.contactId === removedId)
+            ? av
+            : [
+                ...av,
+                {
+                  contactId: removedId,
+                  fullName: removed?.full_name ?? null,
+                  email: removed?.email ?? null,
+                  title: removed?.title ?? null,
+                },
+              ],
+        );
+      }
+      return cs.filter((_, j) => j !== i);
+    });
+  // Add from the pool: append { contact_id, …person, is_signatory: true } and remove from available.
+  const addFromAvailable = (contactId: string) => {
+    const picked = available.find((a) => a.contactId === contactId);
+    if (!picked) return;
+    setContacts((cs) => [
+      ...cs,
+      {
+        contact_id: picked.contactId,
+        full_name: picked.fullName,
+        email: picked.email,
+        title: picked.title,
+        is_signatory: true,
+      },
+    ]);
+    setAvailable((av) => av.filter((a) => a.contactId !== contactId));
+  };
 
   async function save() {
     setSaving(true);
     setSaveError(null);
     try {
       const fresh = await updateDealDetails(token, handle, {
-        contacts,
-        content: data?.content ?? {},
+        // Junction payload — only the resolution key + signatory flag (drop the display fields).
+        contacts: contacts
+          .filter((c) => !!c.contact_id)
+          .map((c) => ({ contact_id: c.contact_id as string, is_signatory: c.is_signatory ?? true })),
+        fieldValues: data?.fieldValues ?? {},
         defaultTemplateUuid: templateUuid || null,
       });
       setData(fresh);
       setContacts(withSignatoryDefault(fresh.contacts));
+      setAvailable(fresh.availableContacts ?? []);
       setTemplateUuid(fresh.defaultTemplateUuid ?? "");
       setJustSaved(true);
       setTimeout(() => setJustSaved(false), 1800);
@@ -161,35 +206,23 @@ export default function DealDetails() {
             ) : (
               contacts.map((c, i) => (
                 <div
-                  key={c.contact_id ?? `new-${i}`}
-                  className="grid items-end gap-3 border-[color:var(--color-border-subtle)] border-b pb-4 last:border-0 last:pb-0 sm:grid-cols-[1fr_1fr_1fr_auto]"
+                  key={c.contact_id ?? `row-${i}`}
+                  className="grid items-end gap-3 border-[color:var(--color-border-subtle)] border-b pb-4 last:border-0 last:pb-0 sm:grid-cols-[1fr_1fr_1fr_auto_auto]"
                 >
+                  {/* Person identity is sourced from business.contacts — display-only here. */}
                   <Field label="Full name">
-                    <BoxedInput
-                      value={c.full_name ?? ""}
-                      onChange={(v) => setContact(i, { full_name: v })}
-                      placeholder="Full name"
-                    />
+                    <ReadonlyValue>{c.full_name || "—"}</ReadonlyValue>
                   </Field>
                   <Field label="Email">
-                    <BoxedInput
-                      value={c.email ?? ""}
-                      onChange={(v) => setContact(i, { email: v })}
-                      placeholder="name@company.com"
-                      type="email"
-                    />
+                    <ReadonlyValue>{c.email || "—"}</ReadonlyValue>
                   </Field>
                   <Field label="Title">
-                    <BoxedInput
-                      value={c.title ?? ""}
-                      onChange={(v) => setContact(i, { title: v })}
-                      placeholder="Title"
-                    />
+                    <ReadonlyValue>{c.title || "—"}</ReadonlyValue>
                   </Field>
                   <Field label="Signatory">
                     <button
                       type="button"
-                      onClick={() => setContact(i, { is_signatory: !(c.is_signatory ?? true) })}
+                      onClick={() => setSignatory(i, !(c.is_signatory ?? true))}
                       aria-pressed={c.is_signatory ?? true}
                       className={signatoryToggleCls(c.is_signatory ?? true)}
                     >
@@ -197,13 +230,42 @@ export default function DealDetails() {
                       {c.is_signatory ?? true ? "Yes" : "No"}
                     </button>
                   </Field>
+                  <Field label="Remove">
+                    <button
+                      type="button"
+                      onClick={() => unlinkContact(i)}
+                      aria-label="Remove contact from this deal"
+                      className={removeBtnCls}
+                    >
+                      <X className="size-3.5" />
+                      Remove
+                    </button>
+                  </Field>
                 </div>
               ))
             )}
-            <button type="button" onClick={addContact} className={secondaryBtnCls}>
-              <Plus className="size-3.5" />
-              Add contact
-            </button>
+            {available.length > 0 ? (
+              <Field label="Add contact">
+                <select
+                  value=""
+                  onChange={(e) => {
+                    if (e.target.value) addFromAvailable(e.target.value);
+                  }}
+                  className="w-full border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-sunken)] px-3 py-2.5 text-[color:var(--color-text-primary)] text-body-sm outline-none focus:border-[color:var(--color-text-accent)]"
+                >
+                  <option value="">— Add an account contact —</option>
+                  {available.map((a) => (
+                    <option key={a.contactId} value={a.contactId}>
+                      {[a.fullName, a.email].filter(Boolean).join("  ·  ") || a.contactId}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            ) : (
+              <Text size="mono-xs" mono color="subtle">
+                No more account contacts available to add.
+              </Text>
+            )}
           </div>
         </Panel>
       </Section>
@@ -284,33 +346,11 @@ function ReadonlyValue({ children }: { children: React.ReactNode }) {
   );
 }
 
-function BoxedInput({
-  value,
-  onChange,
-  placeholder,
-  type = "text",
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-  type?: string;
-}) {
-  return (
-    <input
-      type={type}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-      className="w-full border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-sunken)] px-3 py-2.5 text-[color:var(--color-text-primary)] text-body-sm outline-none placeholder:text-[color:var(--color-text-subtle)] focus:border-[color:var(--color-text-accent)]"
-    />
-  );
-}
-
 const backCls =
   "inline-flex w-fit items-center gap-1.5 font-mono text-[color:var(--color-text-subtle)] text-mono-xs uppercase tracking-[0.12em] transition-colors hover:text-[color:var(--color-text-accent)]";
 
-const secondaryBtnCls =
-  "flex w-fit items-center justify-center gap-2 border border-[color:var(--color-border-default)] px-4 py-2.5 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase tracking-[0.14em] transition-colors hover:border-[color:var(--color-text-accent)] hover:text-[color:var(--color-text-accent)]";
+const removeBtnCls =
+  "flex h-[42px] items-center justify-center gap-1.5 border border-[color:var(--color-border-default)] px-3 font-mono text-[color:var(--color-text-subtle)] text-mono-xs uppercase tracking-[0.12em] transition-colors hover:border-[color:var(--color-text-danger,var(--color-text-accent))] hover:text-[color:var(--color-text-danger,var(--color-text-accent))]";
 
 // Contacts are not deleted — each carries an is_signatory flag (default true: all are signatories
 // until toggled off). Normalize on load/save so the persisted jsonb always carries an explicit boolean.

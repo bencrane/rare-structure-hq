@@ -230,7 +230,13 @@ export interface EdgeDealDetails {
   company_name: string | null;
   company_domain: string | null;
   contacts: unknown[];
-  content: Record<string, unknown>;
+  available_contacts: {
+    contact_id: string;
+    full_name: string | null;
+    email: string | null;
+    title: string | null;
+  }[];
+  field_values: Record<string, unknown>;
   default_template_uuid: string | null;
   template_origin: string;
   available_templates: {
@@ -251,7 +257,7 @@ export async function edgeGetDealDetails(handle: string): Promise<EdgeDealDetail
 
 export async function edgeSaveDealDetails(
   handle: string,
-  body: { contacts: unknown[]; content: Record<string, unknown>; default_template_uuid: string | null },
+  body: { contacts: unknown[]; field_values: Record<string, unknown>; default_template_uuid: string | null },
 ): Promise<EdgeDealDetails> {
   const res = await fetch(`${base()}/api/v1/deals/${encodeURIComponent(handle)}/details`, {
     method: "PUT",
