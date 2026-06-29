@@ -268,6 +268,29 @@ export async function edgeSaveDealDetails(
   return (await res.json()) as EdgeDealDetails;
 }
 
+// Deal originate — mint a prefilled, PENDING Documenso document for the deal from its attached
+// template. Edge resolves the signatory + template off the deal and stamps the deal_handle as the
+// envelope externalId; the response carries the /p/m/{deal_handle}/{document_id} sign link. No body
+// (everything resolves server-side from the deal). Backs the Mandate editor's "Originate" button.
+export interface EdgeDealOriginated {
+  envelope_id: string;
+  document_id: number | null;
+  deal_handle: string;
+  signing_token: string | null;
+  sign_link: string;
+  status: string;
+  documenso_host: string;
+}
+
+export async function edgeOriginateDeal(handle: string): Promise<EdgeDealOriginated> {
+  const res = await fetch(`${base()}/api/v1/deals/${encodeURIComponent(handle)}/originate`, {
+    method: "POST",
+    headers: serviceHeaders(false),
+  });
+  if (!res.ok) throw new EdgeError(`edge deal originate failed: ${res.status} ${await res.text()}`);
+  return (await res.json()) as EdgeDealOriginated;
+}
+
 export interface EdgeEngagementMappingOption {
   id: string;
   label: string;
