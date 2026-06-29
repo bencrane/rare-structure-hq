@@ -86,6 +86,8 @@ export async function renderPushTemplate(
     archetype: string;
     version: string;
     style?: string;
+    /** Operator-set name for the created Documenso template (omit to let edge_api default it). */
+    name?: string;
     /** Operator inputs a tokenized template bakes in; edge_api derives price-per-introduction. */
     values?: { amount: number; introductions: number; term_days: number };
   },
