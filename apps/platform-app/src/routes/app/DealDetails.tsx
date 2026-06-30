@@ -4,7 +4,7 @@
  * fields and saves them back to business.deal_details. Authors no geometry — composes CockpitPage.
  */
 import { Check, ChevronLeft, Save, X } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import { Badge, Text } from "@rare-structure-hq/ui";
@@ -18,6 +18,10 @@ import {
   updateDealDetails,
 } from "@/deals/api";
 import { useAuth } from "@/lib/auth";
+import {
+  getPrefillConfig,
+  type TemplatePrefillConfig,
+} from "@/settings/documenso-template-prefill-api";
 
 export default function DealDetails() {
   // The URL carries the deal's 8-char public handle (DealSummary.handle).
@@ -34,6 +38,11 @@ export default function DealDetails() {
   // The add pool — account contacts not yet on the deal (mutated locally as we add/unlink).
   const [available, setAvailable] = useState<AvailableContact[]>([]);
   const [templateDocumensoId, setTemplateDocumensoId] = useState<number | null>(null);
+  // The deal's per-field prefill OVERRIDES (label → value), editable here, saved into field_values.
+  const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
+  // The selected template's fields + per-label config defaults (fetched for templateDocumensoId).
+  const [prefill, setPrefill] = useState<TemplatePrefillConfig | null>(null);
+  const [prefillLoading, setPrefillLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -48,6 +57,7 @@ export default function DealDetails() {
         setContacts(withSignatoryDefault(d.contacts));
         setAvailable(d.availableContacts ?? []);
         setTemplateDocumensoId(d.templateDocumensoId ?? null);
+        setFieldValues(toStringRecord(d.fieldValues));
         setPhase("ready");
       })
       .catch((e) => {
@@ -63,6 +73,30 @@ export default function DealDetails() {
   useEffect(() => {
     refresh();
   }, [refresh]);
+
+  // Fetch the SELECTED template's fields + per-label config defaults so the prefill inputs follow the
+  // dropdown (switch template → its fields appear). Cleared when no template is attached.
+  useEffect(() => {
+    if (!token || templateDocumensoId === null) {
+      setPrefill(null);
+      return;
+    }
+    let cancelled = false;
+    setPrefillLoading(true);
+    getPrefillConfig(token, templateDocumensoId)
+      .then((p) => {
+        if (!cancelled) setPrefill(p);
+      })
+      .catch(() => {
+        if (!cancelled) setPrefill(null);
+      })
+      .finally(() => {
+        if (!cancelled) setPrefillLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [token, templateDocumensoId]);
 
   // Person fields are display-only; only is_signatory is editable on a linked contact.
   const setSignatory = (i: number, on: boolean) =>
@@ -115,13 +149,14 @@ export default function DealDetails() {
         contacts: contacts
           .filter((c) => !!c.contact_id)
           .map((c) => ({ contact_id: c.contact_id as string, is_signatory: c.is_signatory ?? true })),
-        fieldValues: data?.fieldValues ?? {},
-        templateDocumensoId: templateDocumensoId,
+        fieldValues,
+        templateDocumensoId,
       });
       setData(fresh);
       setContacts(withSignatoryDefault(fresh.contacts));
       setAvailable(fresh.availableContacts ?? []);
       setTemplateDocumensoId(fresh.templateDocumensoId ?? null);
+      setFieldValues(toStringRecord(fresh.fieldValues));
       setJustSaved(true);
       setTimeout(() => setJustSaved(false), 1800);
     } catch (e) {
@@ -170,6 +205,32 @@ export default function DealDetails() {
   const currentTemplateName = nameFor(data.templateDocumensoId); // the SAVED attachment
   const pendingTemplateName = nameFor(templateDocumensoId); // the dropdown's working selection
   const templateDirty = templateDocumensoId !== (data.templateDocumensoId ?? null);
+
+  // The selected template's prefill fields, deduped by label (a label can map to several field ids),
+  // each with its config default + read_only. Operator-term fields (required + locked) surface first;
+  // the rest are editable prospect facts.
+  const prefillFields = useMemo<PrefillFieldRow[]>(() => {
+    if (!prefill) return [];
+    const byLabel = new Map<string, PrefillFieldRow>();
+    for (const f of prefill.fields) {
+      if (byLabel.has(f.label)) continue;
+      const settings = prefill.field_settings[f.label] ?? {};
+      byLabel.set(f.label, {
+        label: f.label,
+        required: f.required,
+        readOnly: settings.read_only === true,
+        default:
+          typeof settings.default_document_field_value === "string"
+            ? settings.default_document_field_value
+            : null,
+      });
+    }
+    return [...byLabel.values()];
+  }, [prefill]);
+  const termFields = prefillFields.filter((f) => f.required && f.readOnly);
+  const prospectFields = prefillFields.filter((f) => !(f.required && f.readOnly));
+  const onFieldValue = (label: string, value: string) =>
+    setFieldValues((fv) => ({ ...fv, [label]: value }));
 
   return (
     <CockpitPage
@@ -308,6 +369,49 @@ export default function DealDetails() {
                 Unsaved — “Save details” to attach {pendingTemplateName ?? "None"}.
               </Text>
             ) : null}
+
+            {/* Prefill values for the attached template — operator OVERRIDES. Empty = use the template
+                default (shown as placeholder); typing creates an override. Stored in field_values[label]. */}
+            {templateDocumensoId !== null ? (
+              <div className="border-[color:var(--color-border-subtle)] border-t pt-4">
+                <Text
+                  size="mono-xs"
+                  mono
+                  color="subtle"
+                  className="mb-3 block uppercase tracking-[0.14em]"
+                >
+                  Prefill values
+                </Text>
+                {prefillLoading ? (
+                  <Text size="mono-xs" mono color="subtle">
+                    Loading fields…
+                  </Text>
+                ) : prefillFields.length === 0 ? (
+                  <Text size="mono-xs" mono color="subtle">
+                    This template has no prefillable fields.
+                  </Text>
+                ) : (
+                  <div className="flex flex-col gap-5">
+                    {termFields.length > 0 ? (
+                      <PrefillGroup
+                        title="Engagement terms"
+                        fields={termFields}
+                        values={fieldValues}
+                        onChange={onFieldValue}
+                      />
+                    ) : null}
+                    {prospectFields.length > 0 ? (
+                      <PrefillGroup
+                        title="Prospect fields"
+                        fields={prospectFields}
+                        values={fieldValues}
+                        onChange={onFieldValue}
+                      />
+                    ) : null}
+                  </div>
+                )}
+              </div>
+            ) : null}
           </div>
         </Panel>
       </Section>
@@ -344,6 +448,52 @@ function ReadonlyValue({ children }: { children: React.ReactNode }) {
       {children}
     </div>
   );
+}
+
+interface PrefillFieldRow {
+  label: string;
+  required: boolean;
+  readOnly: boolean;
+  default: string | null;
+}
+
+// One labelled group of prefill inputs. Each input shows the operator's override; the config default
+// rides as the placeholder, so an empty input means "use the template default."
+function PrefillGroup({
+  title,
+  fields,
+  values,
+  onChange,
+}: {
+  title: string;
+  fields: PrefillFieldRow[];
+  values: Record<string, string>;
+  onChange: (label: string, value: string) => void;
+}) {
+  return (
+    <div>
+      <Text size="mono-xs" mono color="muted" className="mb-3 block uppercase tracking-[0.14em]">
+        {title}
+      </Text>
+      <div className="flex flex-col gap-3">
+        {fields.map((f) => (
+          <Field key={f.label} label={f.label}>
+            <input
+              value={values[f.label] ?? ""}
+              placeholder={f.default ?? ""}
+              onChange={(e) => onChange(f.label, e.target.value)}
+              className="w-full border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-sunken)] px-3 py-2.5 text-[color:var(--color-text-primary)] text-body-sm outline-none focus:border-[color:var(--color-text-accent)]"
+            />
+          </Field>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Coerce the stored field_values (jsonb; values may be any) into a string map for the editable inputs.
+function toStringRecord(r: Record<string, unknown>): Record<string, string> {
+  return Object.fromEntries(Object.entries(r).map(([k, v]) => [k, v == null ? "" : String(v)]));
 }
 
 const backCls =
