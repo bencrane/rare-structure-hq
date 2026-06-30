@@ -28,6 +28,7 @@ import { awardProfileRoutes } from "./routes/award-profile.ts";
 import { bookingAdminRoutes } from "./routes/bookings-admin.ts";
 import { companyProfileRoutes } from "./routes/company-profiles-admin.ts";
 import { documensoPublicRoutes } from "./routes/documenso-public.ts";
+import { documensoTemplateDefaultRoutes } from "./routes/documenso-template-defaults.ts";
 import { documensoTemplateFieldRoutes } from "./routes/documenso-template-fields-admin.ts";
 import { documensoTemplateMirrorRoutes } from "./routes/documenso-template-mirror.ts";
 import { documensoTemplatePrefillRoutes } from "./routes/documenso-template-prefill.ts";
@@ -137,6 +138,11 @@ app.route("/api/v1/documenso-template-mirror", documensoTemplateMirrorRoutes);
 // writer of business.documenso_template_document_prefill_configs). Distinct segment from the
 // `/api/v1/documenso` mount, so no prefix collision.
 app.route("/api/v1/documenso-template-prefill", documensoTemplatePrefillRoutes);
+// Set Template as Default — the MIRROR-template default picker. Lists business.documenso_envelopes
+// templates each flagged is_default and sets the operator's Confirm & Originate default (recorded in
+// the operator-owned business.documenso_template_defaults). Replaces the legacy documenso-templates
+// registry picker for mirror-path templates. Distinct segment from `/api/v1/documenso`, no collision.
+app.route("/api/v1/documenso-template-defaults", documensoTemplateDefaultRoutes);
 app.route("/api/v1/company-profiles", companyProfileRoutes);
 // Insights — the operator's live call cockpit. Brokers the offline Close "now dialing" read
 // from edge_api; the Insights tab polls /active-call and surfaces the briefing on domain change.

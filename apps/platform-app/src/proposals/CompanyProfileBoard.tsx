@@ -339,8 +339,11 @@ export function CompanyProfileBoard({
               </div>
             </div>
 
-            {/* Engagement template */}
-            <div className="mb-5">
+            {/* Engagement template — HIDDEN (kept, not deleted): the Application-sidebar picker is
+                suppressed pending the move of template-attach to the mirror. Its selection was never
+                persisted (templateId is local-only state), so hiding it changes no behavior. Remove the
+                `hidden` class to restore. */}
+            <div className="mb-5 hidden">
               <span className="mb-1.5 block font-mono text-[color:var(--color-text-subtle)] text-mono-xs uppercase tracking-[0.14em]">
                 Engagement
               </span>
