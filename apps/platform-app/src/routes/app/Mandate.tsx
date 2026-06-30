@@ -11,17 +11,22 @@
  * the template document, not an editable field), so the terms render read-only here.
  */
 import { Check, Copy, ExternalLink, FileSignature, Lock, LockOpen } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useParams } from "react-router-dom";
 
 import {
   type DealOriginated,
   type DealDetails as DealDetailsData,
   getDealDetails,
   originateDeal,
+  updateDealDetails,
 } from "@/deals/api";
 import { useAuth } from "@/lib/auth";
 import { DocumentFrame } from "@/proposals/DocumentFrame";
+import {
+  getPrefillConfig,
+  type TemplatePrefillConfig,
+} from "@/settings/documenso-template-prefill-api";
 
 export default function Mandate() {
   // The URL carries the deal's 8-char public handle (DealSummary.handle).
@@ -37,11 +42,19 @@ export default function Mandate() {
   const [originated, setOriginated] = useState<DealOriginated | null>(null);
   const [originateError, setOriginateError] = useState<string | null>(null);
 
-  // Lock/edit: the header lock toggles the engagement values between read-only and editable. Edits are
-  // local-only for now (no persistence wired) — overrides null until the operator types into a field.
+  // Lock/edit: the header lock toggles the engagement TERMS between read-only and editable, and locking
+  // PERSISTS the edits (the save action). Unlock to edit, lock to write the edited field_values back to
+  // the deal's active deal_document_configs — the same append-only path Deal Details writes via PUT.
   const [locked, setLocked] = useState(true);
-  const [mandateOverride, setMandateOverride] = useState<string | null>(null);
-  const [termsOverride, setTermsOverride] = useState<string | null>(null);
+  // The deal's per-field OVERRIDES (label → value), working copy edited while unlocked. Mirrors the Deal
+  // Details editor: the input holds the override; the config default rides as the placeholder.
+  const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
+  // The attached template's prefill config — its per-label defaults resolve the LOCKED display value
+  // (override ?? default), so the page shows exactly what originate will bake in (model B).
+  const [prefill, setPrefill] = useState<TemplatePrefillConfig | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [justSaved, setJustSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const refresh = useCallback(() => {
     if (!token || !handle) return;
@@ -50,6 +63,7 @@ export default function Mandate() {
     getDealDetails(token, handle)
       .then((d) => {
         setData(d);
+        setFieldValues(toStringRecord(d.fieldValues));
         setPhase("ready");
       })
       .catch((e) => {
@@ -66,6 +80,39 @@ export default function Mandate() {
     refresh();
   }, [refresh]);
 
+  // Fetch the attached template's prefill config so the LOCKED display can resolve override ?? default
+  // (the value originate actually bakes). Cleared when no template is attached.
+  const templateDocumensoId = data?.templateDocumensoId ?? null;
+  useEffect(() => {
+    if (!token || templateDocumensoId === null) {
+      setPrefill(null);
+      return;
+    }
+    let cancelled = false;
+    getPrefillConfig(token, templateDocumensoId)
+      .then((p) => {
+        if (!cancelled) setPrefill(p);
+      })
+      .catch(() => {
+        if (!cancelled) setPrefill(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [token, templateDocumensoId]);
+
+  // Per-label config defaults from the prefill config (the default that backs each override). Computed
+  // above the phase early-returns so this hook runs unconditionally (Rules of Hooks); empty until load.
+  const defaults = useMemo<Record<string, string>>(() => {
+    const out: Record<string, string> = {};
+    if (!prefill) return out;
+    for (const [label, s] of Object.entries(prefill.field_settings)) {
+      const d = s.default_document_field_value;
+      if (typeof d === "string") out[label] = d;
+    }
+    return out;
+  }, [prefill]);
+
   async function originate() {
     setOriginating(true);
     setOriginateError(null);
@@ -79,6 +126,44 @@ export default function Mandate() {
     }
   }
 
+  // Persist the edited engagement terms to the deal's active deal_document_configs via PUT details — the
+  // SAME append-only path Deal Details uses. Contacts + attached template are passed through unchanged
+  // (the PUT reconciles the junction; passing the current set is a no-op), so only field_values change.
+  async function persistTerms() {
+    if (!data) return;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const fresh = await updateDealDetails(token, handle, {
+        contacts: data.contacts
+          .filter((c) => !!c.contact_id)
+          .map((c) => ({ contact_id: c.contact_id as string, is_signatory: c.is_signatory ?? true })),
+        fieldValues,
+        templateDocumensoId: data.templateDocumensoId,
+      });
+      setData(fresh);
+      setFieldValues(toStringRecord(fresh.fieldValues));
+      setJustSaved(true);
+      setTimeout(() => setJustSaved(false), 1800);
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : "Could not save the engagement terms");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  // Header lock: unlock → edit; lock → persist. Locking IS the save action.
+  function toggleLock() {
+    if (saving) return;
+    if (locked) {
+      setSaveError(null);
+      setLocked(false);
+    } else {
+      setLocked(true);
+      void persistTerms();
+    }
+  }
+
   if (phase === "loading") return <Note>Loading mandate…</Note>;
   if (phase === "notfound") return <Note>This deal could not be found.</Note>;
   if (phase === "error" || !data) return <Note>{error ?? "Couldn’t load this deal."}</Note>;
@@ -89,20 +174,16 @@ export default function Mandate() {
   const attached =
     data.availableTemplates.find((t) => t.documensoId === data.templateDocumensoId) ?? null;
 
-  // The template label encodes the engagement + its terms ("… — $30,000 / 2.0%"); split on the em dash
-  // for a headline/terms pair, degrading to the whole label when there is no separator.
-  const [engagementTitle, engagementTerms] = splitEngagement(attached?.name ?? null);
-  // Displayed values fall back to the derived template values until the operator edits them.
-  const mandateValue = mandateOverride ?? engagementTitle ?? "";
-  const termsValue = termsOverride ?? engagementTerms ?? "";
-
   // Mirror the edge 422 preconditions so the action explains itself instead of round-tripping a 422.
+  // Also require LOCKED (terms committed) before originating, so unsaved edits can't silently ship.
   const blockReason = !data.templateDocumensoId
     ? "No engagement template is attached. Attach one in Deal Details first."
     : !signatory?.email
       ? "No signatory contact with an email. Set a signatory in Deal Details first."
       : null;
-  const canOriginate = blockReason === null;
+  const editingNotice = !locked ? "Lock the terms to save, then originate." : null;
+  const canOriginate = blockReason === null && locked;
+  const notice = blockReason ?? editingNotice;
 
   const signUrl = originated ? `${window.location.origin}${originated.signLink}` : "";
 
@@ -110,55 +191,44 @@ export default function Mandate() {
     <DocumentFrame
       title="Engagement Agreement"
       housing="cockpit"
-      headerAccessory={<LockToggle locked={locked} onToggle={() => setLocked((l) => !l)} />}
+      headerAccessory={<LockToggle locked={locked} saving={saving} onToggle={toggleLock} />}
     >
       <div className="px-6 pt-10 pb-14 md:px-10 md:pt-12 md:pb-16">
-        <Link to={`/app/applications/${handle}`} className={backCls}>
-          ← Application
-        </Link>
-
-        {/* Prepared for — the prospect signatory bound at originate. */}
-        <div className="mt-6 mb-8 border-[color:var(--color-border-subtle)] border-b pb-5">
+        {/* Prepared for — the prospect's company (the engagement reads as theirs on screenshare). */}
+        <div className="mb-8 border-[color:var(--color-border-subtle)] border-b pb-5">
           <Eyebrow>Prepared for</Eyebrow>
           <div className="text-[0.9375rem] text-[color:var(--color-text-primary)]">
-            {signatory?.full_name || "—"}
-            {data.companyName ? (
-              <span className="text-[color:var(--color-text-muted)]"> · {data.companyName}</span>
-            ) : null}
-          </div>
-          <div className="mt-0.5 flex flex-wrap gap-x-3 text-[0.8125rem] text-[color:var(--color-text-muted)]">
-            {signatory?.title ? <span>{signatory.title}</span> : null}
-            {signatory?.email ? <span className="tabular-nums">{signatory.email}</span> : null}
+            {data.companyName || "—"}
           </div>
         </div>
 
-        {/* Engagement — the attached template + its baked terms (read-only; set in Deal Details). */}
+        {/* Engagement — the attached mandate + its commercial terms. The three terms ARE the deal's
+            field_values overrides (operator-chosen labels mapping to IntroNum / PrepaidFee / PricePerIntro);
+            unlock to edit, lock to persist. Mandate name + Template are read-only (set in Deal Details). */}
         <div className="mb-10">
           <Eyebrow accent>Engagement</Eyebrow>
           <TermRow label="Mandate">
-            {locked ? (
-              <TermVal>{mandateValue || "None attached"}</TermVal>
-            ) : (
-              <input
-                value={mandateValue}
-                onChange={(e) => setMandateOverride(e.target.value)}
-                className={editCls}
-              />
-            )}
+            <TermVal>{attached?.name || "None attached"}</TermVal>
           </TermRow>
-          {termsValue || !locked ? (
-            <TermRow label="Terms">
-              {locked ? (
-                <TermVal>{termsValue}</TermVal>
-              ) : (
-                <input
-                  value={termsValue}
-                  onChange={(e) => setTermsOverride(e.target.value)}
-                  className={editCls}
-                />
-              )}
-            </TermRow>
-          ) : null}
+          {MANDATE_TERMS.map(({ key, label }) => {
+            const override = fieldValues[key] ?? "";
+            const fallback = defaults[key] ?? "";
+            const resolved = override.trim() !== "" ? override : fallback;
+            return (
+              <TermRow key={key} label={label}>
+                {locked ? (
+                  <TermVal>{resolved || "—"}</TermVal>
+                ) : (
+                  <input
+                    value={override}
+                    placeholder={fallback}
+                    onChange={(e) => setFieldValues((fv) => ({ ...fv, [key]: e.target.value }))}
+                    className={editCls}
+                  />
+                )}
+              </TermRow>
+            );
+          })}
           <TermRow label="Template">
             <span className="flex items-center gap-2">
               <TermVal>{attached?.documensoId ? `#${attached.documensoId}` : "—"}</TermVal>
@@ -175,6 +245,20 @@ export default function Mandate() {
               ) : null}
             </span>
           </TermRow>
+          {/* Lock-to-persist feedback. */}
+          {saveError ? (
+            <p className="mt-3 text-right font-mono text-[0.5625rem] text-[color:var(--color-state-warn)] uppercase tracking-[0.14em]">
+              {saveError}
+            </p>
+          ) : saving ? (
+            <p className="mt-3 text-right font-mono text-[0.5625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.14em]">
+              Saving…
+            </p>
+          ) : justSaved ? (
+            <p className="mt-3 text-right font-mono text-[0.5625rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.14em]">
+              Saved
+            </p>
+          ) : null}
         </div>
 
         {/* Execution — Confirm & Originate, then the share link. */}
@@ -182,9 +266,9 @@ export default function Mandate() {
           <ReadyBar signUrl={signUrl} documentId={originated.documentId} status={originated.status} />
         ) : (
           <div>
-            {blockReason ? (
+            {notice ? (
               <p className="mb-3 text-center font-mono text-[0.5625rem] text-[color:var(--color-state-warn)] uppercase tracking-[0.14em]">
-                {blockReason}
+                {notice}
               </p>
             ) : null}
             <button
@@ -220,14 +304,24 @@ function Note({ children }: { children: React.ReactNode }) {
   );
 }
 
-// Header lock — toggles the engagement values between read-only and editable. Locked by default.
-function LockToggle({ locked, onToggle }: { locked: boolean; onToggle: () => void }) {
+// Header lock — toggles the engagement terms between read-only and editable; locking PERSISTS the edits
+// (the save action). Locked by default; disabled mid-save.
+function LockToggle({
+  locked,
+  saving,
+  onToggle,
+}: {
+  locked: boolean;
+  saving: boolean;
+  onToggle: () => void;
+}) {
   return (
     <button
       type="button"
       onClick={onToggle}
-      aria-label={locked ? "Unlock to edit" : "Lock"}
-      className={`flex shrink-0 items-center justify-center border px-2.5 py-1 transition-colors ${
+      disabled={saving}
+      aria-label={locked ? "Unlock to edit" : "Lock and save"}
+      className={`flex shrink-0 items-center justify-center border px-2.5 py-1 transition-colors disabled:opacity-50 ${
         locked
           ? "border-[color:var(--color-border-default)] text-[color:var(--color-text-subtle)] hover:text-[color:var(--color-text-accent)]"
           : "border-[color:var(--color-border-accent)] bg-[color:var(--color-accent-soft)] text-[color:var(--color-text-accent)]"
@@ -326,20 +420,20 @@ function ReadyBar({
   );
 }
 
-const backCls =
-  "inline-flex w-fit items-center font-mono text-[0.625rem] text-[color:var(--color-text-subtle)] uppercase tracking-[0.16em] transition-colors hover:text-[color:var(--color-text-accent)]";
-
 // Inline editable value — matches TermVal typography, right-aligned, faint surface for affordance,
 // NO border/underline (per the operator: no underscore under the field when it becomes editable).
 const editCls =
   "flex-1 bg-[color:var(--color-surface-raised)] px-2 py-0.5 text-right text-[0.9375rem] text-[color:var(--color-text-primary)] outline-none";
 
-// "Engagement Title — $terms" → [title, terms]; no separator → [whole, null].
-function splitEngagement(name: string | null): [string | null, string | null] {
-  if (!name) return [null, null];
-  const idx = name.indexOf("—");
-  if (idx === -1) return [name.trim(), null];
-  const title = name.slice(0, idx).trim();
-  const terms = name.slice(idx + 1).trim();
-  return [title || name.trim(), terms || null];
+// The three commercial terms shown on the mandate — the operator-chosen prospect-facing words mapped to
+// the deal_document_configs field_values keys (the live operator-term labels on the attached template).
+const MANDATE_TERMS: { key: string; label: string }[] = [
+  { key: "IntroNum", label: "Originated Opportunities" },
+  { key: "PrepaidFee", label: "Investment Amount" },
+  { key: "PricePerIntro", label: "Price Per Opportunity" },
+];
+
+// Coerce the stored field_values (jsonb; values may be any) into a string map for the editable inputs.
+function toStringRecord(r: Record<string, unknown>): Record<string, string> {
+  return Object.fromEntries(Object.entries(r).map(([k, v]) => [k, v == null ? "" : String(v)]));
 }
