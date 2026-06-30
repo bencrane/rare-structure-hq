@@ -88,6 +88,25 @@ federalRoutes.get("/entity/:uei/dossier", async (c) => {
   });
 });
 
+// Capability profile — the per-firm card read. Same PUBLIC posture + dumb-BFF broker as the
+// dossier route above: proxies catalyst GET /api/v1/entities/{uei}/capability-profile with the
+// INTERNAL service token; status + {data} envelope pass through verbatim. Payload is public-
+// record SAM/USAspending-derived capability (identity, designations, sub/prime activity, lanes).
+federalRoutes.get("/entity/:uei/capability-profile", async (c) => {
+  const uei = c.req.param("uei");
+  if (!/^[A-Za-z0-9]{12}$/.test(uei)) {
+    throw new HTTPException(400, { message: "invalid uei" });
+  }
+  const res = await fetch(`${env.COREX_API_URL}/api/v1/entities/${uei}/capability-profile`, {
+    headers: { Authorization: `Bearer ${env.COREX_SERVICE_TOKEN}` },
+  });
+  const body = await res.text();
+  return new Response(body, {
+    status: res.status,
+    headers: { "content-type": res.headers.get("content-type") ?? "application/json" },
+  });
+});
+
 // Batch dossier — the cockpit's eager-prefetch read. Verbatim pass-through broker to
 // catalyst's POST /api/v1/entities/dossiers (≤100 UEIs, partial success: unknown UEIs
 // map to null). Body is validated/bounded HERE so a malformed prefetch burst dies at

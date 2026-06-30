@@ -134,6 +134,90 @@ export function fetchEntityDossier(uei: string): Promise<EntityDossier> {
   return getJson<EntityDossier>(`/api/v1/federal/entity/${encodeURIComponent(uei)}/dossier`);
 }
 
+/** A NAICS/PSC code stat — count/dollars normalized across the sub and prime sides. */
+export type CapabilityCodeStat = {
+  code: string | null;
+  description: string | null;
+  count: number | null;
+  dollars: number | null;
+};
+
+/** A prime/sub partner the firm has transacted with. */
+export type CapabilityPartner = {
+  name: string | null;
+  uei: string | null;
+  count: number | null;
+  dollars: number | null;
+};
+
+/** A recommended expansion lane. The primes in `topPrimes` sub this lane out — the teaming targets. */
+export type CapabilityLane = {
+  rank: number | null;
+  evidenceTier: string | null;
+  naics: string | null;
+  psc: string | null;
+  naicsDescription: string | null;
+  pscDescription: string | null;
+  score: number | null;
+  lanePrimes: number | null;
+  laneMedianAmount: number | null;
+  topPrimes: string[];
+};
+
+/** The per-firm capability profile card (catalyst /entities/{uei}/capability-profile). Covers
+ * active subs and never-subbed DSBS alike — `federalStatus` makes the role a status, not the shape. */
+export type CapabilityProfile = {
+  uei: string | null;
+  firmName: string | null;
+  stateCode: string | null;
+  parentUei: string | null;
+  federalStatus: string | null;
+  isDsbs: boolean | null;
+  hasSubHistory: boolean | null;
+  hasPrimeHistory: boolean | null;
+  designations: string[];
+  subActivity: {
+    amount5y: number | null;
+    subawards5y: number | null;
+    distinctPrimes5y: number | null;
+    distinctPrimePartners5y: number | null;
+    recentSubawards90d: number | null;
+    recentSubawardAmount90d: number | null;
+    recentLatestActionDate: string | null;
+    recentTopPrimeName: string | null;
+    recentTopNaicsCode: string | null;
+    recentTopNaicsDescription: string | null;
+    recentSubawardScope: string | null;
+    topPrimePartners: CapabilityPartner[];
+    topNaics: CapabilityCodeStat[];
+  } | null;
+  primeActivity: {
+    awards5y: number | null;
+    obligated5y: number | null;
+    competedAwards5y: number | null;
+    distinctNaics5y: number | null;
+    topNaics: CapabilityCodeStat[];
+    topPsc: CapabilityCodeStat[];
+    topAgencies: {
+      agency: string | null;
+      subAgency: string | null;
+      count: number | null;
+      dollars: number | null;
+    }[];
+  } | null;
+  recommendedLanes: CapabilityLane[];
+  nRecommendedLanes: number | null;
+  topEvidenceTier: string | null;
+  materializedAt: string | null;
+};
+
+/** Fetch the per-firm capability profile card. Public dumb-BFF broker, same posture as dossier. */
+export function fetchEntityCapabilityProfile(uei: string): Promise<CapabilityProfile> {
+  return getJson<CapabilityProfile>(
+    `/api/v1/federal/entity/${encodeURIComponent(uei)}/capability-profile`,
+  );
+}
+
 /** Batch dossier read (≤100 UEIs) — the eager-prefetch path. PARTIAL SUCCESS: the map
  * carries `null` for unknown UEIs; known ones land as full EntityDossier objects. */
 export async function fetchEntityDossiers(
