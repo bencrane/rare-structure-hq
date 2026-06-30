@@ -33,8 +33,9 @@ import SignIn from "./routes/SignIn";
 import Account from "./routes/app/Account";
 import Application from "./routes/app/Application";
 import Applications from "./routes/app/Applications";
-import DealDetails from "./routes/app/DealDetails";
 import Calendar from "./routes/app/Calendar";
+import CapabilityDetail from "./routes/app/CapabilityDetail";
+import DealDetails from "./routes/app/DealDetails";
 import DocumensoTemplateMirror from "./routes/app/DocumensoTemplateMirror";
 import DocumensoTemplatesEditor from "./routes/app/DocumensoTemplatesEditor";
 import DocumensoTemplatesManage from "./routes/app/DocumensoTemplatesManage";
@@ -162,6 +163,16 @@ export function App() {
             element={
               <RequireOperator>
                 <Dossier />
+              </RequireOperator>
+            }
+          />
+          {/* Capability profile — opened by UEI. Server-of-record card: identity + designations
+              + sub/prime activity + evidence-tiered recommended NAICS+PSC lanes (catalyst). */}
+          <Route
+            path="capability/:uei"
+            element={
+              <RequireOperator>
+                <CapabilityDetail />
               </RequireOperator>
             }
           />
