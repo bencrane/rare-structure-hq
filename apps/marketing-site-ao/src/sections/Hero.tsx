@@ -44,6 +44,9 @@ export function Hero() {
                 id="ao-access"
                 name="access"
                 type="email"
+                required
+                autoComplete="email"
+                placeholder="you@firm.com"
                 value={entity}
                 onChange={(e) => setEntity(e.target.value)}
                 className="w-full min-w-0 bg-transparent py-3.5 font-mono text-[0.8125rem] tracking-[0.02em] text-[color:var(--color-text-default)] placeholder:text-[color:var(--color-text-subtle)] focus:outline-none"
