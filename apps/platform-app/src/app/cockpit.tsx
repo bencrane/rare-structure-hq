@@ -57,7 +57,7 @@ export function CockpitPage({
   return (
     <div className="px-6 pt-10 pb-28 md:px-10">
       <Page variant={width} py="0">
-        <Stack gap="8">
+        <Stack gap="10">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <Stack gap="2">
               <Text as="h1" size="display-md" face="display" color="strong">
@@ -82,7 +82,7 @@ export function CockpitPage({
 //    is owned by CockpitPage's Stack; this owns the label↔body beat (step 3).
 export function Section({ label, children }: { label?: string; children: ReactNode }) {
   return (
-    <Stack as="section" gap="3">
+    <Stack as="section" gap="4">
       {label ? (
         <Text as="h2" size="mono-xs" mono color="subtle">
           {label}

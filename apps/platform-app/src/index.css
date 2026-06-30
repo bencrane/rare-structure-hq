@@ -2,6 +2,16 @@
 @import "@rare-structure-hq/tokens/css";
 
 /*
+ * Layout-primitive utility safelist lives in src/lib/tw-safelist.ts (literal class
+ * strings the Tailwind v4 scanner picks up). Stack/Inline/Grid build their gap /
+ * padding / grid-cols classes at RUNTIME (`gap-${token}` via packages/ui utils.ts),
+ * so the scanner never sees them as literals and silently omitted any value not also
+ * hand-written elsewhere — e.g. gap-8 (the CockpitPage section rhythm) was never
+ * generated, collapsing section gaps to 0 (the cramped-sections bug). (@source
+ * inline(...) is unsupported in this Tailwind v4 beta, hence the scanned-literal sink.)
+ */
+
+/*
  * The full design-token @theme block (color / spacing / type scale / radius /
  * breakpoints) is carried by the `@rare-structure-hq/tokens/css` import above.
  * Anything that should be a token belongs in `packages/tokens/src/tokens.ts`,
