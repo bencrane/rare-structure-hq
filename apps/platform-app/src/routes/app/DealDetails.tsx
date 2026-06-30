@@ -33,7 +33,7 @@ export default function DealDetails() {
   const [contacts, setContacts] = useState<DealContact[]>([]);
   // The add pool — account contacts not yet on the deal (mutated locally as we add/unlink).
   const [available, setAvailable] = useState<AvailableContact[]>([]);
-  const [templateUuid, setTemplateUuid] = useState<string>("");
+  const [templateDocumensoId, setTemplateDocumensoId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -47,7 +47,7 @@ export default function DealDetails() {
         setData(d);
         setContacts(withSignatoryDefault(d.contacts));
         setAvailable(d.availableContacts ?? []);
-        setTemplateUuid(d.defaultTemplateUuid ?? "");
+        setTemplateDocumensoId(d.defaultTemplateDocumensoId ?? null);
         setPhase("ready");
       })
       .catch((e) => {
@@ -116,12 +116,12 @@ export default function DealDetails() {
           .filter((c) => !!c.contact_id)
           .map((c) => ({ contact_id: c.contact_id as string, is_signatory: c.is_signatory ?? true })),
         fieldValues: data?.fieldValues ?? {},
-        defaultTemplateUuid: templateUuid || null,
+        defaultTemplateDocumensoId: templateDocumensoId,
       });
       setData(fresh);
       setContacts(withSignatoryDefault(fresh.contacts));
       setAvailable(fresh.availableContacts ?? []);
-      setTemplateUuid(fresh.defaultTemplateUuid ?? "");
+      setTemplateDocumensoId(fresh.defaultTemplateDocumensoId ?? null);
       setJustSaved(true);
       setTimeout(() => setJustSaved(false), 1800);
     } catch (e) {
@@ -165,11 +165,11 @@ export default function DealDetails() {
     );
   }
 
-  const nameFor = (uuid: string | null) =>
-    data.availableTemplates.find((t) => t.templateUuid === uuid)?.name ?? null;
-  const currentTemplateName = nameFor(data.defaultTemplateUuid); // the SAVED attachment
-  const pendingTemplateName = nameFor(templateUuid || null); // the dropdown's working selection
-  const templateDirty = templateUuid !== (data.defaultTemplateUuid ?? "");
+  const nameFor = (id: number | null) =>
+    data.availableTemplates.find((t) => t.documensoId === id)?.name ?? null;
+  const currentTemplateName = nameFor(data.defaultTemplateDocumensoId); // the SAVED attachment
+  const pendingTemplateName = nameFor(templateDocumensoId); // the dropdown's working selection
+  const templateDirty = templateDocumensoId !== (data.defaultTemplateDocumensoId ?? null);
 
   return (
     <CockpitPage
@@ -290,14 +290,14 @@ export default function DealDetails() {
 
             <Field label="Change template">
               <select
-                value={templateUuid}
-                onChange={(e) => setTemplateUuid(e.target.value)}
+                value={templateDocumensoId ?? ""}
+                onChange={(e) => setTemplateDocumensoId(e.target.value ? Number(e.target.value) : null)}
                 className="w-full border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-sunken)] px-3 py-2.5 text-[color:var(--color-text-primary)] text-body-sm outline-none focus:border-[color:var(--color-text-accent)]"
               >
                 <option value="">— None —</option>
                 {data.availableTemplates.map((t) => (
-                  <option key={t.templateUuid} value={t.templateUuid}>
-                    {(t.name ?? t.documensoTemplateId) + (t.isDefault ? "  ·  org default" : "")}
+                  <option key={t.documensoId} value={t.documensoId}>
+                    {(t.name ?? String(t.documensoId)) + (t.isDefault ? "  ·  org default" : "")}
                   </option>
                 ))}
               </select>
