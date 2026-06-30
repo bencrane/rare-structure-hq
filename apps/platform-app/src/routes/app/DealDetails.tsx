@@ -98,6 +98,33 @@ export default function DealDetails() {
     };
   }, [token, templateDocumensoId]);
 
+  // The selected template's prefill fields, deduped by label (a label can map to several field ids),
+  // each with its config default + read_only. Operator-term fields (required + locked) surface first;
+  // the rest are editable prospect facts. Computed here — above the phase early-returns — so this hook
+  // runs unconditionally on every render (Rules of Hooks); the body no-ops to [] until prefill loads.
+  const prefillFields = useMemo<PrefillFieldRow[]>(() => {
+    if (!prefill) return [];
+    const byLabel = new Map<string, PrefillFieldRow>();
+    for (const f of prefill.fields) {
+      if (byLabel.has(f.label)) continue;
+      const settings = prefill.field_settings[f.label] ?? {};
+      byLabel.set(f.label, {
+        label: f.label,
+        required: f.required,
+        readOnly: settings.read_only === true,
+        default:
+          typeof settings.default_document_field_value === "string"
+            ? settings.default_document_field_value
+            : null,
+      });
+    }
+    return [...byLabel.values()];
+  }, [prefill]);
+  const termFields = prefillFields.filter((f) => f.required && f.readOnly);
+  const prospectFields = prefillFields.filter((f) => !(f.required && f.readOnly));
+  const onFieldValue = (label: string, value: string) =>
+    setFieldValues((fv) => ({ ...fv, [label]: value }));
+
   // Person fields are display-only; only is_signatory is editable on a linked contact.
   const setSignatory = (i: number, on: boolean) =>
     setContacts((cs) => cs.map((c, j) => (j === i ? { ...c, is_signatory: on } : c)));
@@ -205,32 +232,6 @@ export default function DealDetails() {
   const currentTemplateName = nameFor(data.templateDocumensoId); // the SAVED attachment
   const pendingTemplateName = nameFor(templateDocumensoId); // the dropdown's working selection
   const templateDirty = templateDocumensoId !== (data.templateDocumensoId ?? null);
-
-  // The selected template's prefill fields, deduped by label (a label can map to several field ids),
-  // each with its config default + read_only. Operator-term fields (required + locked) surface first;
-  // the rest are editable prospect facts.
-  const prefillFields = useMemo<PrefillFieldRow[]>(() => {
-    if (!prefill) return [];
-    const byLabel = new Map<string, PrefillFieldRow>();
-    for (const f of prefill.fields) {
-      if (byLabel.has(f.label)) continue;
-      const settings = prefill.field_settings[f.label] ?? {};
-      byLabel.set(f.label, {
-        label: f.label,
-        required: f.required,
-        readOnly: settings.read_only === true,
-        default:
-          typeof settings.default_document_field_value === "string"
-            ? settings.default_document_field_value
-            : null,
-      });
-    }
-    return [...byLabel.values()];
-  }, [prefill]);
-  const termFields = prefillFields.filter((f) => f.required && f.readOnly);
-  const prospectFields = prefillFields.filter((f) => !(f.required && f.readOnly));
-  const onFieldValue = (label: string, value: string) =>
-    setFieldValues((fv) => ({ ...fv, [label]: value }));
 
   return (
     <CockpitPage
