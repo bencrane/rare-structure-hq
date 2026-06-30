@@ -47,7 +47,7 @@ export default function DealDetails() {
         setData(d);
         setContacts(withSignatoryDefault(d.contacts));
         setAvailable(d.availableContacts ?? []);
-        setTemplateDocumensoId(d.defaultTemplateDocumensoId ?? null);
+        setTemplateDocumensoId(d.templateDocumensoId ?? null);
         setPhase("ready");
       })
       .catch((e) => {
@@ -116,12 +116,12 @@ export default function DealDetails() {
           .filter((c) => !!c.contact_id)
           .map((c) => ({ contact_id: c.contact_id as string, is_signatory: c.is_signatory ?? true })),
         fieldValues: data?.fieldValues ?? {},
-        defaultTemplateDocumensoId: templateDocumensoId,
+        templateDocumensoId: templateDocumensoId,
       });
       setData(fresh);
       setContacts(withSignatoryDefault(fresh.contacts));
       setAvailable(fresh.availableContacts ?? []);
-      setTemplateDocumensoId(fresh.defaultTemplateDocumensoId ?? null);
+      setTemplateDocumensoId(fresh.templateDocumensoId ?? null);
       setJustSaved(true);
       setTimeout(() => setJustSaved(false), 1800);
     } catch (e) {
@@ -167,9 +167,9 @@ export default function DealDetails() {
 
   const nameFor = (id: number | null) =>
     data.availableTemplates.find((t) => t.documensoId === id)?.name ?? null;
-  const currentTemplateName = nameFor(data.defaultTemplateDocumensoId); // the SAVED attachment
+  const currentTemplateName = nameFor(data.templateDocumensoId); // the SAVED attachment
   const pendingTemplateName = nameFor(templateDocumensoId); // the dropdown's working selection
-  const templateDirty = templateDocumensoId !== (data.defaultTemplateDocumensoId ?? null);
+  const templateDirty = templateDocumensoId !== (data.templateDocumensoId ?? null);
 
   return (
     <CockpitPage
