@@ -1,14 +1,14 @@
 /**
  * Mandate — the operator's deal-keyed mandate surface at /app/m/:handle, rendered as a document
  * (the shared DocumentFrame letterhead) so it reads as the engagement itself when screenshared to the
- * prospect on the call — NOT an operator console. Loads the deal's signatory + attached Documenso
- * template (both read-only here; set in Deal Details), then "Confirm & Originate" mints the prefilled
- * PENDING Documenso document and reveals the /p/m share link.
+ * prospect on the call — NOT an operator console. Loads the deal's attached Documenso template + its
+ * commercial terms, then "Confirm & Originate" mints the prefilled PENDING Documenso document and
+ * reveals the /p/m share link.
  *
- * Deal-keyed: the template (and its baked terms) ride on the deal via the active
- * deal_document_configs.template_documenso_id (the mirror attach), so only the deal handle is keyed.
- * Per-deal pricing edits are a later phase (the price is baked into
- * the template document, not an editable field), so the terms render read-only here.
+ * Deal-keyed: the template rides on the deal via the active deal_document_configs.template_documenso_id
+ * (the mirror attach), so only the deal handle is keyed. The three commercial terms ARE the deal's
+ * field_values overrides — the header lock toggles them editable, and LOCKING persists them back to the
+ * active deal_document_configs via PUT details (the same append-only path Deal Details writes).
  */
 import { Check, Copy, ExternalLink, FileSignature, Lock, LockOpen } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
