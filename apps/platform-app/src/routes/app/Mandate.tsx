@@ -87,7 +87,7 @@ export default function Mandate() {
   // so originate binds the first signatory; show that contact as "prepared for".
   const signatory = data.contacts.find((c) => c.is_signatory) ?? data.contacts[0] ?? null;
   const attached =
-    data.availableTemplates.find((t) => t.documensoId === data.defaultTemplateDocumensoId) ?? null;
+    data.availableTemplates.find((t) => t.documensoId === data.templateDocumensoId) ?? null;
 
   // The template label encodes the engagement + its terms ("… — $30,000 / 2.0%"); split on the em dash
   // for a headline/terms pair, degrading to the whole label when there is no separator.
@@ -97,7 +97,7 @@ export default function Mandate() {
   const termsValue = termsOverride ?? engagementTerms ?? "";
 
   // Mirror the edge 422 preconditions so the action explains itself instead of round-tripping a 422.
-  const blockReason = !data.defaultTemplateDocumensoId
+  const blockReason = !data.templateDocumensoId
     ? "No engagement template is attached. Attach one in Deal Details first."
     : !signatory?.email
       ? "No signatory contact with an email. Set a signatory in Deal Details first."

@@ -237,13 +237,10 @@ export interface EdgeDealDetails {
     title: string | null;
   }[];
   field_values: Record<string, unknown>;
-  default_template_uuid: string | null;
-  default_template_documenso_id: number | null;
+  template_documenso_id: number | null;
   template_origin: string;
   available_templates: {
     documenso_id: number;
-    template_uuid: string;
-    documenso_template_id: string;
     name: string | null;
     is_default: boolean;
   }[];
@@ -262,7 +259,7 @@ export async function edgeSaveDealDetails(
   body: {
     contacts: unknown[];
     field_values: Record<string, unknown>;
-    default_template_documenso_id: number | null;
+    template_documenso_id: number | null;
   },
 ): Promise<EdgeDealDetails> {
   const res = await fetch(`${base()}/api/v1/deals/${encodeURIComponent(handle)}/details`, {

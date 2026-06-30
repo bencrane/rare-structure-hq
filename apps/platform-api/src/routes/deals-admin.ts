@@ -69,13 +69,10 @@ function toDealDetails(r: EdgeDealDetails) {
       title: a.title,
     })),
     fieldValues: r.field_values,
-    defaultTemplateUuid: r.default_template_uuid,
-    defaultTemplateDocumensoId: r.default_template_documenso_id,
+    templateDocumensoId: r.template_documenso_id,
     templateOrigin: r.template_origin,
     availableTemplates: (r.available_templates ?? []).map((t) => ({
       documensoId: t.documenso_id,
-      templateUuid: t.template_uuid,
-      documensoTemplateId: t.documenso_template_id,
       name: t.name,
       isDefault: t.is_default,
     })),
@@ -100,7 +97,7 @@ dealAdminRoutes.put("/:handle/details", requireUser, async (c) => {
   const body = (await c.req.json().catch(() => ({}))) as {
     contacts?: unknown;
     fieldValues?: unknown;
-    defaultTemplateDocumensoId?: unknown;
+    templateDocumensoId?: unknown;
   };
   try {
     const r = await edgeSaveDealDetails(c.req.param("handle"), {
@@ -109,8 +106,8 @@ dealAdminRoutes.put("/:handle/details", requireUser, async (c) => {
         body.fieldValues && typeof body.fieldValues === "object" && !Array.isArray(body.fieldValues)
           ? (body.fieldValues as Record<string, unknown>)
           : {},
-      default_template_documenso_id:
-        typeof body.defaultTemplateDocumensoId === "number" ? body.defaultTemplateDocumensoId : null,
+      template_documenso_id:
+        typeof body.templateDocumensoId === "number" ? body.templateDocumensoId : null,
     });
     return c.json({ data: toDealDetails(r) });
   } catch (e) {
