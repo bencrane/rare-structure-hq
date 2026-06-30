@@ -35,6 +35,9 @@ export interface AvailableContact {
 }
 
 export interface TemplateOption {
+  // MIRROR template documenso_id — the attach key the dropdown matches and saves.
+  documensoId: number;
+  // Legacy fields, retained (empty for mirror rows) so the Mandate page's contract still resolves.
   templateUuid: string;
   documensoTemplateId: string;
   name: string | null;
@@ -49,7 +52,8 @@ export interface DealDetails {
   contacts: DealContact[];
   availableContacts: AvailableContact[];
   fieldValues: Record<string, unknown>;
-  defaultTemplateUuid: string | null;
+  defaultTemplateUuid: string | null; // LEGACY attach (documenso_templates uuid); read by Mandate
+  defaultTemplateDocumensoId: number | null; // MIRROR attach — the live key
   templateOrigin: string;
   availableTemplates: TemplateOption[];
 }
@@ -58,7 +62,7 @@ export interface DealDetailsInput {
   // Junction reconciliation payload — only the resolution key + signatory flag (no person fields).
   contacts: { contact_id: string; is_signatory: boolean }[];
   fieldValues: Record<string, unknown>;
-  defaultTemplateUuid: string | null;
+  defaultTemplateDocumensoId: number | null;
 }
 
 export async function getDealDetails(token: string, handle: string): Promise<DealDetails> {
