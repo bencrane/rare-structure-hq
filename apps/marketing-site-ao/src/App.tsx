@@ -3,7 +3,10 @@ import { DeploymentProtocol } from "./sections/DeploymentProtocol";
 import { Hero } from "./sections/Hero";
 import { OperatingProtocol } from "./sections/OperatingProtocol";
 import { OperationalPrecedent } from "./sections/OperationalPrecedent";
-import { PublicUtility } from "./sections/PublicUtility";
+// PublicUtility ("Your Federal Standing" / GovernmentContracted.com) hidden 2026-06-29.
+// Component + data retained in src/sections/PublicUtility.tsx; uncomment this import
+// and the <PublicUtility /> usage below to restore the section.
+// import { PublicUtility } from "./sections/PublicUtility";
 import { SiteFooter } from "./sections/SiteFooter";
 import { SiteHeader } from "./sections/SiteHeader";
 
@@ -17,7 +20,7 @@ export function App() {
           <OperatingProtocol />
           <OperationalPrecedent />
           <CoverageVectors />
-          <PublicUtility />
+          {/* <PublicUtility /> hidden 2026-06-29 — see import note above to restore. */}
           <DeploymentProtocol />
         </main>
         <SiteFooter />
