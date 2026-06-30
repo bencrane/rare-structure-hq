@@ -925,6 +925,39 @@ export async function edgeResyncAllTemplates(): Promise<EdgeTemplateResyncAllRes
   return (await res.json()) as EdgeTemplateResyncAllResult;
 }
 
+// ── Documenso template DEFAULT picker (Settings "Set Template as Default") ──────────────────────────
+// edge_api owns the MIRROR-template default store (business.documenso_template_defaults): list the
+// mirror templates (business.documenso_envelopes, type='template') each flagged is_default, and set
+// which one is the operator's Confirm & Originate default. Distinct from the LEGACY documenso-templates
+// registry picker — mirror-path templates (e.g. 14503) aren't in that registry. snake_case passes through.
+
+export interface EdgeTemplateDefaultRow {
+  documenso_id: number;
+  title: string | null;
+  status: string | null;
+  is_default: boolean;
+}
+
+/** The mirror templates, each flagged with whether it is the operator's default — the picker source. */
+export async function edgeListTemplateDefaults(): Promise<EdgeTemplateDefaultRow[]> {
+  const res = await fetch(`${base()}/api/v1/documenso-template-defaults`, {
+    headers: serviceHeaders(false),
+  });
+  if (!res.ok) throw new EdgeError(`edge template-defaults list failed: ${res.status}`);
+  return (await res.json()) as EdgeTemplateDefaultRow[];
+}
+
+/** Mark one MIRROR template as the operator's Confirm & Originate default (by numeric documenso_id). */
+export async function edgeSetTemplateDefault(documensoId: number): Promise<void> {
+  const res = await fetch(`${base()}/api/v1/documenso-template-defaults`, {
+    method: "POST",
+    headers: serviceHeaders(),
+    body: JSON.stringify({ documenso_id: documensoId }),
+  });
+  if (!res.ok)
+    throw new EdgeError(`edge template-defaults set-default failed: ${res.status} ${await res.text()}`);
+}
+
 // ── Documenso template prefill config (the OPERATOR-OWNED per-template prefill editor) ──────────────
 // business.documenso_template_document_prefill_configs is operator-owned; this editor is its ONLY
 // writer. The webhook projector / mirror resync NEVER touch it. The field SET comes from the MIRROR

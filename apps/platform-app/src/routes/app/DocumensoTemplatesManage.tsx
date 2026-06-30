@@ -1,41 +1,47 @@
 /**
- * DocumensoTemplatesManage — Settings → Documenso → Manage Templates
+ * DocumensoTemplatesManage — Settings → Documenso → Set Template as Default
  * (`/app/settings/documenso/templates`).
  *
- * Table of EVERY Documenso template for the operator's org (active AND archived), from core-x
- * `business.documenso_templates` via the BFF. The Default column marks ONE template as the org's
- * Confirm & Originate default (active templates only) — recorded in the DB (`documenso_templates.
- * is_default`, one per org). Override / attach-at-creation / originate wiring are intentionally NOT
- * here yet. Composes CockpitPage — no route geometry.
+ * Table of every MIRROR template for the operator (core-x `business.documenso_envelopes`,
+ * type='template', non-deleted) via the BFF. The Default column marks ONE as the operator's Confirm &
+ * Originate default, recorded in the operator-owned `business.documenso_template_defaults` (one per
+ * plane) — NOT baked onto the Documenso template, and NOT the legacy `business.documenso_templates`
+ * registry (mirror-path templates like 14503 aren't in it). Override / attach-at-creation / originate
+ * wiring are intentionally NOT here yet. Composes CockpitPage — no route geometry.
  */
 import { FileText } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import type { DocumensoTemplateSummary } from "@rare-structure-hq/shared";
 import { Badge, Inline, Text } from "@rare-structure-hq/ui";
 
 import { BackLink, CockpitPage, EmptyState, Panel, Section } from "@/app/cockpit";
 import { useAuth } from "@/lib/auth";
 import {
-  listDocumensoTemplates,
-  setDefaultDocumensoTemplate,
-} from "@/settings/documenso-templates-api";
+  type TemplateDefaultRow,
+  listTemplateDefaults,
+  setTemplateDefault,
+} from "@/settings/documenso-template-defaults-api";
 
 function statusTone(status: string): "info" | "warn" | "success" {
-  return status === "archived" ? "warn" : "success";
+  if (status === "archived" || status === "cancelled") return "warn";
+  if (status === "completed") return "success";
+  return "info";
 }
 
 export default function DocumensoTemplatesManage() {
   const { session } = useAuth();
   const token = session?.access_token ?? "";
 
-  const [list, setList] = useState<DocumensoTemplateSummary[] | null>(null);
+  const [list, setList] = useState<TemplateDefaultRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // The current DB default (the row with is_default), and the operator's local pick before saving.
-  const persistedDefaultId = useMemo(() => list?.find((t) => t.isDefault)?.id ?? null, [list]);
-  const [selected, setSelected] = useState<string | null>(null);
+  // The current default (the row with is_default), and the operator's local pick before saving.
+  const persistedDefaultId = useMemo(
+    () => list?.find((t) => t.is_default)?.documenso_id ?? null,
+    [list],
+  );
+  const [selected, setSelected] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -44,7 +50,7 @@ export default function DocumensoTemplatesManage() {
     if (!token) return;
     setError(null);
     setList(null);
-    listDocumensoTemplates(token)
+    listTemplateDefaults(token)
       .then(setList)
       .catch((e) => setError(e instanceof Error ? e.message : "Failed to load templates"));
   }, [token]);
@@ -62,11 +68,11 @@ export default function DocumensoTemplatesManage() {
   const dirty = selected !== persistedDefaultId;
 
   const save = useCallback(() => {
-    if (!selected || !dirty) return;
+    if (selected === null || !dirty) return;
     setSaving(true);
     setSaved(false);
     setSaveError(null);
-    setDefaultDocumensoTemplate(token, selected)
+    setTemplateDefault(token, selected)
       .then(() => {
         setSaved(true);
         refresh();
@@ -77,8 +83,8 @@ export default function DocumensoTemplatesManage() {
 
   return (
     <CockpitPage
-      title="Manage Templates"
-      description="Every Documenso template registered for your org — active and archived. Mark one as the Confirm & Originate default."
+      title="Set Template as Default"
+      description="Every Documenso template from the live mirror. Mark one as the Confirm & Originate default."
     >
       <BackLink to="/app/settings/documenso" label="Documenso" />
       <Section label="Templates">
@@ -100,7 +106,7 @@ export default function DocumensoTemplatesManage() {
             <EmptyState
               icon={FileText}
               title="No templates"
-              description="No Documenso templates are registered for your org yet."
+              description="No Documenso templates are mirrored yet. Re-grab them from Template Mirror."
             />
           ) : (
             <>
@@ -116,61 +122,50 @@ export default function DocumensoTemplatesManage() {
                       <Th>Default</Th>
                       <Th>Template ID</Th>
                       <Th>Name</Th>
-                      <Th>Archetype</Th>
                       <Th>Status</Th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[color:var(--color-border-subtle)]">
-                    {list.map((t) => {
-                      const selectable = t.status === "active";
-                      return (
-                        <tr
-                          key={t.id}
-                          className="transition-colors hover:bg-[color:var(--color-surface-raised)]"
-                        >
-                          <td className="px-4 py-3">
-                            <input
-                              type="radio"
-                              name="default-template"
-                              checked={selected === t.id}
-                              disabled={!selectable || saving}
-                              onChange={() => {
-                                setSelected(t.id);
-                                setSaved(false);
-                              }}
-                              aria-label={`Set ${t.name} as the default template`}
-                              title={
-                                selectable ? undefined : "Archived templates can’t be the default"
-                              }
-                              className="size-4 cursor-pointer accent-[color:var(--color-accent-primary)] disabled:cursor-not-allowed disabled:opacity-40"
-                            />
-                          </td>
-                          <td className="px-4 py-3">
-                            <Text size="mono-xs" mono color="subtle">
-                              {t.id}
-                            </Text>
-                          </td>
-                          <td className="px-4 py-3">
-                            <Text size="body-sm" color="primary" className="block truncate">
-                              {t.name}
-                            </Text>
-                            {t.slug ? (
-                              <Text size="mono-xs" mono color="subtle" className="block truncate">
-                                {t.slug}
-                              </Text>
-                            ) : null}
-                          </td>
-                          <td className="px-4 py-3">
-                            <Text size="body-sm" color="muted">
-                              {t.archetypeName ?? "—"}
-                            </Text>
-                          </td>
-                          <td className="px-4 py-3">
+                    {list.map((t) => (
+                      <tr
+                        key={t.documenso_id}
+                        className="transition-colors hover:bg-[color:var(--color-surface-raised)]"
+                      >
+                        <td className="px-4 py-3">
+                          <input
+                            type="radio"
+                            name="default-template"
+                            checked={selected === t.documenso_id}
+                            disabled={saving}
+                            onChange={() => {
+                              setSelected(t.documenso_id);
+                              setSaved(false);
+                            }}
+                            aria-label={`Set ${t.title ?? t.documenso_id} as the default template`}
+                            className="size-4 cursor-pointer accent-[color:var(--color-accent-primary)] disabled:cursor-not-allowed disabled:opacity-40"
+                          />
+                        </td>
+                        <td className="px-4 py-3">
+                          <Text size="mono-xs" mono color="subtle">
+                            {t.documenso_id}
+                          </Text>
+                        </td>
+                        <td className="px-4 py-3">
+                          <Text size="body-sm" color="primary" className="block truncate">
+                            {t.title ?? "—"}
+                          </Text>
+                        </td>
+                        <td className="px-4 py-3">
+                          {t.status ? (
                             <Badge tone={statusTone(t.status)}>{t.status}</Badge>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                          ) : (
+                            <Text size="body-sm" color="muted">
+                              —
+                            </Text>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
@@ -190,7 +185,7 @@ export default function DocumensoTemplatesManage() {
                   ? "Saved"
                   : dirty
                     ? "Unsaved change"
-                    : persistedDefaultId
+                    : persistedDefaultId !== null
                       ? `Default: ${persistedDefaultId}`
                       : "No default set"}
           </Text>
