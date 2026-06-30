@@ -5,8 +5,9 @@
  * template (both read-only here; set in Deal Details), then "Confirm & Originate" mints the prefilled
  * PENDING Documenso document and reveals the /p/m share link.
  *
- * Deal-keyed: the template (and its baked terms) ride on the deal via deal_details.default_template_uuid,
- * so only the deal handle is keyed. Per-deal pricing edits are a later phase (the price is baked into
+ * Deal-keyed: the template (and its baked terms) ride on the deal via the active
+ * deal_document_configs.template_documenso_id (the mirror attach), so only the deal handle is keyed.
+ * Per-deal pricing edits are a later phase (the price is baked into
  * the template document, not an editable field), so the terms render read-only here.
  */
 import { Check, Copy, ExternalLink, FileSignature, Lock, LockOpen } from "lucide-react";
@@ -86,7 +87,7 @@ export default function Mandate() {
   // so originate binds the first signatory; show that contact as "prepared for".
   const signatory = data.contacts.find((c) => c.is_signatory) ?? data.contacts[0] ?? null;
   const attached =
-    data.availableTemplates.find((t) => t.templateUuid === data.defaultTemplateUuid) ?? null;
+    data.availableTemplates.find((t) => t.documensoId === data.defaultTemplateDocumensoId) ?? null;
 
   // The template label encodes the engagement + its terms ("… — $30,000 / 2.0%"); split on the em dash
   // for a headline/terms pair, degrading to the whole label when there is no separator.
@@ -96,7 +97,7 @@ export default function Mandate() {
   const termsValue = termsOverride ?? engagementTerms ?? "";
 
   // Mirror the edge 422 preconditions so the action explains itself instead of round-tripping a 422.
-  const blockReason = !data.defaultTemplateUuid
+  const blockReason = !data.defaultTemplateDocumensoId
     ? "No engagement template is attached. Attach one in Deal Details first."
     : !signatory?.email
       ? "No signatory contact with an email. Set a signatory in Deal Details first."
@@ -160,7 +161,7 @@ export default function Mandate() {
           ) : null}
           <TermRow label="Template">
             <span className="flex items-center gap-2">
-              <TermVal>{attached?.documensoTemplateId ? `#${attached.documensoTemplateId}` : "—"}</TermVal>
+              <TermVal>{attached?.documensoId ? `#${attached.documensoId}` : "—"}</TermVal>
               {attached ? (
                 <span
                   className={`shrink-0 border px-2 py-0.5 font-mono text-[0.5rem] uppercase tracking-[0.16em] ${
