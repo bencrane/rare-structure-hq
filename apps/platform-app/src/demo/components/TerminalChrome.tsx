@@ -5,7 +5,14 @@
  */
 
 import { motion } from "framer-motion";
-import { Crosshair, type LucideIcon, Map as MapIcon, Table2 as TableIcon, X } from "lucide-react";
+import {
+  Crosshair,
+  type LucideIcon,
+  Map as MapIcon,
+  Table2 as TableIcon,
+  SlidersHorizontal as WorkbenchIcon,
+  X,
+} from "lucide-react";
 import { TRACKED_ENTITIES } from "../data";
 import type { MapQuery } from "../types";
 
@@ -16,17 +23,26 @@ type DatasetValue = NonNullable<MapQuery["dataset"]> | "auto";
  * and the full results table. The control lives in the terminal header's top-right corner. */
 export type ResultView = "map" | "table";
 
-/** The compact, icon-only Map/Table selector for the terminal header's top-right. Used both
- * pre-query (`kind="default"` — sets the persisted global default surface) and post-query
- * (`kind="active"` — switches the current result's view); `kind` only changes the a11y label. */
+/** What the top-right toggle can highlight: a result view, or the query workbench pane.
+ * "workbench" is a cockpit MODE, not a result view — it is never persisted as a default
+ * (`parseResultView` stays pinned to map|table) and never seeds a fresh query's surface. */
+export type CockpitPane = ResultView | "workbench";
+
+/** The compact, icon-only Map/Table(/Workbench) selector for the terminal header's top-right.
+ * Used both pre-query (`kind="default"` — sets the persisted global default surface) and
+ * post-query (`kind="active"` — switches the current result's view); `kind` only changes the
+ * a11y label. When `onWorkbench` is provided a third segment opens the deterministic query
+ * workbench — a mode switch, never a persisted default. */
 export function CompactViewToggle({
   view,
   onChange,
   kind,
+  onWorkbench,
 }: {
-  view: ResultView;
+  view: CockpitPane;
   onChange: (v: ResultView) => void;
   kind: "default" | "active";
+  onWorkbench?: () => void;
 }) {
   return (
     <div className="flex items-stretch border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-raised)]">
@@ -45,6 +61,21 @@ export function CompactViewToggle({
         Icon={TableIcon}
         kind={kind}
       />
+      {onWorkbench && (
+        <>
+          <span className="w-px self-stretch bg-[color:var(--color-border-subtle)]" />
+          <CompactViewToggleButton
+            active={view === "workbench"}
+            onClick={() => {
+              if (view !== "workbench") onWorkbench();
+            }}
+            label="Workbench"
+            Icon={WorkbenchIcon}
+            kind={kind}
+            desc="Open the query workbench"
+          />
+        </>
+      )}
     </div>
   );
 }
@@ -55,14 +86,20 @@ function CompactViewToggleButton({
   label,
   Icon,
   kind,
+  desc: descOverride,
 }: {
   active: boolean;
   onClick: () => void;
   label: string;
   Icon: LucideIcon;
   kind: "default" | "active";
+  /** Explicit a11y/tooltip text — the workbench segment is a mode switch, so neither
+   * kind-derived phrasing ("Set … as the default view" / "Show … view") applies. */
+  desc?: string;
 }) {
-  const desc = kind === "default" ? `Set ${label} as the default view` : `Show ${label} view`;
+  const desc =
+    descOverride ??
+    (kind === "default" ? `Set ${label} as the default view` : `Show ${label} view`);
   return (
     <button
       type="button"
@@ -157,6 +194,7 @@ export function TerminalHeader({
   view,
   onView,
   onClear,
+  onWorkbench,
 }: {
   reduced: boolean;
   /** Hide the wordmark + terminal name when the map is embedded in the
@@ -168,12 +206,15 @@ export function TerminalHeader({
   onDefaultView?: (v: ResultView) => void;
   /** POST-QUERY active-view toggle (switches the current result between map and table).
    * Caller passes these only while a result is active; renders in the same top-right slot
-   * as the pre-query toggle, with the Clear (✕) button to its right. */
-  view?: ResultView;
+   * as the pre-query toggle, with the Clear (✕) button to its right. "workbench" marks the
+   * workbench pane active (map/table then EXIT the workbench back to the picked view). */
+  view?: CockpitPane;
   onView?: (v: ResultView) => void;
   /** Clears the active result set — rendered as a compact ✕ to the right of the active
    * toggle (post-query only). */
   onClear?: () => void;
+  /** Opens the deterministic query workbench — renders the third toggle segment. */
+  onWorkbench?: () => void;
 }) {
   return (
     <motion.header
@@ -206,13 +247,23 @@ export function TerminalHeader({
         {/* Pre-query: the global default-view toggle. */}
         {defaultView && onDefaultView && (
           <div className="mt-3 flex justify-end">
-            <CompactViewToggle view={defaultView} onChange={onDefaultView} kind="default" />
+            <CompactViewToggle
+              view={defaultView}
+              onChange={onDefaultView}
+              kind="default"
+              onWorkbench={onWorkbench}
+            />
           </div>
         )}
         {/* Post-query: the active Map/Table toggle + a ✕ clear to its right — same slot. */}
         {view && onView && (
           <div className="mt-3 flex items-center justify-end gap-2">
-            <CompactViewToggle view={view} onChange={onView} kind="active" />
+            <CompactViewToggle
+              view={view}
+              onChange={onView}
+              kind="active"
+              onWorkbench={onWorkbench}
+            />
             {onClear && (
               <button
                 type="button"

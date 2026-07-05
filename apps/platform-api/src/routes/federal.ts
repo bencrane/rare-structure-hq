@@ -19,6 +19,8 @@
  *   GET /entities?naics=&minObligation=&state=&activeOnly=&limit=&offset=
  *                                     the map/list slice, filtered in-memory (paged)
  *   GET /entity/:uei                  one entity for the profile drawer
+ *   GET /query-fields                 workbench field catalog (catalyst /map/fields proxy)
+ *   POST /query/:dataset              workbench deterministic query (catalyst /map/{ds}/query proxy)
  *
  * Each response is the `{ data }` envelope the app's house fetch pattern expects.
  */
@@ -132,6 +134,62 @@ federalRoutes.post("/entity/dossiers", async (c) => {
       "content-type": "application/json",
     },
     body: JSON.stringify({ ueis: ueis.map((u) => (u as string).trim()) }),
+  });
+  const text = await res.text();
+  return new Response(text, {
+    status: res.status,
+    headers: { "content-type": res.headers.get("content-type") ?? "application/json" },
+  });
+});
+
+// ── Query workbench — the deterministic filter surface ──────────────────────
+// Two dumb-BFF brokers to catalyst's map query engine. The workbench is the operator's
+// testing surface for the deterministic path: every filter is composed explicitly in the
+// UI (no LLM), so unsupported fields/ops must surface loudly, never silently. Both routes
+// pass status + body through VERBATIM — in particular catalyst's 422 `"invalid filter: …"`
+// detail string, which IS the workbench's "axis not yet configured" signal.
+//
+// AUTH POSTURE — PUBLIC, same rationale as the dossier/capability routes above: the cockpit
+// /map is public and the payload is exclusively public-record SAM/USAspending data. The BFF
+// stays Lance-free and brokers the INTERNAL operator token (COREX_SERVICE_TOKEN).
+
+// The five concrete serving datasets catalyst's map query engine exposes. No "auto" here —
+// the workbench is deterministic-only; sentence routing belongs to /ask.
+const WORKBENCH_DATASETS = new Set(["company", "winners", "awards", "active", "contracts"]);
+
+// Field catalog — which fields/ops/enums each dataset supports (+ decoderVersion). The UI
+// populates its dropdowns ONLY from this, never from hardcoded lists.
+federalRoutes.get("/query-fields", async (c) => {
+  const res = await fetch(`${env.COREX_API_URL}/api/v1/map/fields`, {
+    headers: { Authorization: `Bearer ${env.COREX_SERVICE_TOKEN}` },
+  });
+  const body = await res.text();
+  return new Response(body, {
+    status: res.status,
+    headers: { "content-type": res.headers.get("content-type") ?? "application/json" },
+  });
+});
+
+// Deterministic query — the composed `{filters, limit}` body is forwarded verbatim (no
+// reshaping: what the operator composed is exactly what catalyst validates), and the
+// response (200 GeoJSON + meta, or the 422 invalid-filter detail) passes back verbatim.
+// Dataset is validated HERE so a bogus path dies at the BFF as a 400, distinct from
+// catalyst's 422 (unsupported filter) and 404 (unknown dataset upstream).
+federalRoutes.post("/query/:dataset", async (c) => {
+  const dataset = c.req.param("dataset");
+  if (!WORKBENCH_DATASETS.has(dataset)) {
+    throw new HTTPException(400, {
+      message: `unknown dataset "${dataset}" — expected one of company, winners, awards, active, contracts`,
+    });
+  }
+  const body = await c.req.text();
+  const res = await fetch(`${env.COREX_API_URL}/api/v1/map/${dataset}/query`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${env.COREX_SERVICE_TOKEN}`,
+      "content-type": "application/json",
+    },
+    body,
   });
   const text = await res.text();
   return new Response(text, {
