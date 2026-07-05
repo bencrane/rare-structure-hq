@@ -20,6 +20,7 @@ import { AnimatePresence } from "framer-motion";
 import { useCallback, useEffect, useState } from "react";
 import { AggregateView } from "./AggregateView";
 import { MapView } from "./MapView";
+import { QueryWorkbench } from "./QueryWorkbench";
 import { ResultsTable } from "./ResultsTable";
 import { CommandPalette } from "./components/CommandPalette";
 import { EntityProfile } from "./components/EntityProfile";
@@ -41,6 +42,10 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
   // every new query; the post-query banner toggle flips THIS only — a per-query local override
   // that never rewrites the global default.
   const [resultView, setResultView] = useState<ResultView>(defaultView);
+  // The deterministic query workbench — a cockpit MODE (third header-toggle segment), not a
+  // result view: it replaces the map pane wholesale and never touches the persisted default.
+  // The pane stays mounted while closed so composed filters and the last run survive toggling.
+  const [workbenchOpen, setWorkbenchOpen] = useState(false);
 
   // The map-query result set is now REMOTE (the BFF's warm federal snapshot), so it is a
   // 3-state async load: loading / error / data. The chart surface (AggregateView) owns
@@ -60,6 +65,8 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
       if (e.key === "Escape") {
         if (commandOpen) {
           setCommandOpen(false);
+        } else if (workbenchOpen) {
+          setWorkbenchOpen(false); // pane stays mounted — composed filters survive
         } else if (selectedCompany) {
           setSelectedCompany(null);
         } else if (aggregate) {
@@ -71,7 +78,7 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [commandOpen, selectedCompany, aggregate, query]);
+  }, [commandOpen, workbenchOpen, selectedCompany, aggregate, query]);
 
   // Running any command closes the palette and the open profile; a map-query
   // lights up the map, an aggregate swaps the map for the chart.
@@ -79,6 +86,7 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
     (command: Command) => {
       setCommandOpen(false);
       setSelectedCompany(null);
+      setWorkbenchOpen(false); // an ⌘K command targets the map/chart surface, not the bench
       if (command.kind === "map-query") {
         setAggregate(null);
         setResultView(defaultView); // each new query starts from the global default
@@ -89,6 +97,15 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
     },
     [defaultView],
   );
+
+  // Header-toggle handlers for the workbench mode: the third segment opens it; clicking
+  // Map/Table inside the workbench exits back to the picked view (applied to the current
+  // result when one is active).
+  const openWorkbench = useCallback(() => setWorkbenchOpen(true), []);
+  const exitWorkbenchToView = useCallback((v: ResultView) => {
+    setWorkbenchOpen(false);
+    setResultView(v);
+  }, []);
 
   // Flip the serving dataset on the current NL query — re-fires the query-watching effect
   // (which keys on `query`) so the result re-resolves against the newly pinned table.
@@ -133,11 +150,20 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
 
   return (
     <div
-      data-cockpit-view={showingAggregate ? "aggregate" : "map"}
+      data-cockpit-view={workbenchOpen ? "workbench" : showingAggregate ? "aggregate" : "map"}
       className="relative h-screen w-full overflow-hidden bg-[color:var(--color-surface-base)]"
     >
+      {/* Always mounted (hidden when closed) so composed filters + the last run survive
+          toggling back to the map. The catalog fetch is deferred until first open. */}
+      <QueryWorkbench
+        open={workbenchOpen}
+        embedded={embedded}
+        onExitToView={exitWorkbenchToView}
+        onInvokeCommand={() => setCommandOpen(true)}
+      />
+
       <AnimatePresence mode="wait">
-        {aggregate ? (
+        {workbenchOpen ? null : aggregate ? (
           <AggregateView
             key="aggregate"
             spec={aggregate}
@@ -167,6 +193,7 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
             resultView={resultView}
             onResultView={setResultView}
             onDataset={handleDataset}
+            onWorkbench={openWorkbench}
           />
         ) : (
           <MapView
@@ -189,6 +216,7 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
             onDataset={handleDataset}
             defaultView={defaultView}
             onDefaultView={setDefaultView}
+            onWorkbench={openWorkbench}
           />
         )}
       </AnimatePresence>

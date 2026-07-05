@@ -43,6 +43,7 @@ export function ResultsTable({
   resultView,
   onResultView,
   onDataset,
+  onWorkbench,
 }: {
   query: MapQuery | null;
   results: Company[];
@@ -62,6 +63,8 @@ export function ResultsTable({
   onResultView: (v: ResultView) => void;
   /** Flip the serving table the NL /ask query is routed to (only meaningful for `query.nl`). */
   onDataset?: (d: NonNullable<MapQuery["dataset"]>) => void;
+  /** Opens the deterministic query workbench (the header toggle's third segment). */
+  onWorkbench?: () => void;
 }) {
   const reduced = !!useReducedMotion();
   const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" }>({
@@ -109,6 +112,7 @@ export function ResultsTable({
         view={resultView}
         onView={onResultView}
         onClear={onDismiss}
+        onWorkbench={onWorkbench}
       />
 
       <div className="relative flex min-h-0 flex-1 flex-col items-center px-6 pt-2 pb-4">

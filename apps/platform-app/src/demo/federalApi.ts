@@ -19,6 +19,8 @@ import type {
   FederalStateChart,
 } from "@rare-structure-hq/shared";
 
+import type { ComposedFilter, WorkbenchCatalog } from "./workbench";
+
 const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "";
 
 async function getJson<T>(path: string): Promise<T> {
@@ -230,6 +232,71 @@ export async function fetchEntityDossiers(
   });
   if (!res.ok) throw new Error(`federal dossiers batch failed: ${res.status}`);
   return (await res.json()).data as Record<string, EntityDossier | null>;
+}
+
+// ── Query workbench (the deterministic filter surface) ──────────────────────
+// Two BFF brokers to catalyst's map query engine: the field catalog and the composed-
+// filter query. NO LLM anywhere on this path — the workbench composes filters explicitly
+// and the engine validates them deterministically. Types live in `workbench.ts` (the pure
+// logic module); these are just the wire calls.
+
+/** Fetch the field catalog — which fields/ops/enums each dataset supports. The workbench's
+ * dropdowns are populated ONLY from this response, never from hardcoded lists. */
+export function fetchQueryFields(): Promise<WorkbenchCatalog> {
+  return getJson<WorkbenchCatalog>("/api/v1/federal/query-fields");
+}
+
+/** One returned row: a GeoJSON feature — `properties` carries the display columns;
+ * `geometry` may be null (non-plottable row). */
+export type WorkbenchFeature = {
+  type: "Feature";
+  geometry: unknown | null;
+  properties: Record<string, unknown>;
+};
+
+export type WorkbenchQueryMeta = {
+  dataset: string;
+  decoderVersion: string;
+  returned: number;
+  plottable: number;
+  total: number;
+  capped: boolean;
+};
+
+export type WorkbenchQueryResponse = {
+  data: { type: "FeatureCollection"; features: WorkbenchFeature[] };
+  meta: WorkbenchQueryMeta;
+};
+
+/**
+ * Run one composed deterministic query. Returns BOTH `data` and `meta` (unlike `getJson`,
+ * which strips to `.data` — the workbench renders the meta honestly).
+ *
+ * Errors are NEVER swallowed: a 422 carries catalyst's `"invalid filter: …"` detail —
+ * thrown VERBATIM (it is the "axis not yet configured" signal the workbench exists to
+ * surface); any other failure throws status + raw body.
+ */
+export async function runWorkbenchQuery(
+  dataset: string,
+  body: { filters: ComposedFilter[]; limit: number },
+): Promise<WorkbenchQueryResponse> {
+  const res = await fetch(`${API_BASE}/api/v1/federal/query/${encodeURIComponent(dataset)}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const text = await res.text();
+  if (!res.ok) {
+    let detail: string | null = null;
+    try {
+      const parsed = JSON.parse(text) as { detail?: unknown };
+      if (typeof parsed?.detail === "string") detail = parsed.detail;
+    } catch {
+      /* non-JSON error body — fall through to the raw surface */
+    }
+    throw new Error(detail ?? `query ${dataset} failed: ${res.status} ${text}`);
+  }
+  return JSON.parse(text) as WorkbenchQueryResponse;
 }
 
 /** A flattened edge `/ask` GeoJSON row — the serving-table properties + real coordinates. */

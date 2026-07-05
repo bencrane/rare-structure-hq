@@ -63,6 +63,7 @@ export function MapView({
   onDataset,
   defaultView,
   onDefaultView,
+  onWorkbench,
 }: {
   query: MapQuery | null;
   results: Company[];
@@ -87,6 +88,8 @@ export function MapView({
    * pre-query; post-query the same header slot shows the active-view toggle (resultView). */
   defaultView: ResultView;
   onDefaultView: (v: ResultView) => void;
+  /** Opens the deterministic query workbench (the header toggle's third segment). */
+  onWorkbench?: () => void;
 }) {
   const reduced = !!useReducedMotion();
   const [hovered, setHovered] = useState<string | null>(null);
@@ -127,6 +130,7 @@ export function MapView({
         view={query ? resultView : undefined}
         onView={query ? onResultView : undefined}
         onClear={query && onDismiss ? onDismiss : undefined}
+        onWorkbench={onWorkbench}
       />
 
       <div className="relative flex min-h-0 flex-1 items-center justify-center px-6">
