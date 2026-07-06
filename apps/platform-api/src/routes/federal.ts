@@ -349,6 +349,29 @@ federalRoutes.post("/subout-opportunities", async (c) => {
   });
 });
 
+// ── Deterministic phrase compiler — verbatim broker ─────────────────────────
+// catalyst POST /api/v1/market/phrase (phrase.v1): closed grammar, zero LLM.
+// Body + status + response pass through VERBATIM — in particular the 422 whose
+// detail names the refusing token (the vocabulary teaching surface). No response
+// cache: phrases vary and the compiled pipeline is already bounded upstream.
+federalRoutes.post("/phrase", async (c) => {
+  const rawBody = await c.req.text();
+  const res = await fetch(`${env.COREX_API_URL}/api/v1/market/phrase`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${env.COREX_SERVICE_TOKEN}`,
+      "content-type": "application/json",
+    },
+    body: rawBody,
+    signal: AbortSignal.timeout(120_000),
+  });
+  const text = await res.text();
+  return new Response(text, {
+    status: res.status,
+    headers: { "content-type": res.headers.get("content-type") ?? "application/json" },
+  });
+});
+
 // Natural-language market query. UNLIKE the warm endpoints above, this one round-trips to
 // core-x edge_api (one forced-tool Anthropic call → catalyst_api Lance scan → GeoJSON), so it
 // is the only federal route that is not purely in-memory. Public posture (the cockpit is

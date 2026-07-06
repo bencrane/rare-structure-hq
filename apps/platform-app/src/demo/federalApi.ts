@@ -19,6 +19,7 @@ import type {
   FederalStateChart,
 } from "@rare-structure-hq/shared";
 
+import type { PhraseResponse } from "./phrase";
 import type { SuboutRequest, SuboutResponse } from "./subout";
 import type { CodeRegistry, ComposedFilter, WorkbenchCatalog } from "./workbench";
 
@@ -341,6 +342,34 @@ export async function fetchSuboutOpportunities(body: SuboutRequest): Promise<Sub
     throw new Error(detail ?? `subout-opportunities failed: ${res.status} ${text}`);
   }
   return JSON.parse(text) as SuboutResponse;
+}
+
+// ── Deterministic phrase compiler (phrase.v1) ────────────────────────────────
+
+/**
+ * Compile-and-run a phrase — catalyst's CLOSED-grammar compiler via the BFF's
+ * verbatim broker. Returns meta (bindings, plan, honest counts) + the terminal
+ * step's rows. A refusal is a 422 whose detail NAMES the offending token —
+ * thrown verbatim (it is the vocabulary teaching surface).
+ */
+export async function fetchPhrase(phrase: string): Promise<PhraseResponse> {
+  const res = await fetch(`${API_BASE}/api/v1/federal/phrase`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ phrase }),
+  });
+  const text = await res.text();
+  if (!res.ok) {
+    let detail: string | null = null;
+    try {
+      const parsed = JSON.parse(text) as { detail?: unknown };
+      if (typeof parsed?.detail === "string") detail = parsed.detail;
+    } catch {
+      /* non-JSON error body — fall through to the raw surface */
+    }
+    throw new Error(detail ?? `phrase failed: ${res.status} ${text}`);
+  }
+  return JSON.parse(text) as PhraseResponse;
 }
 
 /** A flattened edge `/ask` GeoJSON row — the serving-table properties + real coordinates. */
