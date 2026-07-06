@@ -46,8 +46,8 @@ export function SuboutConsole({
 
   return (
     <motion.div
-      className="absolute top-16 right-6 z-10 flex w-72 flex-col gap-1.5"
-      initial={{ opacity: 0, y: -8 }}
+      className="absolute right-6 bottom-6 z-10 flex w-72 flex-col gap-1.5"
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
