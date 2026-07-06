@@ -47,7 +47,49 @@ export type MatchedPeerSubawardee = {
   peers: { uei: string; shared_pairs: SharedPair[] }[];
 };
 
-export type MatchedVia = MatchedWorkedUnderPrime | MatchedPeerSubawardee;
+/** Combos-mode evidence: the award's combo is one the TARGET has subbed under. */
+export type MatchedTargetSubCombo = {
+  rule: "target_sub_combo";
+  combo: { naics: string; psc: string };
+  target_sub_amt: number;
+  target_edge_ct: number;
+};
+
+/** Combos-mode evidence: the combo comes from the named lookalikes' sub work. */
+export type MatchedLookalikeSubCombo = {
+  rule: "lookalike_sub_combo";
+  combo: { naics: string; psc: string };
+  lookalike_sub_amt: number;
+  lookalikes: string[];
+};
+
+export type MatchedVia =
+  | MatchedWorkedUnderPrime
+  | MatchedPeerSubawardee
+  | MatchedTargetSubCombo
+  | MatchedLookalikeSubCombo;
+
+/** The two recipe modes behind POST /subout-opportunities. */
+export type SuboutMode = "relationships" | "combos";
+
+/** The combos-mode POV block (meta.pov): the expressed, tunable defaults. */
+export type SuboutPov = {
+  target_combos: { naics: string; psc: string; sub_amt: number; edge_ct: number }[];
+  lookalikes: {
+    uei: string;
+    legal_business_name: string | null;
+    overlap_amt: number;
+    shared_combos: { naics: string; psc: string }[];
+  }[];
+  expansion_combos: {
+    naics: string;
+    psc: string;
+    lookalike_sub_amt: number;
+    lookalikes: string[];
+  }[];
+  pop_states: string[];
+  pop_state_basis: string;
+};
 
 export type NearestFederalSite = {
   site_name: string | null;
@@ -92,6 +134,8 @@ export type SuboutMeta = {
   recipeId: string;
   registryVersion: string;
   uei: string;
+  mode?: SuboutMode;
+  pov?: SuboutPov | null;
   cache_state: string;
   cache_build_ms: number | null;
   target_hq: { latitude: number; longitude: number } | null;
@@ -111,6 +155,7 @@ export type SuboutResponse = {
 export type SuboutRequest = {
   uei: string;
   limit?: number;
+  mode?: SuboutMode;
 };
 
 // ── Plotting (lat/lon → the us-geo 1000x590 viewBox) ──────────────────────────
