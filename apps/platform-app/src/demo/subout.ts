@@ -22,20 +22,32 @@ export function isValidUei(s: string): boolean {
 
 // ── Wire types (catalyst subout_opportunities.v2, snake_case pass-through) ────
 
-/** One explicit score component: contribution = weight × normalized raw signal. */
-export type SuboutComponent = {
-  name: string;
-  raw_value: unknown;
-  weight: number;
-  contribution: number;
+/** Rule A evidence: the target has received subawards from this award's prime. */
+export type MatchedWorkedUnderPrime = {
+  rule: "worked_under_prime";
+  prime_uei: string;
+  subaward_amt_from_prime: number;
+  edge_ct: number;
+  last_action_date: string | null;
 };
 
-/** One (lens, code) evidence hit connecting the target to the prime. */
-export type SuboutMatched = {
-  lens: string;
+/** One shared (agency, code) pair connecting a peer firm to the target. */
+export type SharedPair = {
+  agency_code: string;
+  code_type: string;
   code: string;
-  evidence: Record<string, unknown>;
+  code_title?: string | null;
 };
+
+/** Rule B evidence: peers (firms that won prime awards in the target's own
+ * (agency, code) pairs) have subbed on this award. */
+export type MatchedPeerSubawardee = {
+  rule: "peer_subawardee";
+  peer_ct: number;
+  peers: { uei: string; shared_pairs: SharedPair[] }[];
+};
+
+export type MatchedVia = MatchedWorkedUnderPrime | MatchedPeerSubawardee;
 
 export type NearestFederalSite = {
   site_name: string | null;
@@ -73,25 +85,13 @@ export type SuboutOpportunity = {
   longitude: number | null;
   distance_mi: number | null;
   nearest_federal_site: NearestFederalSite | null;
-  matched: SuboutMatched[];
-  score: number;
-  components: SuboutComponent[];
-};
-
-export type SuboutPeer = {
-  uei: string;
-  shared_code: string | null;
-  legal_business_name: string | null;
-  latitude: number | null;
-  longitude: number | null;
+  matched_via: MatchedVia[];
 };
 
 export type SuboutMeta = {
   recipeId: string;
   registryVersion: string;
-  componentWeights: Record<string, number>;
   uei: string;
-  lenses: string[];
   cache_state: string;
   cache_build_ms: number | null;
   target_hq: { latitude: number; longitude: number } | null;
@@ -103,17 +103,14 @@ export type SuboutMeta = {
 
 export type SuboutResponse = {
   meta: SuboutMeta;
-  data: { opportunities: SuboutOpportunity[]; peers: SuboutPeer[] };
+  data: { opportunities: SuboutOpportunity[] };
 };
 
-/** The request body — mirrors catalyst's fail-closed contract (unknown keys 422). */
+/** The request body — mirrors catalyst's fail-closed v3 contract ({uei, limit?}
+ * ONLY; anything else is a 422). */
 export type SuboutRequest = {
   uei: string;
-  lenses?: string[];
-  codes_override?: string[];
-  code_type?: "naics" | "psc";
   limit?: number;
-  include_peers?: boolean;
 };
 
 // ── Plotting (lat/lon → the us-geo 1000x590 viewBox) ──────────────────────────
@@ -154,40 +151,5 @@ export function plotSubout(
   return { plotted, unplotted, hq };
 }
 
-/**
- * Score → dot radius. Scores are Σ of weighted [0,1] components (weights sum to 1),
- * so the observed range is roughly [0.1, 0.8]; map linearly onto [2, 4.5]px and
- * clamp — a stronger opportunity reads as a visibly heavier dot.
- */
-export function scoreRadius(score: number): number {
-  const r = 2 + ((score - 0.1) / 0.7) * 2.5;
-  return Math.min(4.5, Math.max(2, r));
-}
-
-// ── Display vocabulary (the lens names are self-describing but long) ──────────
-
-export const LENS_LABELS: Record<string, string> = {
-  awarded_prime_contracts_in_code: "Primed in code",
-  delivered_subawards_under_code: "Delivered subs under code",
-  sam_registered_naics: "SAM-registered",
-  inferred_primeable: "Inferred primeable",
-  caller_declared: "Declared",
-};
-
-export function lensLabel(lens: string): string {
-  return LENS_LABELS[lens] ?? lens;
-}
-
-export const COMPONENT_LABELS: Record<string, string> = {
-  prime_subout_history: "Prime sub-out history",
-  award_already_subbing: "Already subbing",
-  subcontracting_plan: "Subcontracting plan",
-  lens_strength: "Capability match",
-  proximity: "HQ proximity",
-  expiring_window: "Expiring window",
-  federal_site_proximity: "Federal site nearby",
-};
-
-export function componentLabel(name: string): string {
-  return COMPONENT_LABELS[name] ?? name;
-}
+/** Uniform dot radius — v3 is a FLAT list (no scoring), so every dot reads equal. */
+export const OPPORTUNITY_DOT_RADIUS = 3;

@@ -22,7 +22,7 @@ import {
 import { resultScopeCell } from "./data";
 import { promoteDossier } from "./dossierCache";
 import { fmtUsd } from "./format";
-import { type PlottedOpportunity, type SuboutPlot, scoreRadius } from "./subout";
+import { OPPORTUNITY_DOT_RADIUS, type PlottedOpportunity, type SuboutPlot } from "./subout";
 import type { Company, MapQuery } from "./types";
 import { GEO_SCATTER_BANDS, GEO_VIEW, STATE_PATHS } from "./us-geo";
 
@@ -491,9 +491,9 @@ function BannerCell({
 }
 
 // ───────────────────────────────────────────────────────────────────
-// Sub-out layer — the target's HQ pin + scored opportunity dots.
-// Dots are the awards' WORK SITES (PoP centroids), radius scales with
-// the recipe score; a click opens the opportunity detail drawer.
+// Sub-out layer — the target's HQ pin + relationship-matched dots.
+// Dots are the awards' WORK SITES (PoP centroids); v3 is a flat list
+// (no scoring) so radius is uniform. A click opens the detail drawer.
 // ───────────────────────────────────────────────────────────────────
 
 function HqPin({ x, y, reduced }: { x: number; y: number; reduced: boolean }) {
@@ -563,7 +563,7 @@ function OpportunityDot({
   onOpen: () => void;
 }) {
   const { x, y } = opportunity;
-  const r = scoreRadius(opportunity.score);
+  const r = OPPORTUNITY_DOT_RADIUS;
   const enterDelay = reduced ? 0 : (x / GEO_VIEW.w) * 0.5;
   return (
     // biome-ignore lint/a11y/useSemanticElements: this is an SVG <g>, not HTML — it cannot be a <button>; role="button" + tabIndex + onKeyDown is the keyboard-accessible pattern for an interactive SVG group.

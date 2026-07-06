@@ -1,13 +1,13 @@
 /**
  * SuboutProfile — the right-side drawer for a clicked sub-out opportunity dot.
  *
- * Unlike EntityProfile (which fetches a dossier on open), this drawer is fully
- * self-contained: the opportunity row already carries everything the recipe
- * scored with — the explicit components (name, raw_value, weight, contribution;
- * score = Σ contributions), the matched (lens, code) evidence connecting the
- * target to the prime, the award facts, and the nearest-federal-site enrichment.
- * Rendering the wire verbatim IS the product: every number shown traces to a
- * component or an evidence cell, nothing is re-derived client-side.
+ * v3 wire (relationship matching, NO scoring): the drawer is fully self-contained —
+ * the row carries the award facts and the `matched_via` relationship evidence that
+ * admitted it (rule A: the target has received subawards from this award's prime,
+ * with the $ received; rule B: peer firms — companies that won prime awards in the
+ * target's own (agency, code) pairs — have subbed on this award). Rendering the
+ * wire verbatim IS the product: nothing is re-derived client-side, and there is
+ * no score anywhere because the recipe computes none.
  *
  * Styled on the EntityProfile drawer pattern. Closes on X / backdrop
  * (Esc is handled globally by `DemoApp`).
@@ -16,7 +16,7 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Crosshair, Landmark, X } from "lucide-react";
 import { fmtDate, fmtUsd, fmtUsdFull } from "../format";
-import { type SuboutOpportunity, componentLabel, lensLabel } from "../subout";
+import type { MatchedVia, SuboutOpportunity } from "../subout";
 
 export function SuboutProfile({
   opportunity,
@@ -81,6 +81,60 @@ export function SuboutProfile({
   );
 }
 
+function MatchedViaBlock({ matched }: { matched: MatchedVia[] }) {
+  if (matched.length === 0) return null;
+  return (
+    <Section title="Why it matched">
+      <div className="flex flex-col gap-2">
+        {matched.map((ev) =>
+          ev.rule === "worked_under_prime" ? (
+            <div
+              key="worked_under_prime"
+              className="border border-[color:var(--color-border-subtle)] px-3 py-2"
+            >
+              <div className="font-mono text-[color:var(--color-text-accent)] text-mono-xs uppercase">
+                Worked under this prime
+              </div>
+              <div className="mt-0.5 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase">
+                {fmtUsd(ev.subaward_amt_from_prime)} received · {ev.edge_ct} subawards
+                {ev.last_action_date ? ` · last ${fmtDate(ev.last_action_date)}` : ""}
+              </div>
+            </div>
+          ) : (
+            <div
+              key="peer_subawardee"
+              className="border border-[color:var(--color-border-subtle)] px-3 py-2"
+            >
+              <div className="font-mono text-[color:var(--color-text-accent)] text-mono-xs uppercase">
+                Peers subbing on this award · {ev.peer_ct}
+              </div>
+              {ev.peers.map((p) => (
+                <div
+                  key={p.uei}
+                  className="mt-0.5 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase"
+                >
+                  {p.uei} —{" "}
+                  {p.shared_pairs
+                    .map(
+                      (sp) =>
+                        `${sp.agency_code}/${sp.code}${sp.code_title ? ` (${sp.code_title})` : ""}`,
+                    )
+                    .join(", ")}
+                </div>
+              ))}
+              {ev.peer_ct > ev.peers.length && (
+                <div className="mt-0.5 font-mono text-[color:var(--color-text-subtle)] text-mono-xs uppercase">
+                  +{ev.peer_ct - ev.peers.length} more peers
+                </div>
+              )}
+            </div>
+          ),
+        )}
+      </div>
+    </Section>
+  );
+}
+
 function Body({ opportunity: o }: { opportunity: SuboutOpportunity }) {
   const end = o.period_of_performance_current_end_date ?? o.ordering_period_end_date;
   return (
@@ -93,55 +147,7 @@ function Body({ opportunity: o }: { opportunity: SuboutOpportunity }) {
         {[o.award_id_piid, o.awarding_agency_name, o.pop_state_code].filter(Boolean).join(" · ")}
       </div>
 
-      {/* Score — the components ARE the explanation */}
-      <Section title={`Score ${o.score.toFixed(3)}`}>
-        <div className="flex flex-col gap-1.5">
-          {o.components.map((c) => (
-            <div key={c.name} className="flex items-center gap-2">
-              <div className="w-40 shrink-0 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase">
-                {componentLabel(c.name)}
-              </div>
-              <div className="h-1.5 flex-1 bg-[color:var(--color-surface-sunken)]">
-                <div
-                  className="h-full bg-[color:var(--color-accent-primary)]"
-                  style={{ width: `${Math.min(100, (c.contribution / c.weight) * 100)}%` }}
-                />
-              </div>
-              <div className="w-14 shrink-0 text-right font-mono text-[color:var(--color-text-subtle)] text-mono-xs tabular-nums">
-                {c.contribution.toFixed(3)}
-              </div>
-            </div>
-          ))}
-        </div>
-      </Section>
-
-      {/* Why it matched — both sides of the evidence */}
-      {o.matched.length > 0 && (
-        <Section title="Matched evidence">
-          <div className="flex flex-col gap-2">
-            {o.matched.map((m) => {
-              const amt = m.evidence.subaward_amt_total;
-              return (
-                <div
-                  key={`${m.lens}:${m.code}`}
-                  className="border border-[color:var(--color-border-subtle)] px-3 py-2"
-                >
-                  <div className="flex items-center justify-between font-mono text-mono-xs uppercase">
-                    <span className="text-[color:var(--color-text-accent)]">
-                      {lensLabel(m.lens)} · {m.code}
-                    </span>
-                    {typeof amt === "number" && (
-                      <span className="text-[color:var(--color-text-muted)] tabular-nums">
-                        {fmtUsd(amt)} subbed out
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </Section>
-      )}
+      <MatchedViaBlock matched={o.matched_via ?? []} />
 
       {/* Award facts */}
       <Section title="Award">
@@ -176,7 +182,7 @@ function Body({ opportunity: o }: { opportunity: SuboutOpportunity }) {
         />
       </Section>
 
-      {/* Nearest federal site (v2 enrichment) — honestly absent when null */}
+      {/* Nearest federal site (informational enrichment) — honestly absent when null */}
       {o.nearest_federal_site && (
         <Section title="Nearest federal site">
           <div className="flex items-start gap-2">
