@@ -1,14 +1,7 @@
 /// <reference types="bun-types" />
 import { describe, expect, it } from "bun:test";
 
-import {
-  type SuboutOpportunity,
-  componentLabel,
-  isValidUei,
-  lensLabel,
-  plotSubout,
-  scoreRadius,
-} from "./subout";
+import { type SuboutOpportunity, isValidUei, plotSubout } from "./subout";
 
 /**
  * Guards the map layer's honesty seam: wire rows → plotted dots. Rows without a
@@ -43,9 +36,7 @@ function opp(over: Partial<SuboutOpportunity>): SuboutOpportunity {
     longitude: -77.357,
     distance_mi: 15.2,
     nearest_federal_site: null,
-    matched: [],
-    score: 0.5,
-    components: [],
+    matched_via: [],
     ...over,
   };
 }
@@ -107,26 +98,5 @@ describe("plotSubout", () => {
     expect(y).toBeGreaterThan(0);
     expect(y).toBeLessThan(590);
     expect(plot.hq).not.toBeNull();
-  });
-});
-
-describe("scoreRadius", () => {
-  it("maps the working score range onto [2, 4.5] with clamping", () => {
-    expect(scoreRadius(0)).toBe(2);
-    expect(scoreRadius(0.1)).toBe(2);
-    expect(scoreRadius(0.8)).toBe(4.5);
-    expect(scoreRadius(1)).toBe(4.5);
-    const mid = scoreRadius(0.45);
-    expect(mid).toBeGreaterThan(3);
-    expect(mid).toBeLessThan(3.5);
-  });
-});
-
-describe("display labels", () => {
-  it("maps the recipe vocabulary and passes unknown names through", () => {
-    expect(lensLabel("inferred_primeable")).toBe("Inferred primeable");
-    expect(lensLabel("future_lens")).toBe("future_lens");
-    expect(componentLabel("expiring_window")).toBe("Expiring window");
-    expect(componentLabel("new_component")).toBe("new_component");
   });
 });
