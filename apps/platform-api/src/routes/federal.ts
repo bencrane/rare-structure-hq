@@ -22,9 +22,13 @@
  *   GET /query-fields                 workbench field catalog (catalyst /map/fields proxy)
  *   POST /query/:dataset              workbench deterministic query (catalyst /map/{ds}/query proxy)
  *   GET /query-codes                  workbench NAICS/PSC typeahead (catalyst /market/codes proxy)
+ *   POST /subout-opportunities        per-UEI sub-out opportunities (catalyst /market/subout-opportunities
+ *                                     proxy, 15-min in-memory response cache)
  *
  * Each response is the `{ data }` envelope the app's house fetch pattern expects.
  */
+
+import { createHash } from "node:crypto";
 
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
@@ -229,6 +233,119 @@ federalRoutes.get("/query-codes", async (c) => {
   return new Response(body, {
     status: res.status,
     headers: { "content-type": res.headers.get("content-type") ?? "application/json" },
+  });
+});
+
+// ── Sub-out opportunities — the per-UEI demo path ───────────────────────────
+// Dumb-BFF broker to catalyst's POST /api/v1/market/subout-opportunities (the
+// subout_opportunities.v1 recipe): body forwarded VERBATIM, status + body passed back
+// verbatim — including catalyst's 422 "invalid filter: …" detail, same honesty posture
+// as the workbench brokers above. Same PUBLIC posture too: the payload is exclusively
+// public-record USAspending prime-award data.
+//
+// RESPONSE CACHE — the millisecond path. Catalyst's first hit for a UEI can run slow
+// inferred probes (hence the 120s upstream timeout); every identical request within the
+// TTL is answered from an in-memory LRU keyed by the canonicalized request body. Only
+// 200s are cached. The body is NEVER mutated — cache state is signaled exclusively via
+// the `x-cache: hit|miss` response header. `?fresh=1` bypasses the lookup and
+// repopulates the entry.
+
+/** How long a cached 200 stays servable. */
+const SUBOUT_CACHE_TTL_MS = 15 * 60 * 1000;
+/** Hard cap on cached responses; least-recently-used entry is evicted at the cap. */
+export const SUBOUT_CACHE_MAX_ENTRIES = 500;
+/** Upstream budget — first-hit inferred probes on catalyst can be slow; the cache is the fix. */
+const SUBOUT_UPSTREAM_TIMEOUT_MS = 120_000;
+
+type SuboutCacheEntry = { body: string; contentType: string; expiresAt: number };
+
+// Map iterates in insertion order, so delete+re-set on read makes it an LRU: the first
+// key is always the least recently used.
+const suboutCache = new Map<string, SuboutCacheEntry>();
+
+/** Test-only: reset the module-level cache between cases. */
+export function clearSuboutCache(): void {
+  suboutCache.clear();
+}
+
+/** Recursively sort object keys so semantically identical bodies canonicalize identically. */
+function canonicalize(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonicalize);
+  if (value !== null && typeof value === "object") {
+    const obj = value as Record<string, unknown>;
+    return Object.fromEntries(
+      Object.keys(obj)
+        .sort()
+        .map((k) => [k, canonicalize(obj[k])]),
+    );
+  }
+  return value;
+}
+
+/** Stable cache key: sha256 of the key-sorted JSON body (raw text if the body isn't JSON). */
+function suboutCacheKey(rawBody: string): string {
+  let canonical = rawBody;
+  try {
+    canonical = JSON.stringify(canonicalize(JSON.parse(rawBody)));
+  } catch {
+    // Not JSON — catalyst will reject it; key on the raw text so the (uncached) 4xx
+    // still round-trips deterministically.
+  }
+  return createHash("sha256").update(canonical).digest("hex");
+}
+
+function suboutCacheGet(key: string): SuboutCacheEntry | undefined {
+  const entry = suboutCache.get(key);
+  if (!entry) return undefined;
+  if (Date.now() >= entry.expiresAt) {
+    suboutCache.delete(key);
+    return undefined;
+  }
+  suboutCache.delete(key);
+  suboutCache.set(key, entry); // refresh recency
+  return entry;
+}
+
+function suboutCacheSet(key: string, entry: SuboutCacheEntry): void {
+  suboutCache.delete(key);
+  if (suboutCache.size >= SUBOUT_CACHE_MAX_ENTRIES) {
+    const oldest = suboutCache.keys().next();
+    if (!oldest.done) suboutCache.delete(oldest.value);
+  }
+  suboutCache.set(key, entry);
+}
+
+federalRoutes.post("/subout-opportunities", async (c) => {
+  const rawBody = await c.req.text();
+  const key = suboutCacheKey(rawBody);
+
+  if (c.req.query("fresh") !== "1") {
+    const cached = suboutCacheGet(key);
+    if (cached) {
+      return new Response(cached.body, {
+        status: 200,
+        headers: { "content-type": cached.contentType, "x-cache": "hit" },
+      });
+    }
+  }
+
+  const res = await fetch(`${env.COREX_API_URL}/api/v1/market/subout-opportunities`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${env.COREX_SERVICE_TOKEN}`,
+      "content-type": "application/json",
+    },
+    body: rawBody,
+    signal: AbortSignal.timeout(SUBOUT_UPSTREAM_TIMEOUT_MS),
+  });
+  const text = await res.text();
+  const contentType = res.headers.get("content-type") ?? "application/json";
+  if (res.status === 200) {
+    suboutCacheSet(key, { body: text, contentType, expiresAt: Date.now() + SUBOUT_CACHE_TTL_MS });
+  }
+  return new Response(text, {
+    status: res.status,
+    headers: { "content-type": contentType, "x-cache": "miss" },
   });
 });
 

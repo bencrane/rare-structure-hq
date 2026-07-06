@@ -1,5 +1,5 @@
 /// <reference types="bun-types" />
-import { afterEach, describe, expect, it } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it, setSystemTime } from "bun:test";
 
 /**
  * Guards the query-workbench broker contract on the federal routes:
@@ -13,6 +13,11 @@ import { afterEach, describe, expect, it } from "bun:test";
  *                            which is the workbench's "axis not configured" signal.
  *  - GET  /query-codes       proxies catalyst GET /api/v1/market/codes (the NAICS/PSC
  *                            typeahead); q/type/limit pass through untouched.
+ *  - POST /subout-opportunities
+ *                            proxies catalyst POST /api/v1/market/subout-opportunities,
+ *                            body + status verbatim, with a 15-min in-memory LRU response
+ *                            cache (200s only, `x-cache: hit|miss` header, `?fresh=1`
+ *                            bypass) — the millisecond demo path.
  *
  * Catalyst is stubbed at the global-fetch seam; no network leaves the test.
  */
@@ -27,7 +32,7 @@ process.env.COREX_API_URL = "https://catalyst.test";
 process.env.COREX_SERVICE_TOKEN = "test-corex-token";
 process.env.APP_ENV ??= "dev";
 
-const { federalRoutes } = await import("./federal.ts");
+const { federalRoutes, clearSuboutCache, SUBOUT_CACHE_MAX_ENTRIES } = await import("./federal.ts");
 
 type RecordedCall = { url: string; init?: RequestInit };
 
@@ -194,5 +199,175 @@ describe("GET /query-codes", () => {
 
     expect(res.status).toBe(422);
     expect(await res.text()).toBe(detail);
+  });
+});
+
+describe("POST /subout-opportunities", () => {
+  const requestBody = JSON.stringify({ uei: "ABC123DEF456", lenses: ["geo"] });
+  const payload = '{"data":{"uei":"ABC123DEF456","opportunities":[{"award_id":"W91"}]}}';
+
+  /** POST the route with an optional body/path override. */
+  function post(body: string = requestBody, path = "/subout-opportunities") {
+    return federalRoutes.request(path, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body,
+    });
+  }
+
+  // The cache is module-level state; every case starts empty. System time is restored
+  // in case a TTL test faked it.
+  beforeEach(() => {
+    clearSuboutCache();
+    setSystemTime();
+  });
+  afterEach(() => {
+    setSystemTime();
+  });
+
+  it("proxies catalyst verbatim with the service token and marks the first hit x-cache: miss", async () => {
+    stubCatalyst(
+      () => new Response(payload, { status: 200, headers: { "content-type": "application/json" } }),
+    );
+
+    const res = await post();
+
+    expect(res.status).toBe(200);
+    expect(await res.text()).toBe(payload);
+    expect(res.headers.get("x-cache")).toBe("miss");
+    expect(calls).toHaveLength(1);
+    expect(calls[0].url).toBe("https://catalyst.test/api/v1/market/subout-opportunities");
+    expect(calls[0].init?.method).toBe("POST");
+    expect(calls[0].init?.body).toBe(requestBody);
+    expect(calls[0].init?.signal).toBeInstanceOf(AbortSignal);
+    expect((calls[0].init?.headers as Record<string, string>).Authorization).toBe(
+      "Bearer test-corex-token",
+    );
+  });
+
+  it("passes a catalyst 422 invalid-filter detail through verbatim and never caches it", async () => {
+    const detail = '{"detail":"invalid filter: lens \'psc\' not supported"}';
+    stubCatalyst(
+      () => new Response(detail, { status: 422, headers: { "content-type": "application/json" } }),
+    );
+
+    const first = await post();
+    expect(first.status).toBe(422);
+    expect(await first.text()).toBe(detail);
+    expect(first.headers.get("x-cache")).toBe("miss");
+
+    // Identical body again — the 422 was not cached, so catalyst is called again.
+    const second = await post();
+    expect(second.status).toBe(422);
+    expect(second.headers.get("x-cache")).toBe("miss");
+    expect(calls).toHaveLength(2);
+  });
+
+  it("serves an identical body from cache — one fetch, x-cache: hit, body untouched", async () => {
+    stubCatalyst(
+      () => new Response(payload, { status: 200, headers: { "content-type": "application/json" } }),
+    );
+
+    const first = await post();
+    expect(first.headers.get("x-cache")).toBe("miss");
+
+    const second = await post();
+    expect(second.status).toBe(200);
+    expect(second.headers.get("x-cache")).toBe("hit");
+    expect(await second.text()).toBe(payload);
+    expect(calls).toHaveLength(1);
+  });
+
+  it("canonicalizes the body — key order does not fork the cache entry", async () => {
+    stubCatalyst(
+      () => new Response(payload, { status: 200, headers: { "content-type": "application/json" } }),
+    );
+
+    await post(JSON.stringify({ uei: "ABC123DEF456", lenses: ["geo"] }));
+    const reordered = await post(JSON.stringify({ lenses: ["geo"], uei: "ABC123DEF456" }));
+
+    expect(reordered.headers.get("x-cache")).toBe("hit");
+    expect(calls).toHaveLength(1);
+  });
+
+  it("keys different bodies to different cache entries", async () => {
+    stubCatalyst(
+      () => new Response(payload, { status: 200, headers: { "content-type": "application/json" } }),
+    );
+
+    await post(JSON.stringify({ uei: "ABC123DEF456" }));
+    const other = await post(JSON.stringify({ uei: "XYZ789QRS012" }));
+
+    expect(other.headers.get("x-cache")).toBe("miss");
+    expect(calls).toHaveLength(2);
+  });
+
+  it("expires an entry after the 15-minute TTL", async () => {
+    stubCatalyst(
+      () => new Response(payload, { status: 200, headers: { "content-type": "application/json" } }),
+    );
+
+    const start = Date.now();
+    setSystemTime(new Date(start));
+    await post();
+
+    // One millisecond before expiry: still a hit.
+    setSystemTime(new Date(start + 15 * 60 * 1000 - 1));
+    expect((await post()).headers.get("x-cache")).toBe("hit");
+    expect(calls).toHaveLength(1);
+
+    // At expiry: the entry is dead; catalyst is called again and the cache repopulates.
+    setSystemTime(new Date(start + 15 * 60 * 1000));
+    expect((await post()).headers.get("x-cache")).toBe("miss");
+    expect(calls).toHaveLength(2);
+  });
+
+  it("fresh=1 bypasses the cache and repopulates the entry", async () => {
+    let hits = 0;
+    stubCatalyst(() => {
+      hits += 1;
+      return new Response(`{"data":{"revision":${hits}}}`, {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    });
+
+    await post(); // populate: revision 1
+    const bypass = await post(requestBody, "/subout-opportunities?fresh=1");
+    expect(bypass.headers.get("x-cache")).toBe("miss");
+    expect(await bypass.text()).toBe('{"data":{"revision":2}}');
+    expect(calls).toHaveLength(2);
+
+    // The bypass repopulated the entry — the next plain read serves revision 2 from cache.
+    const after = await post();
+    expect(after.headers.get("x-cache")).toBe("hit");
+    expect(await after.text()).toBe('{"data":{"revision":2}}');
+    expect(calls).toHaveLength(2);
+  });
+
+  it("evicts the least-recently-used entry at the cap", async () => {
+    stubCatalyst(
+      () => new Response(payload, { status: 200, headers: { "content-type": "application/json" } }),
+    );
+
+    // Fill the cache to the cap: uei-0 … uei-(MAX-1), inserted in order.
+    for (let i = 0; i < SUBOUT_CACHE_MAX_ENTRIES; i++) {
+      await post(JSON.stringify({ uei: `uei-${i}` }));
+    }
+    expect(calls).toHaveLength(SUBOUT_CACHE_MAX_ENTRIES);
+
+    // Touch uei-0 so uei-1 becomes the least recently used.
+    expect((await post(JSON.stringify({ uei: "uei-0" }))).headers.get("x-cache")).toBe("hit");
+    expect(calls).toHaveLength(SUBOUT_CACHE_MAX_ENTRIES);
+
+    // One past the cap evicts exactly the LRU entry (uei-1)…
+    await post(JSON.stringify({ uei: "uei-overflow" }));
+    expect(calls).toHaveLength(SUBOUT_CACHE_MAX_ENTRIES + 1);
+
+    // …so uei-0 survives (hit) while uei-1 refetches (miss).
+    expect((await post(JSON.stringify({ uei: "uei-0" }))).headers.get("x-cache")).toBe("hit");
+    expect(calls).toHaveLength(SUBOUT_CACHE_MAX_ENTRIES + 1);
+    expect((await post(JSON.stringify({ uei: "uei-1" }))).headers.get("x-cache")).toBe("miss");
+    expect(calls).toHaveLength(SUBOUT_CACHE_MAX_ENTRIES + 2);
   });
 });
