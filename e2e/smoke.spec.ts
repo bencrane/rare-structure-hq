@@ -6,14 +6,12 @@
  *
  *   1. marketing-site (5174) — the homepage renders, the "RARE STRUCTURE"
  *      wordmark is present, and the page loads with zero console errors.
- *   2. platform-app (5173) — the market cockpit: the US map renders (real
- *      state-path geometry in the DOM), ⌘K runs a map-query that lights up
- *      company dots, clicking a dot opens its callout (and the callout opens
- *      the full profile with Capital Catalysts), and an aggregate command
- *      swaps the map for the chart.
+ *   2. platform-app (5173) — the root lands on the sign-in gate (the public
+ *      /map cockpit demo was un-hosted in #100; `/` has redirected to /signin
+ *      since #30), and the DEV "Preview: operator" affordance boots the
+ *      authenticated shell through to the operator's home tab.
  *
- * Screenshots of the homepage and each cockpit step are written to
- * `test-results/` (gitignored).
+ * Screenshots of each surface are written to `test-results/` (gitignored).
  */
 
 import { expect, test } from "@playwright/test";
@@ -49,10 +47,10 @@ test("marketing-site homepage renders the wordmark with zero console errors", as
 });
 
 // ───────────────────────────────────────────────────────────────────
-// platform-app — the market cockpit.
+// platform-app — sign-in gate → authenticated shell.
 // ───────────────────────────────────────────────────────────────────
 
-test("platform-app cockpit runs the ⌘K query → profile → aggregate loop", async ({
+test("platform-app root lands on the sign-in gate and the operator preview boots the shell", async ({
   page,
 }) => {
   const consoleErrors: string[] = [];
@@ -61,71 +59,33 @@ test("platform-app cockpit runs the ⌘K query → profile → aggregate loop", 
   });
   page.on("pageerror", (err) => consoleErrors.push(err.message));
 
-  // ── The map — the cockpit's home surface ──────────────────────────
+  // ── The sign-in gate — the app's public surface ───────────────────
   await page.goto(`${PLATFORM_URL}/`, { waitUntil: "networkidle" });
 
-  // The cockpit starts on the `map` view.
-  const cockpit = page.locator("[data-cockpit-view]");
-  await expect(cockpit).toHaveAttribute("data-cockpit-view", "map");
+  // `/` redirects to the email + password gate.
+  await expect(page).toHaveURL(/\/signin$/);
+  await expect(page.getByText("Rare Structure")).toBeVisible();
+  await expect(page.locator("#email")).toBeVisible();
+  await expect(page.locator("#password")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
 
-  // Real US geography — state-path geometry in the DOM. The map renders 51
-  // states across three SVG layers (fill + border + edge), so well over 50
-  // <path> elements is the geometry tell vs. a geometry-free dot blob.
-  const statePaths = page.locator("svg path");
-  await expect(async () => {
-    expect(await statePaths.count()).toBeGreaterThan(50);
-  }).toPass();
+  await page.screenshot({ path: `${SHOTS}/platform-1-signin.png`, fullPage: true });
 
-  await page.screenshot({ path: `${SHOTS}/cockpit-1-map.png`, fullPage: true });
-
-  // ── Run a map-query command via the ⌘K palette ────────────────────
-  await page.getByRole("button", { name: /query the market/i }).click();
-  const palette = page.locator('[role="dialog"][aria-label="Cockpit command palette"]');
-  await expect(palette).toBeVisible();
-
-  await page.getByRole("button", { name: /companies in heavy construction/i }).click();
-  await expect(palette).toBeHidden();
-
-  // The query lights up the map with clickable company dots — the entrance
-  // animation fades them in, so poll until the point groups are present.
-  const companyDots = page.locator('svg g[role="button"]');
-  await expect(async () => {
-    expect(await companyDots.count()).toBeGreaterThan(0);
-  }).toPass({ timeout: 15_000 });
-
-  await page.screenshot({ path: `${SHOTS}/cockpit-2-query.png`, fullPage: true });
-
-  // ── Click a company dot → its callout → the profile drawer ────────
-  // SVG <g> elements overlap the land-fill <path> geometry, so a positional
-  // click is intercepted — dispatch the click event directly. A single click
-  // opens the on-map callout; clicking the callout opens the full profile.
-  await companyDots.first().dispatchEvent("click");
-  const callout = page.locator('svg g[role="button"][aria-label^="Open profile"]');
-  await expect(callout.first()).toBeVisible();
-
-  await callout.first().dispatchEvent("click");
-  const profile = page.getByRole("dialog", { name: /^Profile/ });
-  await expect(profile).toBeVisible();
-  await expect(profile.getByText("Capital Catalysts")).toBeVisible();
-
-  await page.screenshot({ path: `${SHOTS}/cockpit-3-profile.png`, fullPage: true });
-
-  await page.keyboard.press("Escape");
-  await expect(profile).toBeHidden();
-
-  // ── Run an aggregate command → the chart view ─────────────────────
-  await page.getByRole("button", { name: /query the market/i }).click();
-  await expect(palette).toBeVisible();
-  await page
-    .getByRole("button", { name: /aggregate federal contract spend by industry/i })
-    .click();
-
-  await expect(cockpit).toHaveAttribute("data-cockpit-view", "aggregate");
-  await expect(
-    page.getByRole("heading", { name: /federal contract spend by industry/i }),
-  ).toBeVisible();
-
-  await page.screenshot({ path: `${SHOTS}/cockpit-4-aggregate.png`, fullPage: true });
-
+  // The public surface loads clean — no console errors before auth. (The
+  // authenticated shell is excluded from this assertion: its tabs fetch
+  // platform-api, which the e2e web servers do not boot.)
   expect(consoleErrors, `console errors: ${consoleErrors.join(" | ")}`).toEqual([]);
+
+  // ── DEV preview → the authenticated shell ─────────────────────────
+  // The dev servers run with `import.meta.env.DEV`, so the preview affordance
+  // drops a mock operator session without a configured Supabase project.
+  await page.getByRole("button", { name: /preview: operator/i }).click();
+
+  // The operator's home tab is /app/map (AppIndex redirect).
+  await expect(page).toHaveURL(/\/app\/map$/);
+  // The shell's persistent sidebar renders alongside the routed tab.
+  await expect(page.locator("aside").first()).toBeAttached();
+  await expect(page.locator("main")).toBeVisible();
+
+  await page.screenshot({ path: `${SHOTS}/platform-2-shell.png`, fullPage: true });
 });
