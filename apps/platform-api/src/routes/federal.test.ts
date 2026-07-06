@@ -7,10 +7,12 @@ import { afterEach, describe, expect, it } from "bun:test";
  *  - GET  /query-fields      proxies catalyst GET /api/v1/map/fields with the service
  *                            token; status + body pass through verbatim.
  *  - POST /query/:dataset    validates the dataset (400 at the BFF for anything outside
- *                            the five serving tables — catalyst is never called), then
+ *                            the six serving tables — catalyst is never called), then
  *                            forwards the body verbatim and passes the response through
  *                            verbatim — INCLUDING the 422 "invalid filter: …" detail,
  *                            which is the workbench's "axis not configured" signal.
+ *  - GET  /query-codes       proxies catalyst GET /api/v1/market/codes (the NAICS/PSC
+ *                            typeahead); q/type/limit pass through untouched.
  *
  * Catalyst is stubbed at the global-fetch seam; no network leaves the test.
  */
@@ -134,8 +136,8 @@ describe("POST /query/:dataset", () => {
     expect(calls).toHaveLength(0);
   });
 
-  it("accepts each of the five serving datasets", async () => {
-    for (const dataset of ["company", "winners", "awards", "active", "contracts"]) {
+  it("accepts each of the six serving datasets (Gen-3 entities included)", async () => {
+    for (const dataset of ["entities", "company", "winners", "awards", "active", "contracts"]) {
       stubCatalyst(() => new Response('{"data":{}}', { status: 200 }));
       const res = await federalRoutes.request(`/query/${dataset}`, {
         method: "POST",
@@ -145,5 +147,43 @@ describe("POST /query/:dataset", () => {
       expect(res.status).toBe(200);
       expect(calls[0].url).toBe(`https://catalyst.test/api/v1/map/${dataset}/query`);
     }
+  });
+});
+
+describe("GET /query-codes", () => {
+  it("proxies catalyst /api/v1/market/codes with the service token, q/type/limit untouched", async () => {
+    const codes =
+      '{"data":[{"code":"541511","description":"Custom Computer Programming Services"}]}';
+    stubCatalyst(
+      () => new Response(codes, { status: 200, headers: { "content-type": "application/json" } }),
+    );
+
+    const res = await federalRoutes.request("/query-codes?type=naics&q=custom%20comp&limit=20");
+
+    expect(res.status).toBe(200);
+    expect(await res.text()).toBe(codes);
+    expect(calls).toHaveLength(1);
+    const upstream = new URL(calls[0].url);
+    expect(`${upstream.origin}${upstream.pathname}`).toBe(
+      "https://catalyst.test/api/v1/market/codes",
+    );
+    expect(upstream.searchParams.get("type")).toBe("naics");
+    expect(upstream.searchParams.get("q")).toBe("custom comp");
+    expect(upstream.searchParams.get("limit")).toBe("20");
+    expect((calls[0].init?.headers as Record<string, string>).Authorization).toBe(
+      "Bearer test-corex-token",
+    );
+  });
+
+  it("passes catalyst's 422 (empty q) through verbatim", async () => {
+    const detail = '{"detail":"q is required"}';
+    stubCatalyst(
+      () => new Response(detail, { status: 422, headers: { "content-type": "application/json" } }),
+    );
+
+    const res = await federalRoutes.request("/query-codes?type=psc&q=");
+
+    expect(res.status).toBe(422);
+    expect(await res.text()).toBe(detail);
   });
 });

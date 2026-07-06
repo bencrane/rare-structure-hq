@@ -246,6 +246,20 @@ export function fetchQueryFields(): Promise<WorkbenchCatalog> {
   return getJson<WorkbenchCatalog>("/api/v1/federal/query-fields");
 }
 
+/** One NAICS/PSC registry hit for the typeahead — prefix-beats-substring ranked upstream. */
+export type CodeSuggestion = { code: string; description: string };
+
+/** Search the NAICS/PSC code registries (the workbench's typeahead value editor).
+ * Empty `q` is rejected upstream (422) — callers gate on non-empty input. */
+export function fetchQueryCodes(
+  type: "naics" | "psc",
+  q: string,
+  limit = 20,
+): Promise<CodeSuggestion[]> {
+  const qs = new URLSearchParams({ type, q, limit: String(limit) });
+  return getJson<CodeSuggestion[]>(`/api/v1/federal/query-codes?${qs.toString()}`);
+}
+
 /** One returned row: a GeoJSON feature — `properties` carries the display columns;
  * `geometry` may be null (non-plottable row). */
 export type WorkbenchFeature = {

@@ -2,12 +2,15 @@
 import { describe, expect, it } from "bun:test";
 
 import {
+  type WorkbenchCatalog,
   type WorkbenchFieldDef,
   type WorkbenchRow,
+  codeTypeForField,
   composeFilters,
   createRow,
   rowIsBlank,
   valueEditorKind,
+  visibleWorkbenchDatasets,
 } from "./workbench";
 
 /**
@@ -30,11 +33,100 @@ const FIELDS: Record<string, WorkbenchFieldDef> = {
   last_action: { name: "last_action", type: "days_ago", ops: ["<=", ">="], enum: null },
   naics: { name: "naics", type: "string", ops: ["=", "in"], enum: null },
   capabilities: { name: "capabilities", type: "list", ops: ["has", "has_any"], enum: null },
+  prime_naics: { name: "prime_naics", type: "list", ops: ["has", "has_any"], enum: null },
+  sub_psc: { name: "sub_psc", type: "list", ops: ["has", "has_any"], enum: null },
+  naics_code: { name: "naics_code", type: "string", ops: ["=", "in"], enum: null },
 };
 
 function row(partial: Partial<WorkbenchRow>): WorkbenchRow {
   return { ...createRow(), ...partial };
 }
+
+/** Minimal catalog literal — only the axes visibleWorkbenchDatasets reads. */
+function catalog(datasets: Record<string, { legacy?: boolean }>): WorkbenchCatalog {
+  return {
+    datasets: Object.fromEntries(
+      Object.entries(datasets).map(([k, v]) => [
+        k,
+        { decoderVersion: "test", fields: [], aggregate: null, ...v },
+      ]),
+    ),
+  };
+}
+
+describe("visibleWorkbenchDatasets", () => {
+  it("hides legacy datasets and leads with entities", () => {
+    const tabs = visibleWorkbenchDatasets(
+      catalog({
+        entities: { legacy: false },
+        company: { legacy: true },
+        winners: { legacy: true },
+        awards: { legacy: true },
+        active: { legacy: true },
+        contracts: { legacy: true },
+      }),
+    );
+    expect(tabs.map((t) => t.key)).toEqual(["entities"]);
+    expect(tabs[0].label).toBe("Entities");
+  });
+
+  it("keeps every non-legacy dataset present, in static tab order", () => {
+    const tabs = visibleWorkbenchDatasets(
+      catalog({ company: { legacy: true }, entities: {}, winners: {} }),
+    );
+    expect(tabs.map((t) => t.key)).toEqual(["entities", "winners"]);
+  });
+
+  it("degrades a stale payload (no entities, no legacy flags) to the old five tabs", () => {
+    const tabs = visibleWorkbenchDatasets(
+      catalog({ company: {}, winners: {}, awards: {}, active: {}, contracts: {} }),
+    );
+    expect(tabs.map((t) => t.key)).toEqual(["company", "winners", "awards", "active", "contracts"]);
+  });
+
+  it("shows legacy datasets rather than a blank strip when ALL present datasets are legacy", () => {
+    const tabs = visibleWorkbenchDatasets(
+      catalog({ company: { legacy: true }, awards: { legacy: true } }),
+    );
+    expect(tabs.map((t) => t.key)).toEqual(["company", "awards"]);
+  });
+
+  it("falls back to the full static list when the catalog is null or degenerate", () => {
+    expect(visibleWorkbenchDatasets(null).map((t) => t.key)).toEqual([
+      "entities",
+      "company",
+      "winners",
+      "awards",
+      "active",
+      "contracts",
+    ]);
+    expect(visibleWorkbenchDatasets(catalog({})).map((t) => t.key)).toEqual([
+      "entities",
+      "company",
+      "winners",
+      "awards",
+      "active",
+      "contracts",
+    ]);
+  });
+});
+
+describe("codeTypeForField", () => {
+  it("maps the lane pseudo-fields and plain code dimensions to their registry", () => {
+    expect(codeTypeForField("prime_naics")).toBe("naics");
+    expect(codeTypeForField("sub_naics")).toBe("naics");
+    expect(codeTypeForField("naics_code")).toBe("naics");
+    expect(codeTypeForField("prime_psc")).toBe("psc");
+    expect(codeTypeForField("sub_psc")).toBe("psc");
+    expect(codeTypeForField("psc_code")).toBe("psc");
+  });
+
+  it("returns null for everything else", () => {
+    expect(codeTypeForField("state_code")).toBeNull();
+    expect(codeTypeForField("naics")).toBeNull(); // not one of the registry field names
+    expect(codeTypeForField("total_obligated")).toBeNull();
+  });
+});
 
 describe("valueEditorKind", () => {
   it("routes each (field, op) pair to the right editor", () => {
@@ -49,6 +141,25 @@ describe("valueEditorKind", () => {
     expect(valueEditorKind(FIELDS.naics, "in")).toBe("text-list");
     expect(valueEditorKind(FIELDS.capabilities, "has")).toBe("text");
     expect(valueEditorKind(FIELDS.capabilities, "has_any")).toBe("text-list");
+  });
+
+  it("routes NAICS/PSC code fields to the typeahead editors", () => {
+    expect(valueEditorKind(FIELDS.prime_naics, "has_any")).toBe("code-multi");
+    expect(valueEditorKind(FIELDS.prime_naics, "has")).toBe("code-single");
+    expect(valueEditorKind(FIELDS.sub_psc, "has_any")).toBe("code-multi");
+    expect(valueEditorKind(FIELDS.naics_code, "in")).toBe("code-multi");
+    expect(valueEditorKind(FIELDS.naics_code, "=")).toBe("code-single");
+  });
+
+  it("lets a wire-published enum win over the code-field name heuristic", () => {
+    const enumCodeField: WorkbenchFieldDef = {
+      name: "naics_code",
+      type: "string",
+      ops: ["=", "in"],
+      enum: ["541511", "541512"],
+    };
+    expect(valueEditorKind(enumCodeField, "in")).toBe("enum-multi");
+    expect(valueEditorKind(enumCodeField, "=")).toBe("enum-single");
   });
 });
 
@@ -119,6 +230,40 @@ describe("composeFilters", () => {
     );
     expect(filters).toEqual([]);
     expect(incompleteIds).toEqual(["empty-value", "bad-number", "no-picks", "unknown-field"]);
+  });
+
+  it("composes code fields from chips, folding in a typed-but-not-entered exact code", () => {
+    const { filters, incompleteIds } = composeFilters(
+      [
+        // multi: chips + pending input text, deduped
+        row({
+          field: "prime_naics",
+          op: "has_any",
+          values: ["541511", "236220"],
+          value: " 541512 ",
+        }),
+        // single: one chip
+        row({ field: "naics_code", op: "=", values: ["541511"], value: "" }),
+        // single with ONLY pending text — the typed exact code still runs
+        row({ field: "sub_psc", op: "has", values: [], value: "R425" }),
+      ],
+      FIELDS,
+    );
+    expect(incompleteIds).toEqual([]);
+    expect(filters).toEqual([
+      { field: "prime_naics", op: "has_any", value: ["541511", "236220", "541512"] },
+      { field: "naics_code", op: "=", value: "541511" },
+      { field: "sub_psc", op: "has", value: "R425" },
+    ]);
+  });
+
+  it("blocks a code row with no chips and no typed code", () => {
+    const { filters, incompleteIds } = composeFilters(
+      [row({ id: "empty-code", field: "prime_naics", op: "has_any", values: [], value: "  " })],
+      FIELDS,
+    );
+    expect(filters).toEqual([]);
+    expect(incompleteIds).toEqual(["empty-code"]);
   });
 
   it("defaults an unset or unsupported op to the field's first supported op", () => {

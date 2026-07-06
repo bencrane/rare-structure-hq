@@ -21,6 +21,7 @@
  *   GET /entity/:uei                  one entity for the profile drawer
  *   GET /query-fields                 workbench field catalog (catalyst /map/fields proxy)
  *   POST /query/:dataset              workbench deterministic query (catalyst /map/{ds}/query proxy)
+ *   GET /query-codes                  workbench NAICS/PSC typeahead (catalyst /market/codes proxy)
  *
  * Each response is the `{ data }` envelope the app's house fetch pattern expects.
  */
@@ -143,9 +144,9 @@ federalRoutes.post("/entity/dossiers", async (c) => {
 });
 
 // ── Query workbench — the deterministic filter surface ──────────────────────
-// Two dumb-BFF brokers to catalyst's map query engine. The workbench is the operator's
+// Dumb-BFF brokers to catalyst's map query engine. The workbench is the operator's
 // testing surface for the deterministic path: every filter is composed explicitly in the
-// UI (no LLM), so unsupported fields/ops must surface loudly, never silently. Both routes
+// UI (no LLM), so unsupported fields/ops must surface loudly, never silently. All routes
 // pass status + body through VERBATIM — in particular catalyst's 422 `"invalid filter: …"`
 // detail string, which IS the workbench's "axis not yet configured" signal.
 //
@@ -153,9 +154,17 @@ federalRoutes.post("/entity/dossiers", async (c) => {
 // /map is public and the payload is exclusively public-record SAM/USAspending data. The BFF
 // stays Lance-free and brokers the INTERNAL operator token (COREX_SERVICE_TOKEN).
 
-// The five concrete serving datasets catalyst's map query engine exposes. No "auto" here —
-// the workbench is deterministic-only; sentence routing belongs to /ask.
-const WORKBENCH_DATASETS = new Set(["company", "winners", "awards", "active", "contracts"]);
+// The concrete serving datasets catalyst's map query engine exposes — the Gen-3 `entities`
+// table plus the retiring Gen-2 five (flagged `legacy` in the fields payload; the UI hides
+// them). No "auto" here — the workbench is deterministic-only; sentence routing belongs to /ask.
+const WORKBENCH_DATASETS = new Set([
+  "entities",
+  "company",
+  "winners",
+  "awards",
+  "active",
+  "contracts",
+]);
 
 // Field catalog — which fields/ops/enums each dataset supports (+ decoderVersion). The UI
 // populates its dropdowns ONLY from this, never from hardcoded lists.
@@ -179,7 +188,7 @@ federalRoutes.post("/query/:dataset", async (c) => {
   const dataset = c.req.param("dataset");
   if (!WORKBENCH_DATASETS.has(dataset)) {
     throw new HTTPException(400, {
-      message: `unknown dataset "${dataset}" — expected one of company, winners, awards, active, contracts`,
+      message: `unknown dataset "${dataset}" — expected one of entities, company, winners, awards, active, contracts`,
     });
   }
   const body = await c.req.text();
@@ -193,6 +202,28 @@ federalRoutes.post("/query/:dataset", async (c) => {
   });
   const text = await res.text();
   return new Response(text, {
+    status: res.status,
+    headers: { "content-type": res.headers.get("content-type") ?? "application/json" },
+  });
+});
+
+// Code registry search — the workbench's NAICS/PSC typeahead. Proxies catalyst
+// GET /api/v1/market/codes with the service token; `q`/`type`/`limit` pass through
+// untouched, status + body verbatim (including catalyst's 422 on an empty `q`).
+// Same PUBLIC posture as the workbench brokers above: the registries are public
+// federal code dimensions, nothing operator-scoped.
+federalRoutes.get("/query-codes", async (c) => {
+  const qs = new URLSearchParams();
+  for (const key of ["q", "type", "limit"] as const) {
+    const v = c.req.query(key);
+    if (v != null) qs.set(key, v);
+  }
+  const suffix = qs.toString();
+  const res = await fetch(`${env.COREX_API_URL}/api/v1/market/codes${suffix ? `?${suffix}` : ""}`, {
+    headers: { Authorization: `Bearer ${env.COREX_SERVICE_TOKEN}` },
+  });
+  const body = await res.text();
+  return new Response(body, {
     status: res.status,
     headers: { "content-type": res.headers.get("content-type") ?? "application/json" },
   });
