@@ -17,15 +17,19 @@
  */
 
 import { AnimatePresence } from "framer-motion";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AggregateView } from "./AggregateView";
 import { MapView } from "./MapView";
 import { QueryWorkbench } from "./QueryWorkbench";
 import { ResultsTable } from "./ResultsTable";
 import { CommandPalette } from "./components/CommandPalette";
 import { EntityProfile } from "./components/EntityProfile";
+import { SuboutConsole } from "./components/SuboutConsole";
+import { SuboutProfile } from "./components/SuboutProfile";
 import type { ResultView } from "./components/TerminalChrome";
 import { type QueryResult, runQuery } from "./data";
+import { fetchSuboutOpportunities } from "./federalApi";
+import { type SuboutOpportunity, type SuboutPlot, type SuboutResponse, plotSubout } from "./subout";
 import type { AggregateSpec, Command, Company, MapQuery } from "./types";
 import { useDefaultResultView } from "./useDefaultResultView";
 
@@ -54,6 +58,14 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // The sub-out opportunities layer — an independent per-UEI overlay on the map
+  // surface (it coexists with a map-query result; Esc clears it last-in-first-out).
+  const [suboutUei, setSuboutUei] = useState<string | null>(null);
+  const [suboutResponse, setSuboutResponse] = useState<SuboutResponse | null>(null);
+  const [suboutLoading, setSuboutLoading] = useState(false);
+  const [suboutError, setSuboutError] = useState<string | null>(null);
+  const [selectedOpportunity, setSelectedOpportunity] = useState<SuboutOpportunity | null>(null);
+
   // ⌘K toggles the palette from anywhere; Esc backs out one layer at a time.
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -67,8 +79,12 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
           setCommandOpen(false);
         } else if (workbenchOpen) {
           setWorkbenchOpen(false); // pane stays mounted — composed filters survive
+        } else if (selectedOpportunity) {
+          setSelectedOpportunity(null);
         } else if (selectedCompany) {
           setSelectedCompany(null);
+        } else if (suboutUei) {
+          setSuboutUei(null);
         } else if (aggregate) {
           setAggregate(null);
         } else if (query) {
@@ -78,7 +94,15 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [commandOpen, workbenchOpen, selectedCompany, aggregate, query]);
+  }, [
+    commandOpen,
+    workbenchOpen,
+    selectedOpportunity,
+    selectedCompany,
+    suboutUei,
+    aggregate,
+    query,
+  ]);
 
   // Running any command closes the palette and the open profile; a map-query
   // lights up the map, an aggregate swaps the map for the chart.
@@ -140,6 +164,46 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
       cancelled = true;
     };
   }, [query]);
+
+  // Fetch the sub-out layer whenever the target UEI changes. Same stale-resolve
+  // guard as the map-query effect; clearing the UEI clears the whole layer.
+  useEffect(() => {
+    if (!suboutUei) {
+      setSuboutResponse(null);
+      setSuboutError(null);
+      setSuboutLoading(false);
+      setSelectedOpportunity(null);
+      return;
+    }
+    let cancelled = false;
+    setSuboutLoading(true);
+    setSuboutError(null);
+    setSuboutResponse(null);
+    setSelectedOpportunity(null);
+    fetchSuboutOpportunities({ uei: suboutUei })
+      .then((r) => {
+        if (!cancelled) setSuboutResponse(r);
+      })
+      .catch((e) => {
+        if (!cancelled) setSuboutError(e instanceof Error ? e.message : "sub-out query failed");
+      })
+      .finally(() => {
+        if (!cancelled) setSuboutLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [suboutUei]);
+
+  // Project the wire rows onto the viewBox once per response (pure; memo keeps the
+  // dot layer's identity stable across unrelated re-renders).
+  const suboutPlot: SuboutPlot | null = useMemo(
+    () =>
+      suboutResponse
+        ? plotSubout(suboutResponse.data.opportunities, suboutResponse.meta.target_hq)
+        : null,
+    [suboutResponse],
+  );
 
   const results = result?.companies ?? [];
   // A free-typed /ask query may resolve to an AGGREGATE (breakdown/total/distribution/top-N)
@@ -217,12 +281,34 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
             defaultView={defaultView}
             onDefaultView={setDefaultView}
             onWorkbench={openWorkbench}
+            subout={suboutPlot}
+            suboutSelectedId={selectedOpportunity?.generated_unique_award_id ?? null}
+            onSelectOpportunity={(o) => setSelectedOpportunity(o)}
           />
         )}
       </AnimatePresence>
 
+      {/* The sub-out console rides the MAP surface only — the workbench/aggregate
+          panes own their whole viewport. */}
+      {!workbenchOpen && !showingAggregate && (!query || resultView === "map") && (
+        <SuboutConsole
+          activeUei={suboutUei}
+          loading={suboutLoading}
+          error={suboutError}
+          response={suboutResponse}
+          plot={suboutPlot}
+          onRun={(uei) => setSuboutUei(uei)}
+          onClear={() => setSuboutUei(null)}
+        />
+      )}
+
       <CommandPalette open={commandOpen} onClose={() => setCommandOpen(false)} onRun={handleRun} />
       <EntityProfile company={selectedCompany} onClose={() => setSelectedCompany(null)} />
+      <SuboutProfile
+        opportunity={selectedOpportunity}
+        targetUei={suboutUei}
+        onClose={() => setSelectedOpportunity(null)}
+      />
     </div>
   );
 }
