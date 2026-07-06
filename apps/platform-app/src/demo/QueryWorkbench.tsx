@@ -12,8 +12,9 @@
  *
  * Dataset tabs are CATALOG-DRIVEN: the Gen-3 `entities` dataset leads, and datasets the
  * payload flags `legacy: true` (the retiring Gen-2 five) are hidden outright — with a
- * graceful degrade when the payload is stale (see `visibleWorkbenchDatasets`). NAICS/PSC
- * code fields get a registry typeahead (`CodeValueEditor`) instead of free text.
+ * graceful degrade when the payload is stale (see `visibleWorkbenchDatasets`). Fields the
+ * payload marks with `codes` (naics | psc | agency) — with a name-heuristic fallback for
+ * stale payloads — get a registry typeahead (`CodeValueEditor`) instead of free text.
  *
  * The component stays MOUNTED (hidden) when closed so composed rows and the last result
  * survive toggling back to the map — it is a bench, not a dialog. The catalog fetch is
@@ -31,6 +32,7 @@ import {
 } from "./federalApi";
 import type { CodeSuggestion, WorkbenchFeature } from "./federalApi";
 import {
+  type CodeRegistry,
   type ComposedFilter,
   WORKBENCH_DATASETS,
   WORKBENCH_LIMIT,
@@ -39,7 +41,7 @@ import {
   type WorkbenchFieldDef,
   type WorkbenchOp,
   type WorkbenchRow,
-  codeTypeForField,
+  codeRegistryForField,
   composeFilters,
   createRow,
   valueEditorKind,
@@ -571,7 +573,7 @@ function ValueEditor({
     return (
       <CodeValueEditor
         row={row}
-        codeType={codeTypeForField(def.name) ?? "naics"}
+        codeType={codeRegistryForField(def) ?? "naics"}
         single={kind === "code-single"}
         onPatch={onPatch}
       />
@@ -666,7 +668,7 @@ function ValueEditor({
   );
 }
 
-// ── NAICS/PSC typeahead — search-as-you-type against the code registries ─────
+// ── Code typeahead — search-as-you-type against the naics/psc/agency registries ──
 
 /**
  * The code-field value editor: chips + a debounced (~200ms) search input against
@@ -682,7 +684,7 @@ function CodeValueEditor({
   onPatch,
 }: {
   row: WorkbenchRow;
-  codeType: "naics" | "psc";
+  codeType: CodeRegistry;
   single: boolean;
   onPatch: (patch: Partial<WorkbenchRow>) => void;
 }) {

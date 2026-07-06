@@ -19,7 +19,7 @@ import type {
   FederalStateChart,
 } from "@rare-structure-hq/shared";
 
-import type { ComposedFilter, WorkbenchCatalog } from "./workbench";
+import type { CodeRegistry, ComposedFilter, WorkbenchCatalog } from "./workbench";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "";
 
@@ -246,13 +246,13 @@ export function fetchQueryFields(): Promise<WorkbenchCatalog> {
   return getJson<WorkbenchCatalog>("/api/v1/federal/query-fields");
 }
 
-/** One NAICS/PSC registry hit for the typeahead — prefix-beats-substring ranked upstream. */
+/** One code-registry hit for the typeahead — prefix-beats-substring ranked upstream. */
 export type CodeSuggestion = { code: string; description: string };
 
-/** Search the NAICS/PSC code registries (the workbench's typeahead value editor).
- * Empty `q` is rejected upstream (422) — callers gate on non-empty input. */
+/** Search a code registry (naics | psc | agency — the workbench's typeahead value
+ * editor). Empty `q` is rejected upstream (422) — callers gate on non-empty input. */
 export function fetchQueryCodes(
-  type: "naics" | "psc",
+  type: CodeRegistry,
   q: string,
   limit = 20,
 ): Promise<CodeSuggestion[]> {

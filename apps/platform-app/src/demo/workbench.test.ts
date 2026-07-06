@@ -5,7 +5,7 @@ import {
   type WorkbenchCatalog,
   type WorkbenchFieldDef,
   type WorkbenchRow,
-  codeTypeForField,
+  codeRegistryForField,
   composeFilters,
   createRow,
   rowIsBlank,
@@ -111,20 +111,28 @@ describe("visibleWorkbenchDatasets", () => {
   });
 });
 
-describe("codeTypeForField", () => {
-  it("maps the lane pseudo-fields and plain code dimensions to their registry", () => {
-    expect(codeTypeForField("prime_naics")).toBe("naics");
-    expect(codeTypeForField("sub_naics")).toBe("naics");
-    expect(codeTypeForField("naics_code")).toBe("naics");
-    expect(codeTypeForField("prime_psc")).toBe("psc");
-    expect(codeTypeForField("sub_psc")).toBe("psc");
-    expect(codeTypeForField("psc_code")).toBe("psc");
+describe("codeRegistryForField", () => {
+  it("treats the payload `codes` attribute as the PRIMARY signal", () => {
+    // New fields the name heuristic knows nothing about — attribute alone drives them.
+    expect(codeRegistryForField({ name: "top_naics", codes: "naics" })).toBe("naics");
+    expect(codeRegistryForField({ name: "top_agency_code", codes: "agency" })).toBe("agency");
+    // The attribute WINS over a conflicting name — payload beats heuristic.
+    expect(codeRegistryForField({ name: "prime_naics", codes: "psc" })).toBe("psc");
   });
 
-  it("returns null for everything else", () => {
-    expect(codeTypeForField("state_code")).toBeNull();
-    expect(codeTypeForField("naics")).toBeNull(); // not one of the registry field names
-    expect(codeTypeForField("total_obligated")).toBeNull();
+  it("falls back to the name heuristic when the attribute is absent (stale payload)", () => {
+    expect(codeRegistryForField({ name: "prime_naics" })).toBe("naics");
+    expect(codeRegistryForField({ name: "sub_naics" })).toBe("naics");
+    expect(codeRegistryForField({ name: "naics_code" })).toBe("naics");
+    expect(codeRegistryForField({ name: "prime_psc" })).toBe("psc");
+    expect(codeRegistryForField({ name: "sub_psc" })).toBe("psc");
+    expect(codeRegistryForField({ name: "psc_code" })).toBe("psc");
+  });
+
+  it("returns null when neither the attribute nor the heuristic applies", () => {
+    expect(codeRegistryForField({ name: "state_code" })).toBeNull();
+    expect(codeRegistryForField({ name: "naics" })).toBeNull(); // not a known registry name
+    expect(codeRegistryForField({ name: "top_agency_code" })).toBeNull(); // no attr, unknown name
   });
 });
 
@@ -151,12 +159,34 @@ describe("valueEditorKind", () => {
     expect(valueEditorKind(FIELDS.naics_code, "=")).toBe("code-single");
   });
 
-  it("lets a wire-published enum win over the code-field name heuristic", () => {
+  it("routes `codes`-attributed fields to the typeahead editors — including agency", () => {
+    const topNaics: WorkbenchFieldDef = {
+      name: "top_naics",
+      type: "string",
+      ops: ["=", "in"],
+      enum: null,
+      codes: "naics",
+    };
+    const topAgency: WorkbenchFieldDef = {
+      name: "top_agency_code",
+      type: "string",
+      ops: ["=", "in"],
+      enum: null,
+      codes: "agency",
+    };
+    expect(valueEditorKind(topNaics, "in")).toBe("code-multi");
+    expect(valueEditorKind(topNaics, "=")).toBe("code-single");
+    expect(valueEditorKind(topAgency, "in")).toBe("code-multi");
+    expect(valueEditorKind(topAgency, "=")).toBe("code-single");
+  });
+
+  it("lets a wire-published enum win over BOTH the codes attribute and the name heuristic", () => {
     const enumCodeField: WorkbenchFieldDef = {
       name: "naics_code",
       type: "string",
       ops: ["=", "in"],
       enum: ["541511", "541512"],
+      codes: "naics", // even declared code fields defer to the server's closed set
     };
     expect(valueEditorKind(enumCodeField, "in")).toBe("enum-multi");
     expect(valueEditorKind(enumCodeField, "=")).toBe("enum-single");

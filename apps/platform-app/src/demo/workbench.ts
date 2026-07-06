@@ -74,6 +74,9 @@ export type WorkbenchFieldDef = {
   ops: WorkbenchOp[];
   /** Allowed values (closed vocabulary) or null for open-valued fields. */
   enum: string[] | null;
+  /** Code registry this field's values live in — the PRIMARY typeahead signal.
+   * Absent on stale payloads; the field-name heuristic then covers the known set. */
+  codes?: CodeRegistry;
   index?: string | null;
   gated?: boolean;
 };
@@ -127,18 +130,21 @@ export function createRow(): WorkbenchRow {
 export type ValueEditorKind =
   | "enum-multi" // in | has_any on a closed vocabulary → multi-select chips
   | "enum-single" // scalar op on a closed vocabulary → single select
-  | "code-multi" // in | has_any on a NAICS/PSC code field → typeahead chips
-  | "code-single" // scalar op on a NAICS/PSC code field → typeahead, one chip
+  | "code-multi" // in | has_any on a code-registry field → typeahead chips
+  | "code-single" // scalar op on a code-registry field → typeahead, one chip
   | "between" // two numeric bounds
   | "bool" // true/false select
   | "number" // int | float | days_ago scalar
   | "text-list" // in | has_any on an open vocabulary → comma-separated text
   | "text"; // open string / list `has`
 
-/** Code-registry fields that get the typeahead editor: the lane pseudo-fields
- * (`prime_naics`/`sub_naics`/`prime_psc`/`sub_psc`) plus the plain code dimensions
- * (`naics_code`/`psc_code`). The name infers WHICH registry the typeahead searches. */
-const CODE_FIELDS: Record<string, "naics" | "psc"> = {
+/** The code registries the typeahead can search (`/federal/query-codes?type=…`). */
+export type CodeRegistry = "naics" | "psc" | "agency";
+
+/** FALLBACK name heuristic — the known code fields for payloads that predate the
+ * per-field `codes` attribute (stale catalyst). Never extended: new code fields are
+ * declared by the payload, not by name-matching here. */
+const CODE_FIELDS_BY_NAME: Record<string, CodeRegistry> = {
   prime_naics: "naics",
   sub_naics: "naics",
   naics_code: "naics",
@@ -147,18 +153,23 @@ const CODE_FIELDS: Record<string, "naics" | "psc"> = {
   psc_code: "psc",
 };
 
-/** The code registry a field's values live in, or null for non-code fields. */
-export function codeTypeForField(name: string): "naics" | "psc" | null {
-  return CODE_FIELDS[name] ?? null;
+/** The code registry a field's values live in, or null for non-code fields.
+ * The payload's `codes` attribute is the PRIMARY signal (any field carrying it gets
+ * the typeahead, e.g. `top_agency_code` → "agency"); the name heuristic remains only
+ * so behavior never regresses against a stale payload without the attribute. */
+export function codeRegistryForField(
+  field: Pick<WorkbenchFieldDef, "name" | "codes">,
+): CodeRegistry | null {
+  return field.codes ?? CODE_FIELDS_BY_NAME[field.name] ?? null;
 }
 
 export function valueEditorKind(field: WorkbenchFieldDef, op: WorkbenchOp): ValueEditorKind {
   if (op === "between") return "between";
   const multi = op === "in" || op === "has_any";
-  // A wire-published enum is authoritative — the closed vocabulary wins over the
-  // code-field name heuristic (an enum'd code field renders as a plain enum picker).
+  // A wire-published enum is authoritative — the server's closed set wins even when
+  // the field ALSO carries `codes` (an enum'd code field renders as a plain enum picker).
   if (field.enum && field.enum.length > 0) return multi ? "enum-multi" : "enum-single";
-  if (codeTypeForField(field.name)) return multi ? "code-multi" : "code-single";
+  if (codeRegistryForField(field)) return multi ? "code-multi" : "code-single";
   if (multi) return "text-list";
   if (field.type === "bool") return "bool";
   if (field.type === "int" || field.type === "float" || field.type === "days_ago") return "number";
