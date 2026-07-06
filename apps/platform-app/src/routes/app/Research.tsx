@@ -57,8 +57,7 @@ export default function Research() {
   }, [refresh]);
 
   // Open this deal's Deal Details editor (by its 8-char handle).
-  const openRow = (o: DealSummary) =>
-    navigate(`/app/deals/${encodeURIComponent(o.handle)}`);
+  const openRow = (o: DealSummary) => navigate(`/app/deals/${encodeURIComponent(o.handle)}`);
 
   return (
     <CockpitPage

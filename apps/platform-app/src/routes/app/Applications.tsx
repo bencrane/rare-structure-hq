@@ -56,8 +56,7 @@ export default function Applications() {
   }, [refresh]);
 
   // Open this deal's Application detail, addressed by its 8-char handle.
-  const openRow = (o: DealSummary) =>
-    navigate(`/app/applications/${encodeURIComponent(o.handle)}`);
+  const openRow = (o: DealSummary) => navigate(`/app/applications/${encodeURIComponent(o.handle)}`);
 
   return (
     <CockpitPage

@@ -4,10 +4,10 @@
  * fields and saves them back to business.deal_details. Authors no geometry — composes CockpitPage.
  */
 import { Check, ChevronLeft, Save, X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
-import { Badge, Text } from "@rare-structure-hq/ui";
+import { Badge, Box, Text } from "@rare-structure-hq/ui";
 
 import { CockpitPage, Panel, Section } from "@/app/cockpit";
 import {
@@ -19,8 +19,8 @@ import {
 } from "@/deals/api";
 import { useAuth } from "@/lib/auth";
 import {
-  getPrefillConfig,
   type TemplatePrefillConfig,
+  getPrefillConfig,
 } from "@/settings/documenso-template-prefill-api";
 
 export default function DealDetails() {
@@ -28,6 +28,8 @@ export default function DealDetails() {
   const { handle = "" } = useParams();
   const { session } = useAuth();
   const token = session?.access_token ?? "";
+  const addContactSelectId = useId();
+  const changeTemplateSelectId = useId();
 
   const [data, setData] = useState<DealDetailsData | null>(null);
   const [phase, setPhase] = useState<"loading" | "ready" | "notfound" | "error">("loading");
@@ -175,7 +177,10 @@ export default function DealDetails() {
         // Junction payload — only the resolution key + signatory flag (drop the display fields).
         contacts: contacts
           .filter((c) => !!c.contact_id)
-          .map((c) => ({ contact_id: c.contact_id as string, is_signatory: c.is_signatory ?? true })),
+          .map((c) => ({
+            contact_id: c.contact_id as string,
+            is_signatory: c.is_signatory ?? true,
+          })),
         fieldValues,
         templateDocumensoId,
       });
@@ -288,8 +293,12 @@ export default function DealDetails() {
                       aria-pressed={c.is_signatory ?? true}
                       className={signatoryToggleCls(c.is_signatory ?? true)}
                     >
-                      {c.is_signatory ?? true ? <Check className="size-3.5" /> : <X className="size-3.5" />}
-                      {c.is_signatory ?? true ? "Yes" : "No"}
+                      {(c.is_signatory ?? true) ? (
+                        <Check className="size-3.5" />
+                      ) : (
+                        <X className="size-3.5" />
+                      )}
+                      {(c.is_signatory ?? true) ? "Yes" : "No"}
                     </button>
                   </Field>
                   <Field label="Remove">
@@ -307,8 +316,9 @@ export default function DealDetails() {
               ))
             )}
             {available.length > 0 ? (
-              <Field label="Add contact">
+              <Field label="Add contact" htmlFor={addContactSelectId}>
                 <select
+                  id={addContactSelectId}
                   value=""
                   onChange={(e) => {
                     if (e.target.value) addFromAvailable(e.target.value);
@@ -339,7 +349,11 @@ export default function DealDetails() {
                 working selection), so it stays a stable source of truth while you browse options. */}
             <Field label="Currently attached">
               <div className="flex items-center justify-between gap-3 border border-[color:var(--color-border-subtle)] bg-[color:var(--color-surface-sunken)] px-3 py-2.5">
-                <Text size="body-sm" color={currentTemplateName ? "primary" : "subtle"} className="truncate">
+                <Text
+                  size="body-sm"
+                  color={currentTemplateName ? "primary" : "subtle"}
+                  className="truncate"
+                >
                   {currentTemplateName ?? "None attached"}
                 </Text>
                 {currentTemplateName ? (
@@ -350,10 +364,13 @@ export default function DealDetails() {
               </div>
             </Field>
 
-            <Field label="Change template">
+            <Field label="Change template" htmlFor={changeTemplateSelectId}>
               <select
+                id={changeTemplateSelectId}
                 value={templateDocumensoId ?? ""}
-                onChange={(e) => setTemplateDocumensoId(e.target.value ? Number(e.target.value) : null)}
+                onChange={(e) =>
+                  setTemplateDocumensoId(e.target.value ? Number(e.target.value) : null)
+                }
                 className="w-full border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-sunken)] px-3 py-2.5 text-[color:var(--color-text-primary)] text-body-sm outline-none focus:border-[color:var(--color-text-accent)]"
               >
                 <option value="">— None —</option>
@@ -432,22 +449,45 @@ export default function DealDetails() {
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block">
-      <span className="mb-1.5 block font-mono text-[color:var(--color-text-subtle)] text-mono-xs uppercase tracking-[0.14em]">
-        {label}
-      </span>
+// Renders a real <label> only when pointed at a form control's id — most usages wrap
+// readonly values or buttons, where a bare label would be semantically wrong.
+function Field({
+  label,
+  htmlFor,
+  children,
+}: {
+  label: string;
+  htmlFor?: string;
+  children: React.ReactNode;
+}) {
+  const caption = (
+    <span className="mb-1.5 block font-mono text-[color:var(--color-text-subtle)] text-mono-xs uppercase tracking-[0.14em]">
+      {label}
+    </span>
+  );
+  return htmlFor ? (
+    <label htmlFor={htmlFor} className="block">
+      {caption}
       {children}
     </label>
+  ) : (
+    <div className="block">
+      {caption}
+      {children}
+    </div>
   );
 }
 
 function ReadonlyValue({ children }: { children: React.ReactNode }) {
   return (
-    <div className="border border-[color:var(--color-border-subtle)] bg-[color:var(--color-surface-sunken)] px-3 py-2.5 text-[color:var(--color-text-muted)] text-body-sm">
+    <Box
+      border="subtle"
+      bg="sunken"
+      px="3"
+      unsafe_className="py-2.5 text-[color:var(--color-text-muted)] text-body-sm"
+    >
       {children}
-    </div>
+    </Box>
   );
 }
 
@@ -471,15 +511,17 @@ function PrefillGroup({
   values: Record<string, string>;
   onChange: (label: string, value: string) => void;
 }) {
+  const baseId = useId();
   return (
     <div>
       <Text size="mono-xs" mono color="muted" className="mb-3 block uppercase tracking-[0.14em]">
         {title}
       </Text>
       <div className="flex flex-col gap-3">
-        {fields.map((f) => (
-          <Field key={f.label} label={f.label}>
+        {fields.map((f, i) => (
+          <Field key={f.label} label={f.label} htmlFor={`${baseId}-${i}`}>
             <input
+              id={`${baseId}-${i}`}
               value={values[f.label] ?? ""}
               placeholder={f.default ?? ""}
               onChange={(e) => onChange(f.label, e.target.value)}

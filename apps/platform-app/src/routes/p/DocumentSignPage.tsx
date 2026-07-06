@@ -104,7 +104,11 @@ export default function DocumentSignPage() {
     const tick = async () => {
       // OFFLINE on the server — derived from the raw webhook capture, ZERO Documenso calls. `signed`
       // requires the (opportunity, document) pair to match.
-      const s = await getMandateSignState(opportunityId, documentId, asOriginator ? "originator" : undefined).catch(() => null);
+      const s = await getMandateSignState(
+        opportunityId,
+        documentId,
+        asOriginator ? "originator" : undefined,
+      ).catch(() => null);
       if (s?.signed) {
         setSigned(true);
         if (pollTimer.current) {
@@ -121,7 +125,7 @@ export default function DocumentSignPage() {
         pollTimer.current = null;
       }
     };
-  }, [opportunityId, documentId, state, doc?.signingToken, signed]);
+  }, [opportunityId, documentId, asOriginator, state, doc?.signingToken, signed]);
 
   // One-time read of the authoritative (Stripe-webhook-driven) payment state. `succeeded` (card/settled
   // ACH) or `processing` (ACH initiated) means the prospect has already paid/authorized — the signed
