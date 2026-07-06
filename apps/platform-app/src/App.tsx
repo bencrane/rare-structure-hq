@@ -46,6 +46,7 @@ import Insights from "./routes/app/Insights";
 import ManageDocumensoTemplates from "./routes/app/ManageDocumensoTemplates";
 import Mandate from "./routes/app/Mandate";
 import MapTab from "./routes/app/MapTab";
+import Market from "./routes/app/Market";
 import Overview from "./routes/app/Overview";
 import Preferences from "./routes/app/Preferences";
 import Research from "./routes/app/Research";
@@ -163,6 +164,14 @@ export function App() {
             element={
               <RequireOperator>
                 <Dossier />
+              </RequireOperator>
+            }
+          />
+          <Route
+            path="market"
+            element={
+              <RequireOperator>
+                <Market />
               </RequireOperator>
             }
           />

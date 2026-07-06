@@ -27,6 +27,7 @@ import { db } from "./lib/db.ts";
 import { awardProfileRoutes } from "./routes/award-profile.ts";
 import { bookingAdminRoutes } from "./routes/bookings-admin.ts";
 import { companyProfileRoutes } from "./routes/company-profiles-admin.ts";
+import { dealAdminRoutes } from "./routes/deals-admin.ts";
 import { documensoPublicRoutes } from "./routes/documenso-public.ts";
 import { documensoTemplateDefaultRoutes } from "./routes/documenso-template-defaults.ts";
 import { documensoTemplateFieldRoutes } from "./routes/documenso-template-fields-admin.ts";
@@ -37,7 +38,7 @@ import { engagementMappingRoutes } from "./routes/engagement-mappings-admin.ts";
 import { engagementTemplateRoutes } from "./routes/engagement-templates-admin.ts";
 import { federalRoutes } from "./routes/federal.ts";
 import { insightsAdminRoutes } from "./routes/insights-admin.ts";
-import { dealAdminRoutes } from "./routes/deals-admin.ts";
+import { marketRoutes } from "./routes/market.ts";
 import { proposalTemplateEditorRoutes } from "./routes/proposal-templates-admin.ts";
 import { proposalTemplateRoutes } from "./routes/proposals-admin.ts";
 import { settingsRoutes } from "./routes/settings.ts";
@@ -147,6 +148,9 @@ app.route("/api/v1/company-profiles", companyProfileRoutes);
 // Insights — the operator's live call cockpit. Brokers the offline Close "now dialing" read
 // from edge_api; the Insights tab polls /active-call and surfaces the briefing on domain change.
 app.route("/api/v1/insights", insightsAdminRoutes);
+// Market — the audience-builder cockpit tab. requireUser-gated dumb proxy to edge_api's
+// /api/v1/audience/* (cohort queries + the Close push flow); bodies and statuses verbatim.
+app.route("/api/v1/market", marketRoutes);
 // PUBLIC federal map/chart surface — warm in-memory snapshot, no auth (the cockpit /map
 // route is public). Read-only projections of precomputed public federal-spend data.
 app.route("/api/v1/federal", federalRoutes);

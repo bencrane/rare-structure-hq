@@ -25,6 +25,7 @@ import {
   Radar,
   ScanSearch,
   SlidersHorizontal,
+  Store,
   Workflow,
   X,
 } from "lucide-react";
@@ -47,6 +48,7 @@ const OPERATOR_NAV: NavItem[] = [
   { to: "/app/applications", label: "Applications", icon: Workflow },
   { to: "/app/research", label: "Research", icon: ClipboardList },
   { to: "/app/dossier", label: "Dossier", icon: ScanSearch },
+  { to: "/app/market", label: "Market", icon: Store },
   { to: "/app/calendar", label: "Calendar", icon: CalendarDays },
   { to: "/app/insights", label: "Insights", icon: Headphones },
   { to: "/app/settings", label: "Settings", icon: FileCog },
