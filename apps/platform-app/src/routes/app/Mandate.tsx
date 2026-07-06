@@ -14,9 +14,11 @@ import { Check, Copy, ExternalLink, FileSignature, Lock, LockOpen } from "lucide
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 
+import { Inline } from "@rare-structure-hq/ui";
+
 import {
-  type DealOriginated,
   type DealDetails as DealDetailsData,
+  type DealOriginated,
   getDealDetails,
   originateDeal,
   updateDealDetails,
@@ -24,8 +26,8 @@ import {
 import { useAuth } from "@/lib/auth";
 import { DocumentFrame } from "@/proposals/DocumentFrame";
 import {
-  getPrefillConfig,
   type TemplatePrefillConfig,
+  getPrefillConfig,
 } from "@/settings/documenso-template-prefill-api";
 
 export default function Mandate() {
@@ -137,7 +139,10 @@ export default function Mandate() {
       const fresh = await updateDealDetails(token, handle, {
         contacts: data.contacts
           .filter((c) => !!c.contact_id)
-          .map((c) => ({ contact_id: c.contact_id as string, is_signatory: c.is_signatory ?? true })),
+          .map((c) => ({
+            contact_id: c.contact_id as string,
+            is_signatory: c.is_signatory ?? true,
+          })),
         fieldValues,
         templateDocumensoId: data.templateDocumensoId,
       });
@@ -263,7 +268,11 @@ export default function Mandate() {
 
         {/* Execution — Confirm & Originate, then the share link. */}
         {originated ? (
-          <ReadyBar signUrl={signUrl} documentId={originated.documentId} status={originated.status} />
+          <ReadyBar
+            signUrl={signUrl}
+            documentId={originated.documentId}
+            status={originated.status}
+          />
         ) : (
           <div>
             {notice ? (
@@ -346,12 +355,18 @@ function Eyebrow({ children, accent = false }: { children: React.ReactNode; acce
 
 function TermRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-baseline justify-between gap-4 border-[color:var(--color-border-subtle)] border-b py-3">
+    <Inline
+      gap="4"
+      align="baseline"
+      justify="between"
+      py="3"
+      unsafe_className="border-[color:var(--color-border-subtle)] border-b"
+    >
       <span className="font-mono text-[0.6875rem] text-[color:var(--color-text-muted)] uppercase tracking-[0.12em]">
         {label}
       </span>
       {children}
-    </div>
+    </Inline>
   );
 }
 

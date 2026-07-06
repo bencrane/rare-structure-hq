@@ -73,9 +73,7 @@ export default function ManageDocumensoTemplates() {
     setTemplatesError(null);
     listTemplateMirror(token)
       .then(setTemplates)
-      .catch((e) =>
-        setTemplatesError(e instanceof Error ? e.message : "Failed to load templates"),
-      );
+      .catch((e) => setTemplatesError(e instanceof Error ? e.message : "Failed to load templates"));
   }, [token]);
 
   const loadConfig = useCallback(
