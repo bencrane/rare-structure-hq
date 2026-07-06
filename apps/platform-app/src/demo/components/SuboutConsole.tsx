@@ -11,7 +11,7 @@
 import { motion } from "framer-motion";
 import { Crosshair, X } from "lucide-react";
 import { useState } from "react";
-import { type SuboutPlot, type SuboutResponse, isValidUei } from "../subout";
+import { type SuboutMode, type SuboutPlot, type SuboutResponse, isValidUei } from "../subout";
 
 export function SuboutConsole({
   activeUei,
@@ -19,6 +19,8 @@ export function SuboutConsole({
   error,
   response,
   plot,
+  mode,
+  onMode,
   onRun,
   onClear,
 }: {
@@ -28,6 +30,8 @@ export function SuboutConsole({
   error: string | null;
   response: SuboutResponse | null;
   plot: SuboutPlot | null;
+  mode: SuboutMode;
+  onMode: (m: SuboutMode) => void;
   onRun: (uei: string) => void;
   onClear: () => void;
 }) {
@@ -76,6 +80,23 @@ export function SuboutConsole({
         )}
       </div>
 
+      <div className="flex items-stretch border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-raised)] font-mono text-mono-xs uppercase shadow-lg shadow-black/40">
+        {(["relationships", "combos"] as const).map((m) => (
+          <button
+            key={m}
+            type="button"
+            onClick={() => onMode(m)}
+            className={`flex-1 px-3 py-1.5 transition-colors ${
+              mode === m
+                ? "bg-[color:var(--color-surface-sunken)] text-[color:var(--color-text-accent)]"
+                : "text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text-primary)]"
+            }`}
+          >
+            {m}
+          </button>
+        ))}
+      </div>
+
       {(activeUei || loading || error) && (
         <div className="flex flex-col gap-1 border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-raised)] px-3 py-2 font-mono text-mono-xs uppercase shadow-lg shadow-black/40">
           <div className="flex items-center justify-between gap-2">
@@ -107,6 +128,19 @@ export function SuboutConsole({
               )}
               {plot && !plot.hq && !response.meta.reason && (
                 <span className="text-[color:var(--color-text-subtle)]">HQ not geocoded</span>
+              )}
+              {response.meta.pov && response.meta.pov.lookalikes.length > 0 && (
+                <span className="text-[color:var(--color-text-subtle)]">
+                  Lookalikes:{" "}
+                  {response.meta.pov.lookalikes
+                    .map((lk) => lk.legal_business_name ?? lk.uei)
+                    .join(" · ")}
+                </span>
+              )}
+              {response.meta.pov && (
+                <span className="text-[color:var(--color-text-subtle)]">
+                  Geo default: {response.meta.pov.pop_states.join(", ") || "none"}
+                </span>
               )}
             </>
           ) : null}

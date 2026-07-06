@@ -29,7 +29,13 @@ import { SuboutProfile } from "./components/SuboutProfile";
 import type { ResultView } from "./components/TerminalChrome";
 import { type QueryResult, runQuery } from "./data";
 import { fetchSuboutOpportunities } from "./federalApi";
-import { type SuboutOpportunity, type SuboutPlot, type SuboutResponse, plotSubout } from "./subout";
+import {
+  type SuboutMode,
+  type SuboutOpportunity,
+  type SuboutPlot,
+  type SuboutResponse,
+  plotSubout,
+} from "./subout";
 import type { AggregateSpec, Command, Company, MapQuery } from "./types";
 import { useDefaultResultView } from "./useDefaultResultView";
 
@@ -61,6 +67,9 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
   // The sub-out opportunities layer — an independent per-UEI overlay on the map
   // surface (it coexists with a map-query result; Esc clears it last-in-first-out).
   const [suboutUei, setSuboutUei] = useState<string | null>(null);
+  // Which recipe answers: "relationships" (v3 — who they know) | "combos"
+  // (lookalike sub-combo POV). Toggled on the console; refetches on flip.
+  const [suboutMode, setSuboutMode] = useState<SuboutMode>("relationships");
   const [suboutResponse, setSuboutResponse] = useState<SuboutResponse | null>(null);
   const [suboutLoading, setSuboutLoading] = useState(false);
   const [suboutError, setSuboutError] = useState<string | null>(null);
@@ -180,7 +189,7 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
     setSuboutError(null);
     setSuboutResponse(null);
     setSelectedOpportunity(null);
-    fetchSuboutOpportunities({ uei: suboutUei })
+    fetchSuboutOpportunities({ uei: suboutUei, mode: suboutMode })
       .then((r) => {
         if (!cancelled) setSuboutResponse(r);
       })
@@ -193,7 +202,7 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
     return () => {
       cancelled = true;
     };
-  }, [suboutUei]);
+  }, [suboutUei, suboutMode]);
 
   // Project the wire rows onto the viewBox once per response (pure; memo keeps the
   // dot layer's identity stable across unrelated re-renders).
@@ -297,6 +306,8 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
           error={suboutError}
           response={suboutResponse}
           plot={suboutPlot}
+          mode={suboutMode}
+          onMode={setSuboutMode}
           onRun={(uei) => setSuboutUei(uei)}
           onClear={() => setSuboutUei(null)}
         />

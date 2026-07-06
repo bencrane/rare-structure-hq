@@ -87,7 +87,33 @@ function MatchedViaBlock({ matched }: { matched: MatchedVia[] }) {
     <Section title="Why it matched">
       <div className="flex flex-col gap-2">
         {matched.map((ev) =>
-          ev.rule === "worked_under_prime" ? (
+          ev.rule === "target_sub_combo" ? (
+            <div
+              key="target_sub_combo"
+              className="border border-[color:var(--color-border-subtle)] px-3 py-2"
+            >
+              <div className="font-mono text-[color:var(--color-text-accent)] text-mono-xs uppercase">
+                You have subbed under this combo
+              </div>
+              <div className="mt-0.5 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase">
+                {ev.combo.naics} × {ev.combo.psc} · {fmtUsd(ev.target_sub_amt)} received ·{" "}
+                {ev.target_edge_ct} subawards
+              </div>
+            </div>
+          ) : ev.rule === "lookalike_sub_combo" ? (
+            <div
+              key="lookalike_sub_combo"
+              className="border border-[color:var(--color-border-subtle)] px-3 py-2"
+            >
+              <div className="font-mono text-[color:var(--color-text-accent)] text-mono-xs uppercase">
+                Lookalikes sub under this combo
+              </div>
+              <div className="mt-0.5 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase">
+                {ev.combo.naics} × {ev.combo.psc} · {fmtUsd(ev.lookalike_sub_amt)} of their sub work
+                · {ev.lookalikes.join(", ")}
+              </div>
+            </div>
+          ) : ev.rule === "worked_under_prime" ? (
             <div
               key="worked_under_prime"
               className="border border-[color:var(--color-border-subtle)] px-3 py-2"
