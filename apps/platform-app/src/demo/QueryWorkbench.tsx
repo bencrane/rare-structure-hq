@@ -22,8 +22,10 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
+
 import { CommandPill, TerminalHeader } from "./components/TerminalChrome";
 import type { ResultView } from "./components/TerminalChrome";
+import { fetchPhrase } from "./federalApi";
 import {
   type WorkbenchQueryMeta,
   fetchQueryCodes,
@@ -31,6 +33,7 @@ import {
   runWorkbenchQuery,
 } from "./federalApi";
 import type { CodeSuggestion, WorkbenchFeature } from "./federalApi";
+import { type PhraseMeta, type PhrasePlanStep, bindingLabel, planStepToComposer } from "./phrase";
 import {
   type CodeRegistry,
   type ComposedFilter,
@@ -147,6 +150,16 @@ export function QueryWorkbench({
     setRows((rs) => rs.map((r) => (r.id === id ? { ...r, ...patch } : r)));
   }
 
+  // The phrase compiler POPULATES the composer from its plan's terminal step —
+  // the phrase layer visibly compiles INTO the deterministic layer.
+  function populateFromPlan(step: PhrasePlanStep) {
+    const next = planStepToComposer(step);
+    setDataset(next.dataset);
+    setRows(next.rows);
+    setResult(null);
+    setRunError(null);
+  }
+
   function setRowField(id: string, fieldName: string) {
     // New field → reset op to its first supported op and clear all value state.
     const def = fieldMap[fieldName];
@@ -246,6 +259,8 @@ export function QueryWorkbench({
                 </div>
               )}
             </div>
+
+            <PhraseBar onPopulate={populateFromPlan} />
 
             {/* Catalog states — loading / failed (verbatim) / loaded rows. */}
             {catalogLoading ? (
@@ -844,4 +859,79 @@ function fmtCell(v: unknown): string {
   if (Array.isArray(v)) return v.map((x) => fmtCell(x)).join(", ");
   if (typeof v === "object") return JSON.stringify(v);
   return String(v);
+}
+
+// ── Phrase bar — the deterministic compiler front door (phrase.v1) ───────────
+// Type a vocabulary phrase → catalyst compiles it (zero LLM) → the bindings and
+// plan render verbatim and the composer rows POPULATE from the terminal step.
+// A refusal surfaces the 422 detail naming the token — the teaching surface.
+function PhraseBar({ onPopulate }: { onPopulate: (step: PhrasePlanStep) => void }) {
+  const [draft, setDraft] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [meta, setMeta] = useState<PhraseMeta | null>(null);
+
+  async function run() {
+    const phrase = draft.trim();
+    if (!phrase || busy) return;
+    setBusy(true);
+    setError(null);
+    setMeta(null);
+    try {
+      const res = await fetchPhrase(phrase);
+      setMeta(res.meta);
+      const terminal = res.meta.plan[res.meta.plan.length - 1];
+      if (terminal) onPopulate(terminal);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "phrase failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const bindings = (meta?.bindings ?? []).map(bindingLabel).filter(Boolean);
+
+  return (
+    <div className="border-[color:var(--color-border-subtle)] border-b px-4 py-3">
+      <div className="flex items-stretch gap-2">
+        <input
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") run();
+          }}
+          placeholder='phrase — e.g. "construction companies that received a code A mod in the last 90 days"'
+          spellCheck={false}
+          aria-label="Deterministic phrase"
+          className="min-w-0 flex-1 border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-sunken)] px-3 py-2 font-mono text-[color:var(--color-text-primary)] text-mono-xs outline-none placeholder:text-[color:var(--color-text-subtle)] focus:border-[color:var(--color-text-accent)]"
+        />
+        <button
+          type="button"
+          onClick={run}
+          disabled={busy || !draft.trim()}
+          className="border border-[color:var(--color-border-strong)] px-4 font-mono text-mono-xs uppercase transition-colors disabled:text-[color:var(--color-text-subtle)] enabled:text-[color:var(--color-text-accent)] enabled:hover:text-[color:var(--color-text-primary)]"
+        >
+          {busy ? "Compiling…" : "Compile"}
+        </button>
+      </div>
+
+      {error && (
+        <div className="mt-2 border border-[color:var(--color-state-error)] bg-[color:var(--color-state-errorSoft)] px-3 py-2 font-mono text-[color:var(--color-state-error)] text-mono-xs">
+          {error}
+        </div>
+      )}
+
+      {meta && (
+        <div className="mt-2 flex flex-col gap-1 font-mono text-mono-xs">
+          <div className="text-[color:var(--color-text-muted)] uppercase">
+            {meta.compilerVersion} · grain {meta.grain} · {meta.plan.length}-step plan ·{" "}
+            {typeof meta.total === "number" ? `${meta.total.toLocaleString("en-US")} matches` : ""}
+            {meta.step1 ? ` · step 1: ${meta.step1.distinct_recipients} recipients` : ""}
+            {" · composer populated from the plan"}
+          </div>
+          <div className="text-[color:var(--color-text-subtle)]">{bindings.join("  ·  ")}</div>
+        </div>
+      )}
+    </div>
+  );
 }

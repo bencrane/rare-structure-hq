@@ -371,3 +371,33 @@ describe("POST /subout-opportunities", () => {
     expect(calls).toHaveLength(SUBOUT_CACHE_MAX_ENTRIES + 2);
   });
 });
+
+describe("POST /phrase (deterministic phrase compiler broker)", () => {
+  it("proxies catalyst /api/v1/market/phrase verbatim — body, token, status", async () => {
+    const payload = '{"meta":{"compilerVersion":"phrase.v1"},"data":{"rows":[]}}';
+    stubCatalyst(() => new Response(payload, { status: 200 }));
+    const res = await federalRoutes.request("/phrase", {
+      method: "POST",
+      body: '{"phrase":"vehicles carrying naics 541512"}',
+      headers: { "content-type": "application/json" },
+    });
+    expect(res.status).toBe(200);
+    expect(await res.text()).toBe(payload);
+    expect(calls[0].url).toBe("https://catalyst.test/api/v1/market/phrase");
+    const headers = calls[0].init?.headers as Record<string, string>;
+    expect(headers.Authorization).toBe("Bearer test-corex-token");
+    expect(calls[0].init?.body).toBe('{"phrase":"vehicles carrying naics 541512"}');
+  });
+
+  it("passes the 422 refusal detail through verbatim — the teaching surface", async () => {
+    const refusal = '{"detail":"phrase refused: token \'profitable\' — not in the phrase vocabulary"}';
+    stubCatalyst(() => new Response(refusal, { status: 422 }));
+    const res = await federalRoutes.request("/phrase", {
+      method: "POST",
+      body: '{"phrase":"profitable construction companies"}',
+      headers: { "content-type": "application/json" },
+    });
+    expect(res.status).toBe(422);
+    expect(await res.text()).toBe(refusal);
+  });
+});
