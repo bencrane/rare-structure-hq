@@ -19,6 +19,7 @@ import type {
   FederalStateChart,
 } from "@rare-structure-hq/shared";
 
+import type { SuboutRequest, SuboutResponse } from "./subout";
 import type { CodeRegistry, ComposedFilter, WorkbenchCatalog } from "./workbench";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "";
@@ -311,6 +312,35 @@ export async function runWorkbenchQuery(
     throw new Error(detail ?? `query ${dataset} failed: ${res.status} ${text}`);
   }
   return JSON.parse(text) as WorkbenchQueryResponse;
+}
+
+// ── Sub-out opportunities (the per-UEI map layer) ────────────────────────────
+
+/**
+ * Fetch the sub-out opportunities for one UEI — catalyst's `subout_opportunities.v2`
+ * recipe via the BFF's verbatim broker (15-min upstream response cache; first hit per
+ * UEI can take a few seconds on the inferred probe, cached hits are ~200ms). Returns
+ * BOTH `meta` and `data` (meta carries target_hq, cache_state, timings, notes — the
+ * console renders them honestly). A 422 carries catalyst's fail-closed detail verbatim.
+ */
+export async function fetchSuboutOpportunities(body: SuboutRequest): Promise<SuboutResponse> {
+  const res = await fetch(`${API_BASE}/api/v1/federal/subout-opportunities`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const text = await res.text();
+  if (!res.ok) {
+    let detail: string | null = null;
+    try {
+      const parsed = JSON.parse(text) as { detail?: unknown };
+      if (typeof parsed?.detail === "string") detail = parsed.detail;
+    } catch {
+      /* non-JSON error body — fall through to the raw surface */
+    }
+    throw new Error(detail ?? `subout-opportunities failed: ${res.status} ${text}`);
+  }
+  return JSON.parse(text) as SuboutResponse;
 }
 
 /** A flattened edge `/ask` GeoJSON row — the serving-table properties + real coordinates. */

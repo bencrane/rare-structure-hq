@@ -22,6 +22,7 @@ import {
 import { resultScopeCell } from "./data";
 import { promoteDossier } from "./dossierCache";
 import { fmtUsd } from "./format";
+import { type PlottedOpportunity, type SuboutPlot, scoreRadius } from "./subout";
 import type { Company, MapQuery } from "./types";
 import { GEO_SCATTER_BANDS, GEO_VIEW, STATE_PATHS } from "./us-geo";
 
@@ -64,6 +65,9 @@ export function MapView({
   defaultView,
   onDefaultView,
   onWorkbench,
+  subout = null,
+  suboutSelectedId = null,
+  onSelectOpportunity,
 }: {
   query: MapQuery | null;
   results: Company[];
@@ -90,6 +94,11 @@ export function MapView({
   onDefaultView: (v: ResultView) => void;
   /** Opens the deterministic query workbench (the header toggle's third segment). */
   onWorkbench?: () => void;
+  /** The sub-out opportunities layer: scored work-site dots + the target HQ pin.
+   * Null = layer dormant. Coexists with (renders above) the company-dot layer. */
+  subout?: SuboutPlot | null;
+  suboutSelectedId?: string | null;
+  onSelectOpportunity?: (o: PlottedOpportunity) => void;
 }) {
   const reduced = !!useReducedMotion();
   const [hovered, setHovered] = useState<string | null>(null);
@@ -263,6 +272,22 @@ export function MapView({
               />
             ))}
           </g>
+
+          {/* ── Sub-out opportunities layer: scored work-site dots + HQ pin ── */}
+          {subout && (
+            <g key="subout-layer">
+              {subout.hq && <HqPin x={subout.hq.x} y={subout.hq.y} reduced={reduced} />}
+              {subout.plotted.map((opp) => (
+                <OpportunityDot
+                  key={opp.generated_unique_award_id ?? `${opp.prime_uei}:${opp.award_id_piid}`}
+                  opportunity={opp}
+                  reduced={reduced}
+                  lit={opp.generated_unique_award_id === suboutSelectedId}
+                  onOpen={() => onSelectOpportunity?.(opp)}
+                />
+              ))}
+            </g>
+          )}
         </svg>
 
         {query && (
@@ -462,6 +487,113 @@ function BannerCell({
         {value}
       </div>
     </div>
+  );
+}
+
+// ───────────────────────────────────────────────────────────────────
+// Sub-out layer — the target's HQ pin + scored opportunity dots.
+// Dots are the awards' WORK SITES (PoP centroids), radius scales with
+// the recipe score; a click opens the opportunity detail drawer.
+// ───────────────────────────────────────────────────────────────────
+
+function HqPin({ x, y, reduced }: { x: number; y: number; reduced: boolean }) {
+  return (
+    <motion.g
+      initial={reduced ? false : { opacity: 0, scale: 0 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.35, ease: "easeOut" }}
+      style={{ transformOrigin: `${x}px ${y}px` }}
+      aria-label="Target headquarters"
+    >
+      {/* Crosshair ring — visually distinct from every dot on the canvas. */}
+      <circle
+        cx={x}
+        cy={y}
+        r={6}
+        fill="none"
+        stroke="var(--color-accent-primary)"
+        strokeWidth={1.2}
+      />
+      <line
+        x1={x - 9}
+        y1={y}
+        x2={x - 4}
+        y2={y}
+        stroke="var(--color-accent-primary)"
+        strokeWidth={1.2}
+      />
+      <line
+        x1={x + 4}
+        y1={y}
+        x2={x + 9}
+        y2={y}
+        stroke="var(--color-accent-primary)"
+        strokeWidth={1.2}
+      />
+      <line
+        x1={x}
+        y1={y - 9}
+        x2={x}
+        y2={y - 4}
+        stroke="var(--color-accent-primary)"
+        strokeWidth={1.2}
+      />
+      <line
+        x1={x}
+        y1={y + 4}
+        x2={x}
+        y2={y + 9}
+        stroke="var(--color-accent-primary)"
+        strokeWidth={1.2}
+      />
+      <circle cx={x} cy={y} r={1.6} fill="var(--color-accent-primary)" />
+    </motion.g>
+  );
+}
+
+function OpportunityDot({
+  opportunity,
+  reduced,
+  lit,
+  onOpen,
+}: {
+  opportunity: PlottedOpportunity;
+  reduced: boolean;
+  lit: boolean;
+  onOpen: () => void;
+}) {
+  const { x, y } = opportunity;
+  const r = scoreRadius(opportunity.score);
+  const enterDelay = reduced ? 0 : (x / GEO_VIEW.w) * 0.5;
+  return (
+    // biome-ignore lint/a11y/useSemanticElements: this is an SVG <g>, not HTML — it cannot be a <button>; role="button" + tabIndex + onKeyDown is the keyboard-accessible pattern for an interactive SVG group.
+    <motion.g
+      role="button"
+      tabIndex={0}
+      aria-label={`Open opportunity — ${opportunity.prime_name ?? opportunity.award_id_piid ?? "award"}`}
+      initial={reduced ? false : { opacity: 0, scale: 0 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.3, delay: enterDelay, ease: "easeOut" }}
+      style={{ cursor: "pointer", transformOrigin: `${x}px ${y}px` }}
+      onClick={onOpen}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onOpen();
+        }
+      }}
+    >
+      <circle
+        cx={x}
+        cy={y}
+        r={lit ? r + 1 : r}
+        fill="var(--color-state-warn)"
+        fillOpacity={lit ? 1 : 0.85}
+        filter={lit ? "url(#rs-map-hotglow)" : undefined}
+        style={{ transition: "r 0.18s ease" }}
+      />
+      <circle cx={x} cy={y} r={10} fill="transparent" />
+    </motion.g>
   );
 }
 
