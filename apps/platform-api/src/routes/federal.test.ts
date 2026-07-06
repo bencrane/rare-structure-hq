@@ -136,8 +136,17 @@ describe("POST /query/:dataset", () => {
     expect(calls).toHaveLength(0);
   });
 
-  it("accepts each of the six serving datasets (Gen-3 entities included)", async () => {
-    for (const dataset of ["entities", "company", "winners", "awards", "active", "contracts"]) {
+  it("accepts each of the eight serving datasets (Gen-3 entities/prime_awards/transactions included)", async () => {
+    for (const dataset of [
+      "entities",
+      "prime_awards",
+      "transactions",
+      "company",
+      "winners",
+      "awards",
+      "active",
+      "contracts",
+    ]) {
       stubCatalyst(() => new Response('{"data":{}}', { status: 200 }));
       const res = await federalRoutes.request(`/query/${dataset}`, {
         method: "POST",

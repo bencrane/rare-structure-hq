@@ -19,13 +19,16 @@
 
 // ── Datasets ─────────────────────────────────────────────────────────────────
 
-/** The concrete serving datasets, in tab order (Gen-3 `entities` first). Keys are the
- * wire values of `POST /api/v1/federal/query/:dataset`; labels are the tab captions.
+/** The concrete serving datasets, in tab order (the Gen-3 tables first: entities,
+ * prime_awards, transactions). Keys are the wire values of
+ * `POST /api/v1/federal/query/:dataset`; labels are the tab captions.
  * No AUTO — the workbench is the deterministic path only. WHICH of these actually
  * render as tabs is decided by `visibleWorkbenchDatasets` from the fetched catalog
  * (legacy datasets are hidden), never by this static list alone. */
 export const WORKBENCH_DATASETS = [
   { key: "entities", label: "Entities" },
+  { key: "prime_awards", label: "Prime Awards" },
+  { key: "transactions", label: "Transactions" },
   { key: "company", label: "Companies" },
   { key: "winners", label: "Winners" },
   { key: "awards", label: "Awards" },
