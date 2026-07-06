@@ -19,10 +19,13 @@
 
 // ── Datasets ─────────────────────────────────────────────────────────────────
 
-/** The five concrete serving datasets, in tab order. Keys are the wire values of
- * `POST /api/v1/federal/query/:dataset`; labels are the tab captions. No AUTO —
- * the workbench is the deterministic path only. */
+/** The concrete serving datasets, in tab order (Gen-3 `entities` first). Keys are the
+ * wire values of `POST /api/v1/federal/query/:dataset`; labels are the tab captions.
+ * No AUTO — the workbench is the deterministic path only. WHICH of these actually
+ * render as tabs is decided by `visibleWorkbenchDatasets` from the fetched catalog
+ * (legacy datasets are hidden), never by this static list alone. */
 export const WORKBENCH_DATASETS = [
+  { key: "entities", label: "Entities" },
   { key: "company", label: "Companies" },
   { key: "winners", label: "Winners" },
   { key: "awards", label: "Awards" },
@@ -31,6 +34,28 @@ export const WORKBENCH_DATASETS = [
 ] as const;
 
 export type WorkbenchDataset = (typeof WORKBENCH_DATASETS)[number]["key"];
+
+export type WorkbenchDatasetTab = { key: WorkbenchDataset; label: string };
+
+/**
+ * The dataset tabs to render, derived from the FETCHED catalog:
+ *
+ *   - datasets absent from the payload are hidden (nothing to query);
+ *   - `legacy: true` datasets are hidden outright — no toggle; the workbench fronts
+ *     the current engine, not the retiring serving tables;
+ *   - NEVER a blank strip: if every present dataset is legacy (or the payload is
+ *     degenerate/stale), fall back to showing what exists rather than nothing.
+ *
+ * A stale catalyst payload (no `entities`, no `legacy` flags) therefore degrades to
+ * exactly the old five-tab behaviour — absent flags read as non-legacy.
+ */
+export function visibleWorkbenchDatasets(catalog: WorkbenchCatalog | null): WorkbenchDatasetTab[] {
+  if (!catalog) return [...WORKBENCH_DATASETS];
+  const present = WORKBENCH_DATASETS.filter((d) => catalog.datasets[d.key]);
+  if (present.length === 0) return [...WORKBENCH_DATASETS];
+  const nonLegacy = present.filter((d) => !catalog.datasets[d.key].legacy);
+  return nonLegacy.length > 0 ? [...nonLegacy] : [...present];
+}
 
 /** Rows-per-run bound sent in the POST body (the engine also caps server-side). */
 export const WORKBENCH_LIMIT = 200;
@@ -57,6 +82,9 @@ export type WorkbenchDatasetCatalog = {
   decoderVersion: string;
   fields: WorkbenchFieldDef[];
   aggregate: Record<string, unknown> | null;
+  /** True on the retiring Gen-2 serving tables (winners/company/awards/active/contracts);
+   * false on `entities`. Absent on a stale catalyst payload — read as non-legacy. */
+  legacy?: boolean;
 };
 
 /** The full catalog: dataset key → its fields. Populated ONLY from the wire. */
@@ -99,16 +127,38 @@ export function createRow(): WorkbenchRow {
 export type ValueEditorKind =
   | "enum-multi" // in | has_any on a closed vocabulary → multi-select chips
   | "enum-single" // scalar op on a closed vocabulary → single select
+  | "code-multi" // in | has_any on a NAICS/PSC code field → typeahead chips
+  | "code-single" // scalar op on a NAICS/PSC code field → typeahead, one chip
   | "between" // two numeric bounds
   | "bool" // true/false select
   | "number" // int | float | days_ago scalar
   | "text-list" // in | has_any on an open vocabulary → comma-separated text
   | "text"; // open string / list `has`
 
+/** Code-registry fields that get the typeahead editor: the lane pseudo-fields
+ * (`prime_naics`/`sub_naics`/`prime_psc`/`sub_psc`) plus the plain code dimensions
+ * (`naics_code`/`psc_code`). The name infers WHICH registry the typeahead searches. */
+const CODE_FIELDS: Record<string, "naics" | "psc"> = {
+  prime_naics: "naics",
+  sub_naics: "naics",
+  naics_code: "naics",
+  prime_psc: "psc",
+  sub_psc: "psc",
+  psc_code: "psc",
+};
+
+/** The code registry a field's values live in, or null for non-code fields. */
+export function codeTypeForField(name: string): "naics" | "psc" | null {
+  return CODE_FIELDS[name] ?? null;
+}
+
 export function valueEditorKind(field: WorkbenchFieldDef, op: WorkbenchOp): ValueEditorKind {
   if (op === "between") return "between";
   const multi = op === "in" || op === "has_any";
+  // A wire-published enum is authoritative — the closed vocabulary wins over the
+  // code-field name heuristic (an enum'd code field renders as a plain enum picker).
   if (field.enum && field.enum.length > 0) return multi ? "enum-multi" : "enum-single";
+  if (codeTypeForField(field.name)) return multi ? "code-multi" : "code-single";
   if (multi) return "text-list";
   if (field.type === "bool") return "bool";
   if (field.type === "int" || field.type === "float" || field.type === "days_ago") return "number";
@@ -191,6 +241,24 @@ export function composeFilters(
         continue;
       }
       filters.push({ field: def.name, op, value: picked });
+      continue;
+    }
+
+    if (kind === "code-multi" || kind === "code-single") {
+      // Chips (row.values) plus any exact code still sitting in the search input —
+      // a typed-but-not-entered code runs rather than being silently lost.
+      const picked = row.values.filter((v) => v !== "");
+      const pending = row.value.trim();
+      if (pending !== "" && !picked.includes(pending)) picked.push(pending);
+      if (picked.length === 0) {
+        incompleteIds.push(row.id);
+        continue;
+      }
+      filters.push({
+        field: def.name,
+        op,
+        value: kind === "code-multi" ? picked : picked[0],
+      });
       continue;
     }
 

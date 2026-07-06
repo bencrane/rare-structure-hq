@@ -10,16 +10,26 @@
  * tested explicitly, and an unsupported axis surfaces as catalyst's 422 detail VERBATIM
  * instead of failing silently.
  *
+ * Dataset tabs are CATALOG-DRIVEN: the Gen-3 `entities` dataset leads, and datasets the
+ * payload flags `legacy: true` (the retiring Gen-2 five) are hidden outright — with a
+ * graceful degrade when the payload is stale (see `visibleWorkbenchDatasets`). NAICS/PSC
+ * code fields get a registry typeahead (`CodeValueEditor`) instead of free text.
+ *
  * The component stays MOUNTED (hidden) when closed so composed rows and the last result
  * survive toggling back to the map — it is a bench, not a dialog. The catalog fetch is
  * deferred until first open.
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CommandPill, TerminalHeader } from "./components/TerminalChrome";
 import type { ResultView } from "./components/TerminalChrome";
-import { type WorkbenchQueryMeta, fetchQueryFields, runWorkbenchQuery } from "./federalApi";
-import type { WorkbenchFeature } from "./federalApi";
+import {
+  type WorkbenchQueryMeta,
+  fetchQueryCodes,
+  fetchQueryFields,
+  runWorkbenchQuery,
+} from "./federalApi";
+import type { CodeSuggestion, WorkbenchFeature } from "./federalApi";
 import {
   type ComposedFilter,
   WORKBENCH_DATASETS,
@@ -29,9 +39,11 @@ import {
   type WorkbenchFieldDef,
   type WorkbenchOp,
   type WorkbenchRow,
+  codeTypeForField,
   composeFilters,
   createRow,
   valueEditorKind,
+  visibleWorkbenchDatasets,
 } from "./workbench";
 
 /** One executed run — the meta AND the exact body that produced it, pinned together so
@@ -85,8 +97,20 @@ export function QueryWorkbench({
   }, [open, catalog, catalogError]);
 
   // ── Composition state ──────────────────────────────────────────────────────
-  const [dataset, setDataset] = useState<WorkbenchDataset>("company");
+  const [dataset, setDataset] = useState<WorkbenchDataset>(WORKBENCH_DATASETS[0].key);
   const [rows, setRows] = useState<WorkbenchRow[]>(() => [createRow()]);
+
+  // Tabs are CATALOG-DRIVEN: legacy datasets are hidden outright; a stale payload
+  // (no entities / no legacy flags) degrades to whatever exists — never a blank strip.
+  const visibleTabs = useMemo(() => visibleWorkbenchDatasets(catalog), [catalog]);
+
+  // If the active dataset isn't among the visible tabs once the catalog lands (e.g.
+  // "entities" seeded against a stale catalyst), snap to the first visible one.
+  useEffect(() => {
+    if (!catalog) return;
+    const visible = visibleWorkbenchDatasets(catalog);
+    setDataset((cur) => (visible.some((d) => d.key === cur) ? cur : visible[0].key));
+  }, [catalog]);
 
   // ── Run state ──────────────────────────────────────────────────────────────
   const [running, setRunning] = useState(false);
@@ -193,29 +217,32 @@ export function QueryWorkbench({
                   </span>
                 )}
               </div>
-              {/* Dataset tabs — the five concrete serving tables. No AUTO. */}
-              <div className="flex items-stretch border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-base)]">
-                {WORKBENCH_DATASETS.map((d, i) => (
-                  <span key={d.key} className="flex items-stretch">
-                    {i > 0 && (
-                      <span className="w-px self-stretch bg-[color:var(--color-border-subtle)]" />
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => switchDataset(d.key)}
-                      aria-pressed={dataset === d.key}
-                      title={`Query the ${d.label} dataset`}
-                      className={`px-2.5 py-1.5 font-mono text-mono-xs uppercase transition-colors ${
-                        dataset === d.key
-                          ? "bg-[color:var(--color-accent-soft)] text-[color:var(--color-text-accent)]"
-                          : "text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text-primary)]"
-                      }`}
-                    >
-                      {d.label}
-                    </button>
-                  </span>
-                ))}
-              </div>
+              {/* Dataset tabs — catalog-driven (legacy datasets hidden). No AUTO.
+                  Rendered only once the catalog lands so retiring tabs never flash. */}
+              {catalog && (
+                <div className="flex items-stretch border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-base)]">
+                  {visibleTabs.map((d, i) => (
+                    <span key={d.key} className="flex items-stretch">
+                      {i > 0 && (
+                        <span className="w-px self-stretch bg-[color:var(--color-border-subtle)]" />
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => switchDataset(d.key)}
+                        aria-pressed={dataset === d.key}
+                        title={`Query the ${d.label} dataset`}
+                        className={`px-2.5 py-1.5 font-mono text-mono-xs uppercase transition-colors ${
+                          dataset === d.key
+                            ? "bg-[color:var(--color-accent-soft)] text-[color:var(--color-text-accent)]"
+                            : "text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text-primary)]"
+                        }`}
+                      >
+                        {d.label}
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Catalog states — loading / failed (verbatim) / loaded rows. */}
@@ -540,6 +567,17 @@ function ValueEditor({
     );
   }
 
+  if (kind === "code-multi" || kind === "code-single") {
+    return (
+      <CodeValueEditor
+        row={row}
+        codeType={codeTypeForField(def.name) ?? "naics"}
+        single={kind === "code-single"}
+        onPatch={onPatch}
+      />
+    );
+  }
+
   if (kind === "enum-multi") {
     return (
       <div className="flex max-h-24 flex-wrap content-start gap-1 overflow-y-auto border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-base)] p-1.5">
@@ -625,6 +663,149 @@ function ValueEditor({
       aria-label="Filter value"
       className={inputCls}
     />
+  );
+}
+
+// ── NAICS/PSC typeahead — search-as-you-type against the code registries ─────
+
+/**
+ * The code-field value editor: chips + a debounced (~200ms) search input against
+ * `/api/v1/federal/query-codes`. Selecting a suggestion adds a chip; typing an exact
+ * code and pressing Enter adds it WITHOUT selecting (plain text entry stays possible —
+ * and an un-entered exact code still composes at run time, see `composeFilters`).
+ * `single` (scalar op) replaces the chip instead of accumulating.
+ */
+function CodeValueEditor({
+  row,
+  codeType,
+  single,
+  onPatch,
+}: {
+  row: WorkbenchRow;
+  codeType: "naics" | "psc";
+  single: boolean;
+  onPatch: (patch: Partial<WorkbenchRow>) => void;
+}) {
+  const [suggestions, setSuggestions] = useState<CodeSuggestion[] | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  // Monotonic sequence — a late resolve from a superseded query never lands.
+  const seqRef = useRef(0);
+
+  const q = row.value.trim();
+
+  useEffect(() => {
+    const seq = ++seqRef.current;
+    if (q === "") {
+      // Empty q is a 422 upstream — never fetched; the dropdown just closes.
+      setSuggestions(null);
+      setSearching(false);
+      setSearchError(null);
+      return;
+    }
+    setSearching(true);
+    const t = setTimeout(() => {
+      fetchQueryCodes(codeType, q)
+        .then((list) => {
+          if (seqRef.current !== seq) return;
+          setSuggestions(list);
+          setSearchError(null);
+        })
+        .catch((e) => {
+          if (seqRef.current !== seq) return;
+          setSuggestions([]);
+          setSearchError(e instanceof Error ? e.message : String(e));
+        })
+        .finally(() => {
+          if (seqRef.current === seq) setSearching(false);
+        });
+    }, 200);
+    return () => clearTimeout(t);
+  }, [q, codeType]);
+
+  function addCode(code: string) {
+    const trimmed = code.trim();
+    if (trimmed === "") return;
+    const values = single
+      ? [trimmed]
+      : row.values.includes(trimmed)
+        ? row.values
+        : [...row.values, trimmed];
+    onPatch({ values, value: "" }); // clearing the input also closes the dropdown
+  }
+
+  const dropdownOpen = q !== "" && (searching || suggestions !== null);
+
+  return (
+    <div className="relative">
+      <div className="flex flex-wrap items-center gap-1 border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-base)] p-1.5">
+        {row.values.map((code) => (
+          <span
+            key={code}
+            className="flex items-center gap-1 border border-[color:var(--color-accent-primary)] bg-[color:var(--color-accent-soft)] px-1.5 py-0.5 font-mono text-[color:var(--color-text-accent)] text-mono-xs"
+          >
+            {code}
+            <button
+              type="button"
+              onClick={() => onPatch({ values: row.values.filter((v) => v !== code) })}
+              aria-label={`Remove code ${code}`}
+              title={`Remove code ${code}`}
+              className="text-[color:var(--color-text-muted)] transition-colors hover:text-[color:var(--color-state-error)]"
+            >
+              ✕
+            </button>
+          </span>
+        ))}
+        <input
+          type="text"
+          value={row.value}
+          onChange={(e) => onPatch({ value: e.target.value })}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              addCode(row.value); // exact typed code — no selection required
+            } else if (e.key === "Escape" && dropdownOpen) {
+              // Close the dropdown only; don't let the cockpit's global Esc
+              // layering close the whole workbench mid-edit.
+              e.stopPropagation();
+              onPatch({ value: "" });
+            }
+          }}
+          placeholder={`search ${codeType} codes or type an exact code`}
+          aria-label="Filter value"
+          className="min-w-40 flex-1 bg-transparent font-mono text-[color:var(--color-text-primary)] text-mono-xs outline-none placeholder:text-[color:var(--color-text-subtle)]"
+        />
+      </div>
+      {dropdownOpen && (
+        <div className="absolute top-full right-0 left-0 z-20 mt-1 max-h-56 overflow-y-auto border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-raised)] shadow-lg shadow-black/40">
+          {searching ? (
+            <div className="px-2 py-1.5 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase">
+              Searching…
+            </div>
+          ) : searchError ? (
+            <div className="px-2 py-1.5 font-mono text-[color:var(--color-state-error)] text-mono-xs">
+              {searchError}
+            </div>
+          ) : suggestions && suggestions.length === 0 ? (
+            <div className="px-2 py-1.5 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase">
+              No codes match
+            </div>
+          ) : (
+            (suggestions ?? []).map((s) => (
+              <button
+                key={s.code}
+                type="button"
+                onClick={() => addCode(s.code)}
+                className="block w-full px-2 py-1.5 text-left font-mono text-mono-xs transition-colors hover:bg-[color:var(--color-surface-base)]"
+              >
+                <span className="text-[color:var(--color-text-accent)]">{s.code}</span>
+                <span className="text-[color:var(--color-text-muted)]"> — {s.description}</span>
+              </button>
+            ))
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
