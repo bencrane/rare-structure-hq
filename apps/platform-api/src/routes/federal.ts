@@ -154,11 +154,14 @@ federalRoutes.post("/entity/dossiers", async (c) => {
 // /map is public and the payload is exclusively public-record SAM/USAspending data. The BFF
 // stays Lance-free and brokers the INTERNAL operator token (COREX_SERVICE_TOKEN).
 
-// The concrete serving datasets catalyst's map query engine exposes — the Gen-3 `entities`
-// table plus the retiring Gen-2 five (flagged `legacy` in the fields payload; the UI hides
-// them). No "auto" here — the workbench is deterministic-only; sentence routing belongs to /ask.
+// The concrete serving datasets catalyst's map query engine exposes — the Gen-3 tables
+// (`entities`, `prime_awards`, `transactions`) plus the retiring Gen-2 five (flagged
+// `legacy` in the fields payload; the UI hides them). No "auto" here — the workbench is
+// deterministic-only; sentence routing belongs to /ask.
 const WORKBENCH_DATASETS = new Set([
   "entities",
+  "prime_awards",
+  "transactions",
   "company",
   "winners",
   "awards",
@@ -188,7 +191,7 @@ federalRoutes.post("/query/:dataset", async (c) => {
   const dataset = c.req.param("dataset");
   if (!WORKBENCH_DATASETS.has(dataset)) {
     throw new HTTPException(400, {
-      message: `unknown dataset "${dataset}" — expected one of entities, company, winners, awards, active, contracts`,
+      message: `unknown dataset "${dataset}" — expected one of entities, prime_awards, transactions, company, winners, awards, active, contracts`,
     });
   }
   const body = await c.req.text();

@@ -92,22 +92,60 @@ describe("visibleWorkbenchDatasets", () => {
   });
 
   it("falls back to the full static list when the catalog is null or degenerate", () => {
-    expect(visibleWorkbenchDatasets(null).map((t) => t.key)).toEqual([
+    const full = [
       "entities",
+      "prime_awards",
+      "transactions",
       "company",
       "winners",
       "awards",
       "active",
       "contracts",
-    ]);
-    expect(visibleWorkbenchDatasets(catalog({})).map((t) => t.key)).toEqual([
-      "entities",
-      "company",
-      "winners",
-      "awards",
-      "active",
-      "contracts",
-    ]);
+    ];
+    expect(visibleWorkbenchDatasets(null).map((t) => String(t.key))).toEqual(full);
+    expect(visibleWorkbenchDatasets(catalog({})).map((t) => String(t.key))).toEqual(full);
+  });
+
+  // ── prime_awards / transactions visibility matrix ──────────────────────────
+  it("renders all three Gen-3 tabs, in order, when present and non-legacy", () => {
+    const tabs = visibleWorkbenchDatasets(
+      catalog({
+        entities: { legacy: false },
+        prime_awards: { legacy: false },
+        transactions: { legacy: false },
+        company: { legacy: true },
+        winners: { legacy: true },
+      }),
+    );
+    expect(tabs.map((t) => t.key)).toEqual(["entities", "prime_awards", "transactions"]);
+    expect(tabs.map((t) => t.label)).toEqual(["Entities", "Prime Awards", "Transactions"]);
+  });
+
+  it("hides a known dataset that is ABSENT from the catalog — no error, no tab", () => {
+    // prime_awards deployed, transactions not yet: only what the payload carries renders.
+    const tabs = visibleWorkbenchDatasets(
+      catalog({ entities: { legacy: false }, prime_awards: { legacy: false } }),
+    );
+    expect(tabs.map((t) => t.key)).toEqual(["entities", "prime_awards"]);
+  });
+
+  it("hides a new dataset the payload flags legacy, same as the Gen-2 five", () => {
+    const tabs = visibleWorkbenchDatasets(
+      catalog({
+        entities: { legacy: false },
+        prime_awards: { legacy: false },
+        transactions: { legacy: true },
+      }),
+    );
+    expect(tabs.map((t) => t.key)).toEqual(["entities", "prime_awards"]);
+  });
+
+  it("ignores catalog datasets UNKNOWN to the static list — payload can lead, tabs cannot", () => {
+    // The inverse direction: a dataset the payload serves but this build predates.
+    const tabs = visibleWorkbenchDatasets(
+      catalog({ entities: { legacy: false }, subawards_future: { legacy: false } }),
+    );
+    expect(tabs.map((t) => t.key)).toEqual(["entities"]);
   });
 });
 
