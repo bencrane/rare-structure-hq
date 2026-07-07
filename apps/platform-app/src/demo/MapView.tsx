@@ -614,9 +614,11 @@ function OpportunityDot({
 // ───────────────────────────────────────────────────────────────────
 // Sub-universe dot — one eligible BUYER (the nodes are primes' HQ/geo
 // points). Facts-only doctrine: a gate failure DIMS the dot (low
-// opacity) with disclosed reasons — it is never removed. The <title>
-// carries name + matched $ (+ the dim reasons) as a hover tooltip;
-// a click selects the node for the console's detail panel.
+// opacity) with disclosed reasons — it is never removed; an UNKNOWN
+// fact never dims, it is annotated. The <title> carries name +
+// matched $ ("—" when undisclosed) + the dim reasons + the unknown
+// annotations as a hover tooltip; a click selects the node for the
+// console's detail panel.
 // ───────────────────────────────────────────────────────────────────
 
 function SubUniverseDot({
@@ -634,8 +636,13 @@ function SubUniverseDot({
   const dim = node.evaluation.status === "dim";
   const r = SUB_UNIVERSE_DOT_RADIUS;
   const enterDelay = reduced ? 0 : (x / GEO_VIEW.w) * 0.5;
-  const title = `${node.name ?? node.uei} · ${fmtUsd(node.matched_farmout_60mo)} matched${
+  // Undisclosed matched $ reads "—" (unknown ≠ zero); unknown facts are
+  // disclosed in the tooltip alongside any dim reasons — they never dim.
+  const matched = node.matched_farmout_60mo != null ? fmtUsd(node.matched_farmout_60mo) : "—";
+  const title = `${node.name ?? node.uei} · ${matched} matched${
     dim ? ` — dimmed: ${node.evaluation.reasons.join("; ")}` : ""
+  }${
+    node.evaluation.unknowns.length > 0 ? ` — unknown: ${node.evaluation.unknowns.join("; ")}` : ""
   }`;
   return (
     // biome-ignore lint/a11y/useSemanticElements: this is an SVG <g>, not HTML — it cannot be a <button>; role="button" + tabIndex + onKeyDown is the keyboard-accessible pattern for an interactive SVG group.

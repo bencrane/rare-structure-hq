@@ -16,8 +16,11 @@ import {
 
 /**
  * Guards the facts-only doctrine: gates DIM with disclosed reasons, never
- * delete; a node failing multiple gates accumulates ALL reasons; and the
- * plot seam mirrors subout (unplottable nodes counted, never dotted).
+ * delete; UNKNOWN ≠ ZERO — a null wire fact never fails a gate, it lands in
+ * `unknowns`; lane-level gates read the FULL gate_facts set, not the
+ * display-capped matched_via; a node failing multiple gates accumulates ALL
+ * reasons; and the plot seam mirrors subout (unplottable nodes counted,
+ * never dotted).
  */
 
 function lane(over: Partial<SubUniverseMatchedVia>): SubUniverseMatchedVia {
@@ -34,14 +37,17 @@ function lane(over: Partial<SubUniverseMatchedVia>): SubUniverseMatchedVia {
     n_distinct_subs_60mo: 8,
     last_action_date: "2026-05-01",
     anchor_uei: "UEIANCHOR001",
-    anchor_obl_60mo: 12_000_000,
+    candidate_prime_obl_60mo: 12_000_000,
     prime_backed: true,
     ...over,
   };
 }
 
+/** Node fixture. Unless a test overrides `gate_facts` explicitly, it is
+ * derived from matched_via (m = median_chunk_60mo, pb = prime_backed) — the
+ * server mirrors the displayed lanes into the full fact set. */
 function node(over: Partial<SubUniverseNode>): SubUniverseNode {
-  return {
+  const base: SubUniverseNode = {
     uei: "UEIBUYER0001",
     name: "BUYER ONE LLC",
     latitude: 38.9586,
@@ -50,10 +56,19 @@ function node(over: Partial<SubUniverseNode>): SubUniverseNode {
     matched_farmout_60mo: 5_000_000,
     n_matched_combos: 1,
     matched_via: [lane({})],
+    matched_via_truncated: false,
+    gate_facts: {},
+    disclosed_sub_buyer: true,
     teaming: { n_sub_partners_5y: 12, deepest_repeat_edges_5y: 4, n_partners_ge_3_edges: 2 },
     vehicles: [{ parent_piid: "PIID_A", farmout_amt_60mo: 1_000_000, last_action_date: null }],
     ...over,
   };
+  if (over.gate_facts === undefined) {
+    base.gate_facts = Object.fromEntries(
+      base.matched_via.map((m) => [m.combo, { m: m.median_chunk_60mo, pb: m.prime_backed }]),
+    );
+  }
+  return base;
 }
 
 /** All gates off — the null baseline every test perturbs one gate from. */
@@ -63,6 +78,7 @@ const OFF: SubUniverseGateParams = {
   vehiclePiids: null,
   primeBackedOnly: false,
   combos: null,
+  disclosedSubBuyersOnly: false,
 };
 
 function target(over: Partial<SubUniverseTarget>): SubUniverseTarget {
@@ -73,7 +89,14 @@ function target(over: Partial<SubUniverseTarget>): SubUniverseTarget {
     pop_states: [],
     vehicles: [],
     prime_combos: [],
-    defaults: { mvs_usd: 150_000, repeat_k: 3, pop_states: ["VA"], window: "60mo" },
+    defaults: {
+      mvs_usd: 150_000,
+      mvs_n: 8,
+      mvs_reason: null,
+      repeat_k: 3,
+      pop_states: ["VA"],
+      window: "60mo",
+    },
     ...over,
   };
 }
@@ -85,8 +108,8 @@ function fakeProject(lon: number, lat: number): { x: number; y: number } | null 
 }
 
 describe("evaluateNode", () => {
-  it("all gates off → lit with no reasons", () => {
-    expect(evaluateNode(node({}), OFF)).toEqual({ status: "lit", reasons: [] });
+  it("all gates off → lit with no reasons and no unknowns", () => {
+    expect(evaluateNode(node({}), OFF)).toEqual({ status: "lit", reasons: [], unknowns: [] });
   });
 
   it("MVS floor lights when SOME lane's median chunk clears it", () => {
@@ -99,11 +122,11 @@ describe("evaluateNode", () => {
     expect(evaluateNode(n, { ...OFF, mvsUsd: 250_000 }).status).toBe("lit");
   });
 
-  it("MVS floor dims with the best-chunk reason when every lane is below", () => {
+  it("MVS floor dims with the best-chunk reason when every known lane is below", () => {
     const n = node({
       matched_via: [
         lane({ combo: "A", median_chunk_60mo: 50_000 }),
-        lane({ combo: "B", median_chunk_60mo: null, median_chunk_lifetime: 120_000 }),
+        lane({ combo: "B", median_chunk_60mo: 120_000 }),
       ],
     });
     const ev = evaluateNode(n, { ...OFF, mvsUsd: 250_000 });
@@ -111,20 +134,21 @@ describe("evaluateNode", () => {
     expect(ev.reasons).toEqual(["below $250K floor — best median chunk $120K"]);
   });
 
-  it("MVS falls back to median_chunk_lifetime when 60mo is null", () => {
+  it("MVS reads gate_facts m only — median_chunk_lifetime is display, not a gate fact", () => {
     const n = node({
       matched_via: [lane({ median_chunk_60mo: null, median_chunk_lifetime: 400_000 })],
     });
-    expect(evaluateNode(n, { ...OFF, mvsUsd: 250_000 }).status).toBe("lit");
+    const ev = evaluateNode(n, { ...OFF, mvsUsd: 250_000 });
+    expect(ev.status).toBe("lit"); // unknown never fails
+    expect(ev.unknowns).toEqual(["chunk medians unknown"]);
   });
 
-  it("MVS dims with 'no disclosed chunk medians' when nothing is disclosed", () => {
+  it("all-null medians in scope → LIT with the 'chunk medians unknown' annotation, never dim", () => {
     const n = node({
       matched_via: [lane({ median_chunk_60mo: null, median_chunk_lifetime: null })],
     });
     const ev = evaluateNode(n, { ...OFF, mvsUsd: 250_000 });
-    expect(ev.status).toBe("dim");
-    expect(ev.reasons).toEqual(["no disclosed chunk medians"]);
+    expect(ev).toEqual({ status: "lit", reasons: [], unknowns: ["chunk medians unknown"] });
   });
 
   it("MVS is scoped to the selected combos when the combo filter is set", () => {
@@ -139,6 +163,27 @@ describe("evaluateNode", () => {
     expect(ev.reasons).toEqual(["below $250K floor — best median chunk $50K"]);
   });
 
+  it("gates evaluate over the FULL gate_facts set, beyond the display-capped matched_via", () => {
+    // matched_via shows only lane A (below floor, not prime-backed); the full
+    // fact set carries lane B, which clears the floor, is prime-backed, and
+    // satisfies the combo filter.
+    const n = node({
+      matched_via: [lane({ combo: "A", median_chunk_60mo: 50_000, prime_backed: false })],
+      matched_via_truncated: true,
+      gate_facts: {
+        A: { m: 50_000, pb: false },
+        B: { m: 500_000, pb: true },
+      },
+    });
+    expect(evaluateNode(n, { ...OFF, mvsUsd: 250_000 }).status).toBe("lit");
+    expect(evaluateNode(n, { ...OFF, primeBackedOnly: true }).status).toBe("lit");
+    expect(evaluateNode(n, { ...OFF, combos: ["B"] }).status).toBe("lit");
+    // And scoped MVS over gate_facts: only A selected → best known $50K fails.
+    const scoped = evaluateNode(n, { ...OFF, mvsUsd: 250_000, combos: ["A"] });
+    expect(scoped.status).toBe("dim");
+    expect(scoped.reasons).toEqual(["below $250K floor — best median chunk $50K"]);
+  });
+
   it("repeat depth gates on teaming.deepest_repeat_edges_5y", () => {
     const shallow = node({
       teaming: { n_sub_partners_5y: 5, deepest_repeat_edges_5y: 2, n_partners_ge_3_edges: 0 },
@@ -147,6 +192,29 @@ describe("evaluateNode", () => {
     expect(ev.status).toBe("dim");
     expect(ev.reasons).toEqual(["no sub partner with >=3 repeat edges (deepest: 2)"]);
     expect(evaluateNode(node({}), { ...OFF, repeatK: 3 }).status).toBe("lit"); // deepest 4
+  });
+
+  it("null teaming PASSES the repeat gate with the 'repeat depth unknown' annotation", () => {
+    const unknown = node({
+      teaming: {
+        n_sub_partners_5y: null,
+        deepest_repeat_edges_5y: null,
+        n_partners_ge_3_edges: null,
+      },
+    });
+    const ev = evaluateNode(unknown, { ...OFF, repeatK: 3 });
+    expect(ev).toEqual({ status: "lit", reasons: [], unknowns: ["repeat depth unknown"] });
+  });
+
+  it("disclosed-sub-buyers filter dims undisclosed buyers with the exact reason; off reveals them", () => {
+    const undisclosed = node({ disclosed_sub_buyer: false });
+    const ev = evaluateNode(undisclosed, { ...OFF, disclosedSubBuyersOnly: true });
+    expect(ev.status).toBe("dim");
+    expect(ev.reasons).toEqual([
+      "no FSRS-disclosed sub-buying — may buy below reporting threshold or undisclosed",
+    ]);
+    expect(evaluateNode(undisclosed, OFF).status).toBe("lit"); // toggled off
+    expect(evaluateNode(node({}), { ...OFF, disclosedSubBuyersOnly: true }).status).toBe("lit");
   });
 
   it("vehicle gate needs some node vehicle in the selected PIIDs", () => {
@@ -175,6 +243,7 @@ describe("evaluateNode", () => {
 
   it("a node failing multiple gates accumulates ALL reasons", () => {
     const n = node({
+      disclosed_sub_buyer: false,
       matched_via: [lane({ median_chunk_60mo: 10_000, median_chunk_lifetime: null })],
       teaming: { n_sub_partners_5y: 1, deepest_repeat_edges_5y: 1, n_partners_ge_3_edges: 0 },
       vehicles: [],
@@ -185,31 +254,63 @@ describe("evaluateNode", () => {
       vehiclePiids: ["PIID_Z"],
       primeBackedOnly: false,
       combos: null,
+      disclosedSubBuyersOnly: true,
     });
     expect(ev.status).toBe("dim");
     expect(ev.reasons).toEqual([
+      "no FSRS-disclosed sub-buying — may buy below reporting threshold or undisclosed",
       "below $250K floor — best median chunk $10K",
       "no sub partner with >=3 repeat edges (deepest: 1)",
       "no disclosed sub $ under selected vehicles",
     ]);
   });
+
+  it("unknowns accumulate alongside dim reasons without ever contributing a dim", () => {
+    // Fails the vehicle gate (known fact) while repeat depth and chunk
+    // medians are unknown — both annotated, neither a reason.
+    const n = node({
+      matched_via: [lane({ median_chunk_60mo: null, median_chunk_lifetime: null })],
+      teaming: {
+        n_sub_partners_5y: null,
+        deepest_repeat_edges_5y: null,
+        n_partners_ge_3_edges: null,
+      },
+      vehicles: [],
+    });
+    const ev = evaluateNode(n, { ...OFF, mvsUsd: 250_000, repeatK: 3, vehiclePiids: ["PIID_Z"] });
+    expect(ev.status).toBe("dim");
+    expect(ev.reasons).toEqual(["no disclosed sub $ under selected vehicles"]);
+    expect(ev.unknowns).toEqual(["chunk medians unknown", "repeat depth unknown"]);
+  });
 });
 
 describe("defaultGateParams", () => {
-  it("seeds MVS + repeat-K from target.defaults; filters start off", () => {
+  it("seeds MVS + repeat-K from target.defaults; disclosed filter ON; other filters off", () => {
     expect(defaultGateParams(target({}))).toEqual({
       mvsUsd: 150_000,
       repeatK: 3,
       vehiclePiids: null,
       primeBackedOnly: false,
       combos: null,
+      disclosedSubBuyersOnly: true,
     });
   });
 
-  it("a null mvs_usd default keeps the MVS gate off", () => {
+  it("a null mvs_usd default keeps the MVS gate off (input empty, mvs_reason disclosed)", () => {
     const t = target({});
-    t.defaults = { ...t.defaults, mvs_usd: null };
-    expect(defaultGateParams(t).mvsUsd).toBeNull();
+    t.defaults = {
+      ...t.defaults,
+      mvs_usd: null,
+      mvs_n: 2,
+      mvs_reason: "insufficient history (n=2) to set a default floor",
+    };
+    const params = defaultGateParams(t);
+    expect(params.mvsUsd).toBeNull();
+    // Gate off → a node with no disclosed medians is lit with no MVS annotation.
+    const n = node({
+      matched_via: [lane({ median_chunk_60mo: null, median_chunk_lifetime: null })],
+    });
+    expect(evaluateNode(n, params)).toEqual({ status: "lit", reasons: [], unknowns: [] });
   });
 });
 
@@ -300,6 +401,18 @@ describe("comboOptions / vehicleOptions", () => {
     const opts = comboOptions(target({}), [node({ matched_via: lanes })], 15);
     expect(opts).toHaveLength(15);
     expect(opts[0]).toBe("C0"); // highest $
+  });
+
+  it("ranks undisclosed (null) farm-out $ as 0 — vocabulary order only, never a gate fact", () => {
+    const nodes = [
+      node({
+        matched_via: [
+          lane({ combo: "NULL$", farmout_amt_60mo: null }),
+          lane({ combo: "SOME$", farmout_amt_60mo: 10 }),
+        ],
+      }),
+    ];
+    expect(comboOptions(target({}), nodes)).toEqual(["SOME$", "NULL$"]);
   });
 
   it("unions target vehicle PIIDs with top node PIIDs, deduped", () => {

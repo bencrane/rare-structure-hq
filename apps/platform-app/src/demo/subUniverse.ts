@@ -6,10 +6,15 @@
  * at POST /api/v1/federal/sub-universe: enter a sub's UEI → the buyers whose
  * demonstrated farm-out lanes overlap the sub's demonstrated combos, ordered by
  * matched farm-out $ desc. FACTS-ONLY DOCTRINE: there is no score anywhere.
- * The tunable gates (MVS floor, repeat depth, vehicles, prime-backed, combos)
- * never delete a node — a node failing any gate is DIMMED with every failing
- * gate's reason disclosed, and re-evaluation is entirely client-side (no
- * re-fetch on parameter change). This module owns everything testable without
+ * The tunable gates (MVS floor, repeat depth, vehicles, prime-backed, combos,
+ * disclosed sub-buyers) never delete a node — a node failing any gate is DIMMED
+ * with every failing gate's reason disclosed, and re-evaluation is entirely
+ * client-side (no re-fetch on parameter change). UNKNOWN ≠ ZERO: a fact the
+ * wire discloses as null (teaming absent from the pair mart, no disclosed
+ * chunk medians) NEVER fails a gate — it surfaces as an `unknowns` annotation
+ * alongside the reasons. Lane-level gates (MVS, combo overlap, prime-backed)
+ * evaluate over `gate_facts` — the FULL matched-lane set — never over the
+ * display-capped `matched_via`. This module owns everything testable without
  * a network: response types, gate semantics, lat/lon → viewBox projection
  * (dropping unplottable nodes honestly), and the filter-option builders.
  * The wire call itself lives in `federalApi.ts`.
@@ -21,30 +26,38 @@ import { projectLonLat } from "./projection";
 // ── Wire types (catalyst sub_universe.v1, snake_case pass-through) ───────────
 
 /** One matched lane: a (NAICS × PSC) combo the buyer farms out that the sub has
- * demonstrated. Capped at 25 per node upstream. */
+ * demonstrated. Capped at 25 per node upstream (see `matched_via_truncated`) —
+ * DISPLAY ONLY; gates evaluate over `gate_facts`. Farm-out fields may be null
+ * on undisclosed nodes (unknown, not zero); `candidate_prime_obl_60mo` is
+ * always carried. */
 export type SubUniverseMatchedVia = {
   combo: string;
   naics_code: string | null;
   psc_code: string | null;
   naics_title: string | null;
   psc_title: string | null;
-  farmout_amt_60mo: number;
+  farmout_amt_60mo: number | null;
   median_chunk_60mo: number | null;
   median_chunk_lifetime: number | null;
-  n_subawards_lifetime: number;
-  n_distinct_subs_60mo: number;
+  n_subawards_lifetime: number | null;
+  n_distinct_subs_60mo: number | null;
   last_action_date: string | null;
   anchor_uei: string | null;
-  anchor_obl_60mo: number | null;
+  candidate_prime_obl_60mo: number;
   prime_backed: boolean;
 };
 
-/** The buyer's teaming posture — repeat-partner depth over 5y. */
+/** The buyer's teaming posture — repeat-partner depth over 5y. null = UNKNOWN
+ * (the prime is absent from the pair mart) — an unknown NEVER fails a gate. */
 export type SubUniverseTeaming = {
-  n_sub_partners_5y: number;
-  deepest_repeat_edges_5y: number;
-  n_partners_ge_3_edges: number;
+  n_sub_partners_5y: number | null;
+  deepest_repeat_edges_5y: number | null;
+  n_partners_ge_3_edges: number | null;
 };
+
+/** One lane's gate-relevant facts: `m` = median chunk 60mo (null = no
+ * disclosed median → unknown, never fails MVS); `pb` = prime-backed lane. */
+export type SubUniverseGateFact = { m: number | null; pb: boolean };
 
 /** One vehicle (parent PIID) the buyer has disclosed sub $ under. */
 export type SubUniverseVehicle = {
@@ -53,16 +66,25 @@ export type SubUniverseVehicle = {
   last_action_date: string | null;
 };
 
-/** One buyer node — a prime with matched farm-out lanes. lat/lon may be null. */
+/** One buyer node — a prime with matched farm-out lanes. lat/lon may be null.
+ * `matched_farmout_60mo` may be null (undisclosed — display "—", not $0).
+ * `gate_facts` is the FULL matched-lane set keyed by combo — the ONLY input
+ * to the lane-level gates; `matched_via` is the display-capped top 25
+ * (`matched_via_truncated` flags the cap). `disclosed_sub_buyer` = false means
+ * no FSRS-disclosed sub-buying — the buyer may still buy below the reporting
+ * threshold or undisclosed. */
 export type SubUniverseNode = {
   uei: string;
   name: string | null;
   latitude: number | null;
   longitude: number | null;
   geo_precision: string | null;
-  matched_farmout_60mo: number;
+  matched_farmout_60mo: number | null;
   n_matched_combos: number;
   matched_via: SubUniverseMatchedVia[];
+  matched_via_truncated: boolean;
+  gate_facts: { [combo: string]: SubUniverseGateFact };
+  disclosed_sub_buyer: boolean;
   teaming: SubUniverseTeaming;
   vehicles: SubUniverseVehicle[];
 };
@@ -96,7 +118,13 @@ export type SubUniverseTarget = {
     prime_obl_60mo: number;
   }[];
   defaults: {
+    /** null = insufficient history to set a default floor — the MVS input
+     * starts EMPTY (gate off) and `mvs_reason` is shown verbatim. */
     mvs_usd: number | null;
+    /** How many demonstrated chunks the default floor was derived from. */
+    mvs_n: number;
+    /** Why there is no default floor (verbatim console copy) — null when set. */
+    mvs_reason: string | null;
     repeat_k: number;
     pop_states: string[];
     window: string;
@@ -142,10 +170,14 @@ export type SubUniverseGateParams = {
   primeBackedOnly: boolean;
   /** Restrict to nodes overlapping these combos (also scopes the MVS gate). */
   combos: string[] | null;
+  /** Dim buyers without FSRS-disclosed sub-buying (default ON) — toggle off
+   * to reveal the full lookalike-winner universe. */
+  disclosedSubBuyersOnly: boolean;
 };
 
 /** Seed the gates from the target's expressed defaults (MVS + repeat-K);
- * vehicle/combo filters and prime-backed start off. */
+ * the disclosed-sub-buyers filter starts ON; vehicle/combo filters and
+ * prime-backed start off. A null mvs_usd default leaves the MVS gate OFF. */
 export function defaultGateParams(target: SubUniverseTarget): SubUniverseGateParams {
   return {
     mvsUsd: target.defaults.mvs_usd,
@@ -153,52 +185,71 @@ export function defaultGateParams(target: SubUniverseTarget): SubUniverseGatePar
     vehiclePiids: null,
     primeBackedOnly: false,
     combos: null,
+    disclosedSubBuyersOnly: true,
   };
 }
 
 export type SubUniverseEvaluation = {
   status: "lit" | "dim";
   /** Every failing gate's disclosed reason — a node failing multiple gates
-   * accumulates ALL of them. Empty iff lit. */
+   * accumulates ALL of them. Empty iff lit. Only a KNOWN fact that fails a
+   * gate lands here. */
   reasons: string[];
+  /** Unknown-fact disclosures (unknown ≠ zero) — facts the wire could not
+   * state, annotated honestly. NEVER cause a dim. */
+  unknowns: string[];
 };
 
 /**
  * Evaluate one node against the gates. Facts-only: a failing node is DIMMED
- * with reasons, never deleted. Gate semantics:
- *  - MVS floor: SOME matched lane (scoped to the combo filter when set) must
- *    disclose (median_chunk_60mo ?? median_chunk_lifetime) >= mvsUsd.
- *  - Repeat depth: teaming.deepest_repeat_edges_5y >= repeatK.
+ * with reasons, never deleted. A gate fails ONLY on a known fact that fails;
+ * an unknown fact (null on the wire) produces an `unknowns` annotation
+ * instead. Lane-level gates evaluate over `gate_facts` — the FULL matched-lane
+ * set — never over the display-capped `matched_via`. Gate semantics:
+ *  - Disclosed sub-buyers: disclosed_sub_buyer must be true (default ON).
+ *  - MVS floor: SOME gate_facts lane (scoped to the combo filter when set)
+ *    must disclose m >= mvsUsd; when EVERY lane in scope has m = null the
+ *    medians are unknown → annotate, never dim.
+ *  - Repeat depth: teaming.deepest_repeat_edges_5y >= repeatK; null depth is
+ *    unknown → annotate, never dim.
  *  - Vehicles: some node vehicle parent_piid is in the selected list.
- *  - Prime-backed: some matched lane carries prime_backed.
- *  - Combos: some matched lane's combo is in the selected set.
+ *  - Prime-backed: some gate_facts lane carries pb.
+ *  - Combos: some gate_facts combo is in the selected set.
  */
 export function evaluateNode(
   node: SubUniverseNode,
   params: SubUniverseGateParams,
 ): SubUniverseEvaluation {
   const reasons: string[] = [];
+  const unknowns: string[] = [];
   const comboSet = params.combos && params.combos.length > 0 ? new Set(params.combos) : null;
 
-  // MVS floor — scoped to the selected combos when the combo filter is on.
-  if (params.mvsUsd != null) {
-    const lanes = comboSet
-      ? node.matched_via.filter((m) => comboSet.has(m.combo))
-      : node.matched_via;
+  // The full matched-lane fact set — scoped to the selected combos when the
+  // combo filter is on (the scope the MVS gate evaluates in).
+  const allFacts = Object.entries(node.gate_facts);
+  const scopedFacts = comboSet ? allFacts.filter(([combo]) => comboSet.has(combo)) : allFacts;
+
+  // Disclosed sub-buyers — a KNOWN false is a truthful dim, not a deletion.
+  if (params.disclosedSubBuyersOnly && !node.disclosed_sub_buyer)
+    reasons.push("no FSRS-disclosed sub-buying — may buy below reporting threshold or undisclosed");
+
+  // MVS floor — over the FULL lane set, scoped to the selected combos. An
+  // empty scope is the combo gate's finding, not an MVS failure.
+  if (params.mvsUsd != null && scopedFacts.length > 0) {
     let best: number | null = null;
-    for (const m of lanes) {
-      const chunk = m.median_chunk_60mo ?? m.median_chunk_lifetime;
-      if (chunk != null && (best == null || chunk > best)) best = chunk;
+    for (const [, fact] of scopedFacts) {
+      if (fact.m != null && (best == null || fact.m > best)) best = fact.m;
     }
-    if (best == null) reasons.push("no disclosed chunk medians");
+    if (best == null) unknowns.push("chunk medians unknown");
     else if (best < params.mvsUsd)
       reasons.push(`below ${fmtUsd(params.mvsUsd)} floor — best median chunk ${fmtUsd(best)}`);
   }
 
-  // Repeat depth.
+  // Repeat depth — null = the prime is absent from the pair mart: unknown.
   if (params.repeatK != null) {
     const deepest = node.teaming.deepest_repeat_edges_5y;
-    if (deepest < params.repeatK)
+    if (deepest == null) unknowns.push("repeat depth unknown");
+    else if (deepest < params.repeatK)
       reasons.push(`no sub partner with >=${params.repeatK} repeat edges (deepest: ${deepest})`);
   }
 
@@ -209,15 +260,14 @@ export function evaluateNode(
       reasons.push("no disclosed sub $ under selected vehicles");
   }
 
-  // Prime-backed.
-  if (params.primeBackedOnly && !node.matched_via.some((m) => m.prime_backed))
+  // Prime-backed — over the FULL lane set.
+  if (params.primeBackedOnly && !allFacts.some(([, fact]) => fact.pb))
     reasons.push("no prime-backed lane overlap");
 
-  // Combo overlap.
-  if (comboSet && !node.matched_via.some((m) => comboSet.has(m.combo)))
-    reasons.push("no overlap with selected combos");
+  // Combo overlap — over the FULL lane set.
+  if (comboSet && scopedFacts.length === 0) reasons.push("no overlap with selected combos");
 
-  return { status: reasons.length === 0 ? "lit" : "dim", reasons };
+  return { status: reasons.length === 0 ? "lit" : "dim", reasons, unknowns };
 }
 
 // ── Plotting (lat/lon → the us-geo 1000x590 viewBox) ─────────────────────────
@@ -313,9 +363,11 @@ export function comboOptions(
   topN: number = TOP_OPTION_CT,
 ): string[] {
   const byDollars = new Map<string, number>();
+  // Undisclosed farm-out $ ranks as 0 — this orders the chip vocabulary
+  // only; it is NOT a gate fact (unknown never fails a gate).
   for (const node of nodes)
     for (const m of node.matched_via)
-      byDollars.set(m.combo, (byDollars.get(m.combo) ?? 0) + m.farmout_amt_60mo);
+      byDollars.set(m.combo, (byDollars.get(m.combo) ?? 0) + (m.farmout_amt_60mo ?? 0));
   const top = [...byDollars.entries()]
     .sort((a, b) => b[1] - a[1])
     .slice(0, topN)
