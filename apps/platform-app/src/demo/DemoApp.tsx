@@ -140,12 +140,18 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
     setResultView(v);
   }, []);
 
-  // Flip the serving dataset on the current NL query — re-fires the query-watching effect
-  // (which keys on `query`) so the result re-resolves against the newly pinned table.
-  const handleDataset = useCallback(
-    (dataset: NonNullable<MapQuery["dataset"]>) => setQuery((q) => (q ? { ...q, dataset } : q)),
-    [],
-  );
+  // "Plot on map" — the workbench hands its result set over as an ALREADY-RESOLVED
+  // QueryResult; the display query is composed (the effect below never re-fetches it).
+  const handlePlot = useCallback((qr: QueryResult, title: string) => {
+    setWorkbenchOpen(false);
+    setAggregate(null);
+    setSelectedCompany(null);
+    setResultView("map");
+    setQuery({ nl: title, minAward: 0, composed: true });
+    setResult(qr);
+    setError(null);
+    setLoading(false);
+  }, []);
 
   // Fetch the live result set whenever the map-query changes. Guarded against a stale
   // resolve clobbering a newer query (the classic out-of-order fetch race).
@@ -156,6 +162,7 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
       setLoading(false);
       return;
     }
+    if (query.composed) return; // plotted from the workbench — already resolved
     let cancelled = false;
     setLoading(true);
     setError(null);
@@ -217,9 +224,7 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
   const results = result?.companies ?? [];
   // A free-typed /ask query may resolve to an AGGREGATE (breakdown/total/distribution/top-N)
   // rather than rows — the response shape drives the view. Only when NOT loading, so the
-  // chart doesn't flash a stale aggregate from the previous query mid-fetch.
-  const dynamicAggregate = !loading ? (result?.aggregate ?? null) : null;
-  const showingAggregate = !!aggregate || !!dynamicAggregate;
+  const showingAggregate = !!aggregate;
 
   return (
     <div
@@ -233,6 +238,7 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
         embedded={embedded}
         onExitToView={exitWorkbenchToView}
         onInvokeCommand={() => setCommandOpen(true)}
+        onPlot={handlePlot}
       />
 
       <AnimatePresence mode="wait">
@@ -240,12 +246,6 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
           <AggregateView
             key="aggregate"
             spec={aggregate}
-            onInvokeCommand={() => setCommandOpen(true)}
-          />
-        ) : dynamicAggregate ? (
-          <AggregateView
-            key="dyn-aggregate"
-            resolved={dynamicAggregate}
             onInvokeCommand={() => setCommandOpen(true)}
           />
         ) : query && resultView === "table" ? (
@@ -265,7 +265,6 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
             embedded={embedded}
             resultView={resultView}
             onResultView={setResultView}
-            onDataset={handleDataset}
             onWorkbench={openWorkbench}
           />
         ) : (
@@ -286,7 +285,6 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
             embedded={embedded}
             resultView={resultView}
             onResultView={setResultView}
-            onDataset={handleDataset}
             defaultView={defaultView}
             onDefaultView={setDefaultView}
             onWorkbench={openWorkbench}

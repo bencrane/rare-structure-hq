@@ -37,135 +37,6 @@ function serviceHeaders(json = true): Record<string, string> {
   return h;
 }
 
-// ── Map /ask — the natural-language market query ─────────────────────────────
-// edge_api owns the single forced-tool Anthropic call (NL → constrained filter) and the
-// catalyst_api EXECUTE that runs it; this BFF is a thin service-token proxy. The /map cockpit
-// is public, so the route is unauthenticated — but each call triggers one LLM round-trip, so
-// this is the natural seam to add rate-limiting if abuse shows.
-/** Requestable dataset: a concrete serving table, or "auto" — edge_api's router picks
- * the table from the sentence ("won an award over $X" → awards; lifetime-obligation /
- * firmographic phrasing → company). */
-export type AskMarketDataset = "company" | "winners" | "awards" | "active" | "contracts" | "auto";
-/** The dataset that actually EXECUTED (echoed back by catalyst; never "auto"). */
-export type AskMarketExecutedDataset = "company" | "winners" | "awards" | "active" | "contracts";
-
-export interface AskMarketRow {
-  [key: string]: unknown;
-  /** Real WGS84 coordinates from geocode_xwalk (carried for the deferred geo-dot layer). */
-  lat?: number;
-  lon?: number;
-}
-
-/** One group row of an aggregate result — a measure rolled up over the cohort. `sum`/`avg`/
- * `median`/`p90` are present per the requested metrics; `lo`/`hi` bound a size_band; `uei`
- * carries the entity key for a 'winner' grouping. */
-export interface MarketAggregateGroup {
-  key: string | number | null;
-  count: number;
-  sum?: number | null;
-  avg?: number | null;
-  median?: number | null;
-  p90?: number | null;
-  lo?: number | null;
-  hi?: number | null;
-  uei?: string | null;
-}
-
-/** The aggregate side of an /ask result: a cohort-scoped group-by over award actions. Present
- * (instead of `rows`) when the query asked for a breakdown / total / distribution / ranking. */
-export interface MarketAggregate {
-  groupBy: string;
-  measure: string;
-  metrics: string[];
-  matchedRows: number;
-  totalGroups: number;
-  groups: MarketAggregateGroup[];
-}
-
-export interface AskMarketResult {
-  rows: AskMarketRow[];
-  total: number;
-  capped: boolean;
-  /** Present when the query was a breakdown/total/distribution/ranking — the aggregate
-   * rows in place of the GeoJSON `rows`. Null for a plain row query. */
-  aggregate: MarketAggregate | null;
-  /** The interpreted filter the model produced — for the UI to echo "interpreted as…". */
-  query: {
-    title?: string;
-    filters: { field: string; op: string; value: unknown }[];
-    unmapped?: string[];
-  } | null;
-  /** Constraints the compiler could NOT express (the honesty contract) — the cockpit
-   * renders these as "not applied" so the result never implies a filter it didn't run. */
-  unmapped: string[];
-  /** The dataset that executed (router-resolved when "auto" was requested). */
-  dataset: AskMarketExecutedDataset;
-}
-
-interface RawAggregate {
-  group_by: string;
-  measure: string;
-  metrics: string[];
-  matched_rows: number;
-  total_groups: number;
-  groups: MarketAggregateGroup[];
-}
-
-interface GeoFeature {
-  /** null geometry = a qualifying row whose address did not geocode (table-only row). */
-  geometry?: { coordinates?: [number, number] } | null;
-  properties?: Record<string, unknown>;
-}
-
-/** NL market query → edge_api `/api/v1/map/{dataset}/ask` → flattened rows (+ coords). */
-export async function askMarket(dataset: AskMarketDataset, q: string): Promise<AskMarketResult> {
-  const res = await fetch(`${base()}/api/v1/map/${dataset}/ask`, {
-    method: "POST",
-    headers: serviceHeaders(),
-    body: JSON.stringify({ q }),
-  });
-  if (!res.ok) {
-    throw new EdgeError(`edge_api /ask failed: ${res.status} ${await res.text()}`);
-  }
-  const env = (await res.json()) as {
-    data?: { features?: GeoFeature[]; aggregate?: RawAggregate };
-    meta?: { returned?: number; total?: number; capped?: boolean; dataset?: string };
-    query?: AskMarketResult["query"] & { dataset?: string };
-  };
-  const features = env.data?.features ?? [];
-  const rows: AskMarketRow[] = features.map((f) => ({
-    ...(f.properties ?? {}),
-    lon: f.geometry?.coordinates?.[0],
-    lat: f.geometry?.coordinates?.[1],
-  }));
-  // The aggregate envelope (snake_case from catalyst) → camelCase wire shape. Present only
-  // for breakdown/total/distribution/ranking queries; the group rows pass through as-is.
-  const aggRaw = env.data?.aggregate;
-  const aggregate: MarketAggregate | null = aggRaw
-    ? {
-        groupBy: aggRaw.group_by,
-        measure: aggRaw.measure,
-        metrics: aggRaw.metrics ?? [],
-        matchedRows: aggRaw.matched_rows ?? 0,
-        totalGroups: aggRaw.total_groups ?? 0,
-        groups: aggRaw.groups ?? [],
-      }
-    : null;
-  const executed = (env.meta?.dataset ?? env.query?.dataset) as
-    | AskMarketExecutedDataset
-    | undefined;
-  return {
-    rows,
-    // meta.total is the EXACT match count (pre-cap); `returned` is the served slice.
-    total: env.meta?.total ?? env.meta?.returned ?? rows.length,
-    capped: env.meta?.capped ?? false,
-    aggregate,
-    query: env.query ?? null,
-    unmapped: env.query?.unmapped ?? [],
-    dataset: executed ?? (dataset === "auto" ? "company" : dataset),
-  };
-}
-
 /**
  * Posture → fixed monthly infrastructure fee (cents). The success-fee schedule is baked into
  * the agreement body; only the Infrastructure Fee varies, and it is hardcoded per posture.
@@ -267,7 +138,8 @@ export async function edgeSaveDealDetails(
     headers: serviceHeaders(),
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw new EdgeError(`edge deal details save failed: ${res.status} ${await res.text()}`);
+  if (!res.ok)
+    throw new EdgeError(`edge deal details save failed: ${res.status} ${await res.text()}`);
   return (await res.json()) as EdgeDealDetails;
 }
 
@@ -924,7 +796,9 @@ export async function edgeResyncAllTemplates(): Promise<EdgeTemplateResyncAllRes
     headers: serviceHeaders(false),
   });
   if (!res.ok)
-    throw new EdgeError(`edge template-mirror resync-all failed: ${res.status} ${await res.text()}`);
+    throw new EdgeError(
+      `edge template-mirror resync-all failed: ${res.status} ${await res.text()}`,
+    );
   return (await res.json()) as EdgeTemplateResyncAllResult;
 }
 
@@ -958,7 +832,9 @@ export async function edgeSetTemplateDefault(documensoId: number): Promise<void>
     body: JSON.stringify({ documenso_id: documensoId }),
   });
   if (!res.ok)
-    throw new EdgeError(`edge template-defaults set-default failed: ${res.status} ${await res.text()}`);
+    throw new EdgeError(
+      `edge template-defaults set-default failed: ${res.status} ${await res.text()}`,
+    );
 }
 
 // ── Documenso template prefill config (the OPERATOR-OWNED per-template prefill editor) ──────────────

@@ -16,8 +16,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { BarChart3, CornerDownLeft, MapPin, Search, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { COMMANDS } from "../data";
-import type { Command, MapQuery } from "../types";
-import { CompactDatasetToggle } from "./TerminalChrome";
+import type { Command } from "../types";
 
 export function CommandPalette({
   open,
@@ -31,9 +30,6 @@ export function CommandPalette({
   const reduced = !!useReducedMotion();
   const [queryText, setQueryText] = useState("");
   const [selected, setSelected] = useState(0);
-  // The serving table the free-typed query runs against. "auto" lets edge_api's router pick;
-  // pinning (e.g. Contracts) overrides it. Sticky across ⌘K opens so a chosen lens persists.
-  const [dataset, setDataset] = useState<NonNullable<MapQuery["dataset"]>>("auto");
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Reset state and focus the input each time the palette opens.
@@ -54,20 +50,21 @@ export function CommandPalette({
     });
   }, [queryText]);
 
-  // The free-typed sentence becomes the top "Ask the market" action — running it routes through
-  // the edge_api /ask compiler (NL → forced-tool filter → catalyst Lance scan → companies). The
-  // canned commands (pre-existing, deterministic) filter below it, unchanged.
+  // The free-typed sentence becomes the top "Phrase" action — running it routes through
+  // catalyst's DETERMINISTIC phrase compiler (closed grammar, zero LLM): every token binds
+  // to a disclosed filter or the phrase refuses naming the token. The canned commands
+  // below it are acceptance-fixture phrases of the same grammar.
   const rows = useMemo<Command[]>(() => {
     const trimmed = queryText.trim();
     if (!trimmed) return filtered;
-    const ask: Command = {
-      id: "__ask__",
+    const phrase: Command = {
+      id: "__phrase__",
       kind: "map-query",
       label: trimmed,
-      query: { nl: trimmed, minAward: 0, dataset },
+      query: { nl: trimmed, minAward: 0 },
     };
-    return [ask, ...filtered];
-  }, [queryText, filtered, dataset]);
+    return [phrase, ...filtered];
+  }, [queryText, filtered]);
 
   // Keep the selection in range as the list narrows.
   useEffect(() => {
@@ -133,15 +130,6 @@ export function CommandPalette({
               </kbd>
             </div>
 
-            {/* Serving-table selector — pins the free-typed "Ask the market" query to one table
-                (Contracts = single-contract $ rollup), overriding edge_api's auto-router. */}
-            <div className="flex items-center gap-3 border-[color:var(--color-border-subtle)] border-b px-5 py-2.5">
-              <span className="shrink-0 font-mono text-[color:var(--color-text-subtle)] text-mono-xs uppercase">
-                Dataset
-              </span>
-              <CompactDatasetToggle value={dataset} onChange={setDataset} />
-            </div>
-
             {/* Command list */}
             <ul className="max-h-[52vh] overflow-y-auto py-1.5">
               {rows.length === 0 && (
@@ -184,10 +172,10 @@ function CommandRow({
   onHover: () => void;
   onRun: () => void;
 }) {
-  // The free-typed "Ask the market" row routes through the NL compiler; canned rows are Map/Chart.
-  const isAsk = command.kind === "map-query" && !!command.query.nl;
-  const Icon = isAsk ? Sparkles : command.kind === "aggregate" ? BarChart3 : MapPin;
-  const kindLabel = isAsk ? "Ask" : command.kind === "aggregate" ? "Chart" : "Map";
+  // A phrase row (free-typed or canned) routes through the deterministic compiler.
+  const isPhrase = command.kind === "map-query" && !!command.query.nl;
+  const Icon = isPhrase ? Sparkles : command.kind === "aggregate" ? BarChart3 : MapPin;
+  const kindLabel = isPhrase ? "Phrase" : command.kind === "aggregate" ? "Chart" : "Map";
 
   return (
     <li>

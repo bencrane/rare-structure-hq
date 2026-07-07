@@ -1,11 +1,14 @@
 /**
  * Phrase compiler client types + the plan→composer mapping (pure logic).
  *
- * The wire is catalyst's deterministic phrase.v1 (POST /api/v1/federal/phrase,
- * verbatim broker): a CLOSED grammar — any unbound token refuses the whole
- * phrase with a 422 naming the token, and `meta.bindings` accounts for every
- * token. The workbench uses `planStepToComposer` to POPULATE its filter rows
- * from the plan's terminal step, so the phrase layer visibly compiles INTO the
+ * The wire is catalyst's deterministic phrase compiler (phrase.v2, POST
+ * /api/v1/federal/phrase, verbatim broker): a CLOSED grammar — any unbound
+ * token refuses the whole phrase with a 422 naming the token, and
+ * `meta.bindings` accounts for every token. v2 adds the active axis
+ * (active / expiring within N days / won by UEI) and TWO-LANE plans (event
+ * lane ∩ award lane → entity; `step2` discloses the second lane's collapse).
+ * The workbench uses `planStepToComposer` to POPULATE its filter rows from
+ * the plan's terminal step, so the phrase layer visibly compiles INTO the
  * deterministic layer the operator already drives by hand.
  */
 
@@ -37,6 +40,8 @@ export type PhraseMeta = {
   total?: number;
   capped?: boolean;
   step1?: { total_rows: number; distinct_recipients: number; scan_capped: boolean };
+  /** Second collapse lane's summary — present on phrase.v2 TWO-LANE plans. */
+  step2?: { total_rows: number; distinct_recipients: number; scan_capped: boolean };
 };
 
 export type PhraseResponse = {

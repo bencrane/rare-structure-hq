@@ -13,12 +13,7 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import { useState } from "react";
-import {
-  CommandPill,
-  CompactDatasetToggle,
-  type ResultView,
-  TerminalHeader,
-} from "./components/TerminalChrome";
+import { CommandPill, type ResultView, TerminalHeader } from "./components/TerminalChrome";
 import { resultScopeCell } from "./data";
 import { promoteDossier } from "./dossierCache";
 import { fmtUsd } from "./format";
@@ -61,7 +56,6 @@ export function MapView({
   embedded = false,
   resultView,
   onResultView,
-  onDataset,
   defaultView,
   onDefaultView,
   onWorkbench,
@@ -86,8 +80,6 @@ export function MapView({
   embedded?: boolean;
   resultView: ResultView;
   onResultView: (v: ResultView) => void;
-  /** Flip the serving table the NL /ask query is routed to (only meaningful for `query.nl`). */
-  onDataset?: (d: NonNullable<MapQuery["dataset"]>) => void;
   /** The persisted GLOBAL default view + its setter. Surfaced as the header toggle
    * pre-query; post-query the same header slot shows the active-view toggle (resultView). */
   defaultView: ResultView;
@@ -303,7 +295,6 @@ export function MapView({
             profileAsOfDate={profileAsOfDate}
             reduced={reduced}
             onResultView={onResultView}
-            onDataset={onDataset}
           />
         )}
       </div>
@@ -394,7 +385,6 @@ function ResultBanner({
   profileAsOfDate,
   reduced,
   onResultView,
-  onDataset,
 }: {
   query: MapQuery;
   results: Company[];
@@ -407,7 +397,6 @@ function ResultBanner({
   profileAsOfDate: string | null;
   reduced: boolean;
   onResultView: (v: ResultView) => void;
-  onDataset?: (d: NonNullable<MapQuery["dataset"]>) => void;
 }) {
   const awards = results.reduce((sum, c) => sum + c.totalAwarded, 0);
   const scope = resultScopeCell(query, interpretedTitle);
@@ -432,14 +421,11 @@ function ResultBanner({
         {profileAsOfDate && <BannerCell label="Data as of" value={profileAsOfDate} />}
       </div>
 
-      {/* The dataset toggle only affects NL /ask queries — canned commands never set query.nl. */}
-      {query.nl && onDataset && (
-        <CompactDatasetToggle value={query.dataset ?? "auto"} onChange={onDataset} />
-      )}
-
+      {/* A phrase REFUSAL surfaces verbatim (the compiler names the unbound token —
+          the vocabulary-teaching loop); other failures show the raw error too. */}
       {error && (
-        <div className="border border-[color:var(--color-status-danger,var(--color-border-strong))] bg-[color:var(--color-surface-raised)] px-3 py-1.5 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase">
-          Live federal feed unavailable
+        <div className="max-w-[620px] border border-[color:var(--color-status-danger,var(--color-border-strong))] bg-[color:var(--color-surface-raised)] px-3 py-1.5 font-mono text-[color:var(--color-text-muted)] text-mono-xs">
+          {error}
         </div>
       )}
 
