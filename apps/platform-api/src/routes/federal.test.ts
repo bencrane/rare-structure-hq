@@ -390,7 +390,8 @@ describe("POST /phrase (deterministic phrase compiler broker)", () => {
   });
 
   it("passes the 422 refusal detail through verbatim — the teaching surface", async () => {
-    const refusal = '{"detail":"phrase refused: token \'profitable\' — not in the phrase vocabulary"}';
+    const refusal =
+      '{"detail":"phrase refused: token \'profitable\' — not in the phrase vocabulary"}';
     stubCatalyst(() => new Response(refusal, { status: 422 }));
     const res = await federalRoutes.request("/phrase", {
       method: "POST",

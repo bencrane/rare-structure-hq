@@ -36,7 +36,6 @@ import { HTTPException } from "hono/http-exception";
 import { federalEntityQuerySchema } from "@rare-structure-hq/shared";
 
 import { env } from "../env.ts";
-import { type AskMarketDataset, askMarket } from "../lib/edge.ts";
 import {
   agencyChart,
   entityByUei,
@@ -372,30 +371,6 @@ federalRoutes.post("/phrase", async (c) => {
   });
 });
 
-// Natural-language market query. UNLIKE the warm endpoints above, this one round-trips to
-// core-x edge_api (one forced-tool Anthropic call → catalyst_api Lance scan → GeoJSON), so it
-// is the only federal route that is not purely in-memory. Public posture (the cockpit is
-// public); each call costs one LLM round-trip — add rate-limiting here if abuse shows.
-federalRoutes.get("/ask", async (c) => {
-  const q = (c.req.query("q") ?? "").trim();
-  if (!q) throw new HTTPException(400, { message: "q (natural-language query) is required" });
-  // Explicit dataset pins stay supported; the default is "auto" — edge_api's router
-  // picks the serving table from the sentence ("won an award…" → awards; lifetime-
-  // obligation / firmographic phrasing → company).
-  const requested = c.req.query("dataset");
-  const dataset: AskMarketDataset =
-    requested === "winners" ||
-    requested === "company" ||
-    requested === "awards" ||
-    requested === "active" ||
-    requested === "contracts"
-      ? requested
-      : "auto";
-  try {
-    return c.json({ data: await askMarket(dataset, q) });
-  } catch (err) {
-    throw new HTTPException(502, {
-      message: err instanceof Error ? err.message : "market ask failed",
-    });
-  }
-});
+// The legacy NL /ask route (edge_api forced-tool LLM compile) is REMOVED: free-typed
+// sentences route through POST /phrase (the deterministic compiler) — every answer
+// carries a replayable plan, and an off-vocabulary sentence refuses naming the token.

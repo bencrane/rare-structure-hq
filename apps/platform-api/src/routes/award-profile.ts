@@ -21,8 +21,8 @@
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 
+import { type AuthVariables, requireUser } from "../auth.ts";
 import { env } from "../env.ts";
-import { requireUser, type AuthVariables } from "../auth.ts";
 
 export const awardProfileRoutes = new Hono<{ Variables: AuthVariables }>();
 

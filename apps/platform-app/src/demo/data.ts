@@ -17,16 +17,16 @@
 import type { FederalEntity } from "@rare-structure-hq/shared";
 import { startDossierPrefetch } from "./dossierCache";
 import {
-  type AskMarketRow,
-  type MarketAggregate,
-  askMap,
+  type WorkbenchFeature,
   fetchAgencyChart,
   fetchEntities,
   fetchEntityByUei,
   fetchIndustryChart,
+  fetchPhrase,
   fetchStateChart,
 } from "./federalApi";
 import { fmtMonthYear, fmtUsd, fmtUsdFull } from "./format";
+import { type PhraseResponse, bindingLabel } from "./phrase";
 import { projectLonLat } from "./projection";
 import type {
   AggregateBar,
@@ -37,7 +37,6 @@ import type {
   Industry,
   IndustryKey,
   MapQuery,
-  ResolvedAggregate,
 } from "./types";
 
 // The headline firehose number — shown in the terminal header.
@@ -1216,41 +1215,32 @@ function entityToCompany(e: FederalEntity): Company {
   };
 }
 
-// ── Natural-language query path (edge_api /ask → GeoJSON → Company) ──────────
-// A free-typed sentence is compiled by edge_api (forced-tool Anthropic call) into a constrained
-// filter, executed on catalyst_api over the geocoded serving tables, and returned as GeoJSON.
-// Each feature's flattened properties map onto the SAME `Company` shape the canned path emits,
-// so the rendering layer is unchanged. The row's real lat/lon is projected through the recovered
-// Albers-USA composite (see ./projection) onto the us-geo 1000x590 viewBox and set on `x`/`y`,
-// lighting up the dot layer for live geocoded entities.
+// ── Deterministic phrase path (catalyst phrase.v2 → market rows → Company) ───
+// A free-typed sentence routes through the CLOSED-grammar phrase compiler — zero
+// LLM anywhere on the path: every token binds to a disclosed filter or the whole
+// phrase REFUSES with a 422 naming the token (surfaced verbatim in the banner —
+// refusals teach the vocabulary). The legacy edge_api /ask (forced-tool Anthropic
+// call) is DISABLED: every map answer now has a replayable plan (meta.bindings +
+// meta.plan), so a surprising result is always explainable.
 
-function askRowStr(v: unknown): string | undefined {
+function rowStr(v: unknown): string | undefined {
   return typeof v === "string" && v.length > 0 ? v : undefined;
 }
 
-function askRowNum(v: unknown): number {
+function rowNum(v: unknown): number {
   const x = typeof v === "number" ? v : Number(v);
   return Number.isFinite(x) ? x : 0;
 }
 
-function askRowBool(v: unknown): boolean {
-  return v === true || v === "true";
-}
+/** The obligation-money column per market grain (the subject decides what $ means). */
+const GRAIN_MONEY_KEY: Record<string, string> = {
+  entity: "prime_obl_lifetime",
+  prime_award: "life_to_date_obligated",
+  transaction: "federal_action_obligation",
+};
 
-function askRowList(v: unknown): string[] | undefined {
-  if (!Array.isArray(v)) return undefined;
-  const out = v.filter((x): x is string => typeof x === "string" && x.length > 0);
-  return out.length ? out : undefined;
-}
-
-/** snake_case controlled-vocab token → human label, e.g. "electrical_systems" → "Electrical systems". */
-function humanizeTag(t: string): string {
-  const s = t.replace(/_/g, " ");
-  return s.charAt(0).toUpperCase() + s.slice(1);
-}
-
-/** The single `usaspending` Capital Catalyst for an /ask row's obligation rollup. */
-function askCatalyst(
+/** The `usaspending` Capital Catalyst for a market row's obligation rollup. */
+function marketCatalyst(
   totalAwarded: number,
   contractCount: number,
   naics: string,
@@ -1273,311 +1263,145 @@ function askCatalyst(
   };
 }
 
-/** PHASE-3 govcon capability Capital Catalyst — the "does X and requires A,B,C" signal rolled
- * onto a prime winner from its awards' extracted solicitation requirements. Structured /
- * controlled-vocab only (no verbatim quotes ever cross the serving boundary). */
-function capabilityCatalyst(
-  reqClearance: boolean,
-  clearanceMax: string | undefined,
-  reqCmmc: boolean,
-  capabilityTags: string[] | undefined,
-  laborCategories: string[] | undefined,
-  coveredAwards: number,
-): CapitalCatalyst {
-  const tags = (capabilityTags ?? []).map(humanizeTag);
-  const trades = (laborCategories ?? []).map(humanizeTag);
-  const reqs: string[] = [];
-  if (clearanceMax) reqs.push(`${clearanceMax.replace(/_/g, " ")} clearance`);
-  else if (reqClearance) reqs.push("security clearance");
-  if (reqCmmc) reqs.push("CMMC certification");
-  const headline = tags.length
-    ? `Does ${tags.slice(0, 3).join(", ")}${tags.length > 3 ? " +more" : ""}`
-    : "Extracted solicitation scope";
-  const reqsText = reqs.length
-    ? ` Requires ${reqs.join(" + ")}.`
-    : " No clearance/CMMC requirement detected.";
-  const summary = `${coveredAwards} award${
-    coveredAwards === 1 ? "" : "s"
-  } with readable solicitation docs.${reqsText}`;
-  const facts: CatalystFact[] = [
-    {
-      label: "Clearance required",
-      value: clearanceMax ? clearanceMax.replace(/_/g, " ") : reqClearance ? "Yes" : "—",
-    },
-    { label: "CMMC required", value: reqCmmc ? "Yes" : "—" },
-    { label: "Capabilities", value: tags.length ? tags.slice(0, 4).join(", ") : "—" },
-    { label: "Trades / labor", value: trades.length ? trades.slice(0, 4).join(", ") : "—" },
-    { label: "Covered awards", value: String(coveredAwards) },
-  ];
-  return {
-    kind: "govcon_capability",
-    label: "Solicitation capability profile",
-    headline,
-    summary,
-    facts,
-    tone: reqClearance || reqCmmc ? "warn" : "info",
-  };
-}
-
-/** Map one flattened edge `/ask` row onto the cockpit's `Company` shape. Handles BOTH the
- * `company` and `winners` serving tables (their property names differ; both are resolved). */
-function askRowToCompany(r: AskMarketRow): Company {
-  const naics = askRowStr(r.primary_naics) ?? askRowStr(r.naics_code) ?? askRowStr(r.naics2) ?? "";
-  const name =
-    askRowStr(r.company_name) ??
-    askRowStr(r.winner_name) ??
-    askRowStr(r.uei) ??
-    askRowStr(r.winner_uei) ??
-    "Unknown";
-  const id = askRowStr(r.uei) ?? askRowStr(r.winner_uei) ?? name;
-  // Money read, one key per dataset (the /ask wire passes serving column names verbatim):
-  //   company  → entity_active_obligated_usd   (entity active obligations)
-  //   winners  → entity_obligated_usd          (entity window obligation rollup)
-  //   awards   → action_obligated_usd          (single prime action's obligation)
-  //   active   → contract_current_value_usd    (the contract's current total value / ceiling)
-  //   contracts → contract_obligated_usd (obligated to date; ceiling as fallback)
-  // The active dataset carries none of the first three keys, so its value lives in the last slot.
-  const totalAwarded = askRowNum(
-    r.entity_active_obligated_usd ??
-      r.entity_obligated_usd ??
-      r.action_obligated_usd ??
-      r.contract_current_value_usd ??
-      r.contract_obligated_usd ??
-      r.contract_ceiling_usd,
-  );
-  const contractCount = askRowNum(r.award_count);
-  const hasFed =
-    r.has_federal_awards === true ||
-    askRowNum(r.entity_obligated_usd) > 0 ||
-    askRowNum(r.action_obligated_usd) > 0 ||
-    totalAwarded > 0;
-  // Project the row's real lat/lon onto the us-geo 1000x590 viewBox so the dot layer can plot it.
-  // askRowNum coerces missing to 0, so guard the (0,0) null-island explicitly; projectLonLat
-  // returns null off the US composite (PR/GU/etc.) — those rows simply carry no x/y.
-  const hasLatLon = r.lat != null && r.lon != null;
-  const lat = askRowNum(r.lat);
-  const lon = askRowNum(r.lon);
-  const geo = hasLatLon && (lat !== 0 || lon !== 0) ? projectLonLat(lon, lat) : null;
-  // PHASE-3 capability fields (winners dataset, prime recipients) — absent on company/awards rows.
-  const hasExtractedScope = askRowBool(r.has_extracted_scope);
-  const requiresClearance = askRowBool(r.requires_clearance);
-  const reqClearanceLevelMax = askRowStr(r.req_clearance_level_max);
-  const requiresCmmc = askRowBool(r.requires_cmmc);
-  const capabilityTags = askRowList(r.capability_tags);
-  const laborCategories = askRowList(r.labor_categories);
-  const coveredAwardCount = askRowNum(r.covered_award_count);
-  const catalysts: CapitalCatalyst[] = [askCatalyst(totalAwarded, contractCount, naics, hasFed)];
-  if (hasExtractedScope) {
-    catalysts.push(
-      capabilityCatalyst(
-        requiresClearance,
-        reqClearanceLevelMax,
-        requiresCmmc,
-        capabilityTags,
-        laborCategories,
-        coveredAwardCount,
-      ),
-    );
-  }
+/** Market entity-grain row (entities.v6 wire columns + geo hydration) → Company. */
+function marketEntityRowToCompany(r: Record<string, unknown>): Company {
+  const naics = rowStr(r.top_naics) ?? "";
+  const totalAwarded = rowNum(r.prime_obl_lifetime);
+  const active = r.is_prime_24mo === true;
+  const lat = r.latitude;
+  const lon = r.longitude;
+  const geo = typeof lat === "number" && typeof lon === "number" ? projectLonLat(lon, lat) : null;
+  const id = rowStr(r.uei) ?? "";
   return {
     id,
-    name,
+    name: rowStr(r.legal_business_name) ?? id,
     industry: industryForNaics(naics),
     naics,
-    naicsLabel: askRowStr(r.industry),
-    city: askRowStr(r.hq_city) ?? askRowStr(r.city),
-    state: askRowStr(r.hq_state) ?? askRowStr(r.state),
+    state: rowStr(r.physical_state),
     totalAwarded,
     activeAwarded: totalAwarded,
-    contractCount,
-    latestAwardDate: askRowStr(r.action_date) ?? askRowStr(r.last_action_date) ?? undefined,
-    activeAward: hasFed,
+    latestAwardDate: rowStr(r.last_action_date),
+    activeAward: active,
     ...(geo ? { x: geo.x, y: geo.y } : {}),
-    ...(hasExtractedScope
-      ? {
-          hasExtractedScope,
-          requiresClearance,
-          reqClearanceLevelMax,
-          requiresCmmc,
-          capabilityTags,
-          laborCategories,
-          coveredAwardCount,
-        }
-      : {}),
-    catalysts,
+    catalysts: [marketCatalyst(totalAwarded, 0, naics, active)],
   };
 }
 
 /**
- * Collapse same-name legal entities into one row. A holding company often holds several SAM
- * registrations (one UEI per subsidiary), so the raw result lists "Bristol Bay Construction
- * Holdings Llc" three times — which reads as a bug even though each is a distinct UEI. We group
- * by normalized name: `totalAwarded` becomes the group sum, the row keeps the largest single
- * entity's identity (its profile opens on click), and `relatedEntities` records the count.
+ * Market TABLE-grain rows (prime_award / transaction) → one Company per recipient.
+ * Award/action rows repeat a recipient, so the map reads COMPANIES: money sums over
+ * the group, the count rides `contractCount`, the coords borrow from any geocoded
+ * row (award rows hydrate recipient-HQ geo; transaction rows carry no geometry —
+ * those companies simply plot nothing, disclosed by the plotted count).
  */
-function dedupeByName(list: Company[]): Company[] {
-  const groups = new Map<string, Company[]>();
-  for (const c of list) {
-    const key = c.name.trim().toLowerCase().replace(/\s+/g, " ");
-    const g = groups.get(key);
-    if (g) g.push(c);
-    else groups.set(key, [c]);
+function marketTableRowsToCompanies(grain: string, rows: Record<string, unknown>[]): Company[] {
+  const moneyKey = GRAIN_MONEY_KEY[grain] ?? "life_to_date_obligated";
+  const byRecipient = new Map<string, Record<string, unknown>[]>();
+  for (const r of rows) {
+    const key = rowStr(r.recipient_uei) ?? rowStr(r.recipient_name) ?? "unknown";
+    const g = byRecipient.get(key);
+    if (g) g.push(r);
+    else byRecipient.set(key, [r]);
   }
   const out: Company[] = [];
-  for (const group of groups.values()) {
-    const rep = group.reduce((a, b) => (b.totalAwarded > a.totalAwarded ? b : a));
-    const sum = group.reduce((s, c) => s + c.totalAwarded, 0);
-    out.push({ ...rep, totalAwarded: sum, relatedEntities: group.length });
+  for (const group of byRecipient.values()) {
+    const rep = group.reduce((a, b) => (rowNum(b[moneyKey]) > rowNum(a[moneyKey]) ? b : a));
+    const sum = group.reduce((acc, r) => acc + rowNum(r[moneyKey]), 0);
+    const latest = group.reduce<string | undefined>((acc, r) => {
+      const d = rowStr(r.last_action_date) ?? rowStr(r.action_date);
+      return d && (!acc || d > acc) ? d : acc;
+    }, undefined);
+    const geocoded = group.find(
+      (r) => typeof r.latitude === "number" && typeof r.longitude === "number",
+    );
+    const geo = geocoded
+      ? projectLonLat(geocoded.longitude as number, geocoded.latitude as number)
+      : null;
+    const naics = rowStr(rep.naics_code) ?? "";
+    const id = rowStr(rep.recipient_uei) ?? rowStr(rep.recipient_name) ?? "unknown";
+    out.push({
+      id,
+      name: rowStr(rep.recipient_name) ?? id,
+      industry: industryForNaics(naics),
+      naics,
+      totalAwarded: sum,
+      contractCount: group.length,
+      latestAwardDate: latest,
+      activeAward: sum > 0,
+      ...(geo ? { x: geo.x, y: geo.y } : {}),
+      catalysts: [marketCatalyst(sum, group.length, naics, sum > 0)],
+    });
   }
   return out.sort((a, b) => b.totalAwarded - a.totalAwarded);
 }
 
-/**
- * Collapse award-ACTION rows (the `awards` dataset is 1 row per contract action) to ONE row
- * per winner: the demo reads COMPANIES that won qualifying awards, not per-action duplicates.
- * `action_obligated_usd` becomes the winner's QUALIFYING-window sum, `award_count` the number of
- * qualifying actions, `action_date` the most recent one. The representative row is the largest
- * single action; coordinates borrow from any geocoded action so the dot still plots when the
- * top action's address didn't resolve.
- */
-function collapseAwardActions(rows: AskMarketRow[]): AskMarketRow[] {
-  const byWinner = new Map<string, AskMarketRow[]>();
-  for (const r of rows) {
-    const key = askRowStr(r.winner_uei) ?? askRowStr(r.winner_name) ?? "unknown";
-    const g = byWinner.get(key);
-    if (g) g.push(r);
-    else byWinner.set(key, [r]);
-  }
-  const out: AskMarketRow[] = [];
-  for (const group of byWinner.values()) {
-    const rep = group.reduce((a, b) =>
-      askRowNum(b.action_obligated_usd) > askRowNum(a.action_obligated_usd) ? b : a,
-    );
-    const sum = group.reduce((acc, r) => acc + askRowNum(r.action_obligated_usd), 0);
-    const latest = group.reduce<string | undefined>((acc, r) => {
-      const d = askRowStr(r.action_date);
-      return d && (!acc || d > acc) ? d : acc;
-    }, undefined);
-    const geocoded = group.find((r) => r.lat != null && r.lon != null);
-    out.push({
-      ...rep,
-      action_obligated_usd: sum,
-      award_count: group.length,
-      action_date: latest,
-      lat: rep.lat ?? geocoded?.lat,
-      lon: rep.lon ?? geocoded?.lon,
-    });
-  }
-  return out;
+/** The full-disclosure scope line: every non-connective binding, joined. */
+function phraseScopeTitle(res: PhraseResponse): string {
+  const parts = res.meta.bindings.map(bindingLabel).filter(Boolean);
+  return `${res.meta.grain} · ${parts.join(" · ")}`;
 }
 
-// PSC categories the operator queries by name; the leading char is the FPDS PSC "category".
-const PSC_CATEGORY_LABEL: Record<string, string> = { V: "Transportation/Travel/Relocation" };
-
-/** A human label for one aggregate group, by grouping dimension. size_band → a $ range from
- * its lo/hi bounds; winner → the entity name; psc_category → the named category; else the raw key. */
-function aggregateLabel(groupBy: string, g: MarketAggregate["groups"][number]): string {
-  if (groupBy === "size_band") {
-    const lo = g.lo ?? null;
-    const hi = g.hi ?? null;
-    if (lo == null) return `< ${fmtUsd(hi ?? 0)}`;
-    if (hi == null) return `> ${fmtUsd(lo)}`;
-    return `${fmtUsd(lo)} – ${fmtUsd(hi)}`;
-  }
-  const key = g.key == null ? "—" : String(g.key);
-  if (groupBy === "psc_category" && PSC_CATEGORY_LABEL[key])
-    return `${key} · ${PSC_CATEGORY_LABEL[key]}`;
-  return key;
-}
-
-const AGG_DIM_LABEL: Record<string, string> = {
-  awarding_agency: "agency",
-  awarding_sub_agency: "sub-agency",
-  naics2: "NAICS sector",
-  naics_code: "NAICS",
-  psc_category: "PSC category",
-  psc_code: "PSC",
-  state: "winner state",
-  pop_state: "place-of-performance state",
-  set_aside: "set-aside",
-  winner_type: "winner type",
-  winner: "top winners",
-  size_band: "award size",
-  vertical: "vertical",
-  work_type: "work type",
-  equipment_intensity: "equipment intensity",
-};
-
-/** Map the camelCase aggregate envelope → render-ready ResolvedAggregate. The bar value is the
- * summed measure when present (the $ vantage), else the group count (a pure histogram).
- * Exported for unit tests (the label + USD-vs-count mapping is the load-bearing logic). */
-export function resolveAggregate(
-  agg: MarketAggregate,
-  title: string | undefined,
-  notApplied: string[],
-): ResolvedAggregate {
-  const hasSum = agg.groups.some((g) => g.sum != null);
-  const bars: AggregateBar[] = agg.groups.map((g, i) => ({
-    key: `${g.key ?? i}`,
-    label: aggregateLabel(agg.groupBy, g),
-    total: hasSum ? (g.sum ?? 0) : g.count,
-    count: g.count,
-    median: g.median ?? null,
-    p90: g.p90 ?? null,
-  }));
-  const dim = AGG_DIM_LABEL[agg.groupBy] ?? agg.groupBy;
-  return {
-    title: title?.trim() || `${hasSum ? "Obligated $" : "Award actions"} by ${dim}`,
-    groupBy: agg.groupBy,
-    unitLabel: hasSum ? "USD obligated" : "award actions",
-    matchedRows: agg.matchedRows,
-    totalGroups: agg.totalGroups,
-    bars,
-    notApplied,
-  };
-}
-
-/** Run a free-typed natural-language market query through edge_api `/ask`. Returns the SAME
- * `QueryResult` shape the canned filter path produces (same-name entities collapsed) — or, when
- * the query asked for a breakdown/total/distribution/ranking, a result carrying an `aggregate`. */
-export async function runAsk(
-  nl: string,
-  dataset: "company" | "winners" | "awards" | "active" | "contracts" | "auto" = "auto",
-): Promise<QueryResult> {
-  const res = await askMap(nl, dataset);
-  // Aggregate intent → a chart, not pins. companies stays empty; the view routes on `aggregate`.
-  if (res.aggregate) {
-    return {
-      companies: [],
-      total: res.aggregate.matchedRows,
-      minLifetimeBound: 0,
-      fullUniverse: res.aggregate.matchedRows,
-      materializedAt: "",
-      profileAsOfDate: null,
-      notApplied: res.unmapped ?? [],
-      aggregate: resolveAggregate(res.aggregate, res.query?.title, res.unmapped ?? []),
-    };
-  }
-  const baseRows = res.dataset === "awards" ? collapseAwardActions(res.rows) : res.rows;
-  const companies = dedupeByName(baseRows.map(askRowToCompany));
-  // Eager dossier prefetch for the ENTIRE result set, in ranked order — fire and
-  // forget: the drawer must open warm, and this must never delay the result render.
+/** Compiled-phrase response → the cockpit's QueryResult (companies + provenance). */
+export function phraseToQueryResult(res: PhraseResponse): QueryResult {
+  const rows = res.data.rows;
+  const companies =
+    res.meta.grain === "entity"
+      ? rows.map(marketEntityRowToCompany)
+      : marketTableRowsToCompanies(res.meta.grain, rows);
   startDossierPrefetch(companies.map((c) => c.id));
   return {
     companies,
-    // The headline count is distinct companies (post-collapse); the raw UEI match rides in
-    // `fullUniverse` for anyone who needs it.
     total: companies.length,
     minLifetimeBound: 0,
-    fullUniverse: res.total,
+    fullUniverse: res.meta.total ?? rows.length,
     materializedAt: "",
     profileAsOfDate: null,
-    // The honesty contract: constraints the compiler could not express. The banner
-    // renders them as "not applied" — the demo never implies a filter it didn't run.
-    notApplied: res.unmapped ?? [],
-    // The compiler's read of the sentence — the banner's "Scope" value (vs. the misleading
-    // "Vertical: All industries" that industryLabel(undefined) yields on the NL path).
-    interpretedTitle: res.query?.title?.trim() || undefined,
+    interpretedTitle: phraseScopeTitle(res),
+  };
+}
+
+/** Run a free-typed sentence through the deterministic phrase compiler. A refusal
+ * (422, token named) THROWS with catalyst's detail verbatim — the map banner is the
+ * teaching surface, never a silent fallback. */
+export async function runPhrase(phrase: string): Promise<QueryResult> {
+  return phraseToQueryResult(await fetchPhrase(phrase));
+}
+
+/**
+ * Workbench result → the same QueryResult the map renders ("Plot on map").
+ * Features are the market adapter's GeoJSON: `properties` carry the wire row,
+ * `geometry` the real Point (null for non-plottable rows / the transactions grain).
+ */
+export function workbenchResultToQueryResult(
+  dataset: string,
+  features: WorkbenchFeature[],
+  title: string,
+): QueryResult {
+  const grain =
+    dataset === "entities" ? "entity" : dataset === "prime_awards" ? "prime_award" : "transaction";
+  const rows = features.map((f) => {
+    const p: Record<string, unknown> = { ...(f.properties ?? {}) };
+    const g = f.geometry as { coordinates?: unknown } | null;
+    const c = g?.coordinates;
+    if (Array.isArray(c) && c.length === 2 && p.latitude == null) {
+      p.longitude = c[0];
+      p.latitude = c[1];
+    }
+    return p;
+  });
+  const companies =
+    grain === "entity"
+      ? rows.map(marketEntityRowToCompany)
+      : marketTableRowsToCompanies(grain, rows);
+  startDossierPrefetch(companies.map((c) => c.id));
+  return {
+    companies,
+    total: companies.length,
+    minLifetimeBound: 0,
+    fullUniverse: rows.length,
+    materializedAt: "",
+    profileAsOfDate: null,
+    interpretedTitle: title,
   };
 }
 
@@ -1586,118 +1410,70 @@ export async function runAsk(
 // ───────────────────────────────────────────────────────────────────
 
 export const COMMANDS: Command[] = [
-  // ── Industry VERTICAL axis (live GTM label on the awards serving table — the (NAICS,PSC)
-  // pair classified into a 24-name vertical, distinct from the raw naics2 sector). NL routed
-  // through /ask so the sentence compiles onto the BITMAP `vertical` column. ──
+  // ── Canned PHRASES — every sentence below compiles on the CLOSED grammar (they
+  // are acceptance fixtures of catalyst's phrase compiler). An edited sentence
+  // that drifts off-vocabulary REFUSES with the token named — that refusal is the
+  // signal to be more precise or to expand the vocabulary (a reviewed PR), never
+  // a fuzzy guess. The legacy /ask NL compiler is disabled. ──
   {
-    id: "q-vertical-aerospace",
+    id: "p-code-a-construction",
     kind: "map-query",
-    label: "Aerospace & Defense contracts over $5M",
-    query: { nl: "aerospace contracts over $5M", dataset: "awards", minAward: 0 },
-  },
-  {
-    id: "q-vertical-it-software",
-    kind: "map-query",
-    label: "Information Technology & Software awards over $10M",
-    query: { nl: "information technology contracts over $10M", dataset: "awards", minAward: 0 },
-  },
-  {
-    id: "q-vertical-healthcare",
-    kind: "map-query",
-    label: "Healthcare & Life Sciences awards over $5M",
-    query: { nl: "healthcare contracts over $5M", dataset: "awards", minAward: 0 },
-  },
-  {
-    id: "q-vertical-breakdown",
-    kind: "map-query",
-    label: "Break down award obligations by vertical",
+    label: "Construction companies that received a code A mod in the last 90 days",
     query: {
-      nl: "total award obligations broken down by vertical",
-      dataset: "awards",
+      nl: "construction companies that received a code A mod in the last 90 days",
       minAward: 0,
     },
   },
   {
-    id: "q-vertical-top",
+    id: "p-terminated-default",
     kind: "map-query",
-    label: "Top verticals by obligations",
-    query: { nl: "top verticals by total obligations", dataset: "awards", minAward: 0 },
-  },
-  // ── work_type (make-vs-resell) + equipment_intensity (financing signal) — the mobilization-
-  // capital axes that AND with the vertical. ──
-  {
-    id: "q-worktype-manufacturers",
-    kind: "map-query",
-    label: "Manufacturers that won over $5M",
-    query: { nl: "manufacturers that won over $5M", dataset: "awards", minAward: 0 },
+    label: "Companies terminated for default in the last year",
+    query: { nl: "companies terminated for default in the last year", minAward: 0 },
   },
   {
-    id: "q-equip-heavy",
+    id: "p-option-exercised",
     kind: "map-query",
-    label: "Equipment-heavy awards over $1M",
-    query: { nl: "equipment-heavy awards over $1M", dataset: "awards", minAward: 0 },
-  },
-  // ── PHASE-3 capability queries ("does X and requires A,B,C" — winners dataset) ──
-  {
-    id: "q-cap-cleared-electrical",
-    kind: "map-query",
-    label: "Construction winners requiring Secret clearance with cleared electrical trades",
+    label: "IT services companies whose option was exercised in the last quarter",
     query: {
-      nl: "construction winners requiring secret clearance with electricians",
-      dataset: "winners",
+      nl: "it services companies whose option was exercised in the last quarter",
       minAward: 0,
     },
   },
   {
-    id: "q-cap-cmmc-cyber",
+    id: "p-novated",
     kind: "map-query",
-    label: "Winners that do cybersecurity work and require CMMC certification",
+    label: "Companies novated in the last 2 years",
+    query: { nl: "companies novated in the last 2 years", minAward: 0 },
+  },
+  {
+    id: "p-subk-plan-added",
+    kind: "map-query",
+    label: "Companies that received a code Y mod on construction awards in the last year",
     query: {
-      nl: "winners that do cybersecurity work and require CMMC certification",
-      dataset: "winners",
+      nl: "companies that received a code Y mod on construction awards in the last year",
       minAward: 0,
     },
   },
   {
-    id: "q-cap-cleared-it",
+    id: "p-expiring-construction",
     kind: "map-query",
-    label: "IT-services winners requiring a security clearance",
-    query: {
-      nl: "winners that do IT services and require a security clearance",
-      dataset: "winners",
-      minAward: 0,
-    },
+    label: "Construction companies with awards expiring within 90 days",
+    query: { nl: "construction companies with awards expiring within 90 days", minAward: 0 },
   },
-  // ── Recompete radar (forward-looking active-awards dataset) — incumbents about to rebuy ──
   {
-    id: "q-recompete-transportation",
+    id: "p-two-lane-runway-expiry",
     kind: "map-query",
-    label: "Transportation contracts up for recompete in the next 180 days",
+    label: "Construction companies: option exercised recently + awards expiring within 180 days",
     query: {
-      nl: "transportation contracts expiring in the next 180 days",
-      dataset: "active",
+      nl: "construction companies with awards expiring within 180 days that received a code G mod in the last 90 days",
       minAward: 0,
     },
   },
   {
-    id: "q-recompete-small-business",
+    id: "p-active-dsbs-va",
     kind: "map-query",
-    label: "Small-business contracts expiring in the next 90 days",
-    query: {
-      nl: "small business contracts expiring in the next 90 days",
-      dataset: "active",
-      minAward: 0,
-    },
-  },
-  {
-    id: "q-recompete-by-agency",
-    kind: "map-query",
-    label: "Expiring contract value by agency (next 180 days)",
-    query: {
-      nl: "contracts expiring in the next 180 days broken down by awarding agency",
-      dataset: "active",
-      minAward: 0,
-    },
+    label: "Active DSBS companies in VA",
+    query: { nl: "active dsbs companies in VA", minAward: 0 },
   },
   {
     id: "agg-industry",
@@ -1749,14 +1525,11 @@ export type QueryResult = {
   fullUniverse: number;
   materializedAt: string;
   profileAsOfDate: string | null;
-  /** NL-query constraints the compiler could NOT express ("not applied" banner signal).
-   * Absent/empty on the canned filter path — every canned constraint always runs. */
+  /** Reserved: constraints a compiler could not express. The phrase compiler REFUSES
+   * instead of partially applying, so this is always absent on the phrase path. */
   notApplied?: string[];
-  /** Present when the NL query was a breakdown/total/distribution/ranking — the cockpit
-   * renders AggregateView from this instead of the map/table. Absent for row queries. */
-  aggregate?: ResolvedAggregate;
-  /** The `/ask` compiler's human-readable interpretation of an NL row query — the banner's
-   * "Scope" value. Present only on the NL path; absent on the canned filter path. */
+  /** The phrase compiler's full-disclosure scope line (grain + every binding) — the
+   * banner's "Scope" value. Present only on the phrase path. */
   interpretedTitle?: string;
 };
 
@@ -1767,8 +1540,8 @@ const MAP_PAGE_LIMIT = 2000;
 /** Live companies matching a map query — by NAICS (prefix/code) + optional state, above
  * the lifetime-obligation floor. Fetches the BFF entity slice and maps to `Company`. */
 export async function runQuery(q: MapQuery): Promise<QueryResult> {
-  // Free-typed NL query → the edge_api /ask compiler; the canned filter axis is bypassed.
-  if (q.nl?.trim()) return runAsk(q.nl.trim(), q.dataset ?? "auto");
+  // Free-typed sentence → the deterministic phrase compiler (a refusal throws verbatim).
+  if (q.nl?.trim()) return runPhrase(q.nl.trim());
   const naics =
     q.naicsPrefix ?? (q.industry ? INDUSTRY_BY_KEY[q.industry]?.naicsPrefix : undefined);
   const res = await fetchEntities({

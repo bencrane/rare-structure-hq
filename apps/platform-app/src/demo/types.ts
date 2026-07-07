@@ -150,13 +150,18 @@ export type MapQuery = {
   /** Lifetime-obligation floor, USD. */
   minAward: number;
   /**
-   * Free-typed natural-language sentence. When present, the query is routed through the
-   * edge_api `/ask` compiler (NL → forced-tool filter → catalyst_api Lance scan → GeoJSON)
-   * instead of the canned filter axis above. The canned commands never set this.
+   * Free-typed sentence. When present, the query routes through catalyst's DETERMINISTIC
+   * phrase compiler (closed grammar, zero LLM — an off-vocabulary token refuses the whole
+   * phrase, verbatim in the banner) instead of the canned filter axis above. The grain
+   * comes from the phrase's subject word; there is no dataset routing to pin.
    */
   nl?: string;
-  /** Serving table the NL query targets. Defaults to "auto" (sentence-routed). */
-  dataset?: "company" | "winners" | "awards" | "active" | "contracts" | "auto";
+  /**
+   * True when the result was PLOTTED from the workbench ("Plot on map") rather than
+   * fetched: the query-watching effect must not re-fetch it (`nl` here is only the
+   * banner's scope line, not a compilable phrase).
+   */
+  composed?: boolean;
 };
 
 /** An aggregate command — collapses the market into one chart. */

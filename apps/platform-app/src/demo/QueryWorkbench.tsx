@@ -25,6 +25,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { CommandPill, TerminalHeader } from "./components/TerminalChrome";
 import type { ResultView } from "./components/TerminalChrome";
+import { type QueryResult, workbenchResultToQueryResult } from "./data";
 import { fetchPhrase } from "./federalApi";
 import {
   type WorkbenchQueryMeta,
@@ -65,6 +66,7 @@ export function QueryWorkbench({
   embedded = false,
   onExitToView,
   onInvokeCommand,
+  onPlot,
 }: {
   /** The pane stays mounted when closed (state survives); `open` only gates display
    * and defers the catalog fetch until the first open. */
@@ -73,6 +75,9 @@ export function QueryWorkbench({
   /** Header Map/Table click — exits the workbench back to the picked result view. */
   onExitToView: (v: ResultView) => void;
   onInvokeCommand: () => void;
+  /** "Plot on map" — hand the current result set to the map surface as dots
+   * (the primary-query mechanism drives the map; no separate decoder query). */
+  onPlot?: (qr: QueryResult, title: string) => void;
 }) {
   // ── Field catalog (fetched once, on first open) ────────────────────────────
   const [catalog, setCatalog] = useState<WorkbenchCatalog | null>(null);
@@ -194,6 +199,19 @@ export function QueryWorkbench({
   }
 
   const runBlocked = incompleteIds.length > 0;
+
+  // Hand the current rows to the map as dots. The scope line is the executed
+  // filter set, verbatim — the banner stays a disclosure, never a paraphrase.
+  function plotOnMap() {
+    if (!result || !onPlot) return;
+    const title = `${result.dataset} · ${result.executed.filters
+      .map(
+        (f) =>
+          `${f.field} ${f.op} ${Array.isArray(f.value) ? `[${f.value.length}]` : String(f.value)}`,
+      )
+      .join(" · ")}`;
+    onPlot(workbenchResultToQueryResult(result.dataset, result.features, title), title);
+  }
 
   // Columns = union of property keys across returned features, first-seen order.
   const columns = useMemo(() => {
@@ -366,6 +384,15 @@ export function QueryWorkbench({
               >
                 Filter JSON {showExecutedJson ? "▴" : "▾"}
               </button>
+              {onPlot && result.features.length > 0 && (
+                <button
+                  type="button"
+                  onClick={plotOnMap}
+                  className="border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-raised)] px-3 py-1.5 font-mono text-[color:var(--color-text-accent)] text-mono-xs uppercase shadow-lg shadow-black/40 transition-colors hover:bg-[color:var(--color-accent-soft)]"
+                >
+                  Plot on map ({result.meta.plottable})
+                </button>
+              )}
             </div>
           )}
           {result && showExecutedJson && (

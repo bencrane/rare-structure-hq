@@ -88,8 +88,13 @@ settingsRoutes.put("/", requireUser, async (c) => {
   } = {};
 
   if (body?.renderMode !== undefined) {
-    if (typeof body.renderMode !== "string" || !RENDER_MODES.includes(body.renderMode as RenderMode)) {
-      throw new HTTPException(400, { message: `renderMode must be one of: ${RENDER_MODES.join(", ")}` });
+    if (
+      typeof body.renderMode !== "string" ||
+      !RENDER_MODES.includes(body.renderMode as RenderMode)
+    ) {
+      throw new HTTPException(400, {
+        message: `renderMode must be one of: ${RENDER_MODES.join(", ")}`,
+      });
     }
     edgeBody.render_mode = body.renderMode;
   }
@@ -105,8 +110,13 @@ settingsRoutes.put("/", requireUser, async (c) => {
     edgeBody.direct_to_documenso_lane = body.directToDocumensoLane;
   }
   if (body?.stripeMode !== undefined) {
-    if (typeof body.stripeMode !== "string" || !STRIPE_MODES.includes(body.stripeMode as StripeMode)) {
-      throw new HTTPException(400, { message: `stripeMode must be one of: ${STRIPE_MODES.join(", ")}` });
+    if (
+      typeof body.stripeMode !== "string" ||
+      !STRIPE_MODES.includes(body.stripeMode as StripeMode)
+    ) {
+      throw new HTTPException(400, {
+        message: `stripeMode must be one of: ${STRIPE_MODES.join(", ")}`,
+      });
     }
     edgeBody.stripe_mode = body.stripeMode;
   }
