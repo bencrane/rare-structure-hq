@@ -5,12 +5,17 @@
  * A compact bottom-left instrument on the map surface (the sub-out console owns
  * bottom-right): enter a 12-char SAM UEI → the buyers whose farm-out lanes
  * overlap the sub's demonstrated combos land as dots. The tunable gates below
- * (MVS floor, repeat depth, prime-backed, combo + vehicle filters) re-evaluate
- * CLIENT-SIDE only — a gate change lights/dims dots instantly, never re-fetches,
- * and never deletes a node. The status chip renders the load honestly: lit/dim
- * counts, the no-geo count, catalyst's cache_state, and the empty reason —
- * never a silent zero. A clicked dot's facts (and, when dimmed, every failing
- * gate's reason) render in the panel at the bottom of the stack.
+ * (disclosed sub-buyers, MVS floor, repeat depth, prime-backed, combo + vehicle
+ * filters) re-evaluate CLIENT-SIDE only — a gate change lights/dims dots
+ * instantly, never re-fetches, and never deletes a node. The status chip
+ * renders the load honestly: lit/dim counts, the no-geo count, catalyst's
+ * cache_state, and the empty reason — never a silent zero. UNKNOWN ≠ ZERO:
+ * when the wire has no default MVS floor the input starts empty (gate off)
+ * with the server's reason verbatim, and a clicked dot's panel discloses its
+ * unknown facts (repeat depth / chunk medians) as annotations — an unknown
+ * never dims. The panel also renders the facts, every failing gate's reason
+ * when dimmed, undisclosed $ as "—" (never $0), and the lane-cap note when
+ * matched_via is truncated.
  */
 
 import { motion } from "framer-motion";
@@ -160,6 +165,24 @@ export function SubUniverseConsole({
       {!loading && !error && response && params && (
         <div className="flex flex-col gap-2 border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-raised)] px-3 py-2 font-mono text-mono-xs uppercase shadow-lg shadow-black/40">
           <div className="flex items-center justify-between gap-2">
+            <span className="text-[color:var(--color-text-muted)]">Disclosed sub-buyers only</span>
+            <button
+              type="button"
+              aria-pressed={params.disclosedSubBuyersOnly}
+              onClick={() =>
+                onParams({ ...params, disclosedSubBuyersOnly: !params.disclosedSubBuyersOnly })
+              }
+              className={`border border-[color:var(--color-border-subtle)] px-2 py-1 transition-colors ${
+                params.disclosedSubBuyersOnly
+                  ? "bg-[color:var(--color-surface-sunken)] text-[color:var(--color-text-accent)]"
+                  : "text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text-primary)]"
+              }`}
+            >
+              {params.disclosedSubBuyersOnly ? "on" : "off"}
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between gap-2">
             <span className="text-[color:var(--color-text-muted)]">MVS floor $</span>
             <input
               type="number"
@@ -180,6 +203,12 @@ export function SubUniverseConsole({
               className="w-28 border border-[color:var(--color-border-subtle)] bg-transparent px-2 py-1 text-right text-[color:var(--color-text-primary)] tabular-nums outline-none placeholder:text-[color:var(--color-text-subtle)]"
             />
           </div>
+          {/* No default floor on the wire — the server's reason, verbatim. */}
+          {response.target.defaults.mvs_usd == null && response.target.defaults.mvs_reason && (
+            <span className="text-[color:var(--color-text-subtle)]">
+              {response.target.defaults.mvs_reason}
+            </span>
+          )}
 
           <div className="flex items-center justify-between gap-2">
             <span className="text-[color:var(--color-text-muted)]">Repeat depth</span>
@@ -235,7 +264,8 @@ export function SubUniverseConsole({
         </div>
       )}
 
-      {/* The clicked buyer — facts + (when dimmed) every failing gate's reason. */}
+      {/* The clicked buyer — facts + (when dimmed) every failing gate's reason
+          + unknown-fact annotations (unknown ≠ zero — an unknown never dims). */}
       {selected && (
         <div className="flex flex-col gap-1 border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-raised)] px-3 py-2 font-mono text-mono-xs uppercase shadow-lg shadow-black/40">
           <div className="flex items-center justify-between gap-2">
@@ -252,9 +282,20 @@ export function SubUniverseConsole({
             </button>
           </div>
           <span className="text-[color:var(--color-text-muted)]">
-            {selected.uei} · {fmtUsd(selected.matched_farmout_60mo)} matched ·{" "}
-            {selected.n_matched_combos} combos
+            {selected.uei} ·{" "}
+            {
+              selected.matched_farmout_60mo != null
+                ? fmtUsd(selected.matched_farmout_60mo)
+                : "—" /* undisclosed, not $0 */
+            }{" "}
+            matched · {selected.n_matched_combos} combos
           </span>
+          {selected.matched_via_truncated && (
+            <span className="text-[color:var(--color-text-subtle)]">
+              showing top {selected.matched_via.length} of {Object.keys(selected.gate_facts).length}{" "}
+              lanes
+            </span>
+          )}
           {selected.evaluation.status === "dim" ? (
             <>
               <span className="text-[color:var(--color-state-warn)]">Dimmed</span>
@@ -267,6 +308,11 @@ export function SubUniverseConsole({
           ) : (
             <span className="text-[color:var(--color-text-accent)]">Lit</span>
           )}
+          {selected.evaluation.unknowns.map((unknown) => (
+            <span key={unknown} className="text-[color:var(--color-text-subtle)]">
+              ? {unknown}
+            </span>
+          ))}
         </div>
       )}
     </motion.div>
