@@ -24,11 +24,19 @@ import { QueryWorkbench } from "./QueryWorkbench";
 import { ResultsTable } from "./ResultsTable";
 import { CommandPalette } from "./components/CommandPalette";
 import { EntityProfile } from "./components/EntityProfile";
+import { SubUniverseConsole } from "./components/SubUniverseConsole";
 import { SuboutConsole } from "./components/SuboutConsole";
 import { SuboutProfile } from "./components/SuboutProfile";
 import type { ResultView } from "./components/TerminalChrome";
 import { type QueryResult, runQuery } from "./data";
-import { fetchSuboutOpportunities } from "./federalApi";
+import { fetchSubUniverse, fetchSuboutOpportunities } from "./federalApi";
+import {
+  type SubUniverseGateParams,
+  type SubUniverseLayer,
+  type SubUniverseResponse,
+  buildSubUniverseLayer,
+  defaultGateParams,
+} from "./subUniverse";
 import {
   type SuboutMode,
   type SuboutOpportunity,
@@ -75,6 +83,19 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
   const [suboutError, setSuboutError] = useState<string | null>(null);
   const [selectedOpportunity, setSelectedOpportunity] = useState<SuboutOpportunity | null>(null);
 
+  // The sub-UNIVERSE layer — the eligible-buyer map for one sub's UEI. The fetch
+  // fires once per UEI; the GATES (params) re-evaluate CLIENT-SIDE only, so a
+  // parameter change lights/dims dots without touching the wire.
+  const [subUniverseUei, setSubUniverseUei] = useState<string | null>(null);
+  const [subUniverseResponse, setSubUniverseResponse] = useState<SubUniverseResponse | null>(null);
+  const [subUniverseLoading, setSubUniverseLoading] = useState(false);
+  const [subUniverseError, setSubUniverseError] = useState<string | null>(null);
+  // Seeded from target.defaults when the response lands; null while dormant/loading.
+  const [subUniverseParams, setSubUniverseParams] = useState<SubUniverseGateParams | null>(null);
+  // The clicked buyer dot, by UEI — the evaluated node is derived from the layer
+  // memo so its dim reasons track live parameter changes.
+  const [subUniverseSelectedUei, setSubUniverseSelectedUei] = useState<string | null>(null);
+
   // ⌘K toggles the palette from anywhere; Esc backs out one layer at a time.
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -90,8 +111,12 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
           setWorkbenchOpen(false); // pane stays mounted — composed filters survive
         } else if (selectedOpportunity) {
           setSelectedOpportunity(null);
+        } else if (subUniverseSelectedUei) {
+          setSubUniverseSelectedUei(null);
         } else if (selectedCompany) {
           setSelectedCompany(null);
+        } else if (subUniverseUei) {
+          setSubUniverseUei(null);
         } else if (suboutUei) {
           setSuboutUei(null);
         } else if (aggregate) {
@@ -107,7 +132,9 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
     commandOpen,
     workbenchOpen,
     selectedOpportunity,
+    subUniverseSelectedUei,
     selectedCompany,
+    subUniverseUei,
     suboutUei,
     aggregate,
     query,
@@ -221,6 +248,62 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
     [suboutResponse],
   );
 
+  // Fetch the sub-universe whenever the sub's UEI changes — the ONLY wire trigger
+  // for this layer (gates never re-fetch). Same stale-resolve guard as above.
+  // Gate params seed from target.defaults on arrival.
+  useEffect(() => {
+    if (!subUniverseUei) {
+      setSubUniverseResponse(null);
+      setSubUniverseError(null);
+      setSubUniverseLoading(false);
+      setSubUniverseParams(null);
+      setSubUniverseSelectedUei(null);
+      return;
+    }
+    let cancelled = false;
+    setSubUniverseLoading(true);
+    setSubUniverseError(null);
+    setSubUniverseResponse(null);
+    setSubUniverseParams(null);
+    setSubUniverseSelectedUei(null);
+    fetchSubUniverse({ uei: subUniverseUei })
+      .then((r) => {
+        if (cancelled) return;
+        setSubUniverseResponse(r);
+        setSubUniverseParams(defaultGateParams(r.target));
+      })
+      .catch((e) => {
+        if (!cancelled)
+          setSubUniverseError(e instanceof Error ? e.message : "sub-universe query failed");
+      })
+      .finally(() => {
+        if (!cancelled) setSubUniverseLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [subUniverseUei]);
+
+  // Plot + gate-evaluate in one pure pass. Params changes re-run THIS memo only —
+  // dots light/dim client-side, nothing refetches, no node is ever removed.
+  const subUniverseLayer: SubUniverseLayer | null = useMemo(
+    () =>
+      subUniverseResponse && subUniverseParams
+        ? buildSubUniverseLayer(subUniverseResponse.data, subUniverseParams)
+        : null,
+    [subUniverseResponse, subUniverseParams],
+  );
+
+  // The selected buyer node, re-derived from the live layer so its evaluation
+  // (dim reasons) tracks parameter changes.
+  const selectedSubUniverseNode = useMemo(
+    () =>
+      subUniverseLayer && subUniverseSelectedUei
+        ? (subUniverseLayer.plotted.find((n) => n.uei === subUniverseSelectedUei) ?? null)
+        : null,
+    [subUniverseLayer, subUniverseSelectedUei],
+  );
+
   const results = result?.companies ?? [];
   // A free-typed /ask query may resolve to an AGGREGATE (breakdown/total/distribution/top-N)
   // rather than rows — the response shape drives the view. Only when NOT loading, so the
@@ -291,6 +374,9 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
             subout={suboutPlot}
             suboutSelectedId={selectedOpportunity?.generated_unique_award_id ?? null}
             onSelectOpportunity={(o) => setSelectedOpportunity(o)}
+            subUniverse={subUniverseLayer}
+            subUniverseSelectedUei={subUniverseSelectedUei}
+            onSelectSubUniverseNode={(n) => setSubUniverseSelectedUei(n.uei)}
           />
         )}
       </AnimatePresence>
@@ -308,6 +394,24 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
           onMode={setSuboutMode}
           onRun={(uei) => setSuboutUei(uei)}
           onClear={() => setSuboutUei(null)}
+        />
+      )}
+
+      {/* The sub-universe console — bottom-left (SuboutConsole owns bottom-right),
+          same map-surface-only gating. */}
+      {!workbenchOpen && !showingAggregate && (!query || resultView === "map") && (
+        <SubUniverseConsole
+          activeUei={subUniverseUei}
+          loading={subUniverseLoading}
+          error={subUniverseError}
+          response={subUniverseResponse}
+          layer={subUniverseLayer}
+          params={subUniverseParams}
+          onParams={setSubUniverseParams}
+          onRun={(uei) => setSubUniverseUei(uei)}
+          onClear={() => setSubUniverseUei(null)}
+          selected={selectedSubUniverseNode}
+          onClearSelected={() => setSubUniverseSelectedUei(null)}
         />
       )}
 

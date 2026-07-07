@@ -348,6 +348,45 @@ federalRoutes.post("/subout-opportunities", async (c) => {
   });
 });
 
+// ── Sub-universe — the per-UEI eligible-buyer map payload ───────────────────
+// Dumb-BFF broker to catalyst's POST /api/v1/market/sub-universe (sub_universe.v1):
+// body forwarded VERBATIM, status + body passed back verbatim. Same public-record
+// posture and the same LRU/TTL response cache as the subout broker (shared
+// machinery; keys are namespaced by route so identical bodies never collide).
+federalRoutes.post("/sub-universe", async (c) => {
+  const rawBody = await c.req.text();
+  const key = "sub-universe:" + suboutCacheKey(rawBody);
+
+  if (c.req.query("fresh") !== "1") {
+    const cached = suboutCacheGet(key);
+    if (cached) {
+      return new Response(cached.body, {
+        status: 200,
+        headers: { "content-type": cached.contentType, "x-cache": "hit" },
+      });
+    }
+  }
+
+  const res = await fetch(`${env.COREX_API_URL}/api/v1/market/sub-universe`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${env.COREX_SERVICE_TOKEN}`,
+      "content-type": "application/json",
+    },
+    body: rawBody,
+    signal: AbortSignal.timeout(SUBOUT_UPSTREAM_TIMEOUT_MS),
+  });
+  const text = await res.text();
+  const contentType = res.headers.get("content-type") ?? "application/json";
+  if (res.status === 200) {
+    suboutCacheSet(key, { body: text, contentType, expiresAt: Date.now() + SUBOUT_CACHE_TTL_MS });
+  }
+  return new Response(text, {
+    status: res.status,
+    headers: { "content-type": contentType, "x-cache": "miss" },
+  });
+});
+
 // ── Deterministic phrase compiler — verbatim broker ─────────────────────────
 // catalyst POST /api/v1/market/phrase (phrase.v1): closed grammar, zero LLM.
 // Body + status + response pass through VERBATIM — in particular the 422 whose

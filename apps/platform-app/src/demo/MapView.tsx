@@ -17,6 +17,11 @@ import { CommandPill, type ResultView, TerminalHeader } from "./components/Termi
 import { resultScopeCell } from "./data";
 import { promoteDossier } from "./dossierCache";
 import { fmtUsd } from "./format";
+import {
+  type EvaluatedSubUniverseNode,
+  SUB_UNIVERSE_DOT_RADIUS,
+  type SubUniverseLayer,
+} from "./subUniverse";
 import { OPPORTUNITY_DOT_RADIUS, type PlottedOpportunity, type SuboutPlot } from "./subout";
 import type { Company, MapQuery } from "./types";
 import { GEO_SCATTER_BANDS, GEO_VIEW, STATE_PATHS } from "./us-geo";
@@ -62,6 +67,9 @@ export function MapView({
   subout = null,
   suboutSelectedId = null,
   onSelectOpportunity,
+  subUniverse = null,
+  subUniverseSelectedUei = null,
+  onSelectSubUniverseNode,
 }: {
   query: MapQuery | null;
   results: Company[];
@@ -91,6 +99,11 @@ export function MapView({
   subout?: SuboutPlot | null;
   suboutSelectedId?: string | null;
   onSelectOpportunity?: (o: PlottedOpportunity) => void;
+  /** The sub-universe eligible-buyer layer: gate-evaluated buyer dots — lit at
+   * full accent, dim at low opacity, NEVER removed. Null = layer dormant. */
+  subUniverse?: SubUniverseLayer | null;
+  subUniverseSelectedUei?: string | null;
+  onSelectSubUniverseNode?: (n: EvaluatedSubUniverseNode) => void;
 }) {
   const reduced = !!useReducedMotion();
   const [hovered, setHovered] = useState<string | null>(null);
@@ -276,6 +289,21 @@ export function MapView({
                   reduced={reduced}
                   lit={opp.generated_unique_award_id === suboutSelectedId}
                   onOpen={() => onSelectOpportunity?.(opp)}
+                />
+              ))}
+            </g>
+          )}
+
+          {/* ── Sub-universe layer: gate-evaluated buyer dots (lit/dim) ────── */}
+          {subUniverse && (
+            <g key="sub-universe-layer">
+              {subUniverse.plotted.map((node) => (
+                <SubUniverseDot
+                  key={node.uei}
+                  node={node}
+                  reduced={reduced}
+                  selected={node.uei === subUniverseSelectedUei}
+                  onOpen={() => onSelectSubUniverseNode?.(node)}
                 />
               ))}
             </g>
@@ -577,6 +605,65 @@ function OpportunityDot({
         fillOpacity={lit ? 1 : 0.85}
         filter={lit ? "url(#rs-map-hotglow)" : undefined}
         style={{ transition: "r 0.18s ease" }}
+      />
+      <circle cx={x} cy={y} r={10} fill="transparent" />
+    </motion.g>
+  );
+}
+
+// ───────────────────────────────────────────────────────────────────
+// Sub-universe dot — one eligible BUYER (the nodes are primes' HQ/geo
+// points). Facts-only doctrine: a gate failure DIMS the dot (low
+// opacity) with disclosed reasons — it is never removed. The <title>
+// carries name + matched $ (+ the dim reasons) as a hover tooltip;
+// a click selects the node for the console's detail panel.
+// ───────────────────────────────────────────────────────────────────
+
+function SubUniverseDot({
+  node,
+  reduced,
+  selected,
+  onOpen,
+}: {
+  node: EvaluatedSubUniverseNode;
+  reduced: boolean;
+  selected: boolean;
+  onOpen: () => void;
+}) {
+  const { x, y } = node;
+  const dim = node.evaluation.status === "dim";
+  const r = SUB_UNIVERSE_DOT_RADIUS;
+  const enterDelay = reduced ? 0 : (x / GEO_VIEW.w) * 0.5;
+  const title = `${node.name ?? node.uei} · ${fmtUsd(node.matched_farmout_60mo)} matched${
+    dim ? ` — dimmed: ${node.evaluation.reasons.join("; ")}` : ""
+  }`;
+  return (
+    // biome-ignore lint/a11y/useSemanticElements: this is an SVG <g>, not HTML — it cannot be a <button>; role="button" + tabIndex + onKeyDown is the keyboard-accessible pattern for an interactive SVG group.
+    <motion.g
+      role="button"
+      tabIndex={0}
+      aria-label={`Open buyer — ${node.name ?? node.uei}`}
+      initial={reduced ? false : { opacity: 0, scale: 0 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.3, delay: enterDelay, ease: "easeOut" }}
+      style={{ cursor: "pointer", transformOrigin: `${x}px ${y}px` }}
+      onClick={onOpen}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onOpen();
+        }
+      }}
+    >
+      <title>{title}</title>
+      <circle
+        cx={x}
+        cy={y}
+        r={selected ? r + 1 : r}
+        fill="var(--color-accent-primary)"
+        fillOpacity={dim ? 0.25 : 0.9}
+        filter={selected ? "url(#rs-map-hotglow)" : undefined}
+        style={{ transition: "r 0.18s ease, fill-opacity 0.18s ease" }}
       />
       <circle cx={x} cy={y} r={10} fill="transparent" />
     </motion.g>

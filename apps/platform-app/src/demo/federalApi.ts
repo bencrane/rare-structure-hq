@@ -20,6 +20,7 @@ import type {
 } from "@rare-structure-hq/shared";
 
 import type { PhraseResponse } from "./phrase";
+import type { SubUniverseRequest, SubUniverseResponse } from "./subUniverse";
 import type { SuboutRequest, SuboutResponse } from "./subout";
 import type { CodeRegistry, ComposedFilter, WorkbenchCatalog } from "./workbench";
 
@@ -342,6 +343,35 @@ export async function fetchSuboutOpportunities(body: SuboutRequest): Promise<Sub
     throw new Error(detail ?? `subout-opportunities failed: ${res.status} ${text}`);
   }
   return JSON.parse(text) as SuboutResponse;
+}
+
+// ── Sub-universe (the per-UEI eligible-buyer map layer) ──────────────────────
+
+/**
+ * Fetch the sub-universe for one UEI — catalyst's `sub_universe.v1` recipe via
+ * the BFF's verbatim broker (same LRU/TTL response cache as the subout broker).
+ * Returns the FULL envelope (data + target + meta): the console seeds its gates
+ * from target.defaults and renders meta (cache_state, reason, capped) honestly.
+ * A 422 carries catalyst's fail-closed detail verbatim.
+ */
+export async function fetchSubUniverse(body: SubUniverseRequest): Promise<SubUniverseResponse> {
+  const res = await fetch(`${API_BASE}/api/v1/federal/sub-universe`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const text = await res.text();
+  if (!res.ok) {
+    let detail: string | null = null;
+    try {
+      const parsed = JSON.parse(text) as { detail?: unknown };
+      if (typeof parsed?.detail === "string") detail = parsed.detail;
+    } catch {
+      /* non-JSON error body — fall through to the raw surface */
+    }
+    throw new Error(detail ?? `sub-universe failed: ${res.status} ${text}`);
+  }
+  return JSON.parse(text) as SubUniverseResponse;
 }
 
 // ── Deterministic phrase compiler (phrase.v1) ────────────────────────────────
