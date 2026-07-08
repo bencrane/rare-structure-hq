@@ -186,9 +186,8 @@ export default function Mandate() {
     : !signatory?.email
       ? "No signatory contact with an email. Set a signatory in Deal Details first."
       : null;
-  const editingNotice = !locked ? "Lock the terms to save, then originate." : null;
   const canOriginate = blockReason === null && locked;
-  const notice = blockReason ?? editingNotice;
+  const notice = blockReason;
 
   const signUrl = originated ? `${window.location.origin}${originated.signLink}` : "";
 
@@ -227,6 +226,7 @@ export default function Mandate() {
                   <input
                     value={override}
                     placeholder={fallback}
+                    size={Math.max((override || fallback).length, 4)}
                     onChange={(e) => setFieldValues((fv) => ({ ...fv, [key]: e.target.value }))}
                     className={editCls}
                   />
@@ -436,9 +436,10 @@ function ReadyBar({
 }
 
 // Inline editable value — matches TermVal typography, right-aligned, faint surface for affordance,
-// NO border/underline (per the operator: no underscore under the field when it becomes editable).
+// NO border/underline (per the operator: no underscore under the field when it becomes editable). Sized
+// to its content via the `size` attr (NOT flex-1) so unlocking doesn't widen the field / shift the row.
 const editCls =
-  "flex-1 bg-[color:var(--color-surface-raised)] px-2 py-0.5 text-right text-[0.9375rem] text-[color:var(--color-text-primary)] outline-none";
+  "bg-[color:var(--color-surface-raised)] px-2 py-0.5 text-right text-[0.9375rem] text-[color:var(--color-text-primary)] outline-none";
 
 // The three commercial terms shown on the mandate — the operator-chosen prospect-facing words mapped to
 // the deal_document_configs field_values keys (the live operator-term labels on the attached template).
