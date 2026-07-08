@@ -4,14 +4,15 @@
  * routes to that company's dossier via its last booking. Loads the live list from the BFF
  * (/api/v1/deals → edge_api → business.deals). Composes CockpitPage.
  */
-import { ChevronRight, Workflow } from "lucide-react";
+import { Check, ChevronRight, Circle, CircleDot, Workflow, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import type { DealSummary } from "@rare-structure-hq/shared";
-import { Badge, Text } from "@rare-structure-hq/ui";
+import { Badge, Text, cx } from "@rare-structure-hq/ui";
 
 import { CockpitPage, EmptyState, Panel, Section } from "@/app/cockpit";
+import { useActiveDeal } from "@/lib/activeDeal";
 import { useAuth } from "@/lib/auth";
 import { listDeals } from "@/pipeline/api";
 
@@ -41,6 +42,11 @@ export default function Applications() {
 
   const [list, setList] = useState<DealSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // The global "meeting I'm on" pointer + the row staged for confirmation. Selecting a row stages it
+  // (pending); confirming commits it to the pointer. One active deal at a time; off until set.
+  const { activeDeal, setActiveDeal } = useActiveDeal();
+  const [pending, setPending] = useState<DealSummary | null>(null);
 
   const refresh = useCallback(() => {
     if (!token) return;
@@ -94,10 +100,39 @@ export default function Applications() {
                   {list.length} deal{list.length === 1 ? "" : "s"}
                 </Text>
               </div>
+              {/* Confirm gate — staging a row raises this bar; committing writes the global pointer. */}
+              {pending ? (
+                <div className="flex flex-wrap items-center justify-between gap-3 border-[color:var(--color-border-accent)] border-b bg-[color:var(--color-accent-soft)] px-4 py-3">
+                  <span className="min-w-0 font-mono text-[color:var(--color-text-accent)] text-mono-xs uppercase tracking-[0.12em]">
+                    Set {pending.companyName ?? pending.handle} as the active meeting?
+                  </span>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveDeal({ handle: pending.handle, companyName: pending.companyName });
+                        setPending(null);
+                      }}
+                      className={confirmBtnCls}
+                    >
+                      <Check className="size-3.5" />
+                      Confirm active
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPending(null)}
+                      className={secondaryBtnCls}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : null}
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse text-left">
                   <thead>
                     <tr className="border-[color:var(--color-border-subtle)] border-b">
+                      <Th>Active</Th>
                       <Th>Deal ID</Th>
                       <Th>Prospect</Th>
                       <Th>Company</Th>
@@ -113,6 +148,8 @@ export default function Applications() {
                         key={o.dealId}
                         onClick={() => openRow(o)}
                         onKeyDown={(e) => {
+                          // Only the row itself navigates; keypresses on the Active controls don't bubble up.
+                          if (e.target !== e.currentTarget) return;
                           if (e.key === "Enter" || e.key === " ") {
                             e.preventDefault();
                             openRow(o);
@@ -122,6 +159,18 @@ export default function Applications() {
                         aria-label={`Open dossier for ${o.companyName ?? fullName(o)}`}
                         className="group cursor-pointer outline-none transition-colors hover:bg-[color:var(--color-surface-raised)] focus-visible:bg-[color:var(--color-surface-raised)]"
                       >
+                        <td
+                          className="px-4 py-3"
+                          onClick={(e) => e.stopPropagation()}
+                          onKeyDown={(e) => e.stopPropagation()}
+                        >
+                          <ActiveCell
+                            isActive={activeDeal?.handle === o.handle}
+                            isPending={pending?.handle === o.handle}
+                            onSelect={() => setPending(o)}
+                            onClear={() => setActiveDeal(null)}
+                          />
+                        </td>
                         <td className="px-4 py-3">
                           <Text
                             size="mono-xs"
@@ -182,6 +231,57 @@ export default function Applications() {
   );
 }
 
+// Active-meeting selector for a row: a radio when off (click → stage for confirm), a highlighted ring
+// when staged (pending), and the persistent ACTIVE badge + clear when it's the committed pointer.
+function ActiveCell({
+  isActive,
+  isPending,
+  onSelect,
+  onClear,
+}: {
+  isActive: boolean;
+  isPending: boolean;
+  onSelect: () => void;
+  onClear: () => void;
+}) {
+  if (isActive) {
+    return (
+      <span className="inline-flex items-center gap-2">
+        <span className="inline-flex items-center gap-1.5 border border-[color:var(--color-border-accent)] bg-[color:var(--color-accent-soft)] px-2 py-0.5 font-mono text-[0.5625rem] text-[color:var(--color-text-accent)] uppercase tracking-[0.16em]">
+          <CircleDot className="size-3" />
+          Active
+        </span>
+        <button
+          type="button"
+          onClick={onClear}
+          title="Clear active meeting"
+          aria-label="Clear active meeting"
+          className="flex items-center justify-center text-[color:var(--color-text-subtle)] transition-colors hover:text-[color:var(--color-state-warn)]"
+        >
+          <X className="size-3.5" />
+        </button>
+      </span>
+    );
+  }
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      title="Set as active meeting"
+      aria-label="Set as active meeting"
+      aria-pressed={isPending}
+      className={cx(
+        "flex size-6 items-center justify-center border transition-colors",
+        isPending
+          ? "border-[color:var(--color-border-accent)] bg-[color:var(--color-accent-soft)] text-[color:var(--color-text-accent)]"
+          : "border-[color:var(--color-border-default)] text-[color:var(--color-text-subtle)] hover:border-[color:var(--color-text-accent)] hover:text-[color:var(--color-text-accent)]",
+      )}
+    >
+      <Circle className="size-3" />
+    </button>
+  );
+}
+
 function Th({ children }: { children?: React.ReactNode }) {
   return <th className={thCls}>{children}</th>;
 }
@@ -191,3 +291,6 @@ const thCls =
 
 const secondaryBtnCls =
   "flex items-center justify-center gap-2 border border-[color:var(--color-border-default)] px-4 py-2.5 font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase tracking-[0.14em] transition-colors hover:border-[color:var(--color-text-accent)] hover:text-[color:var(--color-text-accent)]";
+
+const confirmBtnCls =
+  "flex items-center justify-center gap-2 border border-[color:var(--color-accent-primary)] bg-[color:var(--color-accent-soft)] px-4 py-2.5 font-mono text-[color:var(--color-text-accent)] text-mono-xs uppercase tracking-[0.14em] transition-colors hover:bg-[color:var(--color-accent-primary)] hover:text-[color:var(--color-text-onAccent)]";
