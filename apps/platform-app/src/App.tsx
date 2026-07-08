@@ -25,6 +25,7 @@ import type { ReactNode } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 
 import { AppShell } from "./app/AppShell";
+import { ActiveDealProvider } from "./lib/activeDeal";
 import { AuthProvider, useAuth } from "./lib/auth";
 // `/map` is un-hosted (see route below). MapDemo is kept on disk for quick
 // re-enable; do not delete. Restore this import to bring the route back.
@@ -122,7 +123,9 @@ export function App() {
           path="/app"
           element={
             <RequireAuth>
-              <AppShell />
+              <ActiveDealProvider>
+                <AppShell />
+              </ActiveDealProvider>
             </RequireAuth>
           }
         >
