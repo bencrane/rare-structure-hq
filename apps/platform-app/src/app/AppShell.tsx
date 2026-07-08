@@ -37,6 +37,8 @@ import { Inline, Stack, Text, cx } from "@rare-structure-hq/ui";
 import { useAuth } from "@/lib/auth";
 import { useMe } from "@/lib/useMe";
 
+import { CommandPalette } from "./CommandPalette";
+
 type NavItem = { to: string; label: string; icon: LucideIcon };
 
 // Operator (you) gets the full origination cockpit; a client gets a scoped
@@ -290,6 +292,7 @@ export function AppShell() {
           : "md:grid-cols-[16rem_minmax(0,1fr)]",
       )}
     >
+      <CommandPalette />
       <aside
         className={cx(
           "sticky top-0 hidden h-screen border-r md:block",
