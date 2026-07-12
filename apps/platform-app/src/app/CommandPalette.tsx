@@ -71,6 +71,13 @@ export function CommandPalette() {
         run: () =>
           activeDeal ? navigate(`/app/m/${activeDeal.handle}`) : navigate("/app/research"),
       },
+      {
+        id: "demo",
+        title: "Demo",
+        hint: "Guided tour — every beat is a query",
+        keywords: ["tour", "presentation", "pitch", "walkthrough", "narrative"],
+        run: () => navigate("/app/demo"),
+      },
     ],
     [activeDeal, navigate],
   );

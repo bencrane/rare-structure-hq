@@ -15,6 +15,33 @@ function authHeaders(token: string): HeadersInit {
   return { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 }
 
+// DEV-only fixture so the Mandate/Deal editors render fully populated on localhost without the BFF —
+// the same philosophy as auth.devSignIn (import.meta.env.DEV is statically false in prod, so this whole
+// branch is tree-shaken out and can never serve mock data in a production build). Keyed on the "dev"
+// mock token; a real session never hits it.
+const DEV_DEAL: DealDetails = {
+  dealId: "013ca823-dev-mock-0000-0000-000000000000",
+  dealHandle: "013ca823",
+  companyName: "Environmental Logistics",
+  companyDomain: "envlogs.com",
+  contacts: [
+    {
+      contact_id: "dev-contact-1",
+      full_name: "Eddie Andrus",
+      email: "eddie@envlogs.com",
+      title: "Managing Director",
+      is_signatory: true,
+    },
+  ],
+  availableContacts: [],
+  fieldValues: { IntroNum: "30", PrepaidFee: "$45,000", PricePerIntro: "$1500" },
+  templateDocumensoId: 14503,
+  templateOrigin: "org",
+  availableTemplates: [{ documensoId: 14503, name: "Rare Structure - GC - v3", isDefault: true }],
+};
+
+const isDev = (token: string) => import.meta.env.DEV && token === "dev";
+
 export interface DealContact {
   // Person identity (display-only — sourced from business.contacts via the deal_contacts junction).
   contact_id?: string;
@@ -62,6 +89,7 @@ export interface DealDetailsInput {
 }
 
 export async function getDealDetails(token: string, handle: string): Promise<DealDetails> {
+  if (isDev(token)) return { ...DEV_DEAL, dealHandle: handle || DEV_DEAL.dealHandle };
   const res = await fetch(`${API_BASE}/api/v1/deals/${encodeURIComponent(handle)}/details`, {
     headers: authHeaders(token),
   });
@@ -74,6 +102,13 @@ export async function updateDealDetails(
   handle: string,
   input: DealDetailsInput,
 ): Promise<DealDetails> {
+  if (isDev(token))
+    return {
+      ...DEV_DEAL,
+      dealHandle: handle || DEV_DEAL.dealHandle,
+      fieldValues: input.fieldValues,
+      templateDocumensoId: input.templateDocumensoId,
+    };
   const res = await fetch(`${API_BASE}/api/v1/deals/${encodeURIComponent(handle)}/details`, {
     method: "PUT",
     headers: authHeaders(token),
@@ -98,6 +133,18 @@ export interface DealOriginated {
 // POST /api/v1/deals/:handle/originate — mint the prospect signing document for the deal. No body;
 // the signatory + template resolve server-side off the deal. Returns the sign link to surface.
 export async function originateDeal(token: string, handle: string): Promise<DealOriginated> {
+  if (isDev(token)) {
+    const h = handle || DEV_DEAL.dealHandle;
+    return {
+      envelopeId: "dev-envelope",
+      documentId: 90210,
+      dealHandle: h,
+      signingToken: "dev-token",
+      signLink: `/p/m/${h}/90210`,
+      status: "PENDING",
+      documensoHost: "https://sign.dev",
+    };
+  }
   const res = await fetch(`${API_BASE}/api/v1/deals/${encodeURIComponent(handle)}/originate`, {
     method: "POST",
     headers: authHeaders(token),

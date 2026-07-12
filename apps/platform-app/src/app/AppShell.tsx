@@ -267,7 +267,8 @@ export function AppShell() {
   // The operator's mandate view (/app/m/:ref) shows the rail DEFAULT-COLLAPSED — its own state so
   // it never disturbs the cockpit's persisted preference. Still toggleable on the page.
   const { pathname } = useLocation();
-  const onMandate = pathname.startsWith("/app/m/");
+  // The demo tour supplies its own script rail, so it gets the same treatment.
+  const onMandate = pathname.startsWith("/app/m/") || pathname.startsWith("/app/demo");
   const [mandateCollapsed, setMandateCollapsed] = useState(true);
 
   useEffect(() => {
