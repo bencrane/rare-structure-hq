@@ -31,7 +31,9 @@ export type AggregatePhraseResponse = {
       source: string;
       measure: string;
       group_by: string;
-      fy: [number, number];
+      fy: [number, number] | null;
+      /** v2 (active near <zip>): the resolved geo anchor, disclosed. */
+      anchor?: { zip: string; lat: number; lon: number; radius_mi: number };
     }[];
     title: string;
     unitLabel: string;
@@ -65,6 +67,7 @@ export async function fetchAggregatePhrase(phrase: string): Promise<AggregatePhr
 
 /** Aggregate envelope → the renderer's `ResolvedAggregate` (AggregateView). */
 export function toResolvedAggregate(res: AggregatePhraseResponse): ResolvedAggregate {
+  const source = res.meta.plan[0]?.source ?? "";
   return {
     title: res.meta.title,
     groupBy: res.meta.plan[0]?.group_by ?? "industry",
@@ -73,5 +76,8 @@ export function toResolvedAggregate(res: AggregatePhraseResponse): ResolvedAggre
     totalGroups: res.meta.totalGroups,
     bars: res.data.bars,
     notApplied: [],
+    // Open-award sources count AWARDS (per-unit avg is meaningful); the
+    // combo×FY portrait counts award ACTIONS.
+    countNoun: source.startsWith("gtm_open_awards") ? "award" : "action",
   };
 }

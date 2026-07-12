@@ -122,7 +122,7 @@ export function AggregateView({
                 index={i}
                 dense={dense}
                 isUsd={isUsd}
-                countNoun={resolved ? "action" : "company"}
+                countNoun={resolved ? (resolved.countNoun ?? "action") : "company"}
                 reduced={reduced}
               />
             ))}
@@ -203,11 +203,13 @@ function BarRow({
   index: number;
   dense: boolean;
   isUsd: boolean;
-  countNoun: "company" | "action";
+  countNoun: "company" | "action" | "award";
   reduced: boolean;
 }) {
   const pct = Math.max((bar.total / max) * 100, 1.5);
   const rowH = dense ? 26 : 44;
+  // Award-grain bars carry a meaningful per-unit average (aggregate ÷ awards).
+  const avg = countNoun === "award" && isUsd && bar.count > 0 ? bar.total / bar.count : null;
 
   return (
     <div className="flex items-center gap-4">
@@ -244,12 +246,15 @@ function BarRow({
         {!dense && (
           <div className="font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase">
             {bar.count.toLocaleString()}{" "}
-            {bar.count === 1 ? countNoun : countNoun === "company" ? "companies" : "actions"}
+            {bar.count === 1 ? countNoun : countNoun === "company" ? "companies" : `${countNoun}s`}
           </div>
         )}
-        {/* Distribution shape per group — only when the aggregate computed it (dynamic /ask). */}
-        {!dense && (bar.median != null || bar.p90 != null) && (
+        {/* Distribution shape per group — only when the aggregate computed it (dynamic /ask),
+            or the derived per-award average on award-grain bars. */}
+        {!dense && (bar.median != null || bar.p90 != null || avg != null) && (
           <div className="mt-0.5 font-mono text-[color:var(--color-text-subtle)] text-mono-xs tabular-nums">
+            {avg != null && <>avg {fmtUsd(avg)}</>}
+            {avg != null && (bar.median != null || bar.p90 != null) && " · "}
             {bar.median != null && <>med {fmtUsd(bar.median)}</>}
             {bar.median != null && bar.p90 != null && " · "}
             {bar.p90 != null && <>p90 {fmtUsd(bar.p90)}</>}
