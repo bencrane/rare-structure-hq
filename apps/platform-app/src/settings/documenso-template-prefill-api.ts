@@ -41,6 +41,19 @@ export async function getPrefillConfig(
   token: string,
   documensoId: number,
 ): Promise<TemplatePrefillConfig> {
+  // DEV-only fixture (tree-shaken from prod): lets the Mandate editor resolve its term defaults on
+  // localhost without the BFF. Keyed on the "dev" mock token; a real session never hits it.
+  if (import.meta.env.DEV && token === "dev") {
+    return {
+      documenso_id: documensoId,
+      fields: [],
+      field_settings: {
+        IntroNum: { default_document_field_value: "30", read_only: false },
+        PrepaidFee: { default_document_field_value: "$45,000", read_only: false },
+        PricePerIntro: { default_document_field_value: "$1500", read_only: false },
+      },
+    };
+  }
   const res = await fetch(`${API_BASE}${BASE}/${encodeURIComponent(documensoId)}`, {
     headers: authHeaders(token),
   });

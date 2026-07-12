@@ -24,10 +24,13 @@ export function AggregateView({
   spec,
   resolved,
   onInvokeCommand,
+  commandPill = true,
 }: {
   spec?: AggregateSpec;
   resolved?: ResolvedAggregate;
   onInvokeCommand: () => void;
+  /** Hide the ⌘K pill when the surface is embedded under other chrome (demo tour). */
+  commandPill?: boolean;
 }) {
   const reduced = !!useReducedMotion();
 
@@ -126,7 +129,7 @@ export function AggregateView({
         </div>
       </div>
 
-      <CommandPill reduced={reduced} idle={false} onClick={onInvokeCommand} />
+      {commandPill ? <CommandPill reduced={reduced} idle={false} onClick={onInvokeCommand} /> : null}
     </motion.div>
   );
 }
