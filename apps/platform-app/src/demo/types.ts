@@ -222,4 +222,7 @@ export type ResolvedAggregate = {
   bars: AggregateBar[];
   /** Honesty contract — constraints the compiler could not express ("not applied"). */
   notApplied: string[];
+  /** What one unit of `count` is. Aggregate phrases set this from the plan source
+   *  (open awards → "award"); absent means the legacy default ("action"). */
+  countNoun?: "company" | "action" | "award";
 };

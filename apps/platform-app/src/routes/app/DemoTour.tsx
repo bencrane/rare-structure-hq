@@ -45,6 +45,12 @@ const SCRIPT: Beat[] = [
     title: "Total awarded by industry",
     phrase: "total awarded by industry fy23 to fy25",
   },
+  {
+    id: "yard-active-79925",
+    act: "Act 2 · The yard",
+    title: "Active equipment-scope awards near 79925",
+    phrase: "total active awards near 79925 within 50 miles by equipment",
+  },
 ];
 
 type BeatState =
