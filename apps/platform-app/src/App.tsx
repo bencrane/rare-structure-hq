@@ -37,6 +37,7 @@ import Applications from "./routes/app/Applications";
 import Calendar from "./routes/app/Calendar";
 import CapabilityDetail from "./routes/app/CapabilityDetail";
 import DealDetails from "./routes/app/DealDetails";
+import DemoGallery from "./routes/app/DemoGallery";
 import DemoTour from "./routes/app/DemoTour";
 import DocumensoTemplateMirror from "./routes/app/DocumensoTemplateMirror";
 import DocumensoTemplatesEditor from "./routes/app/DocumensoTemplatesEditor";
@@ -141,6 +142,14 @@ export function App() {
           />
           <Route
             path="demo"
+            element={
+              <RequireOperator>
+                <DemoGallery />
+              </RequireOperator>
+            }
+          />
+          <Route
+            path="demo/:narrativeId"
             element={
               <RequireOperator>
                 <DemoTour />
