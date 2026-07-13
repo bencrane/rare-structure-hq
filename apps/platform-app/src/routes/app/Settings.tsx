@@ -6,7 +6,7 @@
  * controls. This file owns no data and no geometry — just the entry points.
  * The card primitive (sizing, equal heights, CTA placement) lives in `@/app/cockpit`.
  */
-import { FileCog, FileDown, FileSignature, Route } from "lucide-react";
+import { FileCog, FileDown, FileSignature, Presentation, Route } from "lucide-react";
 
 import { Grid } from "@rare-structure-hq/ui";
 
@@ -46,6 +46,13 @@ export default function Settings() {
           description="Render repo-resident engagement templates to clean PDFs via DocRaptor."
           cta="Open"
           to="/app/settings/engagement"
+        />
+        <HubCard
+          icon={Presentation}
+          title="Narratives"
+          description="The guided-tour gallery — market narratives assembled from live query cards, one per capital-provider audience."
+          cta="Open gallery"
+          to="/app/demo"
         />
       </Grid>
     </CockpitPage>
