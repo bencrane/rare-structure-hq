@@ -169,3 +169,67 @@ shutdown (Oct–mid-Nov 2025) + CR + late approps (NDAA 2025-12-18, DoD approps 
   must be internally consistent.
 - Iterate locally (HMR) without committing per-card; batch-commit at operator checkpoints.
   Merged PRs so far: rare-structure-hq #266–#270; core-x #1136–#1139 (phrase-agg.v1/v2).
+
+---
+
+## 9 · Addendum — 2026-07-14 session (Facilities Floor rebuild, PR #273)
+
+State as of `main @ 4a96277`. The 2026-07-14 session rebuilt **The Facilities Floor**
+(`facilities-cleaning`) as a voiceover-first pitch video (~90s target) and added a seventh draft
+narrative **The Other Wave** (`capital-arc`, capital providers). §2's table is superseded for
+these two narratives; everything else in this doc still holds.
+
+**The Facilities Floor arc as built:** blank-ish thesis → $2.26T all-sector pie → $36B facility-
+services pie → 12 named live awards on the map → metronome year cards (2021–2025, fixed shared
+y-scale, 2025 stops at Sep with empty Oct–Dec slots) → red-October card (↓70%) → shutdown statute
+card → federal-estate map (blue GSA dots, then orange bases) → 49.9/50.1 DoD-split pie →
+Sep-vs-Oct cliff → recovery stepper + Oct/Nov/Dec lane cards (each lane vs its own FY25 monthly
+average; facilities is the only lane never reaching 100%) → **Act 3: Feb-3 catalyst card + "the
+hole"** ($1.6B deficit in the four lag-clean months; $4–5B projected). Beats no longer in the
+story sit under an `act: "Archive"` shelf rather than being deleted.
+
+**The card-building loop (the pattern to copy):**
+1. Probe the **query-sidecar first** (`/sidecar-query`) — surgical queries at the operator's pace;
+   numbers get discussed in chat *before* any card is built. Never one-shot a deck.
+2. Bake the result into `src/demo/<name>.json` with `scope` + `artifact` stamp inside the JSON.
+3. Component in `src/demo/<Name>View.tsx` — parametrized (props with defaults) so later cards
+   reuse it (`ConstrPieView` and `BoringYearView` are the reference examples). In-system palette:
+   accent color at stepped opacities; error-red only for the knife moment.
+4. Register: new `BeatKind` + beat entry in `narratives/index.ts`, render branch in `DemoTour.tsx`
+   (per-beat props live in the DemoTour switch, keyed on `active.id` when one kind serves
+   several beats).
+5. `tsc -b --noEmit`, HMR — the operator verifies visually in their own browser; do not
+   screenshot-verify.
+
+**Conventions established this session (operator-set, follow them):**
+- Voiceover leads; cards illustrate. 1–2 sentences per beat. Options/registers offered in chat
+  ("cooler vs hotter"), operator picks.
+- Answer the question asked, then STOP — no closing questions, no unsolicited narrative
+  conclusions ("this is the bridge to your deck" = no).
+- Every data response ends with a one-line access note: sidecar or Lance (so sidecar gaps
+  surface).
+- Sales-asset register: minimal footers (artifact stamp + scope), no methodology bibliographies;
+  deeper caveats live in the operator's talk track, not on cards.
+- Exact numbers over round ones on cards (49.9%, not 50%) — round numbers read as invented.
+- DoD data: last lag-clean month is ~Jan 2026 (effective publish delay runs past the nominal 90
+  days — Feb+ months in the current artifact are still filling). Never chart trailing DoD months
+  as real zeros; `gtm_open_awards` DoD `total_obligation` is complete only through ~Jan.
+
+**Load-bearing numbers this session pinned (artifact `20260713T043612Z`):** S-codes ≈ $19–20B/yr,
+FY23–25 $49.9B / 12,341 firms; DoD:civilian 49.9/50.1 (FY25 53/47, DoD +29% FY24→25); the
+metronome floor ($0.7B/mo for 57 straight months) broken by Oct-2025 $0.70B (lane total) /
+$0.21B (DoD half); recovery Dec-2025 hardware 129% / engineering 112% / construction 107% /
+facilities 77% of own FY25 norm; civilian March-2026 record $2.22B (the release preview); DoD
+approps $838.7B enacted 2026-02-03; middle bands at the $10M/3yr split (lower 972 firms·$3.4B,
+upper 407·$11.0B, anchor contracts $1.4M/$8.3M, "substantial contract" = ≥$250K); active S-code
+awards 9,664 / $29.6B obligated / $177.4B ceiling ($79.9B DoD). Borrower shortlists: civilian
+growers (Simmons & Golden, Vision Quest, GXC — built as portrait cards in `capital-arc`) and
+DoD-coil holders (Alutiiq, Diversified Service Contracting, KGJJ — data pinned, cards unbuilt;
+these are the on-thesis set for the Facilities Floor ending).
+
+**Open threads after this session:** welcome/#0 card copy; thesis-card copy refresh (predates the
+arc); estate-map named-base labels; possible FRPP aging-estate beat (median 1983, $60.2B backlog —
+Lance pull); DoD borrower portraits + deal-economics closer for Facilities Floor Act 3; whether
+the middle-class band card returns from the archive (raw notes' beat #8 implies yes); re-check the
+DoD Feb/Mar fill-in at the next sidecar rebuild (~Sep–Oct 2026 makes post-enactment months
+readable).
