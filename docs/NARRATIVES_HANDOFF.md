@@ -136,6 +136,15 @@ shutdown (Oct–mid-Nov 2025) + CR + late approps (NDAA 2025-12-18, DoD approps 
   doppler wrapper or doppler's prod URL wins. Vite needs doppler for `VITE_HQX_SUPABASE_*` or
   auth breaks with "Load failed".
 - Typecheck: `cd apps/platform-app && ./node_modules/.bin/tsc -b --noEmit`.
+- **Auth gate — read before "verifying" the gallery:** every `/app/*` route (gallery included) is
+  wrapped in `RequireOperator` (client-side route guard in `App.tsx`) and will bounce an
+  unauthenticated browser context to `/signin` no matter what the code does. This is not a bug to
+  debug. To get a session in dev: open `http://localhost:5173/signin` and click **"Preview:
+  operator"** (dev-only affordance in `routes/app/../SignIn.tsx` — drops a mock operator session
+  via `devSignIn`; no credentials needed; only rendered when `import.meta.env.DEV`). Real sign-in
+  needs the Supabase env vars, which is another reason vite must run under doppler. Note the BFF's
+  `/api/v1/federal/*` endpoints are public — data answering while the page gates is expected, not
+  a mixed signal.
 
 ## 7 · Open threads (natural next work)
 
