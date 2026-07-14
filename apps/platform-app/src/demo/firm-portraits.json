@@ -1,0 +1,56 @@
+{
+  "scope": "gtm_txn_events_slim (psc S*) by fy · gtm_open_awards (psc S*) per firm",
+  "asOf": "2026-07-06",
+  "artifact": "query-sidecar/query_sidecar_20260713T043612Z.duckdb",
+  "firms": {
+    "simmons": {
+      "name": "Simmons & Golden Security LLC",
+      "what": "S206 · guard services · DHS",
+      "fy": [
+        { "label": "FY24", "oblM": 13.5 },
+        { "label": "FY25", "oblM": 39.8 },
+        { "label": "FY26 ytd", "oblM": 43.5 }
+      ],
+      "awards": [
+        { "label": "DHS · national", "oblM": 0.0, "ceilM": 63.2, "ends": null },
+        { "label": "DHS · MD", "oblM": 5.5, "ceilM": 20.8, "ends": "2026-09" },
+        { "label": "DHS · IN", "oblM": 15.9, "ceilM": 16.8, "ends": "2026-09" },
+        { "label": "DHS · MS", "oblM": 7.0, "ceilM": 7.0, "ends": "2030-02" },
+        { "label": "DHS", "oblM": 9.7, "ceilM": null, "ends": "2026-09" },
+        { "label": "DHS", "oblM": 5.3, "ceilM": null, "ends": "2026-09" }
+      ],
+      "insight": "Tripled in a year and still accelerating. $43M funded against $108M of signed paper — including a $63M vehicle not yet drawn. Guards are paid every two weeks; the government pays in thirty-plus days. The gap between those two clocks is the financing need, and it grows with every option year that funds."
+    },
+    "visionquest": {
+      "name": "Vision Quest Solutions Inc",
+      "what": "S206 · guard services · USDA / Commerce / DHS",
+      "fy": [
+        { "label": "FY24", "oblM": 2.1 },
+        { "label": "FY25", "oblM": 18.0 },
+        { "label": "FY26 ytd", "oblM": 17.2 }
+      ],
+      "awards": [
+        { "label": "USDA · DC", "oblM": 31.7, "ceilM": 79.8, "ends": "2027-02" },
+        { "label": "Commerce · WA", "oblM": 5.2, "ceilM": 11.4, "ends": "2026-11" },
+        { "label": "DHS · SD", "oblM": 0.0, "ceilM": 0.0, "ends": "2027-05" }
+      ],
+      "insight": "An 8× step-change — a $2M-a-year firm that won one $80M-ceiling guard contract in the capital and became a $18M-a-year firm overnight. Growth that arrives in one bite doesn't wait for retained earnings; the payroll for the new headcount starts before the first invoice clears."
+    },
+    "gxc": {
+      "name": "GXC Inc",
+      "what": "S206 · guard services · DHS",
+      "fy": [
+        { "label": "FY24", "oblM": 1.8 },
+        { "label": "FY25", "oblM": 5.4 },
+        { "label": "FY26 ytd", "oblM": 10.2 }
+      ],
+      "awards": [
+        { "label": "DHS · AK", "oblM": 5.0, "ceilM": 54.3, "ends": "2027-03" },
+        { "label": "DHS · NY", "oblM": 4.4, "ceilM": 4.4, "ends": "2026-09" },
+        { "label": "DHS · DE", "oblM": 1.0, "ceilM": 1.0, "ends": "2028-04" },
+        { "label": "DHS · DE", "oblM": 1.4, "ceilM": 0.9, "ends": "2026-09" }
+      ],
+      "insight": "Every year doubles the last. The Alaska vehicle alone carries $54M of ceiling and is 9% drawn — the ramp ahead is contractual, not hopeful. This is what a receivables book looks like the year before it needs a lender."
+    }
+  }
+}

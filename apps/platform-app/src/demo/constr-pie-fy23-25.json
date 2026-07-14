@@ -1,0 +1,42 @@
+{
+  "scope": "naics 23 (construction) · gtm_txn_events_slim · psc-family buckets",
+  "window": "FY23–FY25 (2022-10-01 → 2025-09-30)",
+  "artifact": "query-sidecar/query_sidecar_20260713T043612Z.duckdb",
+  "slices": [
+    {
+      "key": "new-buildings",
+      "label": "New buildings",
+      "sub": "offices, hospitals, labs, barracks",
+      "oblB": 77.67,
+      "firms": 4800
+    },
+    {
+      "key": "repair",
+      "label": "Repair & alteration",
+      "sub": "the standing building economy",
+      "oblB": 54.99,
+      "firms": 8724
+    },
+    {
+      "key": "other",
+      "label": "Everything else",
+      "sub": "remaining construction PSCs",
+      "oblB": 11.18,
+      "firms": 9607
+    },
+    {
+      "key": "barrier",
+      "label": "“Other non-building facilities”",
+      "sub": "PSC Y1PZ — the barrier line item",
+      "oblB": 10.96,
+      "firms": 1099
+    },
+    {
+      "key": "roads",
+      "label": "Roads & bridges",
+      "sub": "PSC Y1L",
+      "oblB": 4.04,
+      "firms": 1154
+    }
+  ]
+}

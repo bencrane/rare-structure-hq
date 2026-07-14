@@ -1,0 +1,56 @@
+{
+  "scope": "naics 56 × psc S* · gtm_txn_events_slim · psc-level · labels from naics_psc_deliverable",
+  "window": "2022-07-04 → 2025-07-03 (the three years before the OBBBA signature)",
+  "artifact": "query-sidecar/query_sidecar_20260713T043612Z.duckdb",
+  "slices": [
+    {
+      "key": "guards",
+      "label": "Guard & protective services",
+      "sub": "→ staff the doors, gates, and perimeters",
+      "oblB": 14.16,
+      "firms": 698
+    },
+    {
+      "key": "facility-ops-support",
+      "label": "Facilities operations support",
+      "sub": "→ run the building's day-to-day operations",
+      "oblB": 8.47,
+      "firms": 949
+    },
+    {
+      "key": "custodial",
+      "label": "Custodial & janitorial",
+      "sub": "→ clean the floors, empty the bins",
+      "oblB": 5.72,
+      "firms": 2694
+    },
+    {
+      "key": "grounds",
+      "label": "Landscaping & grounds",
+      "sub": "→ mow, plant, clear debris",
+      "oblB": 4.35,
+      "firms": 2169
+    },
+    {
+      "key": "sanitation",
+      "label": "Sanitation & housekeeping",
+      "sub": "→ facility sanitation services",
+      "oblB": 0.99,
+      "firms": 478
+    },
+    {
+      "key": "trash",
+      "label": "Trash & garbage collection",
+      "sub": "→ haul the waste",
+      "oblB": 0.94,
+      "firms": 1454
+    },
+    {
+      "key": "long-tail",
+      "label": "The long tail",
+      "sub": "→ waste treatment, mess halls, fueling, fire protection, pest, snow, laundry",
+      "oblB": 1.41,
+      "firms": 2147
+    }
+  ]
+}

@@ -29,7 +29,28 @@ export type BeatKind =
   | "ps-map"
   | "ps-coil"
   | "pact-gap"
-  | "pact-supply";
+  | "pact-supply"
+  | "cp-thesis"
+  | "map-compare"
+  | "constr-pie"
+  | "sector-pie"
+  | "deal-econ"
+  | "firm-portrait"
+  | "dod-catalyst"
+  | "facilities-awards-map"
+  | "everything-map"
+  | "facilities-56-pie"
+  | "middle-band"
+  | "facilities-services-pie"
+  | "sept-sprint"
+  | "sept-oct-cliff"
+  | "recovery-steps"
+  | "recovery-month"
+  | "boring-year"
+  | "shutdown-thesis"
+  | "estate-map"
+  | "dod-split"
+  | "hole";
 
 export type Beat = {
   id: string;
@@ -163,32 +184,186 @@ const FACILITIES: Narrative = {
       kind: "facilities-thesis",
     },
     {
-      id: "scode-map",
+      id: "everything-map",
       act: "Act 1 · The floor",
-      title: "Every federal site, every state",
-      phrase: "fy25 s-code $ by pop state · national · snapshot",
-      kind: "scode-map",
+      title: "Everything else the government buys",
+      phrase: "fy25 non-s-code $ by pop state · national · snapshot",
+      kind: "everything-map",
+    },
+    {
+      id: "facilities-sector-pie",
+      act: "Act 1 · The floor",
+      title: "The three years before — all sectors",
+      phrase: "all $ by naics sector · 2022-07-04 → 2025-07-03 · snapshot",
+      kind: "sector-pie",
+    },
+    {
+      id: "facilities-services-pie",
+      act: "Act 1 · The floor",
+      title: "Inside facility services — $36B",
+      phrase: "naics 56 × psc s · $ by psc · 3yr pre-obbba · snapshot",
+      kind: "facilities-services-pie",
+    },
+    {
+      id: "facilities-awards-map",
+      act: "Act 1 · The floor",
+      title: "Real contracts, running right now",
+      phrase: "12 named active s-code awards · pop lat/lon · snapshot",
+      kind: "facilities-awards-map",
+    },
+    {
+      id: "boring-2021",
+      act: "Act 2 · The metronome",
+      title: "2021 — month in, month out",
+      phrase: "monthly s-code obligations · calendar 2021 · snapshot",
+      kind: "boring-year",
+    },
+    {
+      id: "boring-2022",
+      act: "Act 2 · The metronome",
+      title: "2022 — same twelve bars",
+      phrase: "monthly s-code obligations · calendar 2022 · snapshot",
+      kind: "boring-year",
+    },
+    {
+      id: "boring-2023",
+      act: "Act 2 · The metronome",
+      title: "2023 — third year, same story",
+      phrase: "monthly s-code obligations · calendar 2023 · snapshot",
+      kind: "boring-year",
+    },
+    {
+      id: "boring-2024",
+      act: "Act 2 · The metronome",
+      title: "2024 — best year yet",
+      phrase: "monthly s-code obligations · calendar 2024 · snapshot",
+      kind: "boring-year",
+    },
+    {
+      id: "boring-2025",
+      act: "Act 2 · The metronome",
+      title: "2025 — through September",
+      phrase: "monthly s-code obligations · jan–sep 2025 · snapshot",
+      kind: "boring-year",
+    },
+    {
+      id: "boring-2025-oct",
+      act: "Act 2 · The metronome",
+      title: "October — the metronome stops",
+      phrase: "monthly s-code obligations · jan–oct 2025 · snapshot",
+      kind: "boring-year",
+    },
+    {
+      id: "shutdown-thesis",
+      act: "Act 2 · What happened",
+      title: "October 1 — the government shut down",
+      phrase: "appropriations lapse 2025-10-01 · public record",
+      kind: "shutdown-thesis",
+    },
+    {
+      id: "estate-map",
+      act: "Act 2 · What happened",
+      title: "The estate — buildings, then bases",
+      phrase: "federal_sites · gsa buildings + military bases · snapshot",
+      kind: "estate-map",
+    },
+    {
+      id: "dod-split",
+      act: "Act 2 · What happened",
+      title: "Half this market is one buyer",
+      phrase: "s-code $ dod vs civilian · fy23–25 · snapshot",
+      kind: "dod-split",
+    },
+    {
+      id: "sept-oct-cliff",
+      act: "Act 2 · The sprint",
+      title: "October 1st — the cliff",
+      phrase: "dod obligations · sep vs oct fy22–fy25 · snapshot",
+      kind: "sept-oct-cliff",
+    },
+    {
+      id: "recovery-steps",
+      act: "Act 2 · The sprint",
+      title: "The recovery — except one lane",
+      phrase: "dod $ by lane vs fy25 avg · oct→dec 2025 · snapshot",
+      kind: "recovery-steps",
+    },
+    {
+      id: "recovery-oct",
+      act: "Act 2 · The sprint",
+      title: "October — everything hit",
+      phrase: "dod $ by lane · oct 2025 vs oct 2024 vs fy25 avg · snapshot",
+      kind: "recovery-month",
+    },
+    {
+      id: "recovery-nov",
+      act: "Act 2 · The sprint",
+      title: "November — hardware first",
+      phrase: "dod $ by lane · nov 2025 vs nov 2024 vs fy25 avg · snapshot",
+      kind: "recovery-month",
+    },
+    {
+      id: "recovery-dec",
+      act: "Act 2 · The sprint",
+      title: "December — all but one",
+      phrase: "dod $ by lane · dec 2025 vs dec 2024 vs fy25 avg · snapshot",
+      kind: "recovery-month",
+    },
+    {
+      id: "facilities-catalyst",
+      act: "Act 3 · Here we are",
+      title: "Feb 3, 2026 — the money is law",
+      phrase: "public law · dod approps $838.7b enacted 2026-02-03 · public record",
+      kind: "dod-catalyst",
+    },
+    {
+      id: "facilities-hole",
+      act: "Act 3 · Here we are",
+      title: "The hole — what the metronome owes",
+      phrase: "dod s-code actual vs fy25 pace · oct–jan · snapshot",
+      kind: "hole",
+    },
+    {
+      id: "sept-sprint",
+      act: "Archive",
+      title: "September — $92.4B in thirty days",
+      phrase: "dod obligations · september fy22–fy25 · snapshot",
+      kind: "sept-sprint",
+    },
+    {
+      id: "middle-band",
+      act: "Archive",
+      title: "The middle class — 1,379 firms",
+      phrase: "naics 56 × psc s · per-firm 3yr book banded · snapshot",
+      kind: "middle-band",
     },
     {
       id: "bands-scode",
-      act: "Act 1 · The floor",
+      act: "Archive",
       title: "Who wins it — the deep middle",
       phrase: "fy25 s-code winners banded by total federal book · snapshot",
       kind: "bands",
     },
     {
       id: "freeze-scode",
-      act: "Act 2 · The spring",
+      act: "Archive",
       title: "The coiled DoD half",
       phrase: "monthly s-code obligations · dod vs civilian · snapshot",
       kind: "freeze",
     },
     {
       id: "pact-wave",
-      act: "Act 3 · The exam wave",
+      act: "Archive",
       title: "PACT — statute to backlog",
       phrase: "monthly obligations · 621111×Q403 va exam lane · snapshot",
       kind: "pact-wave",
+    },
+    {
+      id: "scode-map",
+      act: "Archive",
+      title: "Every federal site, every state",
+      phrase: "fy25 s-code $ by pop state · national · snapshot",
+      kind: "scode-map",
     },
   ],
 };
@@ -292,6 +467,81 @@ const MEDICAL_STAFFING: Narrative = {
   ],
 };
 
+// ── Narrative 7 · the capital-provider master arc (voiceover-first, WIP) ─────
+const CAPITAL_ARC: Narrative = {
+  id: "capital-arc",
+  title: "The Other Wave",
+  audience: "Capital providers / factoring · AR · ABL · equipment finance",
+  blurb:
+    "The loud trade at the border → the turn → the quiet facilities annuity and the coiled catalyst behind it.",
+  status: "draft",
+  beats: [
+    {
+      id: "cp-thesis",
+      act: "Act 1 · The signature",
+      title: "OBBBA — signed into law",
+      phrase: "h.r.1 enrolled text · signed 2025-07-04 · public record",
+      kind: "cp-thesis",
+    },
+    {
+      id: "cp-sector-pie",
+      act: "Act 1 · Before the bill",
+      title: "The three years before — all sectors",
+      phrase: "all $ by naics sector · 2022-07-04 → 2025-07-03 · snapshot",
+      kind: "sector-pie",
+    },
+    {
+      id: "cp-constr-pie",
+      act: "Act 1 · The wave",
+      title: "FY23–25 — where the money went",
+      phrase: "construction $ by psc-family bucket · fy23–fy25 · snapshot",
+      kind: "constr-pie",
+    },
+    {
+      id: "cp-map-compare",
+      act: "Act 1 · The wave",
+      title: "Before / since — the map",
+      phrase: "construction $ by pop state · 12mo before vs since 2025-07-04 · snapshot",
+      kind: "map-compare",
+    },
+    {
+      id: "cp-dod-catalyst",
+      act: "Act 2 · The catalyst",
+      title: "Feb 3, 2026 — the DoD money is law",
+      phrase: "public law · dod approps $838.7b enacted 2026-02-03 · public record",
+      kind: "dod-catalyst",
+    },
+    {
+      id: "cp-firm-simmons",
+      act: "Act 3 · The ground",
+      title: "Borrower portrait — Simmons & Golden",
+      phrase: "s-code obligations by fy + open awards · uei-level · snapshot",
+      kind: "firm-portrait",
+    },
+    {
+      id: "cp-firm-visionquest",
+      act: "Act 3 · The ground",
+      title: "Borrower portrait — Vision Quest",
+      phrase: "s-code obligations by fy + open awards · uei-level · snapshot",
+      kind: "firm-portrait",
+    },
+    {
+      id: "cp-firm-gxc",
+      act: "Act 3 · The ground",
+      title: "Borrower portrait — GXC",
+      phrase: "s-code obligations by fy + open awards · uei-level · snapshot",
+      kind: "firm-portrait",
+    },
+    {
+      id: "cp-deal-econ",
+      act: "Act 3 · The ground",
+      title: "Deal economics — one borrower",
+      phrase: "derived: 1.75mo float × 90% advance · illustrative $10m federal book",
+      kind: "deal-econ",
+    },
+  ],
+};
+
 export const NARRATIVES: Narrative[] = [
   EQUIPMENT_YARD,
   EQUIPMENT_FINANCE,
@@ -299,6 +549,7 @@ export const NARRATIVES: Narrative[] = [
   MANUFACTURING,
   PROFSERVICES,
   MEDICAL_STAFFING,
+  CAPITAL_ARC,
 ];
 
 export const getNarrative = (id: string | undefined): Narrative | null =>

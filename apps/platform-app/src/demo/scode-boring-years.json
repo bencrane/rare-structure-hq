@@ -1,0 +1,331 @@
+{
+  "scope": "psc S* · gtm_txn_events_slim · all agencies · monthly obligations by calendar year",
+  "artifact": "query-sidecar/query_sidecar_20260713T043612Z.duckdb",
+  "years": {
+    "2021": {
+      "label": "2021",
+      "totalB": 15.2,
+      "months": [
+        {
+          "label": "Jan",
+          "oblB": 0.9
+        },
+        {
+          "label": "Feb",
+          "oblB": 1.59
+        },
+        {
+          "label": "Mar",
+          "oblB": 1.75
+        },
+        {
+          "label": "Apr",
+          "oblB": 1.17
+        },
+        {
+          "label": "May",
+          "oblB": 0.78
+        },
+        {
+          "label": "Jun",
+          "oblB": 0.82
+        },
+        {
+          "label": "Jul",
+          "oblB": 0.8
+        },
+        {
+          "label": "Aug",
+          "oblB": 1.03
+        },
+        {
+          "label": "Sep",
+          "oblB": 1.48
+        },
+        {
+          "label": "Oct",
+          "oblB": 1.68
+        },
+        {
+          "label": "Nov",
+          "oblB": 1.55
+        },
+        {
+          "label": "Dec",
+          "oblB": 1.64
+        }
+      ]
+    },
+    "2022": {
+      "label": "2022",
+      "totalB": 14.5,
+      "months": [
+        {
+          "label": "Jan",
+          "oblB": 1.46
+        },
+        {
+          "label": "Feb",
+          "oblB": 0.71
+        },
+        {
+          "label": "Mar",
+          "oblB": 1.3
+        },
+        {
+          "label": "Apr",
+          "oblB": 1.3
+        },
+        {
+          "label": "May",
+          "oblB": 1.45
+        },
+        {
+          "label": "Jun",
+          "oblB": 1.27
+        },
+        {
+          "label": "Jul",
+          "oblB": 0.88
+        },
+        {
+          "label": "Aug",
+          "oblB": 0.93
+        },
+        {
+          "label": "Sep",
+          "oblB": 1.48
+        },
+        {
+          "label": "Oct",
+          "oblB": 1.4
+        },
+        {
+          "label": "Nov",
+          "oblB": 1.48
+        },
+        {
+          "label": "Dec",
+          "oblB": 0.88
+        }
+      ]
+    },
+    "2023": {
+      "label": "2023",
+      "totalB": 15.3,
+      "months": [
+        {
+          "label": "Jan",
+          "oblB": 1.13
+        },
+        {
+          "label": "Feb",
+          "oblB": 1.52
+        },
+        {
+          "label": "Mar",
+          "oblB": 1.8
+        },
+        {
+          "label": "Apr",
+          "oblB": 1.46
+        },
+        {
+          "label": "May",
+          "oblB": 1.1
+        },
+        {
+          "label": "Jun",
+          "oblB": 1.02
+        },
+        {
+          "label": "Jul",
+          "oblB": 0.85
+        },
+        {
+          "label": "Aug",
+          "oblB": 0.81
+        },
+        {
+          "label": "Sep",
+          "oblB": 1.85
+        },
+        {
+          "label": "Oct",
+          "oblB": 1.35
+        },
+        {
+          "label": "Nov",
+          "oblB": 1.03
+        },
+        {
+          "label": "Dec",
+          "oblB": 1.41
+        }
+      ]
+    },
+    "2024": {
+      "label": "2024",
+      "totalB": 16.1,
+      "months": [
+        {
+          "label": "Jan",
+          "oblB": 1.04
+        },
+        {
+          "label": "Feb",
+          "oblB": 1.41
+        },
+        {
+          "label": "Mar",
+          "oblB": 1.34
+        },
+        {
+          "label": "Apr",
+          "oblB": 1.47
+        },
+        {
+          "label": "May",
+          "oblB": 1.59
+        },
+        {
+          "label": "Jun",
+          "oblB": 1.34
+        },
+        {
+          "label": "Jul",
+          "oblB": 1.27
+        },
+        {
+          "label": "Aug",
+          "oblB": 1.0
+        },
+        {
+          "label": "Sep",
+          "oblB": 1.53
+        },
+        {
+          "label": "Oct",
+          "oblB": 1.68
+        },
+        {
+          "label": "Nov",
+          "oblB": 1.35
+        },
+        {
+          "label": "Dec",
+          "oblB": 1.05
+        }
+      ]
+    },
+    "2025": {
+      "label": "2025",
+      "totalB": 14.7,
+      "months": [
+        {
+          "label": "Jan",
+          "oblB": 1.53
+        },
+        {
+          "label": "Feb",
+          "oblB": 1.2
+        },
+        {
+          "label": "Mar",
+          "oblB": 1.69
+        },
+        {
+          "label": "Apr",
+          "oblB": 2.18
+        },
+        {
+          "label": "May",
+          "oblB": 1.65
+        },
+        {
+          "label": "Jun",
+          "oblB": 1.09
+        },
+        {
+          "label": "Jul",
+          "oblB": 1.55
+        },
+        {
+          "label": "Aug",
+          "oblB": 1.47
+        },
+        {
+          "label": "Sep",
+          "oblB": 2.37
+        },
+        {
+          "label": "Oct",
+          "oblB": null
+        },
+        {
+          "label": "Nov",
+          "oblB": null
+        },
+        {
+          "label": "Dec",
+          "oblB": null
+        }
+      ]
+    },
+    "2025-oct": {
+      "label": "2025",
+      "totalB": 15.4,
+      "months": [
+        {
+          "label": "Jan",
+          "oblB": 1.53
+        },
+        {
+          "label": "Feb",
+          "oblB": 1.2
+        },
+        {
+          "label": "Mar",
+          "oblB": 1.69
+        },
+        {
+          "label": "Apr",
+          "oblB": 2.18
+        },
+        {
+          "label": "May",
+          "oblB": 1.65
+        },
+        {
+          "label": "Jun",
+          "oblB": 1.09
+        },
+        {
+          "label": "Jul",
+          "oblB": 1.55
+        },
+        {
+          "label": "Aug",
+          "oblB": 1.47
+        },
+        {
+          "label": "Sep",
+          "oblB": 2.37
+        },
+        {
+          "label": "Oct",
+          "oblB": 0.7,
+          "highlight": true
+        },
+        {
+          "label": "Nov",
+          "oblB": null
+        },
+        {
+          "label": "Dec",
+          "oblB": null
+        }
+      ]
+    }
+  }
+}

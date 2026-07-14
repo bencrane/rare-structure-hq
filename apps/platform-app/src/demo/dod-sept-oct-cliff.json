@@ -1,0 +1,10 @@
+{
+  "scope": "awarding_agency_code 097 · gtm_txn_events_slim · september + october monthly totals",
+  "artifact": "query-sidecar/query_sidecar_20260713T043612Z.duckdb",
+  "years": [
+    { "label": "2022", "sepB": 57.2, "octB": 23.8 },
+    { "label": "2023", "sepB": 65.1, "octB": 22.8 },
+    { "label": "2024", "sepB": 78.2, "octB": 29.1 },
+    { "label": "2025", "sepB": 92.4, "octB": 13.3, "highlight": true }
+  ]
+}

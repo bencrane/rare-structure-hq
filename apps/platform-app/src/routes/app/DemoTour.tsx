@@ -27,13 +27,30 @@ import { CombosView } from "@/demo/CombosView";
 import flowNational from "@/demo/flow-national-obbba.json";
 import { FreezeView } from "@/demo/FreezeView";
 import moneyMapScode from "@/demo/money-map-scode.json";
+import { ConstrPieView } from "@/demo/ConstrPieView";
+import { FacilitiesAwardsMapView } from "@/demo/FacilitiesAwardsMapView";
+import { FederalEstateMapView } from "@/demo/FederalEstateMapView";
+import { FirmPortraitView } from "@/demo/FirmPortraitView";
+import { HoleView } from "@/demo/HoleView";
+import facilities56Pie from "@/demo/facilities-56-pie.json";
+import facilitiesServicesPie from "@/demo/facilities-services-pie.json";
+import scodeDodSplitPie from "@/demo/scode-dod-split-pie.json";
+import sectorPiePreObbba from "@/demo/sector-pie-pre-obbba.json";
+import { MapCompareView } from "@/demo/MapCompareView";
+import { MiddleBandView } from "@/demo/MiddleBandView";
 import { MoneyMapView } from "@/demo/MoneyMapView";
 import { PactGapView } from "@/demo/PactGapView";
+import { BoringYearView } from "@/demo/BoringYearView";
+import { RecoveryMonthView } from "@/demo/RecoveryMonthView";
+import { RecoveryStepsView } from "@/demo/RecoveryStepsView";
+import { SeptOctCliffView } from "@/demo/SeptOctCliffView";
+import { SeptSprintView } from "@/demo/SeptSprintView";
 import { PactSupplyView } from "@/demo/PactSupplyView";
 import pactWave from "@/demo/pact-wave.json";
 import coilMfg from "@/demo/coil-manufacturing.json";
 import coilPs from "@/demo/coil-profservices.json";
 import mapMfg from "@/demo/map-manufacturing.json";
+import moneyMapEverything from "@/demo/money-map-everything-else.json";
 import mapPs from "@/demo/map-profservices.json";
 import { type Beat, getNarrative } from "@/demo/narratives";
 import { PrimesView } from "@/demo/PrimesView";
@@ -204,6 +221,190 @@ export default function DemoTour() {
       <main className="relative h-full min-w-0 overflow-hidden">
         {activeState.status === "done" && active && active.kind === "thesis" ? (
           <ThesisView />
+        ) : activeState.status === "done" && active && active.kind === "cp-thesis" ? (
+          <ThesisView
+            kicker="The signature"
+            statement="That signature set in motion the largest federal construction wave in a generation. Before the thesis, watch what it did to the map."
+          />
+        ) : activeState.status === "done" && active && active.kind === "dod-catalyst" ? (
+          <ThesisView
+            kicker="The catalyst"
+            title="February 3, 2026"
+            subtitle="dod appropriations · enacted · public law"
+            lines={[
+              {
+                amount: "$838.7B",
+                label: "DoD appropriations — signed",
+                detail:
+                  "Enacted 2026-02-03, after the October shutdown and the longest CR in the department's history",
+              },
+              {
+                amount: "4 mos",
+                label: "Of triage before it",
+                detail:
+                  "Under the CR, DoD kept hardware and engineering flowing — December manufacturing ran above normal",
+              },
+              {
+                amount: "Last",
+                label: "In line: the buildings",
+                detail:
+                  "Facilities S-codes ran ~40% below run-rate in every clean month — the one lane still dry when the money became law",
+              },
+            ]}
+            statement="The money is not proposed, not promised — enacted. It has been law for five months, and the facilities lane it funds was still running dry in the last month the data can see. What follows is who is holding that paper."
+            footer="public record · enacted appropriation · obligation reads from the pinned snapshot"
+          />
+        ) : activeState.status === "done" && active && active.kind === "firm-portrait" ? (
+          <FirmPortraitView
+            firmKey={
+              active.id === "cp-firm-simmons"
+                ? "simmons"
+                : active.id === "cp-firm-visionquest"
+                  ? "visionquest"
+                  : "gxc"
+            }
+          />
+        ) : activeState.status === "done" && active && active.kind === "deal-econ" ? (
+          <ThesisView
+            kicker="Deal economics"
+            title="What one borrower is worth"
+            subtitle="illustrative facilities firm · $10M annual federal book"
+            lines={[
+              {
+                amount: "$1.3M",
+                label: "Fundable AR on a $10M book",
+                detail:
+                  "≈13% of annual federal revenue — 1.75 months of invoices in float × 90% advance rate",
+              },
+              {
+                amount: "$150–290K",
+                label: "Lender revenue per year",
+                detail:
+                  "Factoring / ABL economics on the funded balance, at prevailing federal-receivable pricing",
+              },
+              {
+                amount: "~$1M",
+                label: "Over one contract life",
+                detail:
+                  "Base-plus-options S-code cycles run ~5 years — the borrower renews with the building, not the news cycle",
+              },
+            ]}
+            statement="The receivable is an invoice to the United States Treasury on a contract that renews every year the building stays open. One sourced borrower of this shape repays a six-figure sourcing seat several times over its life."
+            footer="derived figures · 1.75-month float × 90% advance · pricing range indicative"
+          />
+        ) : activeState.status === "done" && active && active.kind === "boring-year" ? (
+          active.id === "boring-2021" ? (
+            <BoringYearView
+              yearKey="2021"
+              statement="Things need to be cleaned. Doors need to be guarded. Lawns need to be mowed. Twelve months, twelve almost-identical bars — no news cycle, no politics, no story. Exactly how the firms in this market like it."
+            />
+          ) : active.id === "boring-2022" ? (
+            <BoringYearView yearKey="2022" statement="Different year. Same twelve bars." />
+          ) : active.id === "boring-2023" ? (
+            <BoringYearView
+              yearKey="2023"
+              statement="Third year, same story — the most dependable line item in the federal budget."
+            />
+          ) : active.id === "boring-2024" ? (
+            <BoringYearView
+              yearKey="2024"
+              title="2024 — the best year yet"
+              statement="Fourth year. Now $16.1B — the lane's biggest year on record. Still nobody watching."
+            />
+          ) : active.id === "boring-2025" ? (
+            <BoringYearView
+              yearKey="2025"
+              title="2025 — nine months, two all-time records"
+              statement="Through September: on pace for the best year in the lane's history — April and September the two biggest months ever recorded. And then the metronome stopped."
+            />
+          ) : (
+            <BoringYearView
+              yearKey="2025-oct"
+              kicker="October 1st"
+              title="The worst month in the history of the lane"
+              statement="Fifty-seven consecutive months without a single bad one — then $0.7B. The government shut down at midnight on October 1st. What happened next depends on which half of this market you were in."
+            />
+          )
+        ) : activeState.status === "done" && active && active.kind === "sept-sprint" ? (
+          <SeptSprintView />
+        ) : activeState.status === "done" && active && active.kind === "hole" ? (
+          <HoleView />
+        ) : activeState.status === "done" && active && active.kind === "shutdown-thesis" ? (
+          <ThesisView
+            kicker="What happened"
+            title="October 1, 2025"
+            subtitle="appropriations lapse · public record"
+            lines={[
+              {
+                amount: "12:00 AM",
+                label: "Appropriations lapse",
+                detail: "FY26 began with no budget — the federal government shut down",
+              },
+              {
+                amount: "6 wks",
+                label: "Shutdown, then a capped CR",
+                detail:
+                  "Reopened mid-November on a continuing resolution: prior-year rates, no new starts",
+              },
+              {
+                amount: "1 buyer",
+                label: "Took the hit hardest",
+                detail:
+                  "One customer's facilities lane absorbed the freeze — and it happens to be half this market",
+              },
+            ]}
+            statement="The metronome didn't stop everywhere. It stopped for one buyer — the biggest one this market has."
+            footer="public record · the split is the next card"
+          />
+        ) : activeState.status === "done" && active && active.kind === "estate-map" ? (
+          <FederalEstateMapView />
+        ) : activeState.status === "done" && active && active.kind === "dod-split" ? (
+          <ConstrPieView
+            snap={scodeDodSplitPie as never}
+            kicker="The split"
+            title="824 bases spend like 300,000 buildings"
+            subtitle="facility services (psc s-codes) · fy23–fy25 · by awarding agency"
+            centerLabel="fy23–25"
+            pctDecimals={1}
+          />
+        ) : activeState.status === "done" && active && active.kind === "sept-oct-cliff" ? (
+          <SeptOctCliffView />
+        ) : activeState.status === "done" && active && active.kind === "recovery-steps" ? (
+          <RecoveryStepsView />
+        ) : activeState.status === "done" && active && active.kind === "recovery-month" ? (
+          <RecoveryMonthView
+            monthKey={
+              active.id === "recovery-oct" ? "oct" : active.id === "recovery-nov" ? "nov" : "dec"
+            }
+          />
+        ) : activeState.status === "done" && active && active.kind === "facilities-services-pie" ? (
+          <ConstrPieView
+            snap={facilitiesServicesPie as never}
+            kicker="The double-click, again"
+            title="$36B of facility services — what the work is"
+            subtitle="naics 56 × psc s-codes · same three years"
+            centerLabel="3 yrs pre-signing"
+          />
+        ) : activeState.status === "done" && active && active.kind === "facilities-56-pie" ? (
+          <ConstrPieView
+            snap={facilities56Pie as never}
+            kicker="The double-click"
+            title="$197B of Facilities & Support — what it buys"
+            subtitle="naics 56 · psc work families · same three years"
+            centerLabel="3 yrs pre-signing"
+          />
+        ) : activeState.status === "done" && active && active.kind === "sector-pie" ? (
+          <ConstrPieView
+            snap={sectorPiePreObbba as never}
+            kicker="Before the bill"
+            title="$2.26T of federal awards — the standing order"
+            subtitle="all naics sectors · 2022-07-04 → 2025-07-03 · place in line before obbba"
+            centerLabel="3 yrs pre-signing"
+          />
+        ) : activeState.status === "done" && active && active.kind === "constr-pie" ? (
+          <ConstrPieView />
+        ) : activeState.status === "done" && active && active.kind === "map-compare" ? (
+          <MapCompareView />
         ) : activeState.status === "done" && active && active.kind === "facilities-thesis" ? (
           <ThesisView
             kicker="The thesis"
@@ -232,6 +433,15 @@ export default function DemoTour() {
             statement="This market doesn't wait on any bill — 300,000 federal facilities need cleaning, guarding, and operating every year regardless of politics. It is huge, structural, and quietly mispriced — and an unlock is waiting inside it."
             footer="structural — no catalyst required · figures from the pinned snapshot"
           />
+        ) : activeState.status === "done" && active && active.kind === "everything-map" ? (
+          <MoneyMapView
+            snap={moneyMapEverything as never}
+            kicker="The rest of the budget"
+            title="$766B a year — jets, ships, research, medicine"
+            subtitle="fy25 obligations excluding facilities s-codes · place of performance"
+          />
+        ) : activeState.status === "done" && active && active.kind === "facilities-awards-map" ? (
+          <FacilitiesAwardsMapView />
         ) : activeState.status === "done" && active && active.kind === "scode-map" ? (
           <MoneyMapView
             snap={moneyMapScode as never}
@@ -239,6 +449,8 @@ export default function DemoTour() {
             title="The floor is everywhere the flag flies"
             subtitle="fy25 s-code obligations · place of performance"
           />
+        ) : activeState.status === "done" && active && active.kind === "middle-band" ? (
+          <MiddleBandView />
         ) : activeState.status === "done" && active && active.kind === "bands" ? (
           <BandsView />
         ) : activeState.status === "done" && active && active.kind === "freeze" ? (

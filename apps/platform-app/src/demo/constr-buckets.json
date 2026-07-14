@@ -1,0 +1,49 @@
+{
+  "scope": "naics 23 (construction) · gtm_txn_events_slim · psc-family buckets",
+  "beforeWindow": "2024-07-04 → 2025-07-03",
+  "since": "2025-07-04",
+  "artifact": "query-sidecar/query_sidecar_20260713T043612Z.duckdb",
+  "caveat": "trailing months undercount DoD-heavy work (~90-day FPDS publish lag)",
+  "buckets": [
+    {
+      "key": "barrier",
+      "label": "“Other non-building facilities”",
+      "sub": "PSC Y1PZ — the barrier line item",
+      "beforeB": 1.77,
+      "sinceB": 27.54,
+      "firmsSince": 506
+    },
+    {
+      "key": "roads",
+      "label": "Roads & bridges",
+      "sub": "PSC Y1L — the access network",
+      "beforeB": 0.8,
+      "sinceB": 5.69,
+      "firmsSince": 550
+    },
+    {
+      "key": "new-buildings",
+      "label": "New buildings",
+      "sub": "offices, hospitals, labs, barracks",
+      "beforeB": 25.82,
+      "sinceB": 20.75,
+      "firmsSince": 2802
+    },
+    {
+      "key": "repair",
+      "label": "Repair & alteration",
+      "sub": "the standing building economy",
+      "beforeB": 17.7,
+      "sinceB": 15.49,
+      "firmsSince": 4924
+    },
+    {
+      "key": "other",
+      "label": "Everything else",
+      "sub": "remaining construction PSCs",
+      "beforeB": 3.69,
+      "sinceB": 2.62,
+      "firmsSince": 4305
+    }
+  ]
+}

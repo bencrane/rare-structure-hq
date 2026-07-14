@@ -1,0 +1,115 @@
+{
+  "scope": "gtm_open_awards · psc S* · active awards · pop lat/lon",
+  "asOf": "2026-07-06",
+  "artifact": "query-sidecar/query_sidecar_20260713T043612Z.duckdb",
+  "awards": [
+    {
+      "key": "doyon",
+      "work": "Keeping the lights on",
+      "where": "Fort Wainwright, AK",
+      "oblM": 872.6,
+      "lat": 64.834706,
+      "lon": -147.622949,
+      "side": "right"
+    },
+    {
+      "key": "arctec",
+      "work": "Running the base facilities",
+      "where": "JB Elmendorf, AK",
+      "oblM": 428.3,
+      "lat": 61.271958,
+      "lon": -149.807145,
+      "side": "left"
+    },
+    {
+      "key": "amentum",
+      "work": "Operating the spaceport",
+      "where": "Kennedy Space Center, FL",
+      "oblM": 608.2,
+      "lat": 28.570183,
+      "lon": -80.627676,
+      "side": "right"
+    },
+    {
+      "key": "gardaworld",
+      "work": "Guarding DHS",
+      "where": "Washington, DC area",
+      "oblM": 313.4,
+      "lat": 38.89443,
+      "lon": -77.073406,
+      "side": "left"
+    },
+    {
+      "key": "universal",
+      "work": "Guarding the Smithsonian",
+      "where": "Washington, DC",
+      "oblM": 198.5,
+      "lat": 38.890126,
+      "lon": -77.027245,
+      "side": "right"
+    },
+    {
+      "key": "ecc",
+      "work": "Running Moody AFB facilities",
+      "where": "Valdosta, GA",
+      "oblM": 202.2,
+      "lat": 30.969613,
+      "lon": -83.194305,
+      "side": "left"
+    },
+    {
+      "key": "asrc",
+      "work": "Operating Vance AFB",
+      "where": "Enid, OK",
+      "oblM": 174.4,
+      "lat": 36.339188,
+      "lon": -97.902082,
+      "side": "left"
+    },
+    {
+      "key": "fedcap",
+      "work": "Cleaning federal buildings",
+      "where": "Manhattan, NY",
+      "oblM": 109.8,
+      "lat": 40.713868,
+      "lon": -74.007866,
+      "side": "right"
+    },
+    {
+      "key": "workservices",
+      "work": "Feeding Sheppard AFB",
+      "where": "Wichita Falls, TX",
+      "oblM": 68.8,
+      "lat": 33.973218,
+      "lon": -98.508394,
+      "side": "right"
+    },
+    {
+      "key": "pcsi",
+      "work": "Hauling the trash",
+      "where": "Border stations, El Paso, TX",
+      "oblM": 12.6,
+      "lat": 31.805328,
+      "lon": -106.368845,
+      "side": "left"
+    },
+    {
+      "key": "rubicon",
+      "work": "Mowing the VA's lawns",
+      "where": "Palo Alto, CA",
+      "oblM": 10.8,
+      "lat": 37.397253,
+      "lon": -122.166979,
+      "side": "left"
+    },
+    {
+      "key": "unitech",
+      "work": "Industrial laundry",
+      "where": "Hanford site, WA",
+      "oblM": 5.1,
+      "lat": 46.332262,
+      "lon": -119.299108,
+      "side": "left"
+    }
+  ]
+}

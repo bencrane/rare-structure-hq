@@ -1,0 +1,28 @@
+{
+  "scope": "awarding_agency_code 097 · gtm_txn_events_slim · monthly $ vs fy25 monthly average per lane",
+  "artifact": "query-sidecar/query_sidecar_20260713T043612Z.duckdb",
+  "norms": { "hardware": 19.5, "engineering": 9.9, "construction": 2.62, "facilities": 0.84 },
+  "lanes": [
+    { "key": "hardware", "label": "Hardware", "sub": "weapons, aircraft, ships · naics 33" },
+    { "key": "engineering", "label": "Engineering & services", "sub": "naics 54" },
+    { "key": "construction", "label": "Construction", "sub": "naics 23" },
+    { "key": "facilities", "label": "Facilities services", "sub": "psc s-codes", "highlight": true }
+  ],
+  "months": [
+    {
+      "label": "October 2025",
+      "tagline": "the shutdown month — everything gets hit",
+      "values": { "hardware": 5.6, "engineering": 1.7, "construction": 0.4, "facilities": 0.21 }
+    },
+    {
+      "label": "November 2025",
+      "tagline": "the climb begins — hardware first",
+      "values": { "hardware": 15.3, "engineering": 5.7, "construction": 1.4, "facilities": 0.55 }
+    },
+    {
+      "label": "December 2025",
+      "tagline": "three lanes above normal — one still under water",
+      "values": { "hardware": 25.2, "engineering": 11.1, "construction": 2.8, "facilities": 0.64 }
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "scope": "naics 56 × psc S* · gtm_txn_events_slim · per-uei 3yr federal book",
+  "window": "2022-07-04 → 2025-07-03",
+  "artifact": "query-sidecar/query_sidecar_20260713T043612Z.duckdb",
+  "totalFirms": 7090,
+  "totalB": 36.2,
+  "bands": [
+    {
+      "key": "tail",
+      "label": "The tail",
+      "range": "< $1M over 3 yrs",
+      "firms": 5664,
+      "oblB": 0.86,
+      "note": "one small contract each"
+    },
+    {
+      "key": "lower-middle",
+      "label": "The lower middle",
+      "range": "$1M – $10M over 3 yrs · ≈ $0.3–3M/yr",
+      "firms": 972,
+      "oblB": 3.4,
+      "note": "typical firm: 2 substantial contracts (≥$250K), anchor contract ~$1.4M — the sourcing funnel",
+      "highlight": true
+    },
+    {
+      "key": "upper-middle",
+      "label": "The upper middle",
+      "range": "$10M – $100M over 3 yrs · ≈ $3–33M/yr",
+      "firms": 407,
+      "oblB": 11.0,
+      "note": "typical firm: 6 substantial contracts (≥$250K), anchor ~$8.3M, 93% of revenue in auditable contracts — the ticket-size market",
+      "highlight": true
+    },
+    {
+      "key": "top",
+      "label": "The institutional top",
+      "range": "> $100M over 3 yrs · > $33M/yr",
+      "firms": 63,
+      "oblB": 20.9,
+      "note": "national players — already banked"
+    }
+  ]
+}
