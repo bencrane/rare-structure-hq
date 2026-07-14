@@ -1,0 +1,49 @@
+{
+  "scope": "naics 56 · gtm_txn_events_slim · psc letter-family groups · labels from naics_psc_deliverable",
+  "window": "2022-07-04 → 2025-07-03 (the three years before the OBBBA signature)",
+  "artifact": "query-sidecar/query_sidecar_20260713T043612Z.duckdb",
+  "slices": [
+    {
+      "key": "facility-operation",
+      "label": "Facility operation",
+      "sub": "→ run entire installations: government buildings, R&D labs, industrial plants",
+      "oblB": 73.7,
+      "firms": 523
+    },
+    {
+      "key": "professional-support",
+      "label": "Professional & program support",
+      "sub": "→ staff the back office: logistics, badging, contact centers, program management",
+      "oblB": 37.9,
+      "firms": 5715
+    },
+    {
+      "key": "facility-services",
+      "label": "Facility services",
+      "sub": "→ guard the doors, clean the floors, mow the grounds, run the mess",
+      "oblB": 36.0,
+      "firms": 8559
+    },
+    {
+      "key": "environmental",
+      "label": "Environmental remediation",
+      "sub": "→ clean up hazardous sites, haul and treat waste, restore land",
+      "oblB": 19.8,
+      "firms": 2447
+    },
+    {
+      "key": "maintenance-repair",
+      "label": "Building maintenance & repair",
+      "sub": "→ keep the buildings themselves working: HVAC, systems, upkeep",
+      "oblB": 10.4,
+      "firms": 1886
+    },
+    {
+      "key": "other",
+      "label": "Everything else",
+      "sub": "→ air charter, transport, and the sector's long tail",
+      "oblB": 19.3,
+      "firms": 8235
+    }
+  ]
+}

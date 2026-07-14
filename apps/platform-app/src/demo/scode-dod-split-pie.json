@@ -1,0 +1,21 @@
+{
+  "scope": "psc S* · gtm_txn_events_slim · awarding agency 097 vs all others",
+  "window": "FY23–FY25 (2022-10-01 → 2025-09-30)",
+  "artifact": "query-sidecar/query_sidecar_20260713T043612Z.duckdb",
+  "slices": [
+    {
+      "key": "dod",
+      "label": "Department of Defense",
+      "sub": "→ 824 military installations — guards, custodial, grounds, mess; the half growing +29%/yr",
+      "oblB": 24.9,
+      "firms": 5630
+    },
+    {
+      "key": "civilian",
+      "label": "Civilian agencies",
+      "sub": "→ the other ~300,000 federal buildings — courthouses, labs, VA hospitals, offices",
+      "oblB": 25.0,
+      "firms": 8071
+    }
+  ]
+}

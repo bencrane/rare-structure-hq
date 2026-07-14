@@ -1,0 +1,11 @@
+{
+  "scope": "awarding_agency_code 097 · psc S* · monthly actual vs fy25 pace (0.84/mo avg; lane was growing +29%/yr)",
+  "artifact": "query-sidecar/query_sidecar_20260713T043612Z.duckdb",
+  "expectedM": 0.84,
+  "months": [
+    { "label": "Oct", "actualB": 0.21 },
+    { "label": "Nov", "actualB": 0.55 },
+    { "label": "Dec", "actualB": 0.64 },
+    { "label": "Jan", "actualB": 0.39 }
+  ]
+}

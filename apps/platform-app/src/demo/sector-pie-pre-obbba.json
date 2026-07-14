@@ -1,0 +1,77 @@
+{
+  "scope": "all naics sectors · gtm_txn_events_slim · 2-digit naics rollup",
+  "window": "2022-07-04 → 2025-07-03 (the three years before the OBBBA signature)",
+  "artifact": "query-sidecar/query_sidecar_20260713T043612Z.duckdb",
+  "slices": [
+    {
+      "key": "prof-services",
+      "label": "Professional & technical services",
+      "sub": "NAICS 54 — engineering, IT, R&D, consulting",
+      "oblB": 708.4,
+      "firms": 44444
+    },
+    {
+      "key": "mfg-durables",
+      "label": "Manufacturing — durables",
+      "sub": "NAICS 33 — weapons, aircraft, vehicles, electronics",
+      "oblB": 659.3,
+      "firms": 39691
+    },
+    {
+      "key": "facilities-support",
+      "label": "Facilities & support services",
+      "sub": "NAICS 56 — guards, janitorial, grounds, admin support",
+      "oblB": 197.3,
+      "firms": 21272
+    },
+    {
+      "key": "construction",
+      "label": "Construction",
+      "sub": "NAICS 23 — buildings, heavy civil, trades",
+      "oblB": 154.2,
+      "firms": 17085
+    },
+    {
+      "key": "finance-insurance",
+      "label": "Finance & insurance",
+      "sub": "NAICS 52 — largely centralized financial vehicles",
+      "oblB": 145.5,
+      "firms": 898
+    },
+    {
+      "key": "mfg-nondurables",
+      "label": "Manufacturing — chem & nondurables",
+      "sub": "NAICS 32 — pharma, fuels, chemicals",
+      "oblB": 119.1,
+      "firms": 9596
+    },
+    {
+      "key": "transportation",
+      "label": "Transportation & warehousing",
+      "sub": "NAICS 48 — air, sea, freight",
+      "oblB": 60.9,
+      "firms": 6131
+    },
+    {
+      "key": "information",
+      "label": "Information",
+      "sub": "NAICS 51 — software, telecom, data",
+      "oblB": 52.2,
+      "firms": 9434
+    },
+    {
+      "key": "healthcare",
+      "label": "Health care",
+      "sub": "NAICS 62 — providers and services",
+      "oblB": 36.1,
+      "firms": 8036
+    },
+    {
+      "key": "other",
+      "label": "Everything else",
+      "sub": "all remaining sectors",
+      "oblB": 127.1,
+      "firms": 59114
+    }
+  ]
+}
