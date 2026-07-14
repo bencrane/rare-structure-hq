@@ -254,9 +254,14 @@ WITH scope AS (
 SELECT … FROM gtm_txn_events_slim t JOIN scope USING (naics_code, psc_code) …
 ```
 
-Calibration (artifact `20260713T043612Z`): since-signing obligations through this scope =
-**$58.6B / 7,554 firms** (vs $2.9B / 1,006 through the naive 237*-only cut). Strict core:
-`primary_bucket = 'heavy_earthmoving_civil'`. Full financeable-iron universe: union in
-`trucks_heavy_haul` + `material_handling_cranes`. The Iron Wave cards built 2026-07-14
-(iron-mirage / iron-book / iron-dropmic) predate this definition and carry the narrow numbers —
-re-derive before reusing them.
+**CONSTRUCTION-IRON SCOPE (the one to use for equipment-finance narratives):** two gates —
+(1) bucket union `heavy_earthmoving_civil / aerial_access / trucks_heavy_haul /
+material_handling_cranes` (everything an equipment-finance shop writes paper against, dozers to
+scissor lifts), AND (2) `substr(naics_code,1,2) = '23'` (construction industry). The industry gate
+matters: ungated, the bucket union pulls $83.8B of NAICS-33 manufacturing (shipyard cranes,
+aircraft handling — not the audience). Calibration (artifact `20260713T043612Z`), since-signing
+obligations: naive 237*-only cut $2.9B / 1,006 firms → earthmoving-bucket-only $58.6B / 7,554 →
+**construction-iron scope $63.4B / 5,185 firms**. Strict core variant:
+`primary_bucket = 'heavy_earthmoving_civil'`. The Iron Wave cards built 2026-07-14 (iron-mirage /
+iron-book / iron-dropmic) predate this definition and carry the narrow numbers — re-derive before
+reusing them.
