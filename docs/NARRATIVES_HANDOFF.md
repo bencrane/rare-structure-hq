@@ -233,3 +233,30 @@ Lance pull); DoD borrower portraits + deal-economics closer for Facilities Floor
 the middle-class band card returns from the archive (raw notes' beat #8 implies yes); re-check the
 DoD Feb/Mar fill-in at the next sidecar rebuild (~Sep–Oct 2026 makes post-enactment months
 readable).
+
+## 10 · Canonical scope definitions (do NOT hand-roll NAICS/PSC lists)
+
+**Heavy-civil / "iron" scope — use the equipment-needs mart, not a NAICS list.** A NAICS-only cut
+(237*/238910) under-counts ~20×: most dirt-and-iron work is filed under NAICS 2362 (building
+construction) with heavy-civil PSCs (Y1PZ barrier, Y1LB roads, …). The curated source of truth is
+the sidecar mart `naics_psc_equipment_needs` (per-combo verdicts: `in_scope`, `equipment_buckets`,
+`primary_bucket`, `proposed_equipment_needs` machine lists, `reasoning`). Buckets:
+`heavy_earthmoving_civil` (693 combos), `material_handling_cranes` (1,465), `trucks_heavy_haul`
+(337), `aerial_access` (110), `industrial_power_support` (3,124).
+
+```sql
+-- IRON SCOPE (canonical): combos whose curated verdict includes heavy iron
+WITH scope AS (
+  SELECT DISTINCT naics_code, psc_code FROM naics_psc_equipment_needs
+  WHERE in_scope
+    AND len(list_filter(equipment_buckets, x -> x = 'heavy_earthmoving_civil')) > 0
+)
+SELECT … FROM gtm_txn_events_slim t JOIN scope USING (naics_code, psc_code) …
+```
+
+Calibration (artifact `20260713T043612Z`): since-signing obligations through this scope =
+**$58.6B / 7,554 firms** (vs $2.9B / 1,006 through the naive 237*-only cut). Strict core:
+`primary_bucket = 'heavy_earthmoving_civil'`. Full financeable-iron universe: union in
+`trucks_heavy_haul` + `material_handling_cranes`. The Iron Wave cards built 2026-07-14
+(iron-mirage / iron-book / iron-dropmic) predate this definition and carry the narrow numbers —
+re-derive before reusing them.
