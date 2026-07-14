@@ -50,7 +50,11 @@ export type BeatKind =
   | "shutdown-thesis"
   | "estate-map"
   | "dod-split"
-  | "hole";
+  | "hole"
+  | "wave-long"
+  | "iron-mirage"
+  | "iron-book"
+  | "iron-dropmic";
 
 export type Beat = {
   id: string;
@@ -162,9 +166,52 @@ const EQUIPMENT_FINANCE: Narrative = {
   blurb:
     "OBBBA money → the obligation wave → the dirt-iron combos it lands in — the demand curve behind equipment paper.",
   status: "draft",
-  beats: EQUIPMENT_YARD.beats.filter((b) =>
-    ["thesis-obbba", "wave-obbba", "money-map", "flow-national"].includes(b.id),
-  ),
+  beats: [
+    {
+      id: "ef-sector-pie",
+      act: "Act 1 · The standing order",
+      title: "$2.26T — the standing order",
+      phrase: "all $ by naics sector · 2022-07-04 → 2025-07-03 · snapshot",
+      kind: "sector-pie",
+    },
+    {
+      id: "ef-constr-pie",
+      act: "Act 1 · The standing order",
+      title: "Construction — the historical split",
+      phrase: "construction $ by psc-family bucket · fy23–fy25 · snapshot",
+      kind: "constr-pie",
+    },
+    ...EQUIPMENT_YARD.beats.filter((b) => ["thesis-obbba", "wave-obbba"].includes(b.id)),
+    {
+      id: "wave-obbba-long",
+      act: "Act 1 · The thesis",
+      title: "The jump — four years of context",
+      phrase: "monthly obligations · dhs × horizontal construction · 2022→ · snapshot",
+      kind: "wave-long",
+    },
+    ...EQUIPMENT_YARD.beats.filter((b) => ["money-map", "flow-national"].includes(b.id)),
+    {
+      id: "iron-mirage",
+      act: "Act 2 · The mirage",
+      title: "47 firms hold 80% — the mirage",
+      phrase: "active heavy-civil awards by firm band · snapshot",
+      kind: "iron-mirage",
+    },
+    {
+      id: "iron-book",
+      act: "Act 2 · The mirage",
+      title: "The middle's book — right now",
+      phrase: "490 mid firms · 929 active awards · obligated vs ceiling · snapshot",
+      kind: "iron-book",
+    },
+    {
+      id: "iron-dropmic",
+      act: "Act 3 · The names",
+      title: "We know their names",
+      phrase: "mid-market heavy-civil primes · new work since signing · snapshot",
+      kind: "iron-dropmic",
+    },
+  ],
 };
 
 // ── Narrative 3 · janitorial / facilities / cleaning — shell, beats TBD ───────

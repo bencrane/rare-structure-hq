@@ -32,6 +32,8 @@ import { FacilitiesAwardsMapView } from "@/demo/FacilitiesAwardsMapView";
 import { FederalEstateMapView } from "@/demo/FederalEstateMapView";
 import { FirmPortraitView } from "@/demo/FirmPortraitView";
 import { HoleView } from "@/demo/HoleView";
+import ironMiragePie from "@/demo/iron-mirage-pie.json";
+import waveObbbaLong from "@/demo/wave-obbba-long.json";
 import facilities56Pie from "@/demo/facilities-56-pie.json";
 import facilitiesServicesPie from "@/demo/facilities-services-pie.json";
 import scodeDodSplitPie from "@/demo/scode-dod-split-pie.json";
@@ -329,6 +331,72 @@ export default function DemoTour() {
           <SeptSprintView />
         ) : activeState.status === "done" && active && active.kind === "hole" ? (
           <HoleView />
+        ) : activeState.status === "done" && active && active.kind === "iron-mirage" ? (
+          <ConstrPieView
+            snap={ironMiragePie as never}
+            kicker="The mirage"
+            title="47 firms hold 80% of the wave"
+            subtitle="active heavy-civil awards · by firm band · obligated $"
+            centerLabel="active book"
+          />
+        ) : activeState.status === "done" && active && active.kind === "iron-book" ? (
+          <ThesisView
+            kicker="Right now"
+            title="The middle's book, as it sits today"
+            subtitle="mid-market heavy-civil primes · active awards · $1–150m open books"
+            lines={[
+              {
+                amount: "490",
+                label: "Firms holding live paper",
+                detail: "Regional heavy-civil primes — winning federal awards directly, not as subs",
+              },
+              {
+                amount: "929",
+                label: "Active awards, right now",
+                detail: "Roads, border packages, utilities, dams, airfields — work in performance today",
+              },
+              {
+                amount: "$16.2B",
+                label: "Signed capacity — $9.1B funded",
+                detail:
+                  "Another $7B of ceiling already under contract, funding as the work rolls forward",
+              },
+            ]}
+            statement="Every dollar of it is performed with machines. The award is public; the iron it requires is not yet on their balance sheets."
+            footer="active book as of the pinned snapshot"
+          />
+        ) : activeState.status === "done" && active && active.kind === "iron-dropmic" ? (
+          <ThesisView
+            kicker="The names"
+            title="The headlines belong to 47 companies. The market doesn't."
+            subtitle="mid-market heavy-civil primes · new work since the signature"
+            lines={[
+              {
+                amount: "$1.13B",
+                label: "To grade, pave & build roads and bridges",
+                detail: "Paving crews on new highways — and resurfacing the ones already there",
+              },
+              {
+                amount: "$0.48B",
+                label: "To move earth at the border",
+                detail: "Heavy-civil crews — earthworks and structures behind the barrier",
+              },
+              {
+                amount: "$0.36B",
+                label: "To pour dams, cut canals, dredge waterways",
+                detail: "Concrete placement, channel excavation, marine dredge crews",
+              },
+            ]}
+            statement="Every one of those awards is performed with iron — excavators, dozers, cranes — and iron gets financed. We know their names, their awards, and their start dates."
+            footer="new obligations since 2025-07-04 · mid-market cohort · figures from the pinned snapshot"
+          />
+        ) : activeState.status === "done" && active && active.kind === "wave-long" ? (
+          <WaveView
+            snap={waveObbbaLong as never}
+            kicker="The jump"
+            title="Three and a half years of nothing — then this"
+            footer="same lane, widened to 2022 · two net-deobligation months floored at $0 · trailing months still filling"
+          />
         ) : activeState.status === "done" && active && active.kind === "shutdown-thesis" ? (
           <ThesisView
             kicker="What happened"
