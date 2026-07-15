@@ -54,6 +54,27 @@ interface AuthState {
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
 
+// DEV-only mock session. Extracted so both devSignIn and reload-restore mint the same object.
+// `import.meta.env.DEV` is statically false in prod ⇒ every caller is tree-shaken out.
+const DEV_SESSION_KEY = "rs-dev-role";
+function mockSession(as: Role): Session {
+  const operator = as === "operator";
+  return {
+    access_token: "dev",
+    token_type: "bearer",
+    expires_in: 3600,
+    refresh_token: "dev",
+    user: {
+      id: operator ? "dev-operator" : "dev-client",
+      email: operator ? "operator@rarestructure.dev" : "client@thehardmoneyco.com",
+      app_metadata: operator ? { role: "operator" } : {},
+      user_metadata: {},
+      aud: "authenticated",
+      created_at: "2024-01-01T00:00:00.000Z",
+    },
+  } as unknown as Session;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -62,11 +83,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let mounted = true;
     supabase.auth.getSession().then(({ data }) => {
       if (!mounted) return;
+      // DEV: restore a persisted mock session so direct URLs / reloads stay signed in.
+      if (!data.session && import.meta.env.DEV) {
+        const as = sessionStorage.getItem(DEV_SESSION_KEY) as Role | null;
+        if (as === "operator" || as === "client") {
+          setSession(mockSession(as));
+          setLoading(false);
+          return;
+        }
+      }
       setSession(data.session);
       setLoading(false);
     });
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, sess) => {
+      // DEV: the initial INITIAL_SESSION event fires null and would clobber a restored mock.
+      // Ignore null while a persisted dev role exists so reloads stay signed in.
+      if (!sess && import.meta.env.DEV && sessionStorage.getItem(DEV_SESSION_KEY)) return;
       setSession(sess);
     });
 
@@ -89,27 +122,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
+    if (import.meta.env.DEV) sessionStorage.removeItem(DEV_SESSION_KEY);
     await supabase.auth.signOut();
     setSession(null); // also clears a DEV mock session
   }, []);
 
   const devSignIn = useCallback((as: Role = "operator") => {
     if (!import.meta.env.DEV) return;
-    const operator = as === "operator";
-    setSession({
-      access_token: "dev",
-      token_type: "bearer",
-      expires_in: 3600,
-      refresh_token: "dev",
-      user: {
-        id: operator ? "dev-operator" : "dev-client",
-        email: operator ? "operator@rarestructure.dev" : "client@thehardmoneyco.com",
-        app_metadata: operator ? { role: "operator" } : {},
-        user_metadata: {},
-        aud: "authenticated",
-        created_at: new Date().toISOString(),
-      },
-    } as unknown as Session);
+    sessionStorage.setItem(DEV_SESSION_KEY, as); // survive reloads / direct URLs
+    setSession(mockSession(as));
     setLoading(false);
   }, []);
 

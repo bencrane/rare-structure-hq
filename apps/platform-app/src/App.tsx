@@ -48,6 +48,7 @@ import EngagementTemplatesRender from "./routes/app/EngagementTemplatesRender";
 import Insights from "./routes/app/Insights";
 import ManageDocumensoTemplates from "./routes/app/ManageDocumensoTemplates";
 import Mandate from "./routes/app/Mandate";
+import MandateBrief from "./routes/app/MandateBrief";
 import MapTab from "./routes/app/MapTab";
 import Market from "./routes/app/Market";
 import Overview from "./routes/app/Overview";
@@ -233,6 +234,16 @@ export function App() {
             element={
               <RequireOperator>
                 <Mandate />
+              </RequireOperator>
+            }
+          />
+          {/* Firmographic-brief VARIANT of the mandate surface — a template example; the
+              original commercial-terms Mandate above keeps /app/m/:handle. */}
+          <Route
+            path="m/:handle/brief"
+            element={
+              <RequireOperator>
+                <MandateBrief />
               </RequireOperator>
             }
           />
