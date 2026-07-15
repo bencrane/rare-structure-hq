@@ -6,7 +6,7 @@
  * controls. This file owns no data and no geometry — just the entry points.
  * The card primitive (sizing, equal heights, CTA placement) lives in `@/app/cockpit`.
  */
-import { FileCog, FileDown, FileSignature, Presentation, Route } from "lucide-react";
+import { FileCog, FileDown, FilePlus2, FileSignature, Presentation, Route } from "lucide-react";
 
 import { Grid } from "@rare-structure-hq/ui";
 
@@ -19,6 +19,13 @@ export default function Settings() {
       description="Configure the operator cockpit. Pick an area to manage."
     >
       <Grid cols={1} mdCols={2} gap="4">
+        <HubCard
+          icon={FilePlus2}
+          title="New Deals"
+          description="Create a deal without a booking — attach a Documenso template, set its values, and generate the signing document to email after."
+          cta="Create"
+          to="/app/settings/new-deal"
+        />
         <HubCard
           icon={FileCog}
           title="Proposal Templates"

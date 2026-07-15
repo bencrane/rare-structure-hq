@@ -16,6 +16,7 @@ import {
   type EdgeDealDetails,
   type EdgeDealOriginated,
   EdgeError,
+  edgeCreateDeal,
   edgeGetDealDetails,
   edgeListDeals,
   edgeOriginateDeal,
@@ -46,6 +47,43 @@ dealAdminRoutes.get("/", requireUser, async (c) => {
       bookedAt: r.booked_at,
     }));
     return c.json({ data: list });
+  } catch (e) {
+    if (e instanceof EdgeError) throw new HTTPException(502, { message: e.message });
+    throw e;
+  }
+});
+
+// POST /api/v1/deals — the MANUAL deal lane (Settings → New Deal): mint a deal from an operator
+// payload with no booking upstream (the parallel to the Cal.com producer). Signatory required —
+// edge 422s without company_name / first+last / a valid email. Returns the deal_handle that keys
+// the follow-ups (PUT details to attach a template + field_values, then originate).
+dealAdminRoutes.post("/", requireUser, async (c) => {
+  const body = (await c.req.json().catch(() => ({}))) as {
+    companyName?: unknown;
+    domain?: unknown;
+    firstName?: unknown;
+    lastName?: unknown;
+    email?: unknown;
+    title?: unknown;
+  };
+  const str = (v: unknown) => (typeof v === "string" ? v.trim() : "");
+  try {
+    const r = await edgeCreateDeal({
+      company_name: str(body.companyName),
+      domain: str(body.domain) || null,
+      first_name: str(body.firstName),
+      last_name: str(body.lastName),
+      email: str(body.email),
+      title: str(body.title) || null,
+    });
+    return c.json({
+      data: {
+        action: r.action,
+        dealId: r.deal_id,
+        dealHandle: r.deal_handle,
+        status: r.status,
+      },
+    });
   } catch (e) {
     if (e instanceof EdgeError) throw new HTTPException(502, { message: e.message });
     throw e;

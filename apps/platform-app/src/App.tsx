@@ -57,6 +57,7 @@ import Research from "./routes/app/Research";
 import Settings from "./routes/app/Settings";
 import SettingsDocumenso from "./routes/app/SettingsDocumenso";
 import SettingsEngagement from "./routes/app/SettingsEngagement";
+import SettingsNewDeal from "./routes/app/SettingsNewDeal";
 import SettingsOrigination from "./routes/app/SettingsOrigination";
 import SettingsProposalTemplates from "./routes/app/SettingsProposalTemplates";
 import TemplateEditor from "./routes/app/TemplateEditor";
@@ -268,6 +269,14 @@ export function App() {
             element={
               <RequireOperator>
                 <Settings />
+              </RequireOperator>
+            }
+          />
+          <Route
+            path="settings/new-deal"
+            element={
+              <RequireOperator>
+                <SettingsNewDeal />
               </RequireOperator>
             }
           />
