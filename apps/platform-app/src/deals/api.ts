@@ -24,6 +24,19 @@ const DEV_DEAL: DealDetails = {
   dealHandle: "013ca823",
   companyName: "Environmental Logistics",
   companyDomain: "envlogs.com",
+  firmographics: {
+    description:
+      "Regional provider of hazardous-waste transport and remediation logistics for industrial and municipal operators across the Gulf Coast.",
+    industry: "Environmental Services",
+    sector: "Waste Management & Remediation",
+    headquarters: "Houston, TX",
+    employees: "120–250",
+    founded: "2009",
+    annualRevenue: "$25M–$50M",
+    ownership: "Private — founder-owned",
+    entityType: "C-Corp",
+    naics: "562910",
+  },
   contacts: [
     {
       contact_id: "dev-contact-1",
@@ -68,11 +81,28 @@ export interface TemplateOption {
   isDefault: boolean;
 }
 
+// Company firmographics — read-only context on the prospect account, surfaced on the Mandate document
+// so it reads as an engagement brief on screenshare. Optional/nullable throughout: absent fields render
+// as "—" and the section degrades gracefully until the BFF supplies them.
+export interface Firmographics {
+  description?: string | null;
+  industry?: string | null;
+  sector?: string | null;
+  headquarters?: string | null;
+  employees?: string | null;
+  founded?: string | null;
+  annualRevenue?: string | null;
+  ownership?: string | null;
+  entityType?: string | null;
+  naics?: string | null;
+}
+
 export interface DealDetails {
   dealId: string;
   dealHandle: string;
   companyName: string | null;
   companyDomain: string | null;
+  firmographics?: Firmographics | null;
   contacts: DealContact[];
   availableContacts: AvailableContact[];
   fieldValues: Record<string, unknown>;
