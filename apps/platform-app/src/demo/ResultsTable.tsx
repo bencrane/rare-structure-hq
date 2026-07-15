@@ -38,6 +38,8 @@ export function ResultsTable({
   resultView,
   onResultView,
   onWorkbench,
+  scopeRaw = false,
+  onToggleScope,
 }: {
   query: MapQuery | null;
   results: Company[];
@@ -58,6 +60,9 @@ export function ResultsTable({
   /** Flip the serving table the NL /ask query is routed to (only meaningful for `query.nl`). */
   /** Opens the deterministic query workbench (the header toggle's third segment). */
   onWorkbench?: () => void;
+  /** SCOPE-DISPLAY toggle: current state + setter (raw plan ⇄ plain English). */
+  scopeRaw?: boolean;
+  onToggleScope?: () => void;
 }) {
   const reduced = !!useReducedMotion();
   const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" }>({
@@ -66,7 +71,7 @@ export function ResultsTable({
   });
 
   const awards = results.reduce((sum, c) => sum + c.totalAwarded, 0);
-  const scope = resultScopeCell(query, interpretedTitle);
+  const scope = resultScopeCell(query, interpretedTitle, scopeRaw);
 
   const sorted = useMemo(() => {
     const list = [...results];
@@ -106,6 +111,8 @@ export function ResultsTable({
         onView={onResultView}
         onClear={onDismiss}
         onWorkbench={onWorkbench}
+        scopeRaw={scopeRaw}
+        onToggleScope={onToggleScope}
       />
 
       <div className="relative flex min-h-0 flex-1 flex-col items-center px-6 pt-2 pb-4">

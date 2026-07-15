@@ -81,10 +81,27 @@ export function industryLabel(key: IndustryKey | undefined): string {
 export function resultScopeCell(
   query: MapQuery | null | undefined,
   interpretedTitle?: string | null,
+  /** false (default) → the plain-English query; true → the raw compiled plan
+   * (the disclosure surface). The header's scope toggle drives this. */
+  showRaw = false,
 ): { label: string; value: string } {
   const nl = query?.nl?.trim();
-  if (nl) return { label: "Scope", value: interpretedTitle?.trim() || nl };
+  if (nl) {
+    const raw = interpretedTitle?.trim();
+    return { label: "Scope", value: showRaw ? raw || nl : nl };
+  }
   return { label: "Vertical", value: industryLabel(query?.industry) };
+}
+
+/** Whether the scope cell has a distinct raw plan to toggle TO — only nl queries
+ * whose compiled plan differs from the sentence. Non-nl (vertical) has no raw form. */
+export function scopeIsToggleable(
+  query: MapQuery | null | undefined,
+  interpretedTitle?: string | null,
+): boolean {
+  const nl = query?.nl?.trim();
+  const raw = interpretedTitle?.trim();
+  return !!nl && !!raw && raw !== nl;
 }
 
 // ───────────────────────────────────────────────────────────────────

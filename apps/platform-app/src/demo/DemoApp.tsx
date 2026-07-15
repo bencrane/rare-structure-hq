@@ -28,7 +28,7 @@ import { SubUniverseConsole } from "./components/SubUniverseConsole";
 import { SuboutConsole } from "./components/SuboutConsole";
 import { SuboutProfile } from "./components/SuboutProfile";
 import type { ResultView } from "./components/TerminalChrome";
-import { type QueryResult, runQuery } from "./data";
+import { type QueryResult, runQuery, scopeIsToggleable } from "./data";
 import { fetchSubUniverse, fetchSuboutOpportunities } from "./federalApi";
 import {
   type SubUniverseGateParams,
@@ -60,6 +60,9 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
   // every new query; the post-query banner toggle flips THIS only — a per-query local override
   // that never rewrites the global default.
   const [resultView, setResultView] = useState<ResultView>(defaultView);
+  // Scope-display toggle: false (default) shows the plain-English query; true shows the
+  // raw compiled plan (the disclosure surface). Resets to English on each new query.
+  const [scopeRaw, setScopeRaw] = useState(false);
   // The deterministic query workbench — a cockpit MODE (third header-toggle segment), not a
   // result view: it replaces the map pane wholesale and never touches the persisted default.
   // The pane stays mounted while closed so composed filters and the last run survive toggling.
@@ -150,6 +153,7 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
       if (command.kind === "map-query") {
         setAggregate(null);
         setResultView(defaultView); // each new query starts from the global default
+        setScopeRaw(false); // and starts showing plain English, not the raw plan
         setQuery(command.query);
       } else {
         setAggregate(command.aggregate);
@@ -349,6 +353,12 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
             resultView={resultView}
             onResultView={setResultView}
             onWorkbench={openWorkbench}
+            scopeRaw={scopeRaw}
+            onToggleScope={
+              scopeIsToggleable(query, result?.interpretedTitle ?? null)
+                ? () => setScopeRaw((v) => !v)
+                : undefined
+            }
           />
         ) : (
           <MapView
@@ -371,6 +381,12 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
             defaultView={defaultView}
             onDefaultView={setDefaultView}
             onWorkbench={openWorkbench}
+            scopeRaw={scopeRaw}
+            onToggleScope={
+              scopeIsToggleable(query, result?.interpretedTitle ?? null)
+                ? () => setScopeRaw((v) => !v)
+                : undefined
+            }
             subout={suboutPlot}
             suboutSelectedId={selectedOpportunity?.generated_unique_award_id ?? null}
             onSelectOpportunity={(o) => setSelectedOpportunity(o)}
