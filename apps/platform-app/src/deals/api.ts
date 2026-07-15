@@ -118,6 +118,44 @@ export interface DealDetailsInput {
   templateDocumensoId: number | null;
 }
 
+// The MANUAL deal lane (Settings → New Deal): mint a deal from an operator payload with no booking
+// upstream — the parallel to the Cal.com producer. Signatory required (first/last/email). `action`
+// is "updated" when the company's account already carried a deal (one deal per account — the manual
+// lane collapses onto it, same as a repeat booking).
+export interface DealCreateInput {
+  companyName: string;
+  domain: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  title: string;
+}
+
+export interface DealCreated {
+  action: string;
+  dealId: string;
+  dealHandle: string;
+  status: string;
+}
+
+export async function createDeal(token: string, input: DealCreateInput): Promise<DealCreated> {
+  if (isDev(token)) {
+    return {
+      action: "created",
+      dealId: DEV_DEAL.dealId,
+      dealHandle: DEV_DEAL.dealHandle,
+      status: "draft",
+    };
+  }
+  const res = await fetch(`${API_BASE}/api/v1/deals`, {
+    method: "POST",
+    headers: authHeaders(token),
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) throw new Error(`deal create failed: ${res.status} ${await res.text()}`);
+  return (await res.json()).data as DealCreated;
+}
+
 export async function getDealDetails(token: string, handle: string): Promise<DealDetails> {
   if (isDev(token)) return { ...DEV_DEAL, dealHandle: handle || DEV_DEAL.dealHandle };
   const res = await fetch(`${API_BASE}/api/v1/deals/${encodeURIComponent(handle)}/details`, {

@@ -93,6 +93,37 @@ export async function edgeListDeals(): Promise<EdgeDealSummary[]> {
   return (await res.json()) as EdgeDealSummary[];
 }
 
+// Deal create — the MANUAL deal lane (Settings → New Deal): mint a deal from an operator payload
+// with NO booking upstream (the parallel to the Cal.com producer). Same grain — one deal per account;
+// `action` is 'updated' when the account already carried a deal. The signatory is required edge-side.
+export interface EdgeDealCreate {
+  company_name: string;
+  domain: string | null;
+  first_name: string;
+  last_name: string;
+  email: string;
+  title: string | null;
+}
+
+export interface EdgeDealCreated {
+  action: string;
+  deal_id: string;
+  deal_handle: string;
+  status: string;
+  account_id: string;
+  contact_id: string;
+}
+
+export async function edgeCreateDeal(body: EdgeDealCreate): Promise<EdgeDealCreated> {
+  const res = await fetch(`${base()}/api/v1/deals`, {
+    method: "POST",
+    headers: serviceHeaders(),
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new EdgeError(`edge deal create failed: ${res.status} ${await res.text()}`);
+  return (await res.json()) as EdgeDealCreated;
+}
+
 // Deal details — the editable deal_details (contacts + content + attached Documenso template) and the
 // deal-org's selectable templates. Backs the Deal Details editor (opened from a Research row).
 export interface EdgeDealDetails {
