@@ -20,6 +20,7 @@ import { AnimatePresence } from "framer-motion";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AggregateView } from "./AggregateView";
 import { MapView } from "./MapView";
+import { PhraseAggregateView } from "./PhraseAggregateView";
 import { QueryWorkbench } from "./QueryWorkbench";
 import { ResultsTable } from "./ResultsTable";
 import { CommandPalette } from "./components/CommandPalette";
@@ -51,6 +52,10 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
   const [commandOpen, setCommandOpen] = useState(false);
   const [query, setQuery] = useState<MapQuery | null>(null);
   const [aggregate, setAggregate] = useState<AggregateSpec | null>(null);
+  // A free-typed `total …` sentence — the AGGREGATE grammar. Rendered by
+  // PhraseAggregateView (which owns its own fetch); mutually exclusive with
+  // the canned `aggregate` spec above.
+  const [aggregatePhrase, setAggregatePhrase] = useState<string | null>(null);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   // The operator's GLOBAL default surface for a fresh map-query — persisted (localStorage),
   // synced across tabs, set ONLY via the pre-query header toggle. Seeds to Table: live entities
@@ -122,6 +127,8 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
           setSubUniverseUei(null);
         } else if (suboutUei) {
           setSuboutUei(null);
+        } else if (aggregatePhrase) {
+          setAggregatePhrase(null);
         } else if (aggregate) {
           setAggregate(null);
         } else if (query) {
@@ -139,6 +146,7 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
     selectedCompany,
     subUniverseUei,
     suboutUei,
+    aggregatePhrase,
     aggregate,
     query,
   ]);
@@ -152,10 +160,15 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
       setWorkbenchOpen(false); // an ⌘K command targets the map/chart surface, not the bench
       if (command.kind === "map-query") {
         setAggregate(null);
+        setAggregatePhrase(null);
         setResultView(defaultView); // each new query starts from the global default
         setScopeRaw(false); // and starts showing plain English, not the raw plan
         setQuery(command.query);
+      } else if (command.kind === "aggregate-phrase") {
+        setAggregate(null);
+        setAggregatePhrase(command.phrase);
       } else {
+        setAggregatePhrase(null);
         setAggregate(command.aggregate);
       }
     },
@@ -311,7 +324,7 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
   const results = result?.companies ?? [];
   // A free-typed /ask query may resolve to an AGGREGATE (breakdown/total/distribution/top-N)
   // rather than rows — the response shape drives the view. Only when NOT loading, so the
-  const showingAggregate = !!aggregate;
+  const showingAggregate = !!aggregate || !!aggregatePhrase;
 
   return (
     <div
@@ -329,7 +342,13 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
       />
 
       <AnimatePresence mode="wait">
-        {workbenchOpen ? null : aggregate ? (
+        {workbenchOpen ? null : aggregatePhrase ? (
+          <PhraseAggregateView
+            key={`aggregate-phrase:${aggregatePhrase}`}
+            phrase={aggregatePhrase}
+            onInvokeCommand={() => setCommandOpen(true)}
+          />
+        ) : aggregate ? (
           <AggregateView
             key="aggregate"
             spec={aggregate}
