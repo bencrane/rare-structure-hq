@@ -1343,11 +1343,11 @@ function phraseScopeTitle(res: PhraseResponse): string {
 
 /** Compiled-phrase response → the cockpit's QueryResult (companies + provenance). */
 export function phraseToQueryResult(res: PhraseResponse): QueryResult {
-  const rows = res.data.rows;
+  const rows = res.data.rows ?? [];
   const companies =
     res.meta.grain === "entity"
       ? rows.map(marketEntityRowToCompany)
-      : marketTableRowsToCompanies(res.meta.grain, rows);
+      : marketTableRowsToCompanies(res.meta.grain ?? "", rows);
   startDossierPrefetch(companies.map((c) => c.id));
   return {
     companies,
