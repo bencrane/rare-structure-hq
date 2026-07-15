@@ -388,7 +388,7 @@ federalRoutes.post("/sub-universe", async (c) => {
 });
 
 // ── Deterministic phrase compiler — verbatim broker ─────────────────────────
-// catalyst POST /api/v1/market/phrase (phrase.v1): closed grammar, zero LLM.
+// catalyst POST /api/v1/market/phrase (phrase.v5 at audit 2026-07-15; version rides meta.compilerVersion): closed grammar, zero LLM.
 // Body + status + response pass through VERBATIM — in particular the 422 whose
 // detail names the refusing token (the vocabulary teaching surface). No response
 // cache: phrases vary and the compiled pipeline is already bounded upstream.

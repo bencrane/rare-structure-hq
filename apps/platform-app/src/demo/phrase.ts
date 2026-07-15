@@ -1,7 +1,7 @@
 /**
  * Phrase compiler client types + the plan→composer mapping (pure logic).
  *
- * The wire is catalyst's deterministic phrase compiler (phrase.v2, POST
+ * The wire is catalyst's deterministic phrase compiler (phrase.v5 at audit 2026-07-15 — treat compilerVersion as authoritative, POST
  * /api/v1/federal/phrase, verbatim broker): a CLOSED grammar — any unbound
  * token refuses the whole phrase with a 422 naming the token, and
  * `meta.bindings` accounts for every token. v2 adds the active axis
