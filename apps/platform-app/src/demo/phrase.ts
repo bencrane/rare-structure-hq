@@ -12,6 +12,7 @@
  * deterministic layer the operator already drives by hand.
  */
 
+import type { AggregateBar } from "./types";
 import { type WorkbenchDataset, type WorkbenchRow, createRow } from "./workbench";
 
 export type PhraseBinding = {
@@ -24,18 +25,28 @@ export type PhraseBinding = {
 export type PhrasePlanStep = {
   grain: string;
   collapse?: string;
-  filters: { field: string; op: string; value: unknown }[];
-  limit: number;
+  /** Absent on AGGREGATE-mode plan steps (the 'total …' grammar). */
+  filters?: { field: string; op: string; value: unknown }[];
+  limit?: number;
 };
 
 export type PhraseMeta = {
   compilerVersion: string;
-  registryVersion: string;
+  /** Absent on AGGREGATE-mode responses. */
+  registryVersion?: string;
   phrase: string;
   bindings: PhraseBinding[];
-  grain: string;
+  /** Absent on AGGREGATE-mode responses. */
+  grain?: string;
   plan: PhrasePlanStep[];
   refused: null | { token: string; reason: string };
+  /** 'aggregate' when the 'total …' grammar served the phrase (bars, not rows). */
+  mode?: string;
+  title?: string;
+  unitLabel?: string;
+  matchedRows?: number;
+  totalGroups?: number;
+  artifact?: string;
   returned?: number;
   total?: number;
   capped?: boolean;
@@ -46,7 +57,8 @@ export type PhraseMeta = {
 
 export type PhraseResponse = {
   meta: PhraseMeta;
-  data: { rows: Record<string, unknown>[] };
+  /** Retrieval mode carries rows; aggregate mode ('total …') carries bars. */
+  data: { rows?: Record<string, unknown>[]; bars?: AggregateBar[] };
 };
 
 /** Compiler grain → workbench dataset tab. */
@@ -68,7 +80,7 @@ export function planStepToComposer(step: PhrasePlanStep): {
   rows: WorkbenchRow[];
 } {
   const dataset = GRAIN_TO_DATASET[step.grain] ?? ("entities" as WorkbenchDataset);
-  const rows = step.filters.map((f) => {
+  const rows = (step.filters ?? []).map((f) => {
     const row = createRow();
     row.field = f.field;
     row.op = f.op as WorkbenchRow["op"];

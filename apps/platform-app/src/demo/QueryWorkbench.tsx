@@ -35,6 +35,7 @@ import {
 } from "./federalApi";
 import type { CodeSuggestion, WorkbenchFeature } from "./federalApi";
 import { type PhraseMeta, type PhrasePlanStep, bindingLabel, planStepToComposer } from "./phrase";
+import type { AggregateBar } from "./types";
 import {
   type CodeRegistry,
   type ComposedFilter,
@@ -897,6 +898,7 @@ function PhraseBar({ onPopulate }: { onPopulate: (step: PhrasePlanStep) => void 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [meta, setMeta] = useState<PhraseMeta | null>(null);
+  const [aggBars, setAggBars] = useState<AggregateBar[] | null>(null);
 
   async function run() {
     const phrase = draft.trim();
@@ -904,11 +906,18 @@ function PhraseBar({ onPopulate }: { onPopulate: (step: PhrasePlanStep) => void 
     setBusy(true);
     setError(null);
     setMeta(null);
+    setAggBars(null);
     try {
       const res = await fetchPhrase(phrase);
       setMeta(res.meta);
-      const terminal = res.meta.plan[res.meta.plan.length - 1];
-      if (terminal) onPopulate(terminal);
+      if (res.meta.mode === "aggregate") {
+        // 'total …' phrases return BARS, not a filter plan — there is nothing
+        // to populate the composer with; render the result inline instead.
+        setAggBars(res.data.bars ?? []);
+      } else {
+        const terminal = res.meta.plan[res.meta.plan.length - 1];
+        if (terminal) onPopulate(terminal);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "phrase failed");
     } finally {
@@ -951,12 +960,30 @@ function PhraseBar({ onPopulate }: { onPopulate: (step: PhrasePlanStep) => void 
       {meta && (
         <div className="mt-2 flex flex-col gap-1 font-mono text-mono-xs">
           <div className="text-[color:var(--color-text-muted)] uppercase">
-            {meta.compilerVersion} · grain {meta.grain} · {meta.plan.length}-step plan ·{" "}
-            {typeof meta.total === "number" ? `${meta.total.toLocaleString("en-US")} matches` : ""}
-            {meta.step1 ? ` · step 1: ${meta.step1.distinct_recipients} recipients` : ""}
-            {" · composer populated from the plan"}
+            {meta.mode === "aggregate"
+              ? `${meta.compilerVersion} · aggregate · ${meta.totalGroups ?? 0} groups · ${meta.title ?? ""}`
+              : `${meta.compilerVersion} · grain ${meta.grain} · ${meta.plan.length}-step plan · ${
+                  typeof meta.total === "number" ? `${meta.total.toLocaleString("en-US")} matches` : ""
+                }${meta.step1 ? ` · step 1: ${meta.step1.distinct_recipients} recipients` : ""} · composer populated from the plan`}
           </div>
           <div className="text-[color:var(--color-text-subtle)]">{bindings.join("  ·  ")}</div>
+          {aggBars && (
+            <div className="mt-1 flex flex-col gap-0.5 text-[color:var(--color-text-primary)]">
+              {aggBars.slice(0, 8).map((b) => (
+                <div key={b.key} className="flex justify-between gap-4">
+                  <span>{b.label}</span>
+                  <span className="text-[color:var(--color-text-muted)]">
+                    ${b.total.toLocaleString("en-US", { maximumFractionDigits: 0 })} · {b.count.toLocaleString("en-US")}
+                  </span>
+                </div>
+              ))}
+              {aggBars.length > 8 && (
+                <div className="text-[color:var(--color-text-subtle)]">
+                  +{aggBars.length - 8} more groups
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
