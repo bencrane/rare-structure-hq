@@ -45,7 +45,7 @@ type NavItem = { to: string; label: string; icon: LucideIcon };
 // portal — Account + Preferences. The tab set is the role boundary in the UI;
 // operator-only routes are also redirect-gated in App.tsx.
 const OPERATOR_NAV: NavItem[] = [
-  { to: "/app/map", label: "Map", icon: Radar },
+  { to: "/app/map", label: "HQ", icon: Radar },
   { to: "/app/overview", label: "Overview", icon: LayoutDashboard },
   { to: "/app/applications", label: "Applications", icon: Workflow },
   { to: "/app/research", label: "Research", icon: ClipboardList },
