@@ -53,16 +53,20 @@ export function CommandPalette({
   // The free-typed sentence becomes the top "Phrase" action — running it routes through
   // catalyst's DETERMINISTIC phrase compiler (closed grammar, zero LLM): every token binds
   // to a disclosed filter or the phrase refuses naming the token. The canned commands
-  // below it are acceptance-fixture phrases of the same grammar.
+  // below it are acceptance-fixture phrases of the same grammar. The reserved `total …`
+  // opener is the AGGREGATE grammar (bars, not companies) — those sentences route to the
+  // aggregate compiler and render on the chart surface.
   const rows = useMemo<Command[]>(() => {
     const trimmed = queryText.trim();
     if (!trimmed) return filtered;
-    const phrase: Command = {
-      id: "__phrase__",
-      kind: "map-query",
-      label: trimmed,
-      query: { nl: trimmed, minAward: 0 },
-    };
+    const phrase: Command = /^total\s/i.test(trimmed)
+      ? { id: "__phrase__", kind: "aggregate-phrase", label: trimmed, phrase: trimmed }
+      : {
+          id: "__phrase__",
+          kind: "map-query",
+          label: trimmed,
+          query: { nl: trimmed, minAward: 0 },
+        };
     return [phrase, ...filtered];
   }, [queryText, filtered]);
 
@@ -174,8 +178,9 @@ function CommandRow({
 }) {
   // A phrase row (free-typed or canned) routes through the deterministic compiler.
   const isPhrase = command.kind === "map-query" && !!command.query.nl;
-  const Icon = isPhrase ? Sparkles : command.kind === "aggregate" ? BarChart3 : MapPin;
-  const kindLabel = isPhrase ? "Phrase" : command.kind === "aggregate" ? "Chart" : "Map";
+  const isChart = command.kind === "aggregate" || command.kind === "aggregate-phrase";
+  const Icon = isPhrase ? Sparkles : isChart ? BarChart3 : MapPin;
+  const kindLabel = isPhrase ? "Phrase" : isChart ? "Chart" : "Map";
 
   return (
     <li>

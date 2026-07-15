@@ -189,6 +189,17 @@ export type Command =
       kind: "aggregate";
       label: string;
       aggregate: AggregateSpec;
+    }
+  | {
+      /**
+       * A free-typed AGGREGATE-grammar sentence (the reserved `total …` opener) —
+       * fired verbatim at the aggregate phrase compiler; the chart surface renders
+       * the resolved bars. The same recipe strings the narrative beats fire.
+       */
+      id: string;
+      kind: "aggregate-phrase";
+      label: string;
+      phrase: string;
     };
 
 /** One bar in an aggregate chart. `median`/`p90` ride along when the aggregate requested them
