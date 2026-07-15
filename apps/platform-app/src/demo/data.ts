@@ -1232,7 +1232,7 @@ function entityToCompany(e: FederalEntity): Company {
   };
 }
 
-// ── Deterministic phrase path (catalyst phrase.v2 → market rows → Company) ───
+// ── Deterministic phrase path (catalyst phrase compiler → market rows → Company) ───
 // A free-typed sentence routes through the CLOSED-grammar phrase compiler — zero
 // LLM anywhere on the path: every token binds to a disclosed filter or the whole
 // phrase REFUSES with a 422 naming the token (surfaced verbatim in the banner —

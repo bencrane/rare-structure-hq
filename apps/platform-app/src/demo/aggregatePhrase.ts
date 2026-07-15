@@ -1,5 +1,5 @@
 /**
- * Aggregate-mode phrase client — phrase-agg.v1 (catalyst, via the verbatim
+ * Aggregate-mode phrase client — phrase-agg.v3 at audit 2026-07-15 (catalyst, via the verbatim
  * /api/v1/federal/phrase broker).
  *
  * The SAME endpoint as the retrieval phrase compiler: the reserved opener
