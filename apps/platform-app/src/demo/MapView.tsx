@@ -64,6 +64,8 @@ export function MapView({
   defaultView,
   onDefaultView,
   onWorkbench,
+  scopeRaw = false,
+  onToggleScope,
   subout = null,
   suboutSelectedId = null,
   onSelectOpportunity,
@@ -94,6 +96,10 @@ export function MapView({
   onDefaultView: (v: ResultView) => void;
   /** Opens the deterministic query workbench (the header toggle's third segment). */
   onWorkbench?: () => void;
+  /** SCOPE-DISPLAY toggle: current state + setter. When onToggleScope is provided the
+   * header renders the scope toggle (raw plan ⇄ plain English). */
+  scopeRaw?: boolean;
+  onToggleScope?: () => void;
   /** The sub-out opportunities layer: scored work-site dots + the target HQ pin.
    * Null = layer dormant. Coexists with (renders above) the company-dot layer. */
   subout?: SuboutPlot | null;
@@ -145,6 +151,8 @@ export function MapView({
         onView={query ? onResultView : undefined}
         onClear={query && onDismiss ? onDismiss : undefined}
         onWorkbench={onWorkbench}
+        scopeRaw={scopeRaw}
+        onToggleScope={query ? onToggleScope : undefined}
       />
 
       <div className="relative flex min-h-0 flex-1 items-center justify-center px-6">
@@ -323,6 +331,7 @@ export function MapView({
             profileAsOfDate={profileAsOfDate}
             reduced={reduced}
             onResultView={onResultView}
+            scopeRaw={scopeRaw}
           />
         )}
       </div>
@@ -413,6 +422,7 @@ function ResultBanner({
   profileAsOfDate,
   reduced,
   onResultView,
+  scopeRaw = false,
 }: {
   query: MapQuery;
   results: Company[];
@@ -425,9 +435,10 @@ function ResultBanner({
   profileAsOfDate: string | null;
   reduced: boolean;
   onResultView: (v: ResultView) => void;
+  scopeRaw?: boolean;
 }) {
   const awards = results.reduce((sum, c) => sum + c.totalAwarded, 0);
-  const scope = resultScopeCell(query, interpretedTitle);
+  const scope = resultScopeCell(query, interpretedTitle, scopeRaw);
   // Map mode with nothing plotted (live entities have no coords yet — geo deferred): rather than
   // an overlay list, nudge to the Table view, which owns the full result rendering now.
   const geoPending = plottedCount === 0 && results.length > 0 && !loading && !error;

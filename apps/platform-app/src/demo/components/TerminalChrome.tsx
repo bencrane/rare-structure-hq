@@ -6,6 +6,7 @@
 
 import { motion } from "framer-motion";
 import {
+  Braces,
   Crosshair,
   type LucideIcon,
   Map as MapIcon,
@@ -127,6 +128,8 @@ export function TerminalHeader({
   onView,
   onClear,
   onWorkbench,
+  scopeRaw,
+  onToggleScope,
 }: {
   reduced: boolean;
   /** Hide the wordmark + terminal name when the map is embedded in the
@@ -147,6 +150,11 @@ export function TerminalHeader({
   onClear?: () => void;
   /** Opens the deterministic query workbench — renders the third toggle segment. */
   onWorkbench?: () => void;
+  /** SCOPE-DISPLAY toggle: current state (true = raw compiled plan, false = plain
+   * English). Rendered as a compact button left of the ✕ — only when a raw plan
+   * exists to toggle to (caller passes onToggleScope only then). */
+  scopeRaw?: boolean;
+  onToggleScope?: () => void;
 }) {
   return (
     <motion.header
@@ -196,6 +204,26 @@ export function TerminalHeader({
               kind="active"
               onWorkbench={onWorkbench}
             />
+            {onToggleScope && (
+              <button
+                type="button"
+                onClick={onToggleScope}
+                aria-pressed={scopeRaw}
+                aria-label={
+                  scopeRaw
+                    ? "Showing the raw compiled plan — switch to plain English"
+                    : "Showing the plain-English query — switch to the raw compiled plan"
+                }
+                title={scopeRaw ? "Scope: raw plan" : "Scope: plain English"}
+                className={`flex items-center justify-center border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-raised)] px-2 py-1.5 transition-colors ${
+                  scopeRaw
+                    ? "text-[color:var(--color-text-accent)]"
+                    : "text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text-primary)]"
+                }`}
+              >
+                <Braces className="size-3.5" />
+              </button>
+            )}
             {onClear && (
               <button
                 type="button"
