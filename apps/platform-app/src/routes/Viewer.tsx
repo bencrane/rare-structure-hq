@@ -13,6 +13,7 @@ import activeBaked from "@/internal/facilities-codes-active.json";
 import windowBaked from "@/internal/facilities-codes.json";
 import { type CodeDataset, CodeReference } from "@/viewer/CodeReference";
 import { CombosTable } from "@/viewer/CombosTable";
+import { AdsPairs } from "@/viewer/AdsPairs";
 import { BucketExplorer } from "@/viewer/BucketExplorer";
 import { ConstructionPairs } from "@/viewer/ConstructionPairs";
 import { PairAssignment } from "@/viewer/PairAssignment";
@@ -67,6 +68,12 @@ const TABS: { key: string; label: string; sub: string; body: () => React.ReactNo
     label: "Waste & Env Pairs",
     sub: "two buckets · judged dispositions",
     body: () => <WasteEnvPairs />,
+  },
+  {
+    key: "ads-pairs",
+    label: "Aero·Def·Space Pairs",
+    sub: "hardware verticals · in/out",
+    body: () => <AdsPairs />,
   },
 ];
 
