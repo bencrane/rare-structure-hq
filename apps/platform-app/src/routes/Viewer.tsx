@@ -17,6 +17,7 @@ import { BucketExplorer } from "@/viewer/BucketExplorer";
 import { ConstructionPairs } from "@/viewer/ConstructionPairs";
 import { PairAssignment } from "@/viewer/PairAssignment";
 import { PairCuration } from "@/viewer/PairCuration";
+import { WasteEnvPairs } from "@/viewer/WasteEnvPairs";
 
 const TABS: { key: string; label: string; sub: string; body: () => React.ReactNode }[] = [
   {
@@ -60,6 +61,12 @@ const TABS: { key: string; label: string; sub: string; body: () => React.ReactNo
     label: "Construction Pairs",
     sub: "equipment-heavy construction · in/out",
     body: () => <ConstructionPairs />,
+  },
+  {
+    key: "waste-env-pairs",
+    label: "Waste & Env Pairs",
+    sub: "two buckets · judged dispositions",
+    body: () => <WasteEnvPairs />,
   },
 ];
 
