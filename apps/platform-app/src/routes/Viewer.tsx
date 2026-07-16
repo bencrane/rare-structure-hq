@@ -16,6 +16,7 @@ import { CombosTable } from "@/viewer/CombosTable";
 import { AdsPairs } from "@/viewer/AdsPairs";
 import { BucketExplorer } from "@/viewer/BucketExplorer";
 import { MedStaffPairs } from "@/viewer/MedStaffPairs";
+import { StaffingPairs } from "@/viewer/StaffingPairs";
 import { ConstructionPairs } from "@/viewer/ConstructionPairs";
 import { PairAssignment } from "@/viewer/PairAssignment";
 import { PairCuration } from "@/viewer/PairCuration";
@@ -81,6 +82,12 @@ const TABS: { key: string; label: string; sub: string; body: () => React.ReactNo
     label: "Medical Staffing Pairs",
     sub: "clinicians into gov settings · judged",
     body: () => <MedStaffPairs />,
+  },
+  {
+    key: "staffing-pairs",
+    label: "Prof. Staffing Pairs",
+    sub: "IT · eng · PM · admin — four buckets",
+    body: () => <StaffingPairs />,
   },
 ];
 
