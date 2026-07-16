@@ -15,6 +15,7 @@ import { type CodeDataset, CodeReference } from "@/viewer/CodeReference";
 import { CombosTable } from "@/viewer/CombosTable";
 import { AdsPairs } from "@/viewer/AdsPairs";
 import { BucketExplorer } from "@/viewer/BucketExplorer";
+import { ImcPairs } from "@/viewer/ImcPairs";
 import { MedDevPairs } from "@/viewer/MedDevPairs";
 import { MedStaffPairs } from "@/viewer/MedStaffPairs";
 import { StaffingPairs } from "@/viewer/StaffingPairs";
@@ -95,6 +96,12 @@ const TABS: { key: string; label: string; sub: string; body: () => React.ReactNo
     label: "Medical Device Pairs",
     sub: "devices/supplies/diagnostics · judged",
     body: () => <MedDevPairs />,
+  },
+  {
+    key: "imc-pairs",
+    label: "Industrial Mach. Pairs",
+    sub: "machinery/parts supplier base · judged",
+    body: () => <ImcPairs />,
   },
 ];
 
