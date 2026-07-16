@@ -15,6 +15,7 @@ import { type CodeDataset, CodeReference } from "@/viewer/CodeReference";
 import { CombosTable } from "@/viewer/CombosTable";
 import { AdsPairs } from "@/viewer/AdsPairs";
 import { BucketExplorer } from "@/viewer/BucketExplorer";
+import { MedDevPairs } from "@/viewer/MedDevPairs";
 import { MedStaffPairs } from "@/viewer/MedStaffPairs";
 import { StaffingPairs } from "@/viewer/StaffingPairs";
 import { ConstructionPairs } from "@/viewer/ConstructionPairs";
@@ -88,6 +89,12 @@ const TABS: { key: string; label: string; sub: string; body: () => React.ReactNo
     label: "Prof. Staffing Pairs",
     sub: "IT · eng · PM · admin — four buckets",
     body: () => <StaffingPairs />,
+  },
+  {
+    key: "meddev-pairs",
+    label: "Medical Device Pairs",
+    sub: "devices/supplies/diagnostics · judged",
+    body: () => <MedDevPairs />,
   },
 ];
 
