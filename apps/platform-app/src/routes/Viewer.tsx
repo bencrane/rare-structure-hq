@@ -15,6 +15,7 @@ import { type CodeDataset, CodeReference } from "@/viewer/CodeReference";
 import { CombosTable } from "@/viewer/CombosTable";
 import { AdsPairs } from "@/viewer/AdsPairs";
 import { BucketExplorer } from "@/viewer/BucketExplorer";
+import { FirePairs } from "@/viewer/FirePairs";
 import { FoodPairs } from "@/viewer/FoodPairs";
 import { ImcPairs } from "@/viewer/ImcPairs";
 import { MedDevPairs } from "@/viewer/MedDevPairs";
@@ -116,6 +117,12 @@ const TABS: { key: string; label: string; sub: string; body: () => React.ReactNo
     label: "Clothing & Textiles Pairs",
     sub: "uniforms/armor/gear/textiles · judged",
     body: () => <TextilesPairs />,
+  },
+  {
+    key: "fire-pairs",
+    label: "Fire & Forestry Pairs",
+    sub: "suppression/rehab/land mgmt · judged",
+    body: () => <FirePairs />,
   },
 ];
 
