@@ -43,6 +43,7 @@ const BUCKETS = [
   "Industrial Machinery & Components Manufacturing",
   "Food Production",
   "Clothing & Textiles",
+  "Wildland Fire & Forestry Services",
 ];
 
 const median = (xs: number[]): number => {
