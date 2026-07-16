@@ -142,11 +142,12 @@ describe("Q3 event verbs", () => {
     expect(row.label).toContain("in the last 90 days");
   });
 
-  test("`in <state>` (PoP) is NOT offered on event rows", () => {
+  test("`in <state>` (PoP) IS now offered on event rows (routes to the PoP mart)", () => {
     const rows = q1s("received new funding in california");
     expect(rows.length).toBeGreaterThan(0);
-    expect(rows.every((c) => c.stateCode == null)).toBe(true);
-    expect(rows.every((c) => !c.label.includes("in california"))).toBe(true);
+    expect(rows.every((c) => c.mode === "events")).toBe(true);
+    expect(rows.every((c) => c.stateCode === "CA")).toBe(true);
+    expect(rows[0].label).toContain("in california");
   });
 
   test("event verb + `over $X` parses the obligation floor", () => {
@@ -238,11 +239,91 @@ describe("Q4 step-growth (grew {N}x)", () => {
     );
   });
 
-  test("PoP `in <state>` is never offered on growth rows", () => {
+  test("PoP `in <state>` IS now offered on growth rows (routes to the PoP mart)", () => {
     const rows = q1s("grew 2x in california");
     expect(rows.length).toBeGreaterThan(0);
     expect(rows.every((c) => c.mode === "growth")).toBe(true);
-    expect(rows.every((c) => c.stateCode == null)).toBe(true);
-    expect(rows.every((c) => !c.label.includes("in california"))).toBe(true);
+    expect(rows.every((c) => c.multiplier === 2)).toBe(true);
+    expect(rows.every((c) => c.stateCode === "CA")).toBe(true);
+    expect(rows[0].label).toContain("in california");
+  });
+});
+
+describe("billing (pricing family) + financing tokens (Q1/Q2 only)", () => {
+  test("`billing fixed price` binds on active and renders after the awards clause", () => {
+    const [row] = q1s("total billing fixed price");
+    expect(row.mode).toBeUndefined(); // active default
+    expect(row.grain).toBe("total");
+    expect(row.billing).toBe("fixed price");
+    expect(row.label).toContain("companies with active total awards billing fixed price");
+  });
+
+  test("all three billing families resolve", () => {
+    expect(q1s("total billing cost plus")[0].billing).toBe("cost plus");
+    expect(q1s("total billing time and materials")[0].billing).toBe("time and materials");
+    expect(q1s("single billing fixed price")[0].billing).toBe("fixed price");
+  });
+
+  test("`with|without progress payments` binds financing (not confused with the `with` opener)", () => {
+    const withRow = q1s("total with progress payments")[0];
+    expect(withRow.financing).toBe("with progress payments");
+    expect(withRow.label).toContain("with progress payments");
+    const withoutRow = q1s("total without progress payments")[0];
+    expect(withoutRow.financing).toBe("without progress payments");
+    expect(withoutRow.label).toContain("without progress payments");
+  });
+
+  test("billing + financing + PoP compose in canonical render order", () => {
+    const [row] = q1s("total billing cost plus with progress payments in texas");
+    expect(row.billing).toBe("cost plus");
+    expect(row.financing).toBe("with progress payments");
+    expect(row.stateCode).toBe("TX");
+    expect(row.label).toBe(
+      "companies with active total awards billing cost plus with progress payments in texas",
+    );
+  });
+
+  test("billing/financing ride Q2 (won) alongside the window", () => {
+    const [row] = q1s(
+      "won total billing time and materials without progress payments in the last 90 days",
+    );
+    expect(row.mode).toBe("won");
+    expect(row.billing).toBe("time and materials");
+    expect(row.financing).toBe("without progress payments");
+    expect(row.windowDays).toBe(90);
+    expect(row.label).toBe(
+      "companies that have won total awards billing time and materials without progress payments in the last 90 days",
+    );
+  });
+
+  test("canonical order with job + billing + financing + PoP + HQ + floor", () => {
+    const [row] = q1s(
+      "total to weld billing fixed price with progress payments in california based in texas over $5m",
+    );
+    expect(row.jobPhrase).toBe("to: weld structural steel");
+    expect(row.billing).toBe("fixed price");
+    expect(row.financing).toBe("with progress payments");
+    expect(row.stateCode).toBe("CA");
+    expect(row.hqState).toBe("TX");
+    expect(row.minAmt).toBe(5_000_000);
+    expect(row.label).toBe(
+      "companies with active total awards to weld structural steel billing fixed price with progress payments in california based in texas over $5m",
+    );
+  });
+
+  test("billing/financing are DROPPED on events (award-latest-state, award grain)", () => {
+    const rows = q1s("received new funding billing fixed price with progress payments");
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.every((c) => c.mode === "events")).toBe(true);
+    expect(rows.every((c) => c.billing == null && c.financing == null)).toBe(true);
+    expect(rows.every((c) => !c.label.includes("billing"))).toBe(true);
+    expect(rows.every((c) => !c.label.includes("progress payments"))).toBe(true);
+  });
+
+  test("billing/financing are never bound on growth rows", () => {
+    const rows = q1s("grew 3x billing cost plus");
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.every((c) => c.mode === "growth")).toBe(true);
+    expect(rows.every((c) => c.billing == null && c.financing == null)).toBe(true);
   });
 });

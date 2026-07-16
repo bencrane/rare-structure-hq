@@ -3,12 +3,15 @@
  *
  * THE TWO APPROVED SHAPES:
  *   Q1 (active): [<industry> ]companies with active {total|single} awards[ to <job>]
- *                [ in <state>][ based in <state>][ over $X][ and need <occupation>]
+ *                [ billing <family>][ with|without progress payments][ in <state>]
+ *                [ based in <state>][ over $X][ and need <occupation>]
  *   Q2 (won):    [<industry> ]companies that have won {total|single} awards[ to <job>]
- *                [ in <state>][ based in <state>][ over $X] in the last <window>
- *                [ and need <occupation>]
+ *                [ billing <family>][ with|without progress payments][ in <state>]
+ *                [ based in <state>][ over $X] in the last <window>[ and need <occupation>]
  *
- * `in <state>` is place-of-performance; `based in <state>` is HQ. The grain marker
+ * `billing <family>` (fixed price | cost plus | time and materials) and `with|without
+ * progress payments` are award-latest-state slots — Q1/Q2 only. `in <state>` is
+ * place-of-performance; `based in <state>` is HQ. The grain marker
  * (`total`/`single`) is REQUIRED; every other slot is optional (the won-window is
  * required for Q2). The list defaults to Q1-only and flips to Q2 when `won` or a window
  * fragment is typed.
@@ -136,13 +139,25 @@ export const INDUSTRIES = [
 
 const INDUSTRIES_BY_LEN = [...INDUSTRIES].sort((a, b) => b.length - a.length);
 
+/** The 3 canonical billing (pricing-family) tokens — the optional `billing <family>` slot on
+ * Q1/Q2 (award-latest-state pricing). Sent verbatim as `billing`; the edge maps each to its
+ * FPDS pricing-code set. `time and materials` is the only multi-word-ambiguous token, but the
+ * required leading `billing ` keyword disambiguates all three. */
+export const BILLING_TERMS = ["fixed price", "cost plus", "time and materials"] as const;
+type BillingTerm = (typeof BILLING_TERMS)[number];
+
+/** The 2 canonical financing tokens — the optional `with|without progress payments` slot on
+ * Q1/Q2 (award-latest-state financing). Sent verbatim as `financing`; the edge maps each to
+ * its FPDS financing-code set (NULL financing counts as "without"). */
+type FinancingTerm = "with progress payments" | "without progress payments";
+
 /** Q3 EVENT VERBS (approved 2026-07-15) — the FPDS-modification-event sentence family:
- * "[<industry> ]companies that <event verb>[ to <job>][ based in <state>][ over $X]
- *  in the last <window>[ and need <token>]". Each verb maps server-side to an
- * action_type_code set (2 are rollups). There is NO total/single grain marker, the
- * window is REQUIRED, and the `in <state>` (PoP) slot is NOT offered — the month
- * rollup has no place-of-performance columns. The verb string is sent verbatim as
- * `eventVerb`; the edge does the code mapping. `and need` / `over $X` still apply. */
+ * "[<industry> ]companies that <event verb>[ to <job>][ in <state>][ based in <state>]
+ *  [ over $X] in the last <window>[ and need <token>]". Each verb maps server-side to an
+ * action_type_code set (2 are rollups). There is NO total/single grain marker and the
+ * window is REQUIRED. The `in <state>` (PoP) slot IS offered — the edge routes state on
+ * events to the PoP-dimensioned mart. The verb string is sent verbatim as `eventVerb`;
+ * the edge does the code mapping. `and need` / `over $X` still apply. */
 export const EVENT_VERBS = [
   "picked up additional work",
   "had work added in scope",
@@ -176,11 +191,12 @@ export function matchEventVerbs(verbQuery: string): string[] {
 /** Q4 STEP-GROWTH (approved 2026-07-15) — the acceleration sentence family:
  * "[<industry> ]companies whose prime obligations grew {2x|3x|4x|5x|10x}
  *  in the last {12 months vs the prior 24 months | 6 months vs the prior 12 months |
- *  90 days vs the prior 90 days}[ to <job>][ based in <state>][ and need <token>]".
+ *  90 days vs the prior 90 days}[ to <job>][ in <state>][ based in <state>][ and need <token>]".
  * Per company Σ obligations in the recent window A ≥ N × Σ in the immediately-preceding
- * window B, with Σ B > 0. There is NO total/single grain, NO `over $X`, NO percent
- * language, and the `in <state>` (PoP) slot is NOT offered — the month rollup has no
- * place-of-performance columns. `multiplier` + `windowPair` are sent to the edge. */
+ * window B, with Σ B > 0. There is NO total/single grain, NO `over $X`, and NO percent
+ * language. The `in <state>` (PoP) slot IS offered — the edge routes state on growth to
+ * the PoP-dimensioned mart (summing all action types). `multiplier` + `windowPair` are
+ * sent to the edge. */
 const GROWTH_MULTIPLIERS = [2, 3, 4, 5, 10] as const;
 
 type WindowPair = "12v24" | "6v12" | "90v90";
@@ -315,6 +331,10 @@ type Slots = {
   stateCode?: string;
   hqStateName?: string;
   hqStateCode?: string;
+  /** Q1/Q2 award-latest-state pricing family — `billing <family>`. */
+  billing?: BillingTerm;
+  /** Q1/Q2 award-latest-state financing — `with|without progress payments`. */
+  financing?: FinancingTerm;
   minAmt?: number;
   windowDays?: number;
   need?: string;
@@ -333,17 +353,20 @@ export function q1Sentence(slots: Slots): string {
     jobPhrase,
     stateName,
     hqStateName,
+    billing,
+    financing,
     minAmt,
     windowDays,
     need,
   } = slots;
   // Q4 step-growth reads on its own axis: grew {N}x over the recent-vs-prior window pair.
-  // No grain, no `over $X`, no PoP `in <state>`.
+  // No grain, no `over $X`, no billing/financing. `in <state>` (PoP) IS offered.
   if (mode === "growth") {
     let g = industry ? `${industry} ` : "";
     g += `companies whose prime obligations grew ${multiplier}x`;
     g += ` ${renderGrowthWindowPair(windowPair ?? "12v24")}`;
     if (jobPhrase) g += ` ${renderJobPhrase(jobPhrase)}`;
+    if (stateName) g += ` in ${stateName}`;
     if (hqStateName) g += ` based in ${hqStateName}`;
     if (need) g += ` and need ${need}`;
     return g;
@@ -356,8 +379,13 @@ export function q1Sentence(slots: Slots): string {
         ? `companies that have won ${grain} awards`
         : `companies with active ${grain} awards`;
   if (jobPhrase) s += ` ${renderJobPhrase(jobPhrase)}`;
-  // `in <state>` (PoP) is not offered on event verbs — the month rollup has no PoP.
-  if (stateName && mode !== "events") s += ` in ${stateName}`;
+  // Canonical order: awards [to job] [billing X] [with/without progress payments] [in
+  // state] [based in state] [over $X]. billing/financing ride Q1/Q2 only (award grain).
+  if (billing) s += ` billing ${billing}`;
+  if (financing) s += ` ${financing}`;
+  // `in <state>` (PoP) is now offered on event verbs too — the edge routes it to the
+  // PoP-dimensioned mart.
+  if (stateName) s += ` in ${stateName}`;
   if (hqStateName) s += ` based in ${hqStateName}`;
   if (minAmt != null) s += ` over ${formatAmount(minAmt)}`;
   if (mode === "won" || mode === "events") s += ` ${renderWindow(windowDays ?? 365)}`;
@@ -376,16 +404,18 @@ function makeCommand(slots: Slots): Command {
     jobPhrase,
     stateCode,
     hqStateCode,
+    billing,
+    financing,
     minAmt,
     windowDays,
     need,
   } = slots;
   const windowed = mode === "won" || mode === "events";
-  // No grain on event verbs (Q3) or step-growth (Q4). PoP state / $ floor / won-window
-  // never ride a growth row either — the month rollup has no PoP and growth has no floor.
+  // No grain on event verbs (Q3) or step-growth (Q4). billing/financing are award-latest-
+  // state (award grain) → Q1/Q2 only; the $ floor / won-window never ride a growth row.
   const noGrain = mode === "events" || mode === "growth";
   return {
-    id: `q1:${mode}:${grain ?? ""}:${eventVerb ?? ""}:${multiplier ?? ""}:${windowPair ?? ""}:${industry ?? ""}:${jobPhrase ?? ""}:${stateCode ?? ""}:${hqStateCode ?? ""}:${minAmt ?? ""}:${windowDays ?? ""}:${need ?? ""}`,
+    id: `q1:${mode}:${grain ?? ""}:${eventVerb ?? ""}:${multiplier ?? ""}:${windowPair ?? ""}:${industry ?? ""}:${jobPhrase ?? ""}:${stateCode ?? ""}:${hqStateCode ?? ""}:${billing ?? ""}:${financing ?? ""}:${minAmt ?? ""}:${windowDays ?? ""}:${need ?? ""}`,
     kind: "active-awards",
     label: q1Sentence(slots),
     ...(noGrain ? {} : { grain }),
@@ -395,11 +425,14 @@ function makeCommand(slots: Slots): Command {
     ...(mode === "growth" && windowPair ? { windowPair } : {}),
     ...(windowed && windowDays != null ? { windowDays } : {}),
     ...(jobPhrase ? { jobPhrase } : {}),
-    // PoP state is never bound on event/growth rows.
-    ...(stateCode && !noGrain ? { stateCode } : {}),
+    // PoP state is now bound on every mode (events/growth route it to the PoP mart).
+    ...(stateCode ? { stateCode } : {}),
     ...(hqStateCode ? { hqState: hqStateCode } : {}),
     ...(industry ? { industry } : {}),
     ...(need ? { need } : {}),
+    // billing/financing ride Q1/Q2 only (award grain); dropped on events/growth.
+    ...(billing && !noGrain ? { billing } : {}),
+    ...(financing && !noGrain ? { financing } : {}),
     ...(mode === "growth" ? {} : minAmt != null ? { minAmt } : {}),
   };
 }
@@ -416,7 +449,10 @@ const CANDIDATE_CAP = 1000;
  * space × both grains. The list defaults to Q1-ONLY; it flips to Q2 (won) only when the input
  * carries `won` or a window fragment — this keeps the browse list ~610, not ~5000.
  *
- * Slots are extracted from the trailing end inward (each removed before the next is parsed):
+ * Slots are extracted from the trailing end inward (each removed before the next is parsed),
+ * with the distinctive-keyword billing/financing slots stripped first (they may sit anywhere):
+ *   `billing <family>`             → pricing family, Q1/Q2 (fixed price|cost plus|time and materials),
+ *   `with|without progress payments` → financing arrangement, Q1/Q2,
  *   `and need <occupation prefix>` → labor need (from the occupation vocab),
  *   `[in the ]last <window>`       → won-window (flips the sentence to Q2),
  *   `over $<amt>` / `> ` / `>= `   → obligation floor (`>`/`>=` are navigation synonyms),
@@ -443,6 +479,25 @@ export function q1Candidates(
   }
 
   let rest = text;
+
+  // ── billing (Q1/Q2 pricing family): `billing <family>` — distinctive keyword, matched
+  // anywhere after the awards clause and stripped before the trailing-slot parses run. ──
+  let billing: BillingTerm | undefined;
+  const billM = rest.match(/\bbilling\s+(fixed price|cost plus|time and materials)\b/);
+  if (billM) {
+    billing = billM[1] as BillingTerm;
+    rest =
+      `${rest.slice(0, billM.index)} ${rest.slice((billM.index ?? 0) + billM[0].length)}`.trim();
+  }
+
+  // ── financing (Q1/Q2): `with|without progress payments` — the `progress payments` tail
+  // disambiguates from the `companies with active` opener; matched anywhere and stripped. ──
+  let financing: FinancingTerm | undefined;
+  const finM = rest.match(/\b(with|without)\s+progress\s+payments\b/);
+  if (finM) {
+    financing = `${finM[1]} progress payments` as FinancingTerm;
+    rest = `${rest.slice(0, finM.index)} ${rest.slice((finM.index ?? 0) + finM[0].length)}`.trim();
+  }
 
   // ── labor need: trailing `[and ]need <occupation prefix>` (distinctive keyword) ──
   let needPrefix: string | undefined;
@@ -564,11 +619,14 @@ export function q1Candidates(
             ...(mode === "events" ? { eventVerb: head } : { grain: head as Grain }),
             industry,
             jobPhrase,
-            // PoP state never rides an event row (dropped in makeCommand too).
-            stateName: mode === "events" ? undefined : stateName,
-            stateCode: mode === "events" ? undefined : stateCode,
+            // PoP state now rides every mode (events routes it to the PoP mart).
+            stateName,
+            stateCode,
             hqStateName,
             hqStateCode,
+            // billing/financing are award-latest-state → Q1/Q2 only (dropped on events).
+            billing: mode === "events" ? undefined : billing,
+            financing: mode === "events" ? undefined : financing,
             minAmt,
             windowDays: win,
             need,
@@ -618,14 +676,15 @@ export function q1Candidates(
  *
  * Slots (each removed from the tail before the next is parsed, mirroring q1Candidates):
  *   `and need <occupation prefix>` → labor need,
- *   `based in <state>`             → HQ state,
+ *   `based in <state>`             → HQ state (parsed BEFORE `in <state>`),
+ *   `in <state>`                   → place-of-performance state (routes to the PoP mart),
  *   ` to <job>`                    → job phrase (AND-substring filter over the vocab),
  *   a leading industry token       → the industry vertical,
  *   a `{N}x` fragment              → the multiplier (fans all 5 when none is pinned),
  *   a window-pair fragment         → the window pair (fans all 3 when none is pinned).
  *
- * There is NO grain, NO `over $X`, and NO `in <state>` (PoP) — the month rollup has no
- * place-of-performance columns. The multiplier × window-pair × need fan is capped at
+ * There is NO grain and NO `over $X`. `in <state>` (PoP) IS offered — the edge routes it
+ * to the PoP-dimensioned mart. The multiplier × window-pair × need fan is capped at
  * `CANDIDATE_CAP`.
  */
 function growthCandidates(text: string, vocab: JtbdPhrase[], occupations: Occupation[]): Command[] {
@@ -639,7 +698,7 @@ function growthCandidates(text: string, vocab: JtbdPhrase[], occupations: Occupa
     rest = rest.slice(0, needM.index).trim();
   }
 
-  // ── HQ state: trailing `based in <state prefix>` (PoP `in <state>` is never offered) ──
+  // ── HQ state: trailing `based in <state prefix>` — parsed BEFORE `in <state>` ──
   let hqStateName: string | undefined;
   let hqStateCode: string | undefined;
   const basedM = rest.match(/\bbased\s+in\s+([a-z][a-z ]*?)\s*$/);
@@ -649,6 +708,21 @@ function growthCandidates(text: string, vocab: JtbdPhrase[], occupations: Occupa
       hqStateName = hit;
       hqStateCode = STATE_NAME_TO_CODE[hit];
       rest = rest.slice(0, basedM.index).trim();
+    }
+  }
+
+  // ── PoP state: trailing `in <state prefix>` — now offered on growth (the edge routes it
+  // to the PoP-dimensioned mart). The window clause carries digits, so `[a-z ]` can never
+  // false-match "in the last 12 months …" — only a genuine trailing state name matches. ──
+  let stateName: string | undefined;
+  let stateCode: string | undefined;
+  const inM = rest.match(/\bin\s+([a-z][a-z ]*?)\s*$/);
+  if (inM) {
+    const hit = matchState(inM[1].trim());
+    if (hit) {
+      stateName = hit;
+      stateCode = STATE_NAME_TO_CODE[hit];
+      rest = rest.slice(0, inM.index).trim();
     }
   }
 
@@ -707,6 +781,8 @@ function growthCandidates(text: string, vocab: JtbdPhrase[], occupations: Occupa
               windowPair: wp,
               industry,
               jobPhrase,
+              stateName,
+              stateCode,
               hqStateName,
               hqStateCode,
               need,

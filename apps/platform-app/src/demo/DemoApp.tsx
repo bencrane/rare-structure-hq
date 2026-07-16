@@ -187,6 +187,9 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
           hq_state: command.hqState,
           industry: command.industry,
           need: command.need,
+          // Q1/Q2 award-latest-state pricing/financing slots (undefined on events/growth).
+          billing: command.billing,
+          financing: command.financing,
           min_amt: command.minAmt,
         })
           .then((res) => {

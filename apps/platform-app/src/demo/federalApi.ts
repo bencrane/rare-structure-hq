@@ -471,6 +471,12 @@ export type ActiveAwardsQueryBody = {
   industry?: string;
   /** Occupation token — the `and need <occupation>` labor need. */
   need?: string;
+  /** Pricing family (Q1/Q2 only) — "fixed price" | "cost plus" | "time and materials".
+   * The edge 422s this on events/growth (award-latest-state, award grain). */
+  billing?: "fixed price" | "cost plus" | "time and materials";
+  /** Financing arrangement (Q1/Q2 only) — "with progress payments" | "without progress
+   * payments". The edge 422s this on events/growth (award-latest-state, award grain). */
+  financing?: "with progress payments" | "without progress payments";
   min_amt?: number;
   /** Include support/indirect roles in the labor-need match (default false). */
   include_support?: boolean;
