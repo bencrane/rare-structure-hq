@@ -3075,8 +3075,8 @@
    "what_was_done": "Regulated medical waste disposal services",
    "obl_m": 1.09,
    "firms": 7,
-   "bucket": "Waste Management & Sanitation",
-   "reason": "tail: waste/sanitation-coded award, service PSC"
+   "bucket": "Out",
+   "reason": "Q-code medical/healthcare work \u2014 homes to Medical & Clinical Staffing"
   },
   {
    "naics_code": "562219",
@@ -3229,8 +3229,8 @@
    "what_was_done": "Healthcare environmental cleaning and regulated medical waste services",
    "obl_m": 0.93,
    "firms": 7,
-   "bucket": "Waste Management & Sanitation",
-   "reason": "tail: waste/sanitation-coded award, service PSC"
+   "bucket": "Out",
+   "reason": "Q-code medical/healthcare work \u2014 homes to Building Services"
   },
   {
    "naics_code": "562219",
@@ -3405,8 +3405,8 @@
    "what_was_done": null,
    "obl_m": 0.83,
    "firms": 2,
-   "bucket": "Waste Management & Sanitation",
-   "reason": "tail: waste/sanitation-coded award, service PSC"
+   "bucket": "Out",
+   "reason": "Q-code medical/healthcare work \u2014 homes to Medical & Clinical Staffing"
   },
   {
    "naics_code": "562991",
@@ -4527,8 +4527,8 @@
    "what_was_done": "Pharmaceutical waste disposal services",
    "obl_m": 0.45,
    "firms": 4,
-   "bucket": "Waste Management & Sanitation",
-   "reason": "tail: waste/sanitation-coded award, service PSC"
+   "bucket": "Out",
+   "reason": "Q-code medical/healthcare work \u2014 homes to Medical & Clinical Staffing"
   },
   {
    "naics_code": "562212",
@@ -5407,8 +5407,8 @@
    "what_was_done": "Regulated medical waste services",
    "obl_m": 0.29,
    "firms": 11,
-   "bucket": "Waste Management & Sanitation",
-   "reason": "tail: waste/sanitation-coded award, service PSC"
+   "bucket": "Out",
+   "reason": "Q-code medical/healthcare work \u2014 homes to Medical & Clinical Staffing"
   },
   {
    "naics_code": "562910",
@@ -6617,8 +6617,8 @@
    "what_was_done": null,
    "obl_m": 0.17,
    "firms": 1,
-   "bucket": "Waste Management & Sanitation",
-   "reason": "tail: waste/sanitation-coded award, service PSC"
+   "bucket": "Out",
+   "reason": "Q-code medical/healthcare work \u2014 homes to Building Services"
   },
   {
    "naics_code": "562211",
@@ -6815,8 +6815,8 @@
    "what_was_done": "Pharmacy and pharmaceutical returns services",
    "obl_m": 0.15,
    "firms": 2,
-   "bucket": "Waste Management & Sanitation",
-   "reason": "tail: waste/sanitation-coded award, service PSC"
+   "bucket": "Out",
+   "reason": "Q-code medical/healthcare work \u2014 homes to Medical & Clinical Staffing"
   },
   {
    "naics_code": "562910",
@@ -7453,8 +7453,8 @@
    "what_was_done": null,
    "obl_m": 0.11,
    "firms": 3,
-   "bucket": "Waste Management & Sanitation",
-   "reason": "tail: waste/sanitation-coded award, service PSC"
+   "bucket": "Out",
+   "reason": "Q-code medical/healthcare work \u2014 homes to Building Services"
   },
   {
    "naics_code": "541511",
@@ -7563,8 +7563,8 @@
    "what_was_done": "Medical waste technical support services",
    "obl_m": 0.1,
    "firms": 1,
-   "bucket": "Waste Management & Sanitation",
-   "reason": "tail: waste/sanitation-coded award, service PSC"
+   "bucket": "Out",
+   "reason": "Q-code medical/healthcare work \u2014 homes to Medical & Clinical Staffing"
   },
   {
    "naics_code": "562910",
@@ -7750,8 +7750,8 @@
    "what_was_done": "Medical and regulated waste disposal services",
    "obl_m": 0.1,
    "firms": 5,
-   "bucket": "Waste Management & Sanitation",
-   "reason": "tail: waste/sanitation-coded award, service PSC"
+   "bucket": "Out",
+   "reason": "Q-code medical/healthcare work \u2014 homes to Medical & Clinical Staffing"
   },
   {
    "naics_code": "562910",
@@ -7871,8 +7871,8 @@
    "what_was_done": null,
    "obl_m": 0.09,
    "firms": 3,
-   "bucket": "Waste Management & Sanitation",
-   "reason": "tail: waste/sanitation-coded award, service PSC"
+   "bucket": "Out",
+   "reason": "Q-code medical/healthcare work \u2014 homes to Building Services"
   },
   {
    "naics_code": "523910",
@@ -8718,8 +8718,8 @@
    "what_was_done": null,
    "obl_m": 0.07,
    "firms": 1,
-   "bucket": "Waste Management & Sanitation",
-   "reason": "tail: waste/sanitation-coded award, service PSC"
+   "bucket": "Out",
+   "reason": "Q-code medical/healthcare work \u2014 homes to Building Services"
   },
   {
    "naics_code": "562998",
@@ -8993,8 +8993,8 @@
    "what_was_done": null,
    "obl_m": 0.06,
    "firms": 1,
-   "bucket": "Waste Management & Sanitation",
-   "reason": "tail: waste/sanitation-coded award, service PSC"
+   "bucket": "Out",
+   "reason": "Q-code medical/healthcare work \u2014 homes to Medical & Clinical Staffing"
   },
   {
    "naics_code": "562910",
@@ -9279,8 +9279,8 @@
    "what_was_done": null,
    "obl_m": 0.06,
    "firms": 3,
-   "bucket": "Environmental Remediation & Services",
-   "reason": "tail: remediation-coded award, service PSC"
+   "bucket": "Out",
+   "reason": "Q-code medical/healthcare work \u2014 homes to Medical & Clinical Staffing"
   },
   {
    "naics_code": "813920",
@@ -10676,8 +10676,8 @@
    "what_was_done": null,
    "obl_m": 0.03,
    "firms": 1,
-   "bucket": "Waste Management & Sanitation",
-   "reason": "tail: waste/sanitation-coded award, service PSC"
+   "bucket": "Out",
+   "reason": "Q-code medical/healthcare work \u2014 homes to Medical & Clinical Staffing"
   },
   {
    "naics_code": "925120",
@@ -12469,8 +12469,8 @@
    "what_was_done": null,
    "obl_m": 0.02,
    "firms": 2,
-   "bucket": "Environmental Remediation & Services",
-   "reason": "tail: remediation-coded award, service PSC"
+   "bucket": "Out",
+   "reason": "Q-code medical/healthcare work \u2014 homes to Building Services"
   },
   {
    "naics_code": "423850",
@@ -12876,8 +12876,8 @@
    "what_was_done": null,
    "obl_m": 0.02,
    "firms": 3,
-   "bucket": "Waste Management & Sanitation",
-   "reason": "tail: waste/sanitation-coded award, service PSC"
+   "bucket": "Out",
+   "reason": "Q-code medical/healthcare work \u2014 homes to Medical & Clinical Staffing"
   },
   {
    "naics_code": "562991",
@@ -15153,8 +15153,8 @@
    "what_was_done": null,
    "obl_m": 0.0,
    "firms": 2,
-   "bucket": "Waste Management & Sanitation",
-   "reason": "tail: waste/sanitation-coded award, service PSC"
+   "bucket": "Out",
+   "reason": "Q-code medical/healthcare work \u2014 homes to Medical & Clinical Staffing"
   },
   {
    "naics_code": "562211",
@@ -15340,8 +15340,8 @@
    "what_was_done": null,
    "obl_m": 0.0,
    "firms": 1,
-   "bucket": "Waste Management & Sanitation",
-   "reason": "tail: waste/sanitation-coded award, service PSC"
+   "bucket": "Out",
+   "reason": "Q-code medical/healthcare work \u2014 homes to Medical & Clinical Staffing"
   },
   {
    "naics_code": "562998",
@@ -15681,8 +15681,8 @@
    "what_was_done": null,
    "obl_m": 0.0,
    "firms": 2,
-   "bucket": "Waste Management & Sanitation",
-   "reason": "tail: waste/sanitation-coded award, service PSC"
+   "bucket": "Out",
+   "reason": "Q-code medical/healthcare work \u2014 homes to Medical & Clinical Staffing"
   },
   {
    "naics_code": "562211",
@@ -16143,8 +16143,8 @@
    "what_was_done": null,
    "obl_m": 0.0,
    "firms": 1,
-   "bucket": "Waste Management & Sanitation",
-   "reason": "tail: waste/sanitation-coded award, service PSC"
+   "bucket": "Out",
+   "reason": "Q-code medical/healthcare work \u2014 homes to Medical & Clinical Staffing"
   },
   {
    "naics_code": "562910",
@@ -17804,8 +17804,8 @@
    "what_was_done": "Specialized non-clinical medical support services",
    "obl_m": -0.01,
    "firms": 1,
-   "bucket": "Waste Management & Sanitation",
-   "reason": "tail: waste/sanitation-coded award, service PSC"
+   "bucket": "Out",
+   "reason": "Q-code medical/healthcare work \u2014 homes to Medical & Clinical Staffing"
   },
   {
    "naics_code": "562920",
@@ -17969,8 +17969,8 @@
    "what_was_done": null,
    "obl_m": -0.01,
    "firms": 1,
-   "bucket": "Waste Management & Sanitation",
-   "reason": "tail: waste/sanitation-coded award, service PSC"
+   "bucket": "Out",
+   "reason": "Q-code medical/healthcare work \u2014 homes to Medical & Clinical Staffing"
   },
   {
    "naics_code": "484220",
@@ -18662,8 +18662,8 @@
    "what_was_done": null,
    "obl_m": -0.17,
    "firms": 1,
-   "bucket": "Environmental Remediation & Services",
-   "reason": "tail: remediation-coded award, service PSC"
+   "bucket": "Out",
+   "reason": "Q-code medical/healthcare work \u2014 homes to Medical & Clinical Staffing"
   },
   {
    "naics_code": "562119",

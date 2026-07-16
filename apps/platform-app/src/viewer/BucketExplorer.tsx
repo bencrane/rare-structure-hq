@@ -34,6 +34,7 @@ const BUCKETS = [
   "Waste Management & Sanitation",
   "Environmental Remediation & Services",
   "Aerospace, Defense & Space Manufacturing",
+  "Medical & Clinical Staffing",
 ];
 
 const median = (xs: number[]): number => {
