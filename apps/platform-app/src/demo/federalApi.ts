@@ -449,14 +449,19 @@ export async function fetchJtbdVocab(): Promise<JtbdVocab> {
 
 /** The body for one completed Q1/Q2 sentence run. */
 export type ActiveAwardsQueryBody = {
-  /** Total/single grain — omitted on event verbs (Q3 has no grain marker). */
+  /** Total/single grain — omitted on event verbs (Q3) and step-growth (Q4). */
   grain?: "total" | "single";
-  /** Active obligations (default), won-in-window, or FPDS modification events (Q3). */
-  mode?: "active" | "won" | "events";
+  /** Active obligations (default), won-in-window, FPDS modification events (Q3), or
+   * step-growth (Q4). */
+  mode?: "active" | "won" | "events" | "growth";
   /** Q3 event verb sent verbatim (required iff `mode === "events"`). */
   event_verb?: string;
   /** Window length in days (required iff `mode === "won" | "events"`). */
   window_days?: number;
+  /** Q4 step-growth multiplier — one of 2/3/4/5/10 (required iff `mode === "growth"`). */
+  multiplier?: number;
+  /** Q4 step-growth window pair (required iff `mode === "growth"`) — "12v24" | "6v12" | "90v90". */
+  window_pair?: "12v24" | "6v12" | "90v90";
   job_phrase?: string;
   /** Place-of-performance state (2-letter). */
   state?: string;
@@ -488,6 +493,11 @@ export type ActiveAwardsRow = {
   /** Q3 (events) columns — Σ obligations moved by the events and the action count. */
   event_obl?: number;
   event_actions?: number;
+  /** Q4 (growth) columns — Σ obligations in the recent window A, the prior window B, and the
+   * ratio A/B. */
+  window_obl?: number;
+  prior_obl?: number;
+  growth_ratio?: number;
 };
 
 export type ActiveAwardsResponse = {

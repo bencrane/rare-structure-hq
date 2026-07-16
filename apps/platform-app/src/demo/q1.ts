@@ -173,6 +173,58 @@ export function matchEventVerbs(verbQuery: string): string[] {
   return EVENT_VERBS.filter((v) => toks.every((t) => v.includes(t)));
 }
 
+/** Q4 STEP-GROWTH (approved 2026-07-15) — the acceleration sentence family:
+ * "[<industry> ]companies whose prime obligations grew {2x|3x|4x|5x|10x}
+ *  in the last {12 months vs the prior 24 months | 6 months vs the prior 12 months |
+ *  90 days vs the prior 90 days}[ to <job>][ based in <state>][ and need <token>]".
+ * Per company Σ obligations in the recent window A ≥ N × Σ in the immediately-preceding
+ * window B, with Σ B > 0. There is NO total/single grain, NO `over $X`, NO percent
+ * language, and the `in <state>` (PoP) slot is NOT offered — the month rollup has no
+ * place-of-performance columns. `multiplier` + `windowPair` are sent to the edge. */
+const GROWTH_MULTIPLIERS = [2, 3, 4, 5, 10] as const;
+
+type WindowPair = "12v24" | "6v12" | "90v90";
+
+/** The 3 approved growth window pairs: key ⊕ the clause rendered after `grew {N}x `, plus
+ * the confident fragments that pin the pair when typed (anything else fans all 3). */
+export const GROWTH_WINDOW_PAIRS: { key: WindowPair; render: string; frags: string[] }[] = [
+  {
+    key: "12v24",
+    render: "in the last 12 months vs the prior 24 months",
+    frags: ["12v24", "prior 24", "24 month"],
+  },
+  {
+    key: "6v12",
+    render: "in the last 6 months vs the prior 12 months",
+    frags: ["6v12", "prior 12", "6 month"],
+  },
+  {
+    key: "90v90",
+    render: "in the last 90 days vs the prior 90 days",
+    frags: ["90v90", "90 day", "90"],
+  },
+];
+
+/** Render the growth window-pair clause exactly as it reads in the sentence. */
+export function renderGrowthWindowPair(key: WindowPair): string {
+  return GROWTH_WINDOW_PAIRS.find((w) => w.key === key)?.render ?? "";
+}
+
+/** Resolve a typed fragment to one of the 3 canonical window pairs (undefined = fan all 3). */
+export function matchGrowthWindowPair(text: string): WindowPair | undefined {
+  const t = text.toLowerCase();
+  return GROWTH_WINDOW_PAIRS.find((w) => w.frags.some((f) => t.includes(f)))?.key;
+}
+
+/** Resolve a typed `4x` / `10 x` shorthand to one of the 5 canonical multipliers
+ * (undefined = none typed → fan all 5). Off-set values (e.g. `7x`) do not pin. */
+export function matchGrowthMultiplier(text: string): number | undefined {
+  const m = text.match(/\b(\d+)\s*x\b/);
+  if (!m) return undefined;
+  const n = Number(m[1]);
+  return (GROWTH_MULTIPLIERS as readonly number[]).includes(n) ? n : undefined;
+}
+
 /** The 8 approved won-window slots: day value ⊕ the tail rendered after `in the last `. */
 export const WINDOWS: { days: number; render: string }[] = [
   { days: 30, render: "30 days" },
@@ -245,14 +297,18 @@ function matchState(prefix: string): string | undefined {
 }
 
 type Grain = "total" | "single";
-type Mode = "active" | "won" | "events";
+type Mode = "active" | "won" | "events" | "growth";
 
 /** The resolved slots behind one candidate sentence. */
 type Slots = {
   mode: Mode;
-  /** Absent on event verbs — Q3 carries no total/single grain marker. */
+  /** Absent on event verbs (Q3) and step-growth (Q4) — neither carries a grain marker. */
   grain?: Grain;
   eventVerb?: string;
+  /** Q4 step-growth multiplier (2/3/4/5/10) — present only when `mode === "growth"`. */
+  multiplier?: number;
+  /** Q4 step-growth window pair — present only when `mode === "growth"`. */
+  windowPair?: WindowPair;
   industry?: string;
   jobPhrase?: string;
   stateName?: string;
@@ -264,12 +320,15 @@ type Slots = {
   need?: string;
 };
 
-/** Render the full Q1 (active) / Q2 (won) / Q3 (events) sentence from resolved slots. */
+/** Render the full Q1 (active) / Q2 (won) / Q3 (events) / Q4 (growth) sentence from
+ * resolved slots. */
 export function q1Sentence(slots: Slots): string {
   const {
     mode,
     grain,
     eventVerb,
+    multiplier,
+    windowPair,
     industry,
     jobPhrase,
     stateName,
@@ -278,6 +337,17 @@ export function q1Sentence(slots: Slots): string {
     windowDays,
     need,
   } = slots;
+  // Q4 step-growth reads on its own axis: grew {N}x over the recent-vs-prior window pair.
+  // No grain, no `over $X`, no PoP `in <state>`.
+  if (mode === "growth") {
+    let g = industry ? `${industry} ` : "";
+    g += `companies whose prime obligations grew ${multiplier}x`;
+    g += ` ${renderGrowthWindowPair(windowPair ?? "12v24")}`;
+    if (jobPhrase) g += ` ${renderJobPhrase(jobPhrase)}`;
+    if (hqStateName) g += ` based in ${hqStateName}`;
+    if (need) g += ` and need ${need}`;
+    return g;
+  }
   let s = industry ? `${industry} ` : "";
   s +=
     mode === "events"
@@ -300,6 +370,8 @@ function makeCommand(slots: Slots): Command {
     mode,
     grain,
     eventVerb,
+    multiplier,
+    windowPair,
     industry,
     jobPhrase,
     stateCode,
@@ -309,22 +381,26 @@ function makeCommand(slots: Slots): Command {
     need,
   } = slots;
   const windowed = mode === "won" || mode === "events";
+  // No grain on event verbs (Q3) or step-growth (Q4). PoP state / $ floor / won-window
+  // never ride a growth row either — the month rollup has no PoP and growth has no floor.
+  const noGrain = mode === "events" || mode === "growth";
   return {
-    id: `q1:${mode}:${grain ?? ""}:${eventVerb ?? ""}:${industry ?? ""}:${jobPhrase ?? ""}:${stateCode ?? ""}:${hqStateCode ?? ""}:${minAmt ?? ""}:${windowDays ?? ""}:${need ?? ""}`,
+    id: `q1:${mode}:${grain ?? ""}:${eventVerb ?? ""}:${multiplier ?? ""}:${windowPair ?? ""}:${industry ?? ""}:${jobPhrase ?? ""}:${stateCode ?? ""}:${hqStateCode ?? ""}:${minAmt ?? ""}:${windowDays ?? ""}:${need ?? ""}`,
     kind: "active-awards",
     label: q1Sentence(slots),
-    // No grain marker on event verbs (Q3).
-    ...(mode === "events" ? {} : { grain }),
+    ...(noGrain ? {} : { grain }),
     ...(mode !== "active" ? { mode } : {}),
     ...(mode === "events" && eventVerb ? { eventVerb } : {}),
+    ...(mode === "growth" && multiplier != null ? { multiplier } : {}),
+    ...(mode === "growth" && windowPair ? { windowPair } : {}),
     ...(windowed && windowDays != null ? { windowDays } : {}),
     ...(jobPhrase ? { jobPhrase } : {}),
-    // PoP state is never bound on event rows.
-    ...(stateCode && mode !== "events" ? { stateCode } : {}),
+    // PoP state is never bound on event/growth rows.
+    ...(stateCode && !noGrain ? { stateCode } : {}),
     ...(hqStateCode ? { hqState: hqStateCode } : {}),
     ...(industry ? { industry } : {}),
     ...(need ? { need } : {}),
-    ...(minAmt != null ? { minAmt } : {}),
+    ...(mode === "growth" ? {} : minAmt != null ? { minAmt } : {}),
   };
 }
 
@@ -358,6 +434,13 @@ export function q1Candidates(
   occupations: Occupation[] = [],
 ): Command[] {
   const text = raw.toLowerCase().replace(/\s+/g, " ").trim();
+
+  // ── Q4 step-growth: `grew` (or a bare multiplier like `4x`) flips the sentence to the
+  // growth family — a self-contained composer path (its own window vocabulary, no grain,
+  // no PoP, no $ floor). Detected before the Q1/Q2/Q3 slot parser touches `text`. ──
+  if (/\bgrew\b/.test(text) || /\b\d+\s*x\b/.test(text)) {
+    return growthCandidates(text, vocab, occupations);
+  }
 
   let rest = text;
 
@@ -526,6 +609,134 @@ export function q1Candidates(
     for (const head of heads) {
       if (emit(head, p.phrase)) return out;
     }
+  }
+  return out;
+}
+
+/**
+ * Compose the Q4 step-growth candidate rows for the current palette input.
+ *
+ * Slots (each removed from the tail before the next is parsed, mirroring q1Candidates):
+ *   `and need <occupation prefix>` → labor need,
+ *   `based in <state>`             → HQ state,
+ *   ` to <job>`                    → job phrase (AND-substring filter over the vocab),
+ *   a leading industry token       → the industry vertical,
+ *   a `{N}x` fragment              → the multiplier (fans all 5 when none is pinned),
+ *   a window-pair fragment         → the window pair (fans all 3 when none is pinned).
+ *
+ * There is NO grain, NO `over $X`, and NO `in <state>` (PoP) — the month rollup has no
+ * place-of-performance columns. The multiplier × window-pair × need fan is capped at
+ * `CANDIDATE_CAP`.
+ */
+function growthCandidates(text: string, vocab: JtbdPhrase[], occupations: Occupation[]): Command[] {
+  let rest = text;
+
+  // ── labor need: trailing `[and ]need <occupation prefix>` ──
+  let needPrefix: string | undefined;
+  const needM = rest.match(/\b(?:and\s+)?need\b\s*(.*)$/);
+  if (needM) {
+    needPrefix = needM[1].trim();
+    rest = rest.slice(0, needM.index).trim();
+  }
+
+  // ── HQ state: trailing `based in <state prefix>` (PoP `in <state>` is never offered) ──
+  let hqStateName: string | undefined;
+  let hqStateCode: string | undefined;
+  const basedM = rest.match(/\bbased\s+in\s+([a-z][a-z ]*?)\s*$/);
+  if (basedM) {
+    const hit = matchState(basedM[1].trim());
+    if (hit) {
+      hqStateName = hit;
+      hqStateCode = STATE_NAME_TO_CODE[hit];
+      rest = rest.slice(0, basedM.index).trim();
+    }
+  }
+
+  // ── window pair: a confident fragment pins one, else the sentence fans all 3 ──
+  const windowPair = matchGrowthWindowPair(rest);
+
+  // ── job phrase: only the tail after ` to ` is job text (the head is the growth scaffolding
+  // + window clause, which carries no ` to `). ──
+  const toIdx = rest.indexOf(" to ");
+  const head = toIdx >= 0 ? rest.slice(0, toIdx) : rest;
+  const jobSource = toIdx >= 0 ? rest.slice(toIdx + 4) : "";
+
+  // ── multiplier: a `{N}x` fragment pins one, else the sentence fans all 5 ──
+  const multiplier = matchGrowthMultiplier(head) ?? matchGrowthMultiplier(text);
+
+  // ── industry: a leading canonical token (longest-match first for `real estate`) ──
+  let industry: string | undefined;
+  for (const ind of INDUSTRIES_BY_LEN) {
+    if (head === ind || head.startsWith(`${ind} `)) {
+      industry = ind;
+      break;
+    }
+  }
+
+  const jobTokens = jobSource.split(" ").filter((t) => t && !FILLER.has(t));
+
+  const multipliers: number[] = multiplier != null ? [multiplier] : [...GROWTH_MULTIPLIERS];
+  const windowPairs: WindowPair[] =
+    windowPair != null ? [windowPair] : GROWTH_WINDOW_PAIRS.map((w) => w.key);
+
+  // ── the labor-need fan: the matching occupation tokens (verbatim fallback when none) ──
+  const needs: (string | undefined)[] =
+    needPrefix === undefined
+      ? [undefined]
+      : (() => {
+          const toks = needPrefix.split(" ").filter(Boolean);
+          const matched = occupations
+            .filter((o) => {
+              const t = o.token.toLowerCase();
+              return toks.every((x) => t.includes(x));
+            })
+            .sort((a, b) => b.soc_count - a.soc_count)
+            .map((o) => o.token);
+          return matched.length ? matched : [needPrefix];
+        })();
+
+  const out: Command[] = [];
+  const emit = (jobPhrase: string | undefined): boolean => {
+    for (const mult of multipliers) {
+      for (const wp of windowPairs) {
+        for (const need of needs) {
+          out.push(
+            makeCommand({
+              mode: "growth",
+              multiplier: mult,
+              windowPair: wp,
+              industry,
+              jobPhrase,
+              hqStateName,
+              hqStateCode,
+              need,
+            }),
+          );
+          if (out.length >= CANDIDATE_CAP) return true;
+        }
+      }
+    }
+    return false;
+  };
+
+  if (jobTokens.length === 0) {
+    // No job words typed — lead with the all-work sentences, then the full phrase space.
+    if (emit(undefined)) return out;
+    const all = [...vocab].sort((a, b) => b.combo_count - a.combo_count);
+    for (const p of all) {
+      if (emit(p.phrase)) return out;
+    }
+    return out;
+  }
+
+  const phrases = vocab
+    .filter((p) => {
+      const hay = phraseHaystack(p.phrase);
+      return jobTokens.every((t) => hay.includes(t));
+    })
+    .sort((a, b) => b.combo_count - a.combo_count);
+  for (const p of phrases) {
+    if (emit(p.phrase)) return out;
   }
   return out;
 }
