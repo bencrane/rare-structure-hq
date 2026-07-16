@@ -1,0 +1,1577 @@
+{
+ "scope": "NAICS 56 \u00d7 PSC S* \u2014 active combos, ranked by active obligated $",
+ "as_of": "active book at sidecar snapshot",
+ "baked_from": "query-sidecar/query_sidecar_20260716T034525Z.duckdb",
+ "combos": [
+  {
+   "naics_code": "561612",
+   "naics_title": "Security Guards and Patrol Services",
+   "psc_code": "S206",
+   "psc_name": "HOUSEKEEPING- GUARD",
+   "what_was_done": "Armed guard and patrol services",
+   "active_obl_m": 6003.5,
+   "active_award_ct": 2226,
+   "active_recipients": 325
+  },
+  {
+   "naics_code": "561210",
+   "naics_title": "Facilities Support Services",
+   "psc_code": "S216",
+   "psc_name": "HOUSEKEEPING- FACILITIES OPERATIONS SUPPORT",
+   "what_was_done": "Facilities operations support services",
+   "active_obl_m": 5013.6,
+   "active_award_ct": 516,
+   "active_recipients": 273
+  },
+  {
+   "naics_code": "561720",
+   "naics_title": "Janitorial Services",
+   "psc_code": "S201",
+   "psc_name": "HOUSEKEEPING- CUSTODIAL JANITORIAL",
+   "what_was_done": "Custodial and janitorial services",
+   "active_obl_m": 2667.8,
+   "active_award_ct": 2262,
+   "active_recipients": 1043
+  },
+  {
+   "naics_code": "561210",
+   "naics_title": "Facilities Support Services",
+   "psc_code": "S203",
+   "psc_name": "HOUSEKEEPING- FOOD",
+   "what_was_done": "Food service operations",
+   "active_obl_m": 773.2,
+   "active_award_ct": 2,
+   "active_recipients": 2
+  },
+  {
+   "naics_code": "561210",
+   "naics_title": "Facilities Support Services",
+   "psc_code": "S204",
+   "psc_name": "HOUSEKEEPING- FUELING AND OTHER PETROLEUM",
+   "what_was_done": "Fueling and petroleum handling services",
+   "active_obl_m": 496.6,
+   "active_award_ct": 2,
+   "active_recipients": 2
+  },
+  {
+   "naics_code": "561730",
+   "naics_title": "Landscaping Services",
+   "psc_code": "S208",
+   "psc_name": "HOUSEKEEPING- LANDSCAPING/GROUNDSKEEPING",
+   "what_was_done": "Landscaping and groundskeeping services",
+   "active_obl_m": 362.1,
+   "active_award_ct": 1120,
+   "active_recipients": 688
+  },
+  {
+   "naics_code": "561210",
+   "naics_title": "Facilities Support Services",
+   "psc_code": "S201",
+   "psc_name": "HOUSEKEEPING- CUSTODIAL JANITORIAL",
+   "what_was_done": "Custodial and janitorial services",
+   "active_obl_m": 335.5,
+   "active_award_ct": 190,
+   "active_recipients": 84
+  },
+  {
+   "naics_code": "561990",
+   "naics_title": "All Other Support Services",
+   "psc_code": "S299",
+   "psc_name": "HOUSEKEEPING- OTHER",
+   "what_was_done": "Housekeeping and facility support services",
+   "active_obl_m": 333.8,
+   "active_award_ct": 80,
+   "active_recipients": 38
+  },
+  {
+   "naics_code": "562111",
+   "naics_title": "Solid Waste Collection",
+   "psc_code": "S205",
+   "psc_name": "HOUSEKEEPING- TRASH/GARBAGE COLLECTION",
+   "what_was_done": "Trash and garbage collection services",
+   "active_obl_m": 233.8,
+   "active_award_ct": 790,
+   "active_recipients": 439
+  },
+  {
+   "naics_code": "561210",
+   "naics_title": "Facilities Support Services",
+   "psc_code": "S206",
+   "psc_name": "HOUSEKEEPING- GUARD",
+   "what_was_done": "Guard and protective services",
+   "active_obl_m": 129.5,
+   "active_award_ct": 13,
+   "active_recipients": 8
+  },
+  {
+   "naics_code": "561621",
+   "naics_title": "Security Systems Services (except Locksmiths)",
+   "psc_code": "S206",
+   "psc_name": "HOUSEKEEPING- GUARD",
+   "what_was_done": "Guard and physical security services",
+   "active_obl_m": 84.4,
+   "active_award_ct": 10,
+   "active_recipients": 7
+  },
+  {
+   "naics_code": "561990",
+   "naics_title": "All Other Support Services",
+   "psc_code": "S202",
+   "psc_name": "HOUSEKEEPING- FIRE PROTECTION",
+   "what_was_done": "Fire protection services",
+   "active_obl_m": 73.6,
+   "active_award_ct": 6,
+   "active_recipients": 6
+  },
+  {
+   "naics_code": "561720",
+   "naics_title": "Janitorial Services",
+   "psc_code": "S299",
+   "psc_name": "HOUSEKEEPING- OTHER",
+   "what_was_done": "Custodial and housekeeping services",
+   "active_obl_m": 42.7,
+   "active_award_ct": 45,
+   "active_recipients": 35
+  },
+  {
+   "naics_code": "562211",
+   "naics_title": "Hazardous Waste Treatment and Disposal",
+   "psc_code": "S222",
+   "psc_name": "HOUSEKEEPING- WASTE TREATMENT/STORAGE",
+   "what_was_done": "Hazardous waste treatment and disposal",
+   "active_obl_m": 41.6,
+   "active_award_ct": 1524,
+   "active_recipients": 83
+  },
+  {
+   "naics_code": "562112",
+   "naics_title": "Hazardous Waste Collection",
+   "psc_code": "S222",
+   "psc_name": "HOUSEKEEPING- WASTE TREATMENT/STORAGE",
+   "what_was_done": "Waste treatment and storage services",
+   "active_obl_m": 41.4,
+   "active_award_ct": 80,
+   "active_recipients": 43
+  },
+  {
+   "naics_code": "561210",
+   "naics_title": "Facilities Support Services",
+   "psc_code": "S299",
+   "psc_name": "HOUSEKEEPING- OTHER",
+   "what_was_done": "Housekeeping and custodial services",
+   "active_obl_m": 34.8,
+   "active_award_ct": 10,
+   "active_recipients": 9
+  },
+  {
+   "naics_code": "561710",
+   "naics_title": "Exterminating and Pest Control Services",
+   "psc_code": "S207",
+   "psc_name": "HOUSEKEEPING- INSECT/RODENT CONTROL",
+   "what_was_done": "Insect and rodent pest control",
+   "active_obl_m": 34.6,
+   "active_award_ct": 230,
+   "active_recipients": 136
+  },
+  {
+   "naics_code": "561210",
+   "naics_title": "Facilities Support Services",
+   "psc_code": "S208",
+   "psc_name": "HOUSEKEEPING- LANDSCAPING/GROUNDSKEEPING",
+   "what_was_done": "Landscaping and groundskeeping services",
+   "active_obl_m": 26.4,
+   "active_award_ct": 40,
+   "active_recipients": 30
+  },
+  {
+   "naics_code": "561720",
+   "naics_title": "Janitorial Services",
+   "psc_code": "S216",
+   "psc_name": "HOUSEKEEPING- FACILITIES OPERATIONS SUPPORT",
+   "what_was_done": "Facilities operations support services",
+   "active_obl_m": 24.7,
+   "active_award_ct": 24,
+   "active_recipients": 22
+  },
+  {
+   "naics_code": "561790",
+   "naics_title": "Other Services to Buildings and Dwellings",
+   "psc_code": "S218",
+   "psc_name": "HOUSEKEEPING- SNOW REMOVAL/SALT",
+   "what_was_done": "Snow removal and salting services",
+   "active_obl_m": 23.6,
+   "active_award_ct": 170,
+   "active_recipients": 103
+  },
+  {
+   "naics_code": "562991",
+   "naics_title": "Septic Tank and Related Services",
+   "psc_code": "S222",
+   "psc_name": "HOUSEKEEPING- WASTE TREATMENT/STORAGE",
+   "what_was_done": "Septic and waste treatment services",
+   "active_obl_m": 19.7,
+   "active_award_ct": 191,
+   "active_recipients": 139
+  },
+  {
+   "naics_code": "561720",
+   "naics_title": "Janitorial Services",
+   "psc_code": "S205",
+   "psc_name": "HOUSEKEEPING- TRASH/GARBAGE COLLECTION",
+   "what_was_done": "Trash and garbage collection services",
+   "active_obl_m": 15.6,
+   "active_award_ct": 17,
+   "active_recipients": 13
+  },
+  {
+   "naics_code": "561720",
+   "naics_title": "Janitorial Services",
+   "psc_code": "S208",
+   "psc_name": "HOUSEKEEPING- LANDSCAPING/GROUNDSKEEPING",
+   "what_was_done": "Landscaping and grounds maintenance",
+   "active_obl_m": 13.5,
+   "active_award_ct": 26,
+   "active_recipients": 25
+  },
+  {
+   "naics_code": "561612",
+   "naics_title": "Security Guards and Patrol Services",
+   "psc_code": "S211",
+   "psc_name": "HOUSEKEEPING- SURVEILLANCE",
+   "what_was_done": "Physical surveillance and monitoring services",
+   "active_obl_m": 12.3,
+   "active_award_ct": 7,
+   "active_recipients": 7
+  },
+  {
+   "naics_code": "561730",
+   "naics_title": "Landscaping Services",
+   "psc_code": "S218",
+   "psc_name": "HOUSEKEEPING- SNOW REMOVAL/SALT",
+   "what_was_done": "Snow removal and salting services",
+   "active_obl_m": 12.0,
+   "active_award_ct": 60,
+   "active_recipients": 53
+  },
+  {
+   "naics_code": "562219",
+   "naics_title": "Other Nonhazardous Waste Treatment and Disposal",
+   "psc_code": "S205",
+   "psc_name": "HOUSEKEEPING- TRASH/GARBAGE COLLECTION",
+   "what_was_done": "Trash and garbage collection services",
+   "active_obl_m": 11.3,
+   "active_award_ct": 17,
+   "active_recipients": 14
+  },
+  {
+   "naics_code": "561612",
+   "naics_title": "Security Guards and Patrol Services",
+   "psc_code": "S205",
+   "psc_name": "HOUSEKEEPING- TRASH/GARBAGE COLLECTION",
+   "what_was_done": "Trash and garbage collection services",
+   "active_obl_m": 11.1,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "561730",
+   "naics_title": "Landscaping Services",
+   "psc_code": "S201",
+   "psc_name": "HOUSEKEEPING- CUSTODIAL JANITORIAL",
+   "what_was_done": "Custodial and janitorial services",
+   "active_obl_m": 10.9,
+   "active_award_ct": 8,
+   "active_recipients": 8
+  },
+  {
+   "naics_code": "561210",
+   "naics_title": "Facilities Support Services",
+   "psc_code": "S215",
+   "psc_name": "HOUSEKEEPING- WAREHOUSING/STORAGE",
+   "what_was_done": "Warehousing and storage services",
+   "active_obl_m": 10.8,
+   "active_award_ct": 3,
+   "active_recipients": 3
+  },
+  {
+   "naics_code": "562112",
+   "naics_title": "Hazardous Waste Collection",
+   "psc_code": "S205",
+   "psc_name": "HOUSEKEEPING- TRASH/GARBAGE COLLECTION",
+   "what_was_done": "Hazardous waste collection services",
+   "active_obl_m": 10.0,
+   "active_award_ct": 33,
+   "active_recipients": 18
+  },
+  {
+   "naics_code": "562920",
+   "naics_title": "Materials Recovery Facilities",
+   "psc_code": "S205",
+   "psc_name": "HOUSEKEEPING- TRASH/GARBAGE COLLECTION",
+   "what_was_done": "Trash and garbage collection services",
+   "active_obl_m": 9.4,
+   "active_award_ct": 6,
+   "active_recipients": 6
+  },
+  {
+   "naics_code": "562998",
+   "naics_title": "All Other Miscellaneous Waste Management Services",
+   "psc_code": "S205",
+   "psc_name": "HOUSEKEEPING- TRASH/GARBAGE COLLECTION",
+   "what_was_done": "Trash and garbage collection services",
+   "active_obl_m": 9.3,
+   "active_award_ct": 25,
+   "active_recipients": 23
+  },
+  {
+   "naics_code": "562998",
+   "naics_title": "All Other Miscellaneous Waste Management Services",
+   "psc_code": "S222",
+   "psc_name": "HOUSEKEEPING- WASTE TREATMENT/STORAGE",
+   "what_was_done": "Waste treatment and storage services",
+   "active_obl_m": 8.3,
+   "active_award_ct": 41,
+   "active_recipients": 38
+  },
+  {
+   "naics_code": "562119",
+   "naics_title": "Other Waste Collection",
+   "psc_code": "S205",
+   "psc_name": "HOUSEKEEPING- TRASH/GARBAGE COLLECTION",
+   "what_was_done": "Trash and garbage collection",
+   "active_obl_m": 7.7,
+   "active_award_ct": 39,
+   "active_recipients": 37
+  },
+  {
+   "naics_code": "562991",
+   "naics_title": "Septic Tank and Related Services",
+   "psc_code": "S205",
+   "psc_name": "HOUSEKEEPING- TRASH/GARBAGE COLLECTION",
+   "what_was_done": "Trash and garbage collection services",
+   "active_obl_m": 7.6,
+   "active_award_ct": 53,
+   "active_recipients": 51
+  },
+  {
+   "naics_code": "561621",
+   "naics_title": "Security Systems Services (except Locksmiths)",
+   "psc_code": "S211",
+   "psc_name": "HOUSEKEEPING- SURVEILLANCE",
+   "what_was_done": "Surveillance services",
+   "active_obl_m": 6.6,
+   "active_award_ct": 24,
+   "active_recipients": 23
+  },
+  {
+   "naics_code": "562111",
+   "naics_title": "Solid Waste Collection",
+   "psc_code": "S222",
+   "psc_name": "HOUSEKEEPING- WASTE TREATMENT/STORAGE",
+   "what_was_done": "Waste treatment and storage services",
+   "active_obl_m": 6.4,
+   "active_award_ct": 59,
+   "active_recipients": 51
+  },
+  {
+   "naics_code": "561720",
+   "naics_title": "Janitorial Services",
+   "psc_code": "S209",
+   "psc_name": "HOUSEKEEPING- LAUNDRY/DRYCLEANING",
+   "what_was_done": "Laundry and drycleaning services",
+   "active_obl_m": 6.0,
+   "active_award_ct": 7,
+   "active_recipients": 3
+  },
+  {
+   "naics_code": "561790",
+   "naics_title": "Other Services to Buildings and Dwellings",
+   "psc_code": "S299",
+   "psc_name": "HOUSEKEEPING- OTHER",
+   "what_was_done": "Housekeeping and building services",
+   "active_obl_m": 5.7,
+   "active_award_ct": 24,
+   "active_recipients": 24
+  },
+  {
+   "naics_code": "561210",
+   "naics_title": "Facilities Support Services",
+   "psc_code": "S205",
+   "psc_name": "HOUSEKEEPING- TRASH/GARBAGE COLLECTION",
+   "what_was_done": "Trash and garbage collection",
+   "active_obl_m": 5.6,
+   "active_award_ct": 11,
+   "active_recipients": 7
+  },
+  {
+   "naics_code": "561910",
+   "naics_title": "Packaging and Labeling Services",
+   "psc_code": "S216",
+   "psc_name": "HOUSEKEEPING- FACILITIES OPERATIONS SUPPORT",
+   "what_was_done": null,
+   "active_obl_m": 4.9,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "561611",
+   "naics_title": "Investigation and Personal Background Check Services",
+   "psc_code": "S206",
+   "psc_name": "HOUSEKEEPING- GUARD",
+   "what_was_done": null,
+   "active_obl_m": 4.8,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "561990",
+   "naics_title": "All Other Support Services",
+   "psc_code": "S201",
+   "psc_name": "HOUSEKEEPING- CUSTODIAL JANITORIAL",
+   "what_was_done": "Custodial and janitorial services",
+   "active_obl_m": 4.7,
+   "active_award_ct": 4,
+   "active_recipients": 4
+  },
+  {
+   "naics_code": "562920",
+   "naics_title": "Materials Recovery Facilities",
+   "psc_code": "S201",
+   "psc_name": "HOUSEKEEPING- CUSTODIAL JANITORIAL",
+   "what_was_done": "Custodial and janitorial services",
+   "active_obl_m": 4.4,
+   "active_award_ct": 2,
+   "active_recipients": 2
+  },
+  {
+   "naics_code": "561210",
+   "naics_title": "Facilities Support Services",
+   "psc_code": "S202",
+   "psc_name": "HOUSEKEEPING- FIRE PROTECTION",
+   "what_was_done": "Facility fire protection services",
+   "active_obl_m": 4.3,
+   "active_award_ct": 18,
+   "active_recipients": 8
+  },
+  {
+   "naics_code": "561720",
+   "naics_title": "Janitorial Services",
+   "psc_code": "S203",
+   "psc_name": "HOUSEKEEPING- FOOD",
+   "what_was_done": "Food services",
+   "active_obl_m": 4.2,
+   "active_award_ct": 19,
+   "active_recipients": 14
+  },
+  {
+   "naics_code": "562119",
+   "naics_title": "Other Waste Collection",
+   "psc_code": "S201",
+   "psc_name": "HOUSEKEEPING- CUSTODIAL JANITORIAL",
+   "what_was_done": "Custodial and janitorial services",
+   "active_obl_m": 3.1,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "562119",
+   "naics_title": "Other Waste Collection",
+   "psc_code": "S222",
+   "psc_name": "HOUSEKEEPING- WASTE TREATMENT/STORAGE",
+   "what_was_done": "Waste treatment and storage services",
+   "active_obl_m": 2.9,
+   "active_award_ct": 15,
+   "active_recipients": 13
+  },
+  {
+   "naics_code": "562212",
+   "naics_title": "Solid Waste Landfill",
+   "psc_code": "S222",
+   "psc_name": "HOUSEKEEPING- WASTE TREATMENT/STORAGE",
+   "what_was_done": "Waste treatment and storage services",
+   "active_obl_m": 2.7,
+   "active_award_ct": 18,
+   "active_recipients": 18
+  },
+  {
+   "naics_code": "562211",
+   "naics_title": "Hazardous Waste Treatment and Disposal",
+   "psc_code": "S205",
+   "psc_name": "HOUSEKEEPING- TRASH/GARBAGE COLLECTION",
+   "what_was_done": "Hazardous and medical waste collection and disposal",
+   "active_obl_m": 2.6,
+   "active_award_ct": 16,
+   "active_recipients": 15
+  },
+  {
+   "naics_code": "561990",
+   "naics_title": "All Other Support Services",
+   "psc_code": "S216",
+   "psc_name": "HOUSEKEEPING- FACILITIES OPERATIONS SUPPORT",
+   "what_was_done": "Facilities operations and housekeeping support",
+   "active_obl_m": 2.5,
+   "active_award_ct": 13,
+   "active_recipients": 13
+  },
+  {
+   "naics_code": "561710",
+   "naics_title": "Exterminating and Pest Control Services",
+   "psc_code": "S208",
+   "psc_name": "HOUSEKEEPING- LANDSCAPING/GROUNDSKEEPING",
+   "what_was_done": "Landscaping and groundskeeping services",
+   "active_obl_m": 2.3,
+   "active_award_ct": 3,
+   "active_recipients": 3
+  },
+  {
+   "naics_code": "561790",
+   "naics_title": "Other Services to Buildings and Dwellings",
+   "psc_code": "S201",
+   "psc_name": "HOUSEKEEPING- CUSTODIAL JANITORIAL",
+   "what_was_done": "Custodial and janitorial services",
+   "active_obl_m": 2.2,
+   "active_award_ct": 11,
+   "active_recipients": 10
+  },
+  {
+   "naics_code": "561790",
+   "naics_title": "Other Services to Buildings and Dwellings",
+   "psc_code": "S216",
+   "psc_name": "HOUSEKEEPING- FACILITIES OPERATIONS SUPPORT",
+   "what_was_done": "Facilities operations support services",
+   "active_obl_m": 2.1,
+   "active_award_ct": 15,
+   "active_recipients": 13
+  },
+  {
+   "naics_code": "562111",
+   "naics_title": "Solid Waste Collection",
+   "psc_code": "S119",
+   "psc_name": "UTILITIES- OTHER",
+   "what_was_done": "Utility services",
+   "active_obl_m": 2.0,
+   "active_award_ct": 11,
+   "active_recipients": 11
+  },
+  {
+   "naics_code": "561210",
+   "naics_title": "Facilities Support Services",
+   "psc_code": "S112",
+   "psc_name": "UTILITIES- ELECTRIC",
+   "what_was_done": "Electric utility services",
+   "active_obl_m": 1.7,
+   "active_award_ct": 3,
+   "active_recipients": 3
+  },
+  {
+   "naics_code": "561210",
+   "naics_title": "Facilities Support Services",
+   "psc_code": "S119",
+   "psc_name": "UTILITIES- OTHER",
+   "what_was_done": "Utility services",
+   "active_obl_m": 1.5,
+   "active_award_ct": 2,
+   "active_recipients": 2
+  },
+  {
+   "naics_code": "561720",
+   "naics_title": "Janitorial Services",
+   "psc_code": "S211",
+   "psc_name": "HOUSEKEEPING- SURVEILLANCE",
+   "what_was_done": "Facility surveillance and monitoring services",
+   "active_obl_m": 1.5,
+   "active_award_ct": 3,
+   "active_recipients": 3
+  },
+  {
+   "naics_code": "562111",
+   "naics_title": "Solid Waste Collection",
+   "psc_code": "S206",
+   "psc_name": "HOUSEKEEPING- GUARD",
+   "what_was_done": "Guard services",
+   "active_obl_m": 1.5,
+   "active_award_ct": 4,
+   "active_recipients": 4
+  },
+  {
+   "naics_code": "562212",
+   "naics_title": "Solid Waste Landfill",
+   "psc_code": "S205",
+   "psc_name": "HOUSEKEEPING- TRASH/GARBAGE COLLECTION",
+   "what_was_done": "Trash and garbage collection services",
+   "active_obl_m": 1.4,
+   "active_award_ct": 28,
+   "active_recipients": 25
+  },
+  {
+   "naics_code": "561740",
+   "naics_title": "Carpet and Upholstery Cleaning Services",
+   "psc_code": "S214",
+   "psc_name": "HOUSEKEEPING- CARPET LAYING/CLEANING",
+   "what_was_done": "Carpet and upholstery cleaning services",
+   "active_obl_m": 1.4,
+   "active_award_ct": 24,
+   "active_recipients": 13
+  },
+  {
+   "naics_code": "562991",
+   "naics_title": "Septic Tank and Related Services",
+   "psc_code": "S201",
+   "psc_name": "HOUSEKEEPING- CUSTODIAL JANITORIAL",
+   "what_was_done": "Custodial and janitorial services",
+   "active_obl_m": 1.3,
+   "active_award_ct": 15,
+   "active_recipients": 14
+  },
+  {
+   "naics_code": "561621",
+   "naics_title": "Security Systems Services (except Locksmiths)",
+   "psc_code": "S202",
+   "psc_name": "HOUSEKEEPING- FIRE PROTECTION",
+   "what_was_done": "Fire protection and life-safety services",
+   "active_obl_m": 1.3,
+   "active_award_ct": 10,
+   "active_recipients": 9
+  },
+  {
+   "naics_code": "561210",
+   "naics_title": "Facilities Support Services",
+   "psc_code": "S218",
+   "psc_name": "HOUSEKEEPING- SNOW REMOVAL/SALT",
+   "what_was_done": "Snow removal and de-icing services",
+   "active_obl_m": 1.3,
+   "active_award_ct": 9,
+   "active_recipients": 8
+  },
+  {
+   "naics_code": "562998",
+   "naics_title": "All Other Miscellaneous Waste Management Services",
+   "psc_code": "S299",
+   "psc_name": "HOUSEKEEPING- OTHER",
+   "what_was_done": "Waste management housekeeping services",
+   "active_obl_m": 1.2,
+   "active_award_ct": 9,
+   "active_recipients": 8
+  },
+  {
+   "naics_code": "562219",
+   "naics_title": "Other Nonhazardous Waste Treatment and Disposal",
+   "psc_code": "S114",
+   "psc_name": "UTILITIES- WATER",
+   "what_was_done": "Water utility services",
+   "active_obl_m": 1.2,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "562219",
+   "naics_title": "Other Nonhazardous Waste Treatment and Disposal",
+   "psc_code": "S222",
+   "psc_name": "HOUSEKEEPING- WASTE TREATMENT/STORAGE",
+   "what_was_done": "Waste treatment and storage services",
+   "active_obl_m": 1.1,
+   "active_award_ct": 21,
+   "active_recipients": 18
+  },
+  {
+   "naics_code": "561710",
+   "naics_title": "Exterminating and Pest Control Services",
+   "psc_code": "S201",
+   "psc_name": "HOUSEKEEPING- CUSTODIAL JANITORIAL",
+   "what_was_done": "Custodial and janitorial services",
+   "active_obl_m": 1.0,
+   "active_award_ct": 6,
+   "active_recipients": 6
+  },
+  {
+   "naics_code": "562111",
+   "naics_title": "Solid Waste Collection",
+   "psc_code": "S299",
+   "psc_name": "HOUSEKEEPING- OTHER",
+   "what_was_done": "Housekeeping and waste-handling services",
+   "active_obl_m": 0.9,
+   "active_award_ct": 10,
+   "active_recipients": 10
+  },
+  {
+   "naics_code": "561612",
+   "naics_title": "Security Guards and Patrol Services",
+   "psc_code": "S201",
+   "psc_name": "HOUSEKEEPING- CUSTODIAL JANITORIAL",
+   "what_was_done": "Custodial and janitorial services",
+   "active_obl_m": 0.8,
+   "active_award_ct": 2,
+   "active_recipients": 2
+  },
+  {
+   "naics_code": "562112",
+   "naics_title": "Hazardous Waste Collection",
+   "psc_code": "S216",
+   "psc_name": "HOUSEKEEPING- FACILITIES OPERATIONS SUPPORT",
+   "what_was_done": "Facilities operations support services",
+   "active_obl_m": 0.8,
+   "active_award_ct": 6,
+   "active_recipients": 6
+  },
+  {
+   "naics_code": "562910",
+   "naics_title": "Remediation Services",
+   "psc_code": "S114",
+   "psc_name": "UTILITIES- WATER",
+   "what_was_done": null,
+   "active_obl_m": 0.8,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "561210",
+   "naics_title": "Facilities Support Services",
+   "psc_code": "S209",
+   "psc_name": "HOUSEKEEPING- LAUNDRY/DRYCLEANING",
+   "what_was_done": "Laundry and drycleaning services",
+   "active_obl_m": 0.8,
+   "active_award_ct": 4,
+   "active_recipients": 3
+  },
+  {
+   "naics_code": "562910",
+   "naics_title": "Remediation Services",
+   "psc_code": "S202",
+   "psc_name": "HOUSEKEEPING- FIRE PROTECTION",
+   "what_was_done": "Fire protection services",
+   "active_obl_m": 0.8,
+   "active_award_ct": 3,
+   "active_recipients": 2
+  },
+  {
+   "naics_code": "562998",
+   "naics_title": "All Other Miscellaneous Waste Management Services",
+   "psc_code": "S216",
+   "psc_name": "HOUSEKEEPING- FACILITIES OPERATIONS SUPPORT",
+   "what_was_done": "Facilities operations support services",
+   "active_obl_m": 0.7,
+   "active_award_ct": 6,
+   "active_recipients": 5
+  },
+  {
+   "naics_code": "562991",
+   "naics_title": "Septic Tank and Related Services",
+   "psc_code": "S216",
+   "psc_name": "HOUSEKEEPING- FACILITIES OPERATIONS SUPPORT",
+   "what_was_done": "Facilities operations and support services",
+   "active_obl_m": 0.7,
+   "active_award_ct": 17,
+   "active_recipients": 14
+  },
+  {
+   "naics_code": "561110",
+   "naics_title": "Office Administrative Services",
+   "psc_code": "S215",
+   "psc_name": "HOUSEKEEPING- WAREHOUSING/STORAGE",
+   "what_was_done": "Warehousing and storage services",
+   "active_obl_m": 0.6,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "561210",
+   "naics_title": "Facilities Support Services",
+   "psc_code": "S222",
+   "psc_name": "HOUSEKEEPING- WASTE TREATMENT/STORAGE",
+   "what_was_done": "Waste treatment and storage services",
+   "active_obl_m": 0.5,
+   "active_award_ct": 3,
+   "active_recipients": 2
+  },
+  {
+   "naics_code": "562910",
+   "naics_title": "Remediation Services",
+   "psc_code": "S201",
+   "psc_name": "HOUSEKEEPING- CUSTODIAL JANITORIAL",
+   "what_was_done": "Custodial and janitorial services",
+   "active_obl_m": 0.5,
+   "active_award_ct": 2,
+   "active_recipients": 2
+  },
+  {
+   "naics_code": "562119",
+   "naics_title": "Other Waste Collection",
+   "psc_code": "S299",
+   "psc_name": "HOUSEKEEPING- OTHER",
+   "what_was_done": "Nonhazardous waste collection and hauling services",
+   "active_obl_m": 0.5,
+   "active_award_ct": 5,
+   "active_recipients": 5
+  },
+  {
+   "naics_code": "561611",
+   "naics_title": "Investigation and Personal Background Check Services",
+   "psc_code": "S211",
+   "psc_name": "HOUSEKEEPING- SURVEILLANCE",
+   "what_was_done": "Surveillance and monitoring services",
+   "active_obl_m": 0.5,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "562111",
+   "naics_title": "Solid Waste Collection",
+   "psc_code": "S208",
+   "psc_name": "HOUSEKEEPING- LANDSCAPING/GROUNDSKEEPING",
+   "what_was_done": "Landscaping and grounds maintenance services",
+   "active_obl_m": 0.5,
+   "active_award_ct": 2,
+   "active_recipients": 2
+  },
+  {
+   "naics_code": "562991",
+   "naics_title": "Septic Tank and Related Services",
+   "psc_code": "S299",
+   "psc_name": "HOUSEKEEPING- OTHER",
+   "what_was_done": "Facility sanitation and housekeeping services",
+   "active_obl_m": 0.5,
+   "active_award_ct": 9,
+   "active_recipients": 8
+  },
+  {
+   "naics_code": "561990",
+   "naics_title": "All Other Support Services",
+   "psc_code": "S205",
+   "psc_name": "HOUSEKEEPING- TRASH/GARBAGE COLLECTION",
+   "what_was_done": "Trash and garbage collection services",
+   "active_obl_m": 0.4,
+   "active_award_ct": 4,
+   "active_recipients": 4
+  },
+  {
+   "naics_code": "562111",
+   "naics_title": "Solid Waste Collection",
+   "psc_code": "S215",
+   "psc_name": "HOUSEKEEPING- WAREHOUSING/STORAGE",
+   "what_was_done": "Warehousing and storage services",
+   "active_obl_m": 0.4,
+   "active_award_ct": 2,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "562910",
+   "naics_title": "Remediation Services",
+   "psc_code": "S222",
+   "psc_name": "HOUSEKEEPING- WASTE TREATMENT/STORAGE",
+   "what_was_done": "Waste treatment and storage services",
+   "active_obl_m": 0.4,
+   "active_award_ct": 4,
+   "active_recipients": 3
+  },
+  {
+   "naics_code": "562112",
+   "naics_title": "Hazardous Waste Collection",
+   "psc_code": "S299",
+   "psc_name": "HOUSEKEEPING- OTHER",
+   "what_was_done": "Hazardous housekeeping and waste-handling services",
+   "active_obl_m": 0.4,
+   "active_award_ct": 2,
+   "active_recipients": 2
+  },
+  {
+   "naics_code": "561320",
+   "naics_title": "Temporary Help Services",
+   "psc_code": "S201",
+   "psc_name": "HOUSEKEEPING- CUSTODIAL JANITORIAL",
+   "what_was_done": "Custodial and janitorial personnel",
+   "active_obl_m": 0.4,
+   "active_award_ct": 2,
+   "active_recipients": 2
+  },
+  {
+   "naics_code": "562111",
+   "naics_title": "Solid Waste Collection",
+   "psc_code": "S201",
+   "psc_name": "HOUSEKEEPING- CUSTODIAL JANITORIAL",
+   "what_was_done": null,
+   "active_obl_m": 0.4,
+   "active_award_ct": 2,
+   "active_recipients": 2
+  },
+  {
+   "naics_code": "561622",
+   "naics_title": "Locksmiths",
+   "psc_code": "S216",
+   "psc_name": "HOUSEKEEPING- FACILITIES OPERATIONS SUPPORT",
+   "what_was_done": "Facilities operations support services",
+   "active_obl_m": 0.4,
+   "active_award_ct": 2,
+   "active_recipients": 2
+  },
+  {
+   "naics_code": "561790",
+   "naics_title": "Other Services to Buildings and Dwellings",
+   "psc_code": "S203",
+   "psc_name": "HOUSEKEEPING- FOOD",
+   "what_was_done": null,
+   "active_obl_m": 0.4,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "562213",
+   "naics_title": "Solid Waste Combustors and Incinerators",
+   "psc_code": "S205",
+   "psc_name": "HOUSEKEEPING- TRASH/GARBAGE COLLECTION",
+   "what_was_done": "Trash and garbage collection services",
+   "active_obl_m": 0.3,
+   "active_award_ct": 2,
+   "active_recipients": 2
+  },
+  {
+   "naics_code": "562998",
+   "naics_title": "All Other Miscellaneous Waste Management Services",
+   "psc_code": "S201",
+   "psc_name": "HOUSEKEEPING- CUSTODIAL JANITORIAL",
+   "what_was_done": "Custodial and janitorial services",
+   "active_obl_m": 0.3,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "561790",
+   "naics_title": "Other Services to Buildings and Dwellings",
+   "psc_code": "S208",
+   "psc_name": "HOUSEKEEPING- LANDSCAPING/GROUNDSKEEPING",
+   "what_was_done": "Landscaping and grounds maintenance services",
+   "active_obl_m": 0.3,
+   "active_award_ct": 6,
+   "active_recipients": 6
+  },
+  {
+   "naics_code": "561710",
+   "naics_title": "Exterminating and Pest Control Services",
+   "psc_code": "S216",
+   "psc_name": "HOUSEKEEPING- FACILITIES OPERATIONS SUPPORT",
+   "what_was_done": null,
+   "active_obl_m": 0.3,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "561720",
+   "naics_title": "Janitorial Services",
+   "psc_code": "S214",
+   "psc_name": "HOUSEKEEPING- CARPET LAYING/CLEANING",
+   "what_was_done": "Carpet and janitorial cleaning services",
+   "active_obl_m": 0.2,
+   "active_award_ct": 9,
+   "active_recipients": 8
+  },
+  {
+   "naics_code": "561621",
+   "naics_title": "Security Systems Services (except Locksmiths)",
+   "psc_code": "S216",
+   "psc_name": "HOUSEKEEPING- FACILITIES OPERATIONS SUPPORT",
+   "what_was_done": "Facilities operations support services",
+   "active_obl_m": 0.2,
+   "active_award_ct": 2,
+   "active_recipients": 2
+  },
+  {
+   "naics_code": "561613",
+   "naics_title": "Armored Car Services",
+   "psc_code": "S206",
+   "psc_name": "HOUSEKEEPING- GUARD",
+   "what_was_done": "Armed guard services",
+   "active_obl_m": 0.2,
+   "active_award_ct": 3,
+   "active_recipients": 3
+  },
+  {
+   "naics_code": "561720",
+   "naics_title": "Janitorial Services",
+   "psc_code": "S207",
+   "psc_name": "HOUSEKEEPING- INSECT/RODENT CONTROL",
+   "what_was_done": null,
+   "active_obl_m": 0.2,
+   "active_award_ct": 4,
+   "active_recipients": 4
+  },
+  {
+   "naics_code": "561790",
+   "naics_title": "Other Services to Buildings and Dwellings",
+   "psc_code": "S202",
+   "psc_name": "HOUSEKEEPING- FIRE PROTECTION",
+   "what_was_done": null,
+   "active_obl_m": 0.2,
+   "active_award_ct": 2,
+   "active_recipients": 2
+  },
+  {
+   "naics_code": "561730",
+   "naics_title": "Landscaping Services",
+   "psc_code": "S216",
+   "psc_name": "HOUSEKEEPING- FACILITIES OPERATIONS SUPPORT",
+   "what_was_done": "Grounds and facilities operations support",
+   "active_obl_m": 0.2,
+   "active_award_ct": 5,
+   "active_recipients": 5
+  },
+  {
+   "naics_code": "561740",
+   "naics_title": "Carpet and Upholstery Cleaning Services",
+   "psc_code": "S201",
+   "psc_name": "HOUSEKEEPING- CUSTODIAL JANITORIAL",
+   "what_was_done": "Custodial and janitorial services",
+   "active_obl_m": 0.2,
+   "active_award_ct": 2,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "561990",
+   "naics_title": "All Other Support Services",
+   "psc_code": "S203",
+   "psc_name": "HOUSEKEEPING- FOOD",
+   "what_was_done": null,
+   "active_obl_m": 0.2,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "561720",
+   "naics_title": "Janitorial Services",
+   "psc_code": "S218",
+   "psc_name": "HOUSEKEEPING- SNOW REMOVAL/SALT",
+   "what_was_done": "Snow removal and de-icing services",
+   "active_obl_m": 0.2,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "561730",
+   "naics_title": "Landscaping Services",
+   "psc_code": "S217",
+   "psc_name": "HOUSEKEEPING- INTERIOR PLANTSCAPING",
+   "what_was_done": "Interior plantscaping services",
+   "active_obl_m": 0.2,
+   "active_award_ct": 4,
+   "active_recipients": 4
+  },
+  {
+   "naics_code": "562211",
+   "naics_title": "Hazardous Waste Treatment and Disposal",
+   "psc_code": "S216",
+   "psc_name": "HOUSEKEEPING- FACILITIES OPERATIONS SUPPORT",
+   "what_was_done": "Facilities operations support services",
+   "active_obl_m": 0.2,
+   "active_award_ct": 4,
+   "active_recipients": 3
+  },
+  {
+   "naics_code": "561210",
+   "naics_title": "Facilities Support Services",
+   "psc_code": "S207",
+   "psc_name": "HOUSEKEEPING- INSECT/RODENT CONTROL",
+   "what_was_done": "Pest and rodent control services",
+   "active_obl_m": 0.1,
+   "active_award_ct": 5,
+   "active_recipients": 5
+  },
+  {
+   "naics_code": "561621",
+   "naics_title": "Security Systems Services (except Locksmiths)",
+   "psc_code": "S119",
+   "psc_name": "UTILITIES- OTHER",
+   "what_was_done": "Utility support services",
+   "active_obl_m": 0.1,
+   "active_award_ct": 2,
+   "active_recipients": 2
+  },
+  {
+   "naics_code": "562212",
+   "naics_title": "Solid Waste Landfill",
+   "psc_code": "S119",
+   "psc_name": "UTILITIES- OTHER",
+   "what_was_done": "Nonhazardous solid waste disposal utility services",
+   "active_obl_m": 0.1,
+   "active_award_ct": 3,
+   "active_recipients": 3
+  },
+  {
+   "naics_code": "562111",
+   "naics_title": "Solid Waste Collection",
+   "psc_code": "S209",
+   "psc_name": "HOUSEKEEPING- LAUNDRY/DRYCLEANING",
+   "what_was_done": null,
+   "active_obl_m": 0.1,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "562213",
+   "naics_title": "Solid Waste Combustors and Incinerators",
+   "psc_code": "S299",
+   "psc_name": "HOUSEKEEPING- OTHER",
+   "what_was_done": "Solid waste housekeeping services",
+   "active_obl_m": 0.1,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "561720",
+   "naics_title": "Janitorial Services",
+   "psc_code": "S202",
+   "psc_name": "HOUSEKEEPING- FIRE PROTECTION",
+   "what_was_done": "Fire protection housekeeping services",
+   "active_obl_m": 0.1,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "562111",
+   "naics_title": "Solid Waste Collection",
+   "psc_code": "S114",
+   "psc_name": "UTILITIES- WATER",
+   "what_was_done": "Water utility services",
+   "active_obl_m": 0.1,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "562111",
+   "naics_title": "Solid Waste Collection",
+   "psc_code": "S216",
+   "psc_name": "HOUSEKEEPING- FACILITIES OPERATIONS SUPPORT",
+   "what_was_done": "Facilities operations support services",
+   "active_obl_m": 0.1,
+   "active_award_ct": 4,
+   "active_recipients": 4
+  },
+  {
+   "naics_code": "561740",
+   "naics_title": "Carpet and Upholstery Cleaning Services",
+   "psc_code": "S209",
+   "psc_name": "HOUSEKEEPING- LAUNDRY/DRYCLEANING",
+   "what_was_done": "Laundry and drycleaning services",
+   "active_obl_m": 0.1,
+   "active_award_ct": 7,
+   "active_recipients": 5
+  },
+  {
+   "naics_code": "561499",
+   "naics_title": "All Other Business Support Services",
+   "psc_code": "S216",
+   "psc_name": "HOUSEKEEPING- FACILITIES OPERATIONS SUPPORT",
+   "what_was_done": "Facilities operations support services",
+   "active_obl_m": 0.1,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "562998",
+   "naics_title": "All Other Miscellaneous Waste Management Services",
+   "psc_code": "S114",
+   "psc_name": "UTILITIES- WATER",
+   "what_was_done": "Water utility services",
+   "active_obl_m": 0.1,
+   "active_award_ct": 2,
+   "active_recipients": 2
+  },
+  {
+   "naics_code": "562998",
+   "naics_title": "All Other Miscellaneous Waste Management Services",
+   "psc_code": "S212",
+   "psc_name": "HOUSEKEEPING- SOLID FUEL HANDLING",
+   "what_was_done": "Solid fuel handling services",
+   "active_obl_m": 0.1,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "562991",
+   "naics_title": "Septic Tank and Related Services",
+   "psc_code": "S202",
+   "psc_name": "HOUSEKEEPING- FIRE PROTECTION",
+   "what_was_done": null,
+   "active_obl_m": 0.1,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "562211",
+   "naics_title": "Hazardous Waste Treatment and Disposal",
+   "psc_code": "S207",
+   "psc_name": "HOUSEKEEPING- INSECT/RODENT CONTROL",
+   "what_was_done": null,
+   "active_obl_m": 0.1,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "562119",
+   "naics_title": "Other Waste Collection",
+   "psc_code": "S209",
+   "psc_name": "HOUSEKEEPING- LAUNDRY/DRYCLEANING",
+   "what_was_done": "Laundry and drycleaning services",
+   "active_obl_m": 0.0,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "562213",
+   "naics_title": "Solid Waste Combustors and Incinerators",
+   "psc_code": "S222",
+   "psc_name": "HOUSEKEEPING- WASTE TREATMENT/STORAGE",
+   "what_was_done": "Waste treatment and storage services",
+   "active_obl_m": 0.0,
+   "active_award_ct": 5,
+   "active_recipients": 4
+  },
+  {
+   "naics_code": "561710",
+   "naics_title": "Exterminating and Pest Control Services",
+   "psc_code": "S205",
+   "psc_name": "HOUSEKEEPING- TRASH/GARBAGE COLLECTION",
+   "what_was_done": "Trash and garbage collection services",
+   "active_obl_m": 0.0,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "562211",
+   "naics_title": "Hazardous Waste Treatment and Disposal",
+   "psc_code": "S299",
+   "psc_name": "HOUSEKEEPING- OTHER",
+   "what_was_done": "Hazardous waste housekeeping services",
+   "active_obl_m": 0.0,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "561790",
+   "naics_title": "Other Services to Buildings and Dwellings",
+   "psc_code": "S205",
+   "psc_name": "HOUSEKEEPING- TRASH/GARBAGE COLLECTION",
+   "what_was_done": "Trash and garbage collection services",
+   "active_obl_m": 0.0,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "562212",
+   "naics_title": "Solid Waste Landfill",
+   "psc_code": "S216",
+   "psc_name": "HOUSEKEEPING- FACILITIES OPERATIONS SUPPORT",
+   "what_was_done": null,
+   "active_obl_m": 0.0,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "562991",
+   "naics_title": "Septic Tank and Related Services",
+   "psc_code": "S203",
+   "psc_name": "HOUSEKEEPING- FOOD",
+   "what_was_done": null,
+   "active_obl_m": 0.0,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "561110",
+   "naics_title": "Office Administrative Services",
+   "psc_code": "S216",
+   "psc_name": "HOUSEKEEPING- FACILITIES OPERATIONS SUPPORT",
+   "what_was_done": "Facilities operations support services",
+   "active_obl_m": 0.0,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "562920",
+   "naics_title": "Materials Recovery Facilities",
+   "psc_code": "S216",
+   "psc_name": "HOUSEKEEPING- FACILITIES OPERATIONS SUPPORT",
+   "what_was_done": null,
+   "active_obl_m": 0.0,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "561421",
+   "naics_title": "Telephone Answering Services",
+   "psc_code": "S119",
+   "psc_name": "UTILITIES- OTHER",
+   "what_was_done": "Telecommunications utility services",
+   "active_obl_m": 0.0,
+   "active_award_ct": 3,
+   "active_recipients": 2
+  },
+  {
+   "naics_code": "561210",
+   "naics_title": "Facilities Support Services",
+   "psc_code": "S211",
+   "psc_name": "HOUSEKEEPING- SURVEILLANCE",
+   "what_was_done": null,
+   "active_obl_m": 0.0,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "562119",
+   "naics_title": "Other Waste Collection",
+   "psc_code": "S119",
+   "psc_name": "UTILITIES- OTHER",
+   "what_was_done": "Waste utility services",
+   "active_obl_m": 0.0,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "562119",
+   "naics_title": "Other Waste Collection",
+   "psc_code": "S208",
+   "psc_name": "HOUSEKEEPING- LANDSCAPING/GROUNDSKEEPING",
+   "what_was_done": "Debris removal and grounds cleanup",
+   "active_obl_m": 0.0,
+   "active_award_ct": 10,
+   "active_recipients": 3
+  },
+  {
+   "naics_code": "561710",
+   "naics_title": "Exterminating and Pest Control Services",
+   "psc_code": "S299",
+   "psc_name": "HOUSEKEEPING- OTHER",
+   "what_was_done": "Housekeeping and facility support services",
+   "active_obl_m": 0.0,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "562910",
+   "naics_title": "Remediation Services",
+   "psc_code": "S299",
+   "psc_name": "HOUSEKEEPING- OTHER",
+   "what_was_done": "Environmental housekeeping services",
+   "active_obl_m": 0.0,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "561440",
+   "naics_title": "Collection Agencies",
+   "psc_code": "S205",
+   "psc_name": "HOUSEKEEPING- TRASH/GARBAGE COLLECTION",
+   "what_was_done": "Trash and garbage collection services",
+   "active_obl_m": 0.0,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "561440",
+   "naics_title": "Collection Agencies",
+   "psc_code": "S222",
+   "psc_name": "HOUSEKEEPING- WASTE TREATMENT/STORAGE",
+   "what_was_done": "Waste treatment and storage services",
+   "active_obl_m": 0.0,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "561990",
+   "naics_title": "All Other Support Services",
+   "psc_code": "S119",
+   "psc_name": "UTILITIES- OTHER",
+   "what_was_done": null,
+   "active_obl_m": 0.0,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "561621",
+   "naics_title": "Security Systems Services (except Locksmiths)",
+   "psc_code": "S299",
+   "psc_name": "HOUSEKEEPING- OTHER",
+   "what_was_done": "Housekeeping and facility support services",
+   "active_obl_m": 0.0,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "561990",
+   "naics_title": "All Other Support Services",
+   "psc_code": "S204",
+   "psc_name": "HOUSEKEEPING- FUELING AND OTHER PETROLEUM",
+   "what_was_done": null,
+   "active_obl_m": 0.0,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "561990",
+   "naics_title": "All Other Support Services",
+   "psc_code": "S208",
+   "psc_name": "HOUSEKEEPING- LANDSCAPING/GROUNDSKEEPING",
+   "what_was_done": null,
+   "active_obl_m": 0.0,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "561990",
+   "naics_title": "All Other Support Services",
+   "psc_code": "S215",
+   "psc_name": "HOUSEKEEPING- WAREHOUSING/STORAGE",
+   "what_was_done": null,
+   "active_obl_m": 0.0,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "561990",
+   "naics_title": "All Other Support Services",
+   "psc_code": "S218",
+   "psc_name": "HOUSEKEEPING- SNOW REMOVAL/SALT",
+   "what_was_done": null,
+   "active_obl_m": 0.0,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "561720",
+   "naics_title": "Janitorial Services",
+   "psc_code": "S222",
+   "psc_name": "HOUSEKEEPING- WASTE TREATMENT/STORAGE",
+   "what_was_done": "Waste treatment and storage services",
+   "active_obl_m": 0.0,
+   "active_award_ct": 3,
+   "active_recipients": 2
+  },
+  {
+   "naics_code": "562111",
+   "naics_title": "Solid Waste Collection",
+   "psc_code": "S203",
+   "psc_name": "HOUSEKEEPING- FOOD",
+   "what_was_done": null,
+   "active_obl_m": 0.0,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "561740",
+   "naics_title": "Carpet and Upholstery Cleaning Services",
+   "psc_code": "S299",
+   "psc_name": "HOUSEKEEPING- OTHER",
+   "what_was_done": "Housekeeping and cleaning support services",
+   "active_obl_m": 0.0,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "561210",
+   "naics_title": "Facilities Support Services",
+   "psc_code": "S214",
+   "psc_name": "HOUSEKEEPING- CARPET LAYING/CLEANING",
+   "what_was_done": null,
+   "active_obl_m": 0.0,
+   "active_award_ct": 3,
+   "active_recipients": 3
+  },
+  {
+   "naics_code": "562998",
+   "naics_title": "All Other Miscellaneous Waste Management Services",
+   "psc_code": "S208",
+   "psc_name": "HOUSEKEEPING- LANDSCAPING/GROUNDSKEEPING",
+   "what_was_done": null,
+   "active_obl_m": 0.0,
+   "active_award_ct": 2,
+   "active_recipients": 2
+  },
+  {
+   "naics_code": "562219",
+   "naics_title": "Other Nonhazardous Waste Treatment and Disposal",
+   "psc_code": "S119",
+   "psc_name": "UTILITIES- OTHER",
+   "what_was_done": null,
+   "active_obl_m": 0.0,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "562219",
+   "naics_title": "Other Nonhazardous Waste Treatment and Disposal",
+   "psc_code": "S201",
+   "psc_name": "HOUSEKEEPING- CUSTODIAL JANITORIAL",
+   "what_was_done": null,
+   "active_obl_m": 0.0,
+   "active_award_ct": 3,
+   "active_recipients": 3
+  },
+  {
+   "naics_code": "562219",
+   "naics_title": "Other Nonhazardous Waste Treatment and Disposal",
+   "psc_code": "S216",
+   "psc_name": "HOUSEKEEPING- FACILITIES OPERATIONS SUPPORT",
+   "what_was_done": null,
+   "active_obl_m": 0.0,
+   "active_award_ct": 2,
+   "active_recipients": 2
+  },
+  {
+   "naics_code": "561439",
+   "naics_title": "Other Business Service Centers (including Copy Shops)",
+   "psc_code": "S209",
+   "psc_name": "HOUSEKEEPING- LAUNDRY/DRYCLEANING",
+   "what_was_done": null,
+   "active_obl_m": 0.0,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "562910",
+   "naics_title": "Remediation Services",
+   "psc_code": "S216",
+   "psc_name": "HOUSEKEEPING- FACILITIES OPERATIONS SUPPORT",
+   "what_was_done": null,
+   "active_obl_m": 0.0,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "562219",
+   "naics_title": "Other Nonhazardous Waste Treatment and Disposal",
+   "psc_code": "S299",
+   "psc_name": "HOUSEKEEPING- OTHER",
+   "what_was_done": "Nonhazardous waste housekeeping services",
+   "active_obl_m": 0.0,
+   "active_award_ct": 2,
+   "active_recipients": 2
+  },
+  {
+   "naics_code": "562920",
+   "naics_title": "Materials Recovery Facilities",
+   "psc_code": "S222",
+   "psc_name": "HOUSEKEEPING- WASTE TREATMENT/STORAGE",
+   "what_was_done": null,
+   "active_obl_m": 0.0,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "561740",
+   "naics_title": "Carpet and Upholstery Cleaning Services",
+   "psc_code": "S205",
+   "psc_name": "HOUSEKEEPING- TRASH/GARBAGE COLLECTION",
+   "what_was_done": null,
+   "active_obl_m": 0.0,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  },
+  {
+   "naics_code": "561320",
+   "naics_title": "Temporary Help Services",
+   "psc_code": "S215",
+   "psc_name": "HOUSEKEEPING- WAREHOUSING/STORAGE",
+   "what_was_done": null,
+   "active_obl_m": 0.0,
+   "active_award_ct": 1,
+   "active_recipients": 1
+  }
+ ]
+}

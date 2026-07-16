@@ -12,19 +12,26 @@ import { useState } from "react";
 import activeBaked from "@/internal/facilities-codes-active.json";
 import windowBaked from "@/internal/facilities-codes.json";
 import { type CodeDataset, CodeReference } from "@/viewer/CodeReference";
+import { CombosTable } from "@/viewer/CombosTable";
 
-const TABS: { key: string; label: string; sub: string; data: CodeDataset }[] = [
+const TABS: { key: string; label: string; sub: string; body: () => React.ReactNode }[] = [
   {
     key: "window",
     label: "2022 – 2025",
     sub: "3 yrs pre-OBBBA obligations",
-    data: windowBaked as unknown as CodeDataset,
+    body: () => <CodeReference data={windowBaked as unknown as CodeDataset} />,
   },
   {
     key: "active",
     label: "Active Awards",
     sub: "current active book",
-    data: activeBaked as unknown as CodeDataset,
+    body: () => <CodeReference data={activeBaked as unknown as CodeDataset} />,
+  },
+  {
+    key: "combos",
+    label: "Active Combos",
+    sub: "ranked, titles + work summary",
+    body: () => <CombosTable />,
   },
 ];
 
@@ -88,7 +95,7 @@ export default function Viewer() {
         ))}
       </nav>
       <main style={{ minWidth: 0 }}>
-        <CodeReference key={current.key} data={current.data} />
+        <div key={current.key}>{current.body()}</div>
       </main>
     </div>
   );
