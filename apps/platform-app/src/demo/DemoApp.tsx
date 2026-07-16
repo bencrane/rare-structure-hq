@@ -170,8 +170,10 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
         setError(null);
         setLoading(true);
         fetchActiveAwardsQuery({
-          grain: command.grain,
+          // No grain marker on event verbs (Q3); the edge 422s if grain rides along.
+          ...(command.mode === "events" ? {} : { grain: command.grain }),
           mode: command.mode,
+          event_verb: command.eventVerb,
           window_days: command.windowDays,
           job_phrase: command.jobPhrase,
           state: command.stateCode,
@@ -187,9 +189,11 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
               naics: "",
               city: r.physical_city ?? undefined,
               state: r.physical_state ?? undefined,
-              totalAwarded: r.active_total_obl ?? 0,
-              activeAwarded: r.active_total_obl ?? 0,
-              contractCount: r.active_award_ct ?? undefined,
+              // Event rows carry event_obl (the money the events moved); Q1/Q2 carry
+              // active_total_obl. Either maps to the table's totalAwarded axis.
+              totalAwarded: r.event_obl ?? r.active_total_obl ?? 0,
+              activeAwarded: r.event_obl ?? r.active_total_obl ?? 0,
+              contractCount: r.event_actions ?? r.active_award_ct ?? undefined,
               activeAward: true,
               catalysts: [],
             }));

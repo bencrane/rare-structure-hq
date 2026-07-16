@@ -449,10 +449,13 @@ export async function fetchJtbdVocab(): Promise<JtbdVocab> {
 
 /** The body for one completed Q1/Q2 sentence run. */
 export type ActiveAwardsQueryBody = {
-  grain: "total" | "single";
-  /** Active obligations (default) vs. won-in-window. */
-  mode?: "active" | "won";
-  /** Won-window length in days (required iff `mode === "won"`). */
+  /** Total/single grain — omitted on event verbs (Q3 has no grain marker). */
+  grain?: "total" | "single";
+  /** Active obligations (default), won-in-window, or FPDS modification events (Q3). */
+  mode?: "active" | "won" | "events";
+  /** Q3 event verb sent verbatim (required iff `mode === "events"`). */
+  event_verb?: string;
+  /** Window length in days (required iff `mode === "won" | "events"`). */
   window_days?: number;
   job_phrase?: string;
   /** Place-of-performance state (2-letter). */
@@ -476,9 +479,13 @@ export type ActiveAwardsRow = {
   physical_city: string | null;
   physical_state: string | null;
   normalized_domain: string | null;
-  active_total_obl: number;
-  active_max_single: number;
-  active_award_ct: number;
+  /** Q1/Q2 (active/won) obligation columns. */
+  active_total_obl?: number;
+  active_max_single?: number;
+  active_award_ct?: number;
+  /** Q3 (events) columns — Σ obligations moved by the events and the action count. */
+  event_obl?: number;
+  event_actions?: number;
 };
 
 export type ActiveAwardsResponse = {

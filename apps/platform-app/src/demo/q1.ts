@@ -136,6 +136,43 @@ export const INDUSTRIES = [
 
 const INDUSTRIES_BY_LEN = [...INDUSTRIES].sort((a, b) => b.length - a.length);
 
+/** Q3 EVENT VERBS (approved 2026-07-15) — the FPDS-modification-event sentence family:
+ * "[<industry> ]companies that <event verb>[ to <job>][ based in <state>][ over $X]
+ *  in the last <window>[ and need <token>]". Each verb maps server-side to an
+ * action_type_code set (2 are rollups). There is NO total/single grain marker, the
+ * window is REQUIRED, and the `in <state>` (PoP) slot is NOT offered — the month
+ * rollup has no place-of-performance columns. The verb string is sent verbatim as
+ * `eventVerb`; the edge does the code mapping. `and need` / `over $X` still apply. */
+export const EVENT_VERBS = [
+  "picked up additional work",
+  "had work added in scope",
+  "received new funding",
+  "got change orders",
+  "had change orders priced",
+  "had options exercised",
+  "were terminated for default",
+  "were terminated for convenience",
+  "were novated",
+  "picked up more work",
+  "were terminated",
+] as const;
+
+/** Content tokens of the event-verb query — scaffolding words that carry no
+ * discriminating signal are dropped before the AND-substring match, so a fragment
+ * like `funding`, `novated`, or `change orders` surfaces the matching verb(s). */
+const EVENT_VERB_FILLER = new Set(["were", "had", "got", "up", "new", "for", "in"]);
+
+/** Match the typed verb query against the canonical event verbs (AND-substring over
+ * content tokens). Returns the matching verb strings in canonical order (empty = none). */
+export function matchEventVerbs(verbQuery: string): string[] {
+  const toks = verbQuery
+    .split(" ")
+    .map((t) => t.trim())
+    .filter((t) => t && !EVENT_VERB_FILLER.has(t));
+  if (!toks.length) return [];
+  return EVENT_VERBS.filter((v) => toks.every((t) => v.includes(t)));
+}
+
 /** The 8 approved won-window slots: day value ⊕ the tail rendered after `in the last `. */
 export const WINDOWS: { days: number; render: string }[] = [
   { days: 30, render: "30 days" },
@@ -208,12 +245,14 @@ function matchState(prefix: string): string | undefined {
 }
 
 type Grain = "total" | "single";
-type Mode = "active" | "won";
+type Mode = "active" | "won" | "events";
 
 /** The resolved slots behind one candidate sentence. */
 type Slots = {
   mode: Mode;
-  grain: Grain;
+  /** Absent on event verbs — Q3 carries no total/single grain marker. */
+  grain?: Grain;
+  eventVerb?: string;
   industry?: string;
   jobPhrase?: string;
   stateName?: string;
@@ -225,36 +264,63 @@ type Slots = {
   need?: string;
 };
 
-/** Render the full Q1 (active) / Q2 (won) sentence from resolved slots. */
+/** Render the full Q1 (active) / Q2 (won) / Q3 (events) sentence from resolved slots. */
 export function q1Sentence(slots: Slots): string {
-  const { mode, grain, industry, jobPhrase, stateName, hqStateName, minAmt, windowDays, need } =
-    slots;
+  const {
+    mode,
+    grain,
+    eventVerb,
+    industry,
+    jobPhrase,
+    stateName,
+    hqStateName,
+    minAmt,
+    windowDays,
+    need,
+  } = slots;
   let s = industry ? `${industry} ` : "";
   s +=
-    mode === "won"
-      ? `companies that have won ${grain} awards`
-      : `companies with active ${grain} awards`;
+    mode === "events"
+      ? `companies that ${eventVerb}`
+      : mode === "won"
+        ? `companies that have won ${grain} awards`
+        : `companies with active ${grain} awards`;
   if (jobPhrase) s += ` ${renderJobPhrase(jobPhrase)}`;
-  if (stateName) s += ` in ${stateName}`;
+  // `in <state>` (PoP) is not offered on event verbs — the month rollup has no PoP.
+  if (stateName && mode !== "events") s += ` in ${stateName}`;
   if (hqStateName) s += ` based in ${hqStateName}`;
   if (minAmt != null) s += ` over ${formatAmount(minAmt)}`;
-  if (mode === "won") s += ` ${renderWindow(windowDays ?? 365)}`;
+  if (mode === "won" || mode === "events") s += ` ${renderWindow(windowDays ?? 365)}`;
   if (need) s += ` and need ${need}`;
   return s;
 }
 
 function makeCommand(slots: Slots): Command {
-  const { mode, grain, industry, jobPhrase, stateCode, hqStateCode, minAmt, windowDays, need } =
-    slots;
+  const {
+    mode,
+    grain,
+    eventVerb,
+    industry,
+    jobPhrase,
+    stateCode,
+    hqStateCode,
+    minAmt,
+    windowDays,
+    need,
+  } = slots;
+  const windowed = mode === "won" || mode === "events";
   return {
-    id: `q1:${mode}:${grain}:${industry ?? ""}:${jobPhrase ?? ""}:${stateCode ?? ""}:${hqStateCode ?? ""}:${minAmt ?? ""}:${windowDays ?? ""}:${need ?? ""}`,
+    id: `q1:${mode}:${grain ?? ""}:${eventVerb ?? ""}:${industry ?? ""}:${jobPhrase ?? ""}:${stateCode ?? ""}:${hqStateCode ?? ""}:${minAmt ?? ""}:${windowDays ?? ""}:${need ?? ""}`,
     kind: "active-awards",
     label: q1Sentence(slots),
-    grain,
-    ...(mode === "won" ? { mode } : {}),
-    ...(mode === "won" && windowDays != null ? { windowDays } : {}),
+    // No grain marker on event verbs (Q3).
+    ...(mode === "events" ? {} : { grain }),
+    ...(mode !== "active" ? { mode } : {}),
+    ...(mode === "events" && eventVerb ? { eventVerb } : {}),
+    ...(windowed && windowDays != null ? { windowDays } : {}),
     ...(jobPhrase ? { jobPhrase } : {}),
-    ...(stateCode ? { stateCode } : {}),
+    // PoP state is never bound on event rows.
+    ...(stateCode && mode !== "events" ? { stateCode } : {}),
     ...(hqStateCode ? { hqState: hqStateCode } : {}),
     ...(industry ? { industry } : {}),
     ...(need ? { need } : {}),
@@ -347,9 +413,6 @@ export function q1Candidates(
     }
   }
 
-  // ── mode: `won` (or any window fragment) → Q2; otherwise Q1 (default) ──
-  const mode: Mode = /\bwon\b/.test(rest) || windowTyped ? "won" : "active";
-
   // ── grain: explicit total/single token(s); absent → both variants ──
   const hasTotal = /\btotal\b/.test(rest);
   const hasSingle = /\bsingle\b/.test(rest);
@@ -367,12 +430,28 @@ export function q1Candidates(
     }
   }
 
-  // ── job phrase: remaining non-filler words as an AND-substring filter ──
-  const jobTokens = rest.split(" ").filter((t) => t && !FILLER.has(t));
+  // ── event verbs (Q3): the verb sits where `have won` would, before an optional
+  // ` to <job>`. A verb match (and no explicit `won`) flips the sentence to Q3.
+  const explicitWon = /\bwon\b/.test(rest);
+  const verbSplit = rest.split(/\bto\b/);
+  const matchedVerbs = explicitWon ? [] : matchEventVerbs(verbSplit[0] ?? "");
 
-  // ── the won-window fan: one specific window, or all 8 when won-mode without a match ──
+  // ── mode: event verb → Q3; `won`/window → Q2; otherwise Q1 (default) ──
+  const mode: Mode = matchedVerbs.length ? "events" : explicitWon || windowTyped ? "won" : "active";
+
+  // ── job phrase: remaining non-filler words as an AND-substring filter. On event
+  // rows only the tail after ` to ` is job text (the head is the verb). ──
+  const jobSource = mode === "events" ? verbSplit.slice(1).join(" ") : rest;
+  const jobTokens = jobSource.split(" ").filter((t) => t && !FILLER.has(t));
+
+  // ── the window fan (Q2 won + Q3 events): one specific window, or all 8 when the
+  // sentence is windowed but no window was typed. Q1 (active) has no window. ──
   const windows: (number | undefined)[] =
-    mode === "won" ? (windowDays != null ? [windowDays] : WINDOWS.map((w) => w.days)) : [undefined];
+    mode === "won" || mode === "events"
+      ? windowDays != null
+        ? [windowDays]
+        : WINDOWS.map((w) => w.days)
+      : [undefined];
 
   // ── the labor-need fan: the matching occupation tokens (verbatim fallback when none) ──
   const needs: (string | undefined)[] =
@@ -391,17 +470,20 @@ export function q1Candidates(
         })();
 
   const out: Command[] = [];
-  const emit = (grain: Grain, jobPhrase: string | undefined): boolean => {
+  // On event rows the outer fan is the matched verb(s) and there is NO grain; on
+  // Q1/Q2 the outer fan is the grain(s). `head` carries whichever applies.
+  const emit = (head: Grain | string, jobPhrase: string | undefined): boolean => {
     for (const win of windows) {
       for (const need of needs) {
         out.push(
           makeCommand({
             mode,
-            grain,
+            ...(mode === "events" ? { eventVerb: head } : { grain: head as Grain }),
             industry,
             jobPhrase,
-            stateName,
-            stateCode,
+            // PoP state never rides an event row (dropped in makeCommand too).
+            stateName: mode === "events" ? undefined : stateName,
+            stateCode: mode === "events" ? undefined : stateCode,
             hqStateName,
             hqStateCode,
             minAmt,
@@ -415,16 +497,19 @@ export function q1Candidates(
     return false;
   };
 
+  // Outer fan: the matched event verbs (Q3) or the grain variants (Q1/Q2).
+  const heads: (Grain | string)[] = mode === "events" ? matchedVerbs : grains;
+
   if (jobTokens.length === 0) {
     // No job words typed — the job slot is optional, so the all-work sentences lead,
     // followed by the ENTIRE phrase space (scrollable browse; typing only narrows).
-    for (const grain of grains) {
-      if (emit(grain, undefined)) return out;
+    for (const head of heads) {
+      if (emit(head, undefined)) return out;
     }
     const all = [...vocab].sort((a, b) => b.combo_count - a.combo_count);
     for (const p of all) {
-      for (const grain of grains) {
-        if (emit(grain, p.phrase)) return out;
+      for (const head of heads) {
+        if (emit(head, p.phrase)) return out;
       }
     }
     return out;
@@ -438,8 +523,8 @@ export function q1Candidates(
     .sort((a, b) => b.combo_count - a.combo_count);
 
   for (const p of phrases) {
-    for (const grain of grains) {
-      if (emit(grain, p.phrase)) return out;
+    for (const head of heads) {
+      if (emit(head, p.phrase)) return out;
     }
   }
   return out;

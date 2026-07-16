@@ -114,6 +114,58 @@ describe("amount `>` / `>=` navigation synonyms", () => {
   });
 });
 
+describe("Q3 event verbs", () => {
+  test("a verb fragment surfaces the event family (no grain marker on rows)", () => {
+    const rows = q1s("received new funding");
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.every((c) => c.mode === "events")).toBe(true);
+    expect(rows.every((c) => c.eventVerb === "received new funding")).toBe(true);
+    expect(rows.every((c) => c.grain == null)).toBe(true);
+    expect(rows[0].label).toContain("companies that received new funding");
+  });
+
+  test("`change orders` fragment surfaces both matching verbs", () => {
+    const verbs = new Set(q1s("change orders").map((c) => c.eventVerb));
+    expect(verbs.has("got change orders")).toBe(true);
+    expect(verbs.has("had change orders priced")).toBe(true);
+  });
+
+  test("event rows fan all 8 windows when none typed", () => {
+    const windows = new Set(q1s("novated").map((c) => c.windowDays));
+    for (const d of [30, 45, 60, 90, 180, 365, 730, 1095]) expect(windows.has(d)).toBe(true);
+  });
+
+  test("explicit window binds and renders on an event row", () => {
+    const [row] = q1s("received new funding in the last 90 days");
+    expect(row.mode).toBe("events");
+    expect(row.windowDays).toBe(90);
+    expect(row.label).toContain("in the last 90 days");
+  });
+
+  test("`in <state>` (PoP) is NOT offered on event rows", () => {
+    const rows = q1s("received new funding in california");
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.every((c) => c.stateCode == null)).toBe(true);
+    expect(rows.every((c) => !c.label.includes("in california"))).toBe(true);
+  });
+
+  test("event verb + `over $X` parses the obligation floor", () => {
+    const [row] = q1s("received new funding over $10m");
+    expect(row.minAmt).toBe(10_000_000);
+    expect(row.mode).toBe("events");
+    expect(row.label).toContain("over $10m");
+  });
+
+  test("event verb keeps industry, HQ, and need slots", () => {
+    const [row] = q1s("construction were novated based in texas and need welders");
+    expect(row.mode).toBe("events");
+    expect(row.eventVerb).toBe("were novated");
+    expect(row.industry).toBe("construction");
+    expect(row.hqState).toBe("TX");
+    expect(row.need).toBe("welders");
+  });
+});
+
 describe("leading industry token", () => {
   test("single-word leading token binds industry", () => {
     const [row] = q1s("construction total");
