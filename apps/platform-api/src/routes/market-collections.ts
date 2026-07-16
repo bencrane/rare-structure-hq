@@ -4,8 +4,11 @@
  * market collections (gtm.market_collections; hq/MARKET_COLLECTIONS_PROGRAM.md
  * v2) — list + live member count with geo/band tuning.
  *
- * Same seam as routes/market-spec.ts (requireUser in, service token out, bodies
- * and statuses verbatim).
+ * PUBLIC routes (no requireUser) — same convention as /api/v1/federal/*: the
+ * responses carry only public-procurement aggregates and the collection
+ * registry (names/descriptions/pair counts), nothing account- or
+ * contact-scoped. Public is also what makes the tab work under the dev mock
+ * session. Service token still gates the edge upstream.
  *
  *   GET  /            → edge GET  /api/v1/market-collections
  *   POST /count       → edge POST /api/v1/market-collections/count
@@ -13,16 +16,12 @@
 
 import { Hono } from "hono";
 
-import { type AuthVariables, requireUser } from "../auth.ts";
-
 const EDGE_API_URL = (process.env.EDGE_API_URL ?? "").replace(/\/$/, "");
 const EDGE_API_SERVICE_TOKEN = process.env.EDGE_API_SERVICE_TOKEN ?? "";
 
 const UPSTREAM = "/api/v1/market-collections";
 
-export const marketCollectionsRoutes = new Hono<{ Variables: AuthVariables }>();
-
-marketCollectionsRoutes.use("*", requireUser);
+export const marketCollectionsRoutes = new Hono();
 
 marketCollectionsRoutes.get("/", async (c) => {
   const res = await fetch(`${EDGE_API_URL}${UPSTREAM}`, {
