@@ -31,6 +31,7 @@ import { SuboutProfile } from "./components/SuboutProfile";
 import type { ResultView } from "./components/TerminalChrome";
 import { type QueryResult, runQuery, scopeIsToggleable } from "./data";
 import { fetchActiveAwardsQuery, fetchSubUniverse, fetchSuboutOpportunities } from "./federalApi";
+import { projectLonLat } from "./projection";
 import {
   type SubUniverseGateParams,
   type SubUniverseLayer,
@@ -183,20 +184,27 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
           min_amt: command.minAmt,
         })
           .then((res) => {
-            const companies: Company[] = res.rows.map((r) => ({
-              id: r.uei,
-              name: r.legal_business_name ?? r.uei,
-              naics: "",
-              city: r.physical_city ?? undefined,
-              state: r.physical_state ?? undefined,
-              // Event rows carry event_obl (the money the events moved); Q1/Q2 carry
-              // active_total_obl. Either maps to the table's totalAwarded axis.
-              totalAwarded: r.event_obl ?? r.active_total_obl ?? 0,
-              activeAwarded: r.event_obl ?? r.active_total_obl ?? 0,
-              contractCount: r.event_actions ?? r.active_award_ct ?? undefined,
-              activeAward: true,
-              catalysts: [],
-            }));
+            const companies: Company[] = res.rows.map((r) => {
+              const geo =
+                typeof r.longitude === "number" && typeof r.latitude === "number"
+                  ? projectLonLat(r.longitude, r.latitude)
+                  : null;
+              return {
+                id: r.uei,
+                name: r.legal_business_name ?? r.uei,
+                naics: "",
+                city: r.physical_city ?? undefined,
+                state: r.physical_state ?? undefined,
+                // Event rows carry event_obl (the money the events moved); Q1/Q2 carry
+                // active_total_obl. Either maps to the table's totalAwarded axis.
+                totalAwarded: r.event_obl ?? r.active_total_obl ?? 0,
+                activeAwarded: r.event_obl ?? r.active_total_obl ?? 0,
+                contractCount: r.event_actions ?? r.active_award_ct ?? undefined,
+                activeAward: true,
+                catalysts: [],
+                ...(geo ? { x: geo.x, y: geo.y } : {}),
+              };
+            });
             setResult({
               companies,
               total: res.total,

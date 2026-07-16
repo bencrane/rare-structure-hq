@@ -474,6 +474,8 @@ export type ActiveAwardsQueryBody = {
 
 /** One returned company row from the active-awards query. */
 export type ActiveAwardsRow = {
+  latitude?: number | null;
+  longitude?: number | null;
   uei: string;
   legal_business_name: string;
   physical_city: string | null;
