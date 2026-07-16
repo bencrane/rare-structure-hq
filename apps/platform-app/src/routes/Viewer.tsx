@@ -13,6 +13,7 @@ import activeBaked from "@/internal/facilities-codes-active.json";
 import windowBaked from "@/internal/facilities-codes.json";
 import { type CodeDataset, CodeReference } from "@/viewer/CodeReference";
 import { CombosTable } from "@/viewer/CombosTable";
+import { PairCuration } from "@/viewer/PairCuration";
 
 const TABS: { key: string; label: string; sub: string; body: () => React.ReactNode }[] = [
   {
@@ -32,6 +33,12 @@ const TABS: { key: string; label: string; sub: string; body: () => React.ReactNo
     label: "Active Combos",
     sub: "ranked, titles + work summary",
     body: () => <CombosTable />,
+  },
+  {
+    key: "pair-curation",
+    label: "Pair Curation",
+    sub: "collection combos · keep/strike",
+    body: () => <PairCuration />,
   },
 ];
 
