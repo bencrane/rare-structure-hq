@@ -46,6 +46,7 @@ import Dossier from "./routes/app/Dossier";
 import EngagementTemplateToDocumenso from "./routes/app/EngagementTemplateToDocumenso";
 import EngagementTemplatesRender from "./routes/app/EngagementTemplatesRender";
 import Insights from "./routes/app/Insights";
+import JtbdReview from "./routes/app/JtbdReview";
 import ManageDocumensoTemplates from "./routes/app/ManageDocumensoTemplates";
 import Mandate from "./routes/app/Mandate";
 import MandateBrief from "./routes/app/MandateBrief";
@@ -195,6 +196,16 @@ export function App() {
             element={
               <RequireOperator>
                 <MarketSpec />
+              </RequireOperator>
+            }
+          />
+          {/* Phrase review — canonicalization quality audit (350 canonical phrases →
+              their GPT-5.4 variants). */}
+          <Route
+            path="jtbd"
+            element={
+              <RequireOperator>
+                <JtbdReview />
               </RequireOperator>
             }
           />

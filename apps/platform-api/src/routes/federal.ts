@@ -435,6 +435,21 @@ federalRoutes.get("/jtbd-vocab", async (c) => {
   });
 });
 
+// GET /jtbd-phrase-map → edge /api/v1/market/jtbd-phrase-map: the canonicalization
+// audit map (350 canonical phrases → distinct gpt-5.4 variants) for the operator's
+// phrase-quality review page.
+federalRoutes.get("/jtbd-phrase-map", async (c) => {
+  const res = await fetch(`${EDGE_API_URL}/api/v1/market/jtbd-phrase-map`, {
+    headers: { Authorization: `Bearer ${EDGE_API_SERVICE_TOKEN}` },
+    signal: AbortSignal.timeout(120_000),
+  });
+  const text = await res.text();
+  return new Response(text, {
+    status: res.status,
+    headers: { "content-type": res.headers.get("content-type") ?? "application/json" },
+  });
+});
+
 // POST /active-awards-query → edge /api/v1/market/active-awards-query: runs one
 // completed Q1 sentence (grain + optional job_phrase/state/min_amt). Body forwarded
 // VERBATIM; status + response pass through unchanged.
