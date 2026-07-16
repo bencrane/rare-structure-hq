@@ -240,6 +240,12 @@ export type Command =
       industry?: string;
       /** Occupation token — the `and need <occupation>` labor need (absent = none). */
       need?: string;
+      /** Pricing family — the `billing <family>` slot (Q1/Q2 only, award-latest-state).
+       * One of "fixed price" | "cost plus" | "time and materials" (absent = no filter). */
+      billing?: "fixed price" | "cost plus" | "time and materials";
+      /** Financing arrangement — the `with|without progress payments` slot (Q1/Q2 only,
+       * award-latest-state). "with progress payments" | "without progress payments". */
+      financing?: "with progress payments" | "without progress payments";
       /** Obligation floor in USD (absent = no floor). */
       minAmt?: number;
     };
