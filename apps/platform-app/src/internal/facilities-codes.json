@@ -1,0 +1,2507 @@
+{
+ "scope": "NAICS 56 \u00d7 PSC S* \u2014 the facilities-services cut",
+ "window": "2022-07-04 \u2192 2025-07-03 (three years pre-OBBBA signature)",
+ "baked_from": "query-sidecar/query_sidecar_20260716T034525Z.duckdb",
+ "naics": [
+  {
+   "naics_code": "56",
+   "naics_title": "Administrative and Support and Waste Management and Remediation Services",
+   "description": "The Sector as a Whole\n\nThe Administrative and Support and Waste Management and Remediation Services sector comprises establishments performing routine support activities for the day-to-day operations of other organizations.  These essential activities are often undertaken in-house by establishments in many sectors of the economy.  The establishments in this sector specialize in one or more of these support activities and provide these services to clients in a variety of industries and, in some cases, to households.  Activities performed include: office administration, hiring and placing of personnel, document preparation and similar clerical services, solicitation, collection, security and surveillance services, cleaning, and waste disposal services.\n\nThe administrative and management activities performed by establishments in this sector are typically on a contract or fee basis.  These activities may also be performed by establishments that are part of the company or enterprise.  However, establishments involved in administering, overseeing, and managing other establishments of the company or enterprise are classified in Sector 55, Management of Companies and Enterprises.  Establishments in Sector 55, Management of Companies and Enterprises, normally undertake the strategic and organizational planning and decision-making role of the company or enterprise.  Government establishments engaged in administering, overseeing, and managing governmental programs are classified in Sector 92, Public Administration.",
+   "code_len": 2
+  },
+  {
+   "naics_code": "561",
+   "naics_title": "Administrative and Support Services",
+   "description": "Industries in the Administrative and Support Services subsector group establishments engaged in activities that support the day-to-day operations of other organizations.  The processes employed in this sector (e.g., general management, personnel administration, clerical activities, cleaning activities) are often integral parts of the activities of establishments found in all sectors of the economy.  The establishments classified in this subsector have specialization in one or more of these activities and can, therefore, provide services to clients in a variety of industries and, in some cases, to households.  The individual industries of this subsector are defined on the basis of the particular process that they are engaged in and the particular services they provide.\n\nMany of the activities in this subsector are ongoing routine support functions that businesses and organizations perform in-house.  However, it is common to contract or purchase services from businesses that specialize in such activities and can, therefore, provide the services more efficiently.\n\nThe industries in this subsector cannot be viewed as strictly \"support.\"  The Travel Arrangement and Reservation Services industry group includes travel agents, tour operators, and providers of other travel arrangement services, such as hotel and restaurant reservations and arranging the purchase of tickets, serving many types of clients, including individual consumers.  This group was placed in this subsector because the services are often of the \"support\" nature (e.g., travel arrangement) to businesses and other organizations that purchase such services.\n\nThe administrative and management activities performed by establishments in this sector are typically on a contract or fee basis.  These activities may also be performed by establishments that are part of the company or enterprise.  However, establishments involved in administering, overseeing, and managing other establishments of the company or enterprise are classified in Sector 55, Management of Companies and Enterprises.  Establishments in Sector 55, Management of Companies and Enterprises, normally undertake the strategic and organizational planning and decision-making role of the company or enterprise.  Government establishments engaged in administering, overseeing, and managing governmental programs are classified in Sector 92, Public Administration.",
+   "code_len": 3
+  },
+  {
+   "naics_code": "5611",
+   "naics_title": "Office Administrative Services",
+   "description": null,
+   "code_len": 4
+  },
+  {
+   "naics_code": "56111",
+   "naics_title": "Office Administrative Services",
+   "description": "See industry description for 561110.",
+   "code_len": 5
+  },
+  {
+   "naics_code": "561110",
+   "naics_title": "Office Administrative Services",
+   "description": "This industry comprises establishments primarily engaged in providing a range of day-to-day office administrative services, such as financial planning; billing and recordkeeping; personnel; and physical distribution and logistics, for others on a contract or fee basis.  These establishments do not provide operating staff to carry out the complete operations of a business.\n\nCross-References. Establishments primarily engaged in--",
+   "code_len": 6
+  },
+  {
+   "naics_code": "5612",
+   "naics_title": "Facilities Support Services",
+   "description": null,
+   "code_len": 4
+  },
+  {
+   "naics_code": "56121",
+   "naics_title": "Facilities Support Services",
+   "description": "See industry description for 561210.",
+   "code_len": 5
+  },
+  {
+   "naics_code": "561210",
+   "naics_title": "Facilities Support Services",
+   "description": "This industry comprises establishments primarily engaged in providing operating staff to perform a combination of support services within a client's facilities.  Establishments in this industry typically provide a combination of services, such as janitorial, maintenance, trash disposal, guard and security, mail routing, reception, laundry, and related services to support operations within facilities.  These establishments provide operating staff to carry out these support activities, but are not involved with or responsible for the core business or activities of the client.  Establishments providing facilities (except computer and/or data processing) operation support services and establishments providing private jail services or operating correctional facilities (i.e., jails) on a contract or fee basis are included in this industry.\n\nCross-References.",
+   "code_len": 6
+  },
+  {
+   "naics_code": "5613",
+   "naics_title": "Employment Services",
+   "description": "This industry group comprises establishments primarily engaged in one of the following: (1) listing employment vacancies and referring or placing applicants for employment; (2) providing executive search, recruitment, and placement services; (3) supplying workers to clients' businesses for limited periods of time to supplement the working force of the client; or (4) providing human resources and human resource management services to client businesses and households.",
+   "code_len": 4
+  },
+  {
+   "naics_code": "56131",
+   "naics_title": "Employment Placement Agencies and Executive Search Services",
+   "description": "This industry comprises establishments primarily engaged in one of the following: (1) listing employment vacancies and referring or placing applicants for employment; or (2) providing executive search, recruitment, and placement services.\n\nIllustrative Examples:\n\nEmployment agencies\nExecutive placement agencies or services\nExecutive search services\n\n\nCross-References. Establishments primarily engaged in--",
+   "code_len": 5
+  },
+  {
+   "naics_code": "561311",
+   "naics_title": "Employment Placement Agencies",
+   "description": "This U.S. industry comprises establishments primarily engaged in listing employment vacancies and in recruiting, referring, or placing applicants for employment.  The individuals referred or placed are not employees of the employment agencies.\n\nIllustrative Examples:\n\nBabysitting bureaus (i.e., registries)\nEmployment registries\nModel registries\nCasting agencies or bureaus (i.e., motion picture, theatrical, video)\nEmployment agencies\n\n\nCross-References. Establishments primarily engaged in--",
+   "code_len": 6
+  },
+  {
+   "naics_code": "561312",
+   "naics_title": "Executive Search Services",
+   "description": "This U.S. industry comprises establishments primarily engaged in providing executive search, recruitment, and placement services for clients with specific executive and senior management position requirements.  The range of services provided by these establishments may include developing a search strategy and position specification based on the culture and needs of the client; researching, identifying, screening, and interviewing candidates; verifying candidate qualifications; and assisting in final offer negotiations and assimilation of the selected candidate.  The individuals identified, recruited, or placed are not employees of the executive search services establishments.\n\nIllustrative Examples:\n\nSenior executive search services\nExecutive placement services\nExecutive search services\n\n\nCross-References. Establishments primarily engaged in--",
+   "code_len": 6
+  },
+  {
+   "naics_code": "56132",
+   "naics_title": "Temporary Help Services",
+   "description": "See industry description for 561320.",
+   "code_len": 5
+  },
+  {
+   "naics_code": "561320",
+   "naics_title": "Temporary Help Services",
+   "description": "This industry comprises establishments primarily engaged in supplying workers to clients' businesses for limited periods of time to supplement the working force of the client.  The individuals provided are employees of the temporary help services establishment.  However, these establishments do not provide direct supervision of their employees at the clients' work sites.\n\nIllustrative Examples:\n\nHelp supply services\nModel supply services\nLabor (except farm) contractors (i.e., personnel suppliers)\nTemporary employment or temporary staffing services\nManpower pools\n\n\nCross-References. Establishments primarily engaged in--",
+   "code_len": 6
+  },
+  {
+   "naics_code": "56133",
+   "naics_title": "Professional Employer Organizations",
+   "description": "See industry description for 561330.",
+   "code_len": 5
+  },
+  {
+   "naics_code": "561330",
+   "naics_title": "Professional Employer Organizations",
+   "description": "This industry comprises establishments primarily engaged in providing human resources and human resource management services to client businesses and households.  Establishments in this industry operate in a co-employment relationship with client businesses or organizations and are specialized in performing a wide range of human resource and personnel management duties, such as payroll, payroll tax, benefits administration, workers' compensation, unemployment, and human resource administration.  Professional employer organizations (PEOs) are responsible for payroll, including withholding and remitting employment-related taxes, for some or all of the employees of their clients, and also serve as the employer of those employees for benefits and related purposes.\n\nCross-References. Establishments primarily engaged in--",
+   "code_len": 6
+  },
+  {
+   "naics_code": "5614",
+   "naics_title": "Business Support Services",
+   "description": "This industry group comprises establishments engaged in performing activities that are ongoing routine business support functions for clients on a contract or fee basis, or serving other establishments of the same enterprise.",
+   "code_len": 4
+  },
+  {
+   "naics_code": "56141",
+   "naics_title": "Document Preparation Services",
+   "description": "See industry description for 561410.",
+   "code_len": 5
+  },
+  {
+   "naics_code": "561410",
+   "naics_title": "Document Preparation Services",
+   "description": "This industry comprises establishments primarily engaged in one or more of the following: (1) letter or resume writing; (2) document editing or proofreading; (3) typing, word processing, or desktop publishing; and (4) stenography (except court reporting or stenotype recording), transcription, and other secretarial services.\n\nCross-References. Establishments primarily engaged in--",
+   "code_len": 6
+  },
+  {
+   "naics_code": "56142",
+   "naics_title": "Telephone Call Centers",
+   "description": "This industry comprises (1) establishments primarily engaged in answering telephone calls and relaying messages and (2) establishments primarily engaged in providing telemarketing services, such as promoting products or services by telephone; taking orders by telephone, facsimile, email, or other communication modes; and soliciting contributions or providing information by telephone.  Telephone call centers provide these services on behalf of clients and do not own the products or provide the services that they are representing, or they serve other establishments of the same enterprise.\n\nCross-References. Establishments primarily engaged in--",
+   "code_len": 5
+  },
+  {
+   "naics_code": "561421",
+   "naics_title": "Telephone Answering Services",
+   "description": "This U.S. industry comprises establishments primarily engaged in answering telephone calls and relaying messages on behalf of clients or for other establishments of the same enterprise.\n\nCross-References.",
+   "code_len": 6
+  },
+  {
+   "naics_code": "561422",
+   "naics_title": "Telemarketing Bureaus and Other Contact Centers",
+   "description": "This U.S. industry comprises establishments primarily engaged in operating call centers that initiate or receive communications via telephone, facsimile, email, or other communication modes for purposes such as: (1) promoting products or services, (2) taking orders, (3) soliciting contributions, and (4) providing information or assistance regarding products or services.  Telemarketing bureaus and other contact centers provide these services on behalf of clients and do not own the products or provide the services that they are representing, or they serve other establishments of the same enterprise.\n\nCross-References. Establishments primarily engaged in--",
+   "code_len": 6
+  },
+  {
+   "naics_code": "56143",
+   "naics_title": "Business Service Centers",
+   "description": "This industry comprises (1) establishments primarily engaged in providing mailbox rental and other postal and mailing services (except direct mail advertising); (2) establishments, generally known as copy centers or shops, primarily engaged in providing photocopying, duplicating, blueprinting, and other document copying services without also providing printing services (i.e., offset printing, quick printing, digital printing, prepress services); and (3) establishments that provide a range of office support services (except printing services), such as mailing services, document copying services, facsimile services, word processing services, on-site PC rental services, and office product sales.\n\nCross-References. Establishments primarily engaged in--",
+   "code_len": 5
+  },
+  {
+   "naics_code": "561431",
+   "naics_title": "Private Mail Centers",
+   "description": "This U.S. industry comprises (1) establishments primarily engaged in providing mailbox rental and other postal and mailing (except direct mail advertising) services or (2) establishments engaged in providing these mailing services along with one or more other office support services, such as facsimile services, word processing services, on-site PC rental services, and office product sales.\n\nCross-References. Establishments primarily engaged in--",
+   "code_len": 6
+  },
+  {
+   "naics_code": "561439",
+   "naics_title": "Other Business Service Centers (including Copy Shops)",
+   "description": "This U.S. industry comprises (1) establishments generally known as copy centers or shops primarily engaged in providing photocopying, duplicating, blueprinting, and other document copying services, without also providing printing services (e.g., offset printing, quick printing, digital printing, prepress services) and (2) establishments (except private mail centers) engaged in providing a range of office support services (except printing services), such as document copying services, facsimile services, word processing services, on-site PC rental services, and office product sales.\n\nCross-References.",
+   "code_len": 6
+  },
+  {
+   "naics_code": "56144",
+   "naics_title": "Collection Agencies",
+   "description": "See industry description for 561440.",
+   "code_len": 5
+  },
+  {
+   "naics_code": "561440",
+   "naics_title": "Collection Agencies",
+   "description": "This industry comprises establishments primarily engaged in collecting payments for claims and remitting payments collected to their clients.\n\nIllustrative Examples:\n\nAccount or delinquent account collection services\nTax collection services on a contract or fee basis\nBill or debt collection services\n\n\nCross-References. Establishments primarily engaged in--",
+   "code_len": 6
+  },
+  {
+   "naics_code": "56145",
+   "naics_title": "Credit Bureaus",
+   "description": "See industry description for 561450.",
+   "code_len": 5
+  },
+  {
+   "naics_code": "561450",
+   "naics_title": "Credit Bureaus",
+   "description": "This industry comprises establishments primarily engaged in compiling information, such as credit and employment histories, and providing the information to financial institutions, retailers, and others who have a need to evaluate the creditworthiness of individuals and businesses.\n\nIllustrative Examples:\n\nCredit agencies\nCredit rating services\nCredit investigation services\nCredit reporting bureaus",
+   "code_len": 6
+  },
+  {
+   "naics_code": "56149",
+   "naics_title": "Other Business Support Services",
+   "description": "This industry comprises establishments primarily engaged in providing business support services (except secretarial and other document preparation services; telephone answering or telemarketing services; private mail services or document copying services conducted as separate activities or in conjunction with other office support services; monetary debt collection services; and credit reporting services).\n\nIllustrative Examples:\n\nAddress bar coding services\nMail presorting services\nBar code imprinting services\nCourt reporting services\nRepossession services\nReal-time (i.e., simultaneous) closed captioning of live television performances, meetings, conferences\nCharitable fundraising campaign organization services on a contract or fee basis\n\n\nCross-References. Establishments primarily engaged in--",
+   "code_len": 5
+  },
+  {
+   "naics_code": "561491",
+   "naics_title": "Repossession Services",
+   "description": "This U.S. industry comprises establishments primarily engaged in repossessing tangible assets (e.g., automobiles, boats, equipment, planes, furniture, appliances) for the creditor as a result of delinquent debts.\n\nCross-References. Establishments primarily engaged in--",
+   "code_len": 6
+  },
+  {
+   "naics_code": "561492",
+   "naics_title": "Court Reporting and Stenotype Services",
+   "description": "This U.S. industry comprises establishments primarily engaged in providing verbatim reporting and stenotype recording of live legal proceedings and transcribing subsequent recorded materials.\n\nIllustrative Examples:\n\nReal-time (i.e., simultaneous) closed captioning of live television performances, meetings, conferences\nCourt reporting or stenotype recording services\nPublic stenography services\n\n\nCross-References. Establishments primarily engaged in--",
+   "code_len": 6
+  },
+  {
+   "naics_code": "561499",
+   "naics_title": "All Other Business Support Services",
+   "description": "This U.S. industry comprises establishments primarily engaged in providing business support services (except secretarial and other document preparation services; telephone answering and telemarketing services; private mail services or document copying services conducted as separate activities or in conjunction with other office support services; monetary debt collection services; credit reporting services; repossession services; and court reporting and stenotype recording services).\n\nIllustrative Examples:\n\nAddress bar coding services\nCharitable fundraising campaign organization services on a contract or fee basis\nBar code imprinting services\nMail presorting services\n\n\nCross-References. Establishments primarily engaged in--",
+   "code_len": 6
+  },
+  {
+   "naics_code": "5615",
+   "naics_title": "Travel Arrangement and Reservation Services",
+   "description": "This industry group comprises establishments primarily engaged in one of the following: (1) travel agency services; (2) arranging and assembling tours; or (3) other travel arrangement and reservation services.",
+   "code_len": 4
+  },
+  {
+   "naics_code": "56151",
+   "naics_title": "Travel Agencies",
+   "description": "See industry description for 561510.",
+   "code_len": 5
+  },
+  {
+   "naics_code": "561510",
+   "naics_title": "Travel Agencies",
+   "description": "This industry comprises establishments primarily engaged in acting as agents in selling travel, tour, and accommodation services to the general public and commercial clients.\n\nCross-References. Establishments primarily engaged in--",
+   "code_len": 6
+  },
+  {
+   "naics_code": "56152",
+   "naics_title": "Tour Operators",
+   "description": "See industry description for 561520.",
+   "code_len": 5
+  },
+  {
+   "naics_code": "561520",
+   "naics_title": "Tour Operators",
+   "description": "This industry comprises establishments primarily engaged in arranging and assembling tours.  The tours are sold through travel agencies or tour operators.  Travel or wholesale tour operators are included in this industry.\n\nCross-References. Establishments primarily engaged in--",
+   "code_len": 6
+  },
+  {
+   "naics_code": "56159",
+   "naics_title": "Other Travel Arrangement and Reservation Services",
+   "description": "This industry comprises establishments (except travel agencies and tour operators) primarily engaged in providing travel arrangement and reservation services.\n\nIllustrative Examples:\n\nCondominium time-share exchange services\nRoad and travel services automobile clubs\nConvention or visitors bureaus\nTicket (e.g., amusement, sports, theatrical) agencies\nTicket (e.g., airline, bus, cruise ship, sports, theatrical) offices\nReservation (e.g., airline, car rental, hotel, restaurant) services\n\n\nCross-References.",
+   "code_len": 5
+  },
+  {
+   "naics_code": "561591",
+   "naics_title": "Convention and Visitors Bureaus",
+   "description": "This U.S. industry comprises establishments primarily engaged in marketing and promoting communities and facilities to businesses and leisure travelers through a range of activities, such as assisting organizations in locating meeting and convention sites; providing travel information on area attractions, lodging accommodations, restaurants; providing maps; and organizing group tours of local historical, recreational, and cultural attractions.\n\nCross-References. Establishments primarily engaged in--",
+   "code_len": 6
+  },
+  {
+   "naics_code": "561599",
+   "naics_title": "All Other Travel Arrangement and Reservation Services",
+   "description": "This U.S. industry comprises establishments (except travel agencies, tour operators, and convention and visitors bureaus) primarily engaged in providing travel arrangement and reservation services.\n\nIllustrative Examples:\n\nCondominium time-share exchange services\nTicket (e.g., airline, bus, cruise ship, sports, theatrical) offices\nRoad and travel services automobile clubs\nReservation (e.g., airline, car rental, hotel, restaurant) services\nTicket (e.g., amusement, sports, theatrical) agencies\n\n\nCross-References.",
+   "code_len": 6
+  },
+  {
+   "naics_code": "5616",
+   "naics_title": "Investigation and Security Services",
+   "description": "This industry group comprises establishments primarily engaged in one of the following: (1) investigation, guard, and armored car services; (2) selling security systems, such as burglar and fire alarms and locking devices, along with installation, repair, or monitoring services; or (3) remote monitoring of electronic security alarm systems.",
+   "code_len": 4
+  },
+  {
+   "naics_code": "56161",
+   "naics_title": "Investigation, Guard, and Armored Car Services",
+   "description": "This industry comprises establishments primarily engaged in providing one or more of the following: (1) investigation, detective, and personal background check services; (2) guard and patrol services; and (3) picking up and delivering money, receipts, or other valuable items with personnel and equipment to protect such properties while in transit.\n\nIllustrative Examples:\n\nArmored car services\nPrivate detective services\nBodyguard services\nSecurity guard services\nPolygraph services\n\n\nCross-References.",
+   "code_len": 5
+  },
+  {
+   "naics_code": "561611",
+   "naics_title": "Investigation and Personal Background Check Services",
+   "description": "This U.S. industry comprises establishments primarily engaged in providing investigation, detective, and personal background check services.\n\nIllustrative Examples:\n\nFingerprint services\nPrivate detective services\nPolygraph services\nPrivate investigative services (except credit)\n\n\nCross-References.",
+   "code_len": 6
+  },
+  {
+   "naics_code": "561612",
+   "naics_title": "Security Guards and Patrol Services",
+   "description": "This U.S. industry comprises establishments primarily engaged in providing guard and patrol services, such as bodyguard, guard dog, and parking security services.\n\nCross-References.",
+   "code_len": 6
+  },
+  {
+   "naics_code": "561613",
+   "naics_title": "Armored Car Services",
+   "description": "This U.S. industry comprises establishments primarily engaged in picking up and delivering money, receipts, or other valuable items.  These establishments maintain personnel and equipment to protect such properties while in transit.",
+   "code_len": 6
+  },
+  {
+   "naics_code": "56162",
+   "naics_title": "Security Systems Services",
+   "description": "This industry comprises establishments engaged in (1) selling security systems, such as burglar and fire alarms and locking devices, along with installation, repair, or monitoring services or (2) remote monitoring of electronic security alarm systems.\n\nCross-References. Establishments primarily engaged in--",
+   "code_len": 5
+  },
+  {
+   "naics_code": "561621",
+   "naics_title": "Security Systems Services (except Locksmiths)",
+   "description": "This U.S. industry comprises establishments primarily engaged in (1) selling security alarm systems, such as burglar and fire alarms, along with installation, repair, or monitoring services or (2) remote monitoring of electronic security alarm systems.\n\nCross-References. Establishments primarily engaged in--",
+   "code_len": 6
+  },
+  {
+   "naics_code": "561622",
+   "naics_title": "Locksmiths",
+   "description": "This U.S. industry comprises establishments primarily engaged in (1) selling mechanical or electronic locking devices, safes, and security vaults, along with installation, repair, rebuilding, or adjusting services or (2) installing, repairing, rebuilding, and adjusting mechanical or electronic locking devices, safes, and security vaults.\n\nCross-References. Establishments primarily engaged in--",
+   "code_len": 6
+  },
+  {
+   "naics_code": "5617",
+   "naics_title": "Services to Buildings and Dwellings",
+   "description": "This industry group comprises establishments primarily engaged in one of the following: (1) exterminating and pest control services; (2) janitorial services; (3) landscaping services; (4) carpet and upholstery cleaning services; or (5) other services to buildings and dwellings.",
+   "code_len": 4
+  },
+  {
+   "naics_code": "56171",
+   "naics_title": "Exterminating and Pest Control Services",
+   "description": "See industry description for 561710.",
+   "code_len": 5
+  },
+  {
+   "naics_code": "561710",
+   "naics_title": "Exterminating and Pest Control Services",
+   "description": "This industry comprises establishments primarily engaged in exterminating and controlling birds, mosquitoes, rodents, termites, and other insects and pests (except for crop production and forestry production).  Establishments providing fumigation services are included in this industry.\n\nCross-References.",
+   "code_len": 6
+  },
+  {
+   "naics_code": "56172",
+   "naics_title": "Janitorial Services",
+   "description": "See industry description for 561720.",
+   "code_len": 5
+  },
+  {
+   "naics_code": "561720",
+   "naics_title": "Janitorial Services",
+   "description": "This industry comprises establishments primarily engaged in cleaning building interiors, interiors of transportation equipment (e.g., aircraft, rail cars, ships), and/or windows.\n\nIllustrative Examples:\n\nCustodial services\nService station cleaning and degreasing services\nHousekeeping (i.e., cleaning) services\nWashroom sanitation services\nMaid (i.e., cleaning) services\n\n\nCross-References. Establishments primarily engaged in--",
+   "code_len": 6
+  },
+  {
+   "naics_code": "56173",
+   "naics_title": "Landscaping Services",
+   "description": "See industry description for 561730.",
+   "code_len": 5
+  },
+  {
+   "naics_code": "561730",
+   "naics_title": "Landscaping Services",
+   "description": "This industry comprises (1) establishments primarily engaged in providing landscape care and maintenance services and/or installing trees, shrubs, plants, lawns, or gardens and (2) establishments primarily engaged in providing these services along with the design of landscape plans and/or the construction (i.e., installation) of walkways, retaining walls, decks, fences, ponds, and similar structures.\n\nCross-References. Establishments primarily engaged in--",
+   "code_len": 6
+  },
+  {
+   "naics_code": "56174",
+   "naics_title": "Carpet and Upholstery Cleaning Services",
+   "description": "See industry description for 561740.",
+   "code_len": 5
+  },
+  {
+   "naics_code": "561740",
+   "naics_title": "Carpet and Upholstery Cleaning Services",
+   "description": "This industry comprises establishments primarily engaged in cleaning and dyeing used rugs, carpets, and upholstery.\n\nCross-References. Establishments primarily engaged in--",
+   "code_len": 6
+  },
+  {
+   "naics_code": "56179",
+   "naics_title": "Other Services to Buildings and Dwellings",
+   "description": "See industry description for 561790.",
+   "code_len": 5
+  },
+  {
+   "naics_code": "561790",
+   "naics_title": "Other Services to Buildings and Dwellings",
+   "description": "This industry comprises establishments primarily engaged in providing services to buildings and dwellings (except exterminating and pest control; janitorial; landscaping care and maintenance; and carpet and upholstery cleaning).\n\nIllustrative Examples:\n\nBuilding exterior cleaning services (except sandblasting, window cleaning)\nSwimming pool cleaning and maintenance services\nChimney cleaning services\nVentilation duct cleaning services\nDrain or gutter cleaning services\n\n\nCross-References. Establishments primarily engaged in--",
+   "code_len": 6
+  },
+  {
+   "naics_code": "5619",
+   "naics_title": "Other Support Services",
+   "description": "This industry group comprises establishments primarily engaged in providing day-to-day business and other organizational support services (except office administrative services; facilities support services; employment services; business support services; travel arrangement and reservation services; security and investigation services; and services to buildings and dwellings).",
+   "code_len": 4
+  },
+  {
+   "naics_code": "56191",
+   "naics_title": "Packaging and Labeling Services",
+   "description": "See industry description for 561910.",
+   "code_len": 5
+  },
+  {
+   "naics_code": "561910",
+   "naics_title": "Packaging and Labeling Services",
+   "description": "This industry comprises establishments primarily engaged in packaging client-owned materials.  The services may include labeling and/or imprinting the package.\n\nIllustrative Examples:\n\nApparel and textile folding and packaging services\nKit assembling and packaging services\nBlister packaging services\nShrink wrapping services\nGift wrapping services\n\n\nCross-References. Establishments primarily engaged in--",
+   "code_len": 6
+  },
+  {
+   "naics_code": "56192",
+   "naics_title": "Convention and Trade Show Organizers",
+   "description": "See industry description for 561920.",
+   "code_len": 5
+  },
+  {
+   "naics_code": "561920",
+   "naics_title": "Convention and Trade Show Organizers",
+   "description": "This industry comprises establishments primarily engaged in organizing, promoting, and/or managing events, such as business and trade shows, conventions, conferences, and meetings (whether or not they manage and provide the staff to operate the facilities in which these events take place).\n\nCross-References.",
+   "code_len": 6
+  },
+  {
+   "naics_code": "56199",
+   "naics_title": "All Other Support Services",
+   "description": "See industry description for 561990.",
+   "code_len": 5
+  },
+  {
+   "naics_code": "561990",
+   "naics_title": "All Other Support Services",
+   "description": "This industry comprises establishments primarily engaged in providing day-to-day business and other organizational support services (except office administrative services, facilities support services, employment services, business support services, travel arrangement and reservation services, security and investigation services, services to buildings and other structures, packaging and labeling services, and convention and trade show organizing services).\n\nIllustrative Examples:\n\nBartering services\nFlagging (i.e., traffic control) services\nBottle exchanges\nFloat decorating services\nInventory taking services\nContract meter reading services\nLumber grading services\nDiving services on a contract or fee basis\n\n\nCross-References. Establishments primarily engaged in--",
+   "code_len": 6
+  },
+  {
+   "naics_code": "562",
+   "naics_title": "Waste Management and Remediation Services",
+   "description": "Industries in the Waste Management and Remediation Services subsector group establishments engaged in the collection, treatment, and disposal of waste materials.  This includes establishments engaged in local hauling of waste materials; operating materials recovery facilities (i.e., those that sort recyclable materials from the trash stream); providing remediation services (i.e., those that provide for the cleanup of contaminated buildings, mine sites, soil, or ground water); and providing septic pumping and other miscellaneous waste management services.  There are three industry groups within the subsector that separate these activities into waste collection, waste treatment and disposal, and remediation and other waste management.\n\nExcluded from this subsector are establishments primarily engaged in collecting, treating, and disposing waste through sewer systems or sewage treatment facilities that are classified in Industry 22132, Sewage Treatment Facilities, and establishments primarily engaged in long-distance hauling of waste materials that are classified in Industry 48423, Specialized Freight (except Used Goods) Trucking, Long-Distance.  Also, there are some activities that appear to be related to waste management, but that are not included in this subsector.  For example, establishments primarily engaged in providing waste management consulting services are classified in Industry 54162, Environmental Consulting Services.",
+   "code_len": 3
+  },
+  {
+   "naics_code": "5621",
+   "naics_title": "Waste Collection",
+   "description": null,
+   "code_len": 4
+  },
+  {
+   "naics_code": "56211",
+   "naics_title": "Waste Collection",
+   "description": "This industry comprises establishments primarily engaged in (1) collecting and/or hauling hazardous waste, nonhazardous waste, and/or recyclable materials within a local area and/or (2) operating hazardous or nonhazardous waste transfer stations.  Hazardous waste collection establishments may be responsible for the identification, treatment, packaging, and labeling of waste for the purposes of transport.\n\nCross-References. Establishments primarily engaged in--",
+   "code_len": 5
+  },
+  {
+   "naics_code": "562111",
+   "naics_title": "Solid Waste Collection",
+   "description": "This U.S. industry comprises establishments primarily engaged in one or more of the following: (1) collecting and/or hauling nonhazardous solid waste (i.e., garbage) within a local area; (2) operating nonhazardous solid waste transfer stations; and (3) collecting and/or hauling mixed recyclable materials within a local area.\n\nCross-References. Establishments primarily engaged in--",
+   "code_len": 6
+  },
+  {
+   "naics_code": "562112",
+   "naics_title": "Hazardous Waste Collection",
+   "description": "This U.S. industry comprises establishments primarily engaged in collecting and/or hauling hazardous waste within a local area and/or operating hazardous waste transfer stations.  Hazardous waste collection establishments may be responsible for the identification, treatment, packaging, and labeling of waste for the purposes of transport.\n\nCross-References. Establishments primarily engaged in--",
+   "code_len": 6
+  },
+  {
+   "naics_code": "562119",
+   "naics_title": "Other Waste Collection",
+   "description": "This U.S. industry comprises establishments primarily engaged in collecting and/or hauling waste (except nonhazardous solid waste and hazardous waste) within a local area.  Establishments engaged in brush or rubble removal services are included in this industry.\n\nCross-References. Establishments primarily engaged in--",
+   "code_len": 6
+  },
+  {
+   "naics_code": "5622",
+   "naics_title": "Waste Treatment and Disposal",
+   "description": null,
+   "code_len": 4
+  },
+  {
+   "naics_code": "56221",
+   "naics_title": "Waste Treatment and Disposal",
+   "description": "This industry comprises establishments primarily engaged in (1) operating waste treatment or disposal facilities (except sewer systems or sewage treatment facilities) or (2) the combined activity of collecting and/or hauling of waste materials within a local area and operating waste treatment or disposal facilities.  Waste combustors or incinerators (including those that may produce byproducts, such as electricity), solid waste landfills, and compost dumps are included in this industry.\n\nCross-References. Establishments primarily engaged in--",
+   "code_len": 5
+  },
+  {
+   "naics_code": "562211",
+   "naics_title": "Hazardous Waste Treatment and Disposal",
+   "description": "This U.S. industry comprises establishments primarily engaged in (1) operating treatment and/or disposal facilities for hazardous waste or (2) the combined activity of collecting and/or hauling of hazardous waste materials within a local area and operating treatment or disposal facilities for hazardous waste.\n\nCross-References. Establishments primarily engaged in--",
+   "code_len": 6
+  },
+  {
+   "naics_code": "562212",
+   "naics_title": "Solid Waste Landfill",
+   "description": "This U.S. industry comprises establishments primarily engaged in (1) operating landfills for the disposal of nonhazardous solid waste or (2) the combined activity of collecting and/or hauling nonhazardous waste materials within a local area and operating landfills for the disposal of nonhazardous solid waste.  These establishments may produce byproducts, such as methane.\n\nCross-References. Establishments primarily engaged in--",
+   "code_len": 6
+  },
+  {
+   "naics_code": "562213",
+   "naics_title": "Solid Waste Combustors and Incinerators",
+   "description": "This U.S. industry comprises establishments primarily engaged in operating combustors and incinerators for the disposal of nonhazardous solid waste.  These establishments may produce byproducts, such as electricity and steam.\n\nCross-References. Establishments primarily engaged in--",
+   "code_len": 6
+  },
+  {
+   "naics_code": "562219",
+   "naics_title": "Other Nonhazardous Waste Treatment and Disposal",
+   "description": "This U.S. industry comprises establishments primarily engaged in (1) operating nonhazardous waste treatment and disposal facilities (except landfills, combustors, incinerators, and sewer systems or sewage treatment facilities) or (2) the combined activity of collecting and/or hauling of nonhazardous waste materials within a local area and operating waste treatment or disposal facilities (except landfills, combustors, incinerators, and sewer systems or sewage treatment facilities).  Compost dumps are included in this industry.\n\nCross-References. Establishments primarily engaged in--",
+   "code_len": 6
+  },
+  {
+   "naics_code": "5629",
+   "naics_title": "Remediation and Other Waste Management Services",
+   "description": "This industry group comprises establishments primarily engaged in remediation and other waste management services (except waste collection, waste treatment and disposal, and waste management consulting services).",
+   "code_len": 4
+  },
+  {
+   "naics_code": "56291",
+   "naics_title": "Remediation Services",
+   "description": "See industry description for 562910.",
+   "code_len": 5
+  },
+  {
+   "naics_code": "562910",
+   "naics_title": "Remediation Services",
+   "description": "This industry comprises establishments primarily engaged in one or more of the following: (1) remediation and cleanup of contaminated buildings, mine sites, soil, or ground water; (2) integrated mine reclamation activities, including demolition, soil remediation, waste water treatment, hazardous material removal, contouring land, and revegetation; and (3) asbestos, lead paint, and other toxic material abatement.\n\nCross-References. Establishments primarily engaged in--",
+   "code_len": 6
+  },
+  {
+   "naics_code": "56292",
+   "naics_title": "Materials Recovery Facilities",
+   "description": "See industry description for 562920.",
+   "code_len": 5
+  },
+  {
+   "naics_code": "562920",
+   "naics_title": "Materials Recovery Facilities",
+   "description": "This industry comprises establishments primarily engaged in (1) operating facilities for separating and sorting recyclable materials from nonhazardous waste streams (i.e., garbage) and/or (2) operating facilities where commingled recyclable materials, such as paper, plastics, used beverage cans, and metals, are sorted into distinct categories.\n\nCross-References.",
+   "code_len": 6
+  },
+  {
+   "naics_code": "56299",
+   "naics_title": "All Other Waste Management Services",
+   "description": "This industry comprises establishments primarily engaged in waste management services (except waste collection, waste treatment and disposal, remediation, operation of materials recovery facilities, and waste management consulting services).\n\nIllustrative Examples:\n\nBeach cleaning and maintenance services\nPumping (i.e., cleaning) cesspools, portable toilets, or septic tanks\nCesspool cleaning services\nSewer cleaning and rodding services\nPortable toilet renting and/or servicing\nSewer or storm basin cleanout services\n\n\nCross-References. Establishments primarily engaged in--",
+   "code_len": 5
+  },
+  {
+   "naics_code": "562991",
+   "naics_title": "Septic Tank and Related Services",
+   "description": "This U.S. industry comprises establishments primarily engaged in (1) pumping (i.e., cleaning) septic tanks and cesspools and/or (2) renting and/or servicing portable toilets.\n\nCross-References. Establishments primarily engaged in--",
+   "code_len": 6
+  },
+  {
+   "naics_code": "562998",
+   "naics_title": "All Other Miscellaneous Waste Management Services",
+   "description": "This U.S. industry comprises establishments primarily engaged in providing waste management services (except waste collection, waste treatment and disposal, remediation, operation of materials recovery facilities, septic tank pumping and related services, and waste management consulting services).\n\nIllustrative Examples:\n\nBeach cleaning and maintenance services\nSewer or storm basin cleanout services\nCatch basin cleaning services\nTank cleaning and disposal services, commercial or industrial\nSewer cleaning and rodding services\n\n\nCross-References. Establishments primarily engaged in--",
+   "code_len": 6
+  }
+ ],
+ "psc": [
+  {
+   "psc_code": "S",
+   "psc_name": "UTILITIES AND HOUSEKEEPING",
+   "full_description": null,
+   "includes": null,
+   "excludes": null,
+   "code_len": 1,
+   "is_active": true
+  },
+  {
+   "psc_code": "S1",
+   "psc_name": "UTILITIES",
+   "full_description": null,
+   "includes": null,
+   "excludes": null,
+   "code_len": 2,
+   "is_active": true
+  },
+  {
+   "psc_code": "S111",
+   "psc_name": "UTILITIES- GAS",
+   "full_description": "Gas Services",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": true
+  },
+  {
+   "psc_code": "S111",
+   "psc_name": "GAS SERVICES",
+   "full_description": "Gas Services",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": false
+  },
+  {
+   "psc_code": "S112",
+   "psc_name": "UTILITIES- ELECTRIC",
+   "full_description": "Electric Services",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": true
+  },
+  {
+   "psc_code": "S112",
+   "psc_name": "ELECTRIC SERVICES",
+   "full_description": "Electric Services",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": false
+  },
+  {
+   "psc_code": "S113",
+   "psc_name": "TELEPHONE AND-OR COMMUNICATIONS SER",
+   "full_description": "Telephone and/or Communications Services (includes Telegraph, Telex, and Cablevision Services)",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": false
+  },
+  {
+   "psc_code": "S114",
+   "psc_name": "WATER SERVICES",
+   "full_description": "Water Services",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": false
+  },
+  {
+   "psc_code": "S114",
+   "psc_name": "UTILITIES- WATER",
+   "full_description": "Water Services",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": true
+  },
+  {
+   "psc_code": "S119",
+   "psc_name": "UTILITIES- OTHER",
+   "full_description": "Other Utilities",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": true
+  },
+  {
+   "psc_code": "S119",
+   "psc_name": "OTHER UTILITIES",
+   "full_description": "Other Utilities",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": false
+  },
+  {
+   "psc_code": "S2",
+   "psc_name": "HOUSEKEEPING SERVICES",
+   "full_description": null,
+   "includes": null,
+   "excludes": null,
+   "code_len": 2,
+   "is_active": true
+  },
+  {
+   "psc_code": "S201",
+   "psc_name": "HOUSEKEEPING- CUSTODIAL JANITORIAL",
+   "full_description": "Custodial Janitorial Services",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": true
+  },
+  {
+   "psc_code": "S201",
+   "psc_name": "CUSTODIAL JANITORIAL SERVICES",
+   "full_description": "Custodial Janitorial Services",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": false
+  },
+  {
+   "psc_code": "S202",
+   "psc_name": "FIRE PROTECTION SERVICES",
+   "full_description": "Fire Protection Services",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": false
+  },
+  {
+   "psc_code": "S202",
+   "psc_name": "HOUSEKEEPING- FIRE PROTECTION",
+   "full_description": "Fire Protection Services",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": true
+  },
+  {
+   "psc_code": "S203",
+   "psc_name": "HOUSEKEEPING- FOOD",
+   "full_description": "Food Services",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": true
+  },
+  {
+   "psc_code": "S203",
+   "psc_name": "FOOD SERVICES",
+   "full_description": "Food Services",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": false
+  },
+  {
+   "psc_code": "S204",
+   "psc_name": "HOUSEKEEPING- FUELING AND OTHER PETROLEUM",
+   "full_description": "Fueling and Other Petroleum Services - Excluding Storage",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": true
+  },
+  {
+   "psc_code": "S204",
+   "psc_name": "FUELING SERVICE",
+   "full_description": "Fueling and Other Petroleum Services - Excluding Storage",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": false
+  },
+  {
+   "psc_code": "S205",
+   "psc_name": "TRASH/GARBAGE COLLECTION",
+   "full_description": "Trash/Garbage Collection Services - Including Portable Sanitation Services",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": false
+  },
+  {
+   "psc_code": "S205",
+   "psc_name": "HOUSEKEEPING- TRASH/GARBAGE COLLECTION",
+   "full_description": "Trash/Garbage Collection Services - Including Portable Sanitation Services",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": true
+  },
+  {
+   "psc_code": "S206",
+   "psc_name": "HOUSEKEEPING- GUARD",
+   "full_description": "Guard Services",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": true
+  },
+  {
+   "psc_code": "S206",
+   "psc_name": "GUARD SERVICES",
+   "full_description": "Guard Services",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": false
+  },
+  {
+   "psc_code": "S207",
+   "psc_name": "INSECT AND RODENT CONTROL SERVICES",
+   "full_description": "Insect and Rodent Control Services",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": false
+  },
+  {
+   "psc_code": "S207",
+   "psc_name": "HOUSEKEEPING- INSECT/RODENT CONTROL",
+   "full_description": "Insect and Rodent Control Services",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": true
+  },
+  {
+   "psc_code": "S208",
+   "psc_name": "HOUSEKEEPING- LANDSCAPING/GROUNDSKEEPING",
+   "full_description": "Landscaping/Groundskeeping Services",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": true
+  },
+  {
+   "psc_code": "S208",
+   "psc_name": "LANDSCAPING/GROUNDSKEEPING SERVICES",
+   "full_description": "Landscaping/Groundskeeping Services",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": false
+  },
+  {
+   "psc_code": "S209",
+   "psc_name": "LAUNDRY AND DRYCLEANING SERVICES",
+   "full_description": "Laundry and DryCleaning Services",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": false
+  },
+  {
+   "psc_code": "S209",
+   "psc_name": "HOUSEKEEPING- LAUNDRY/DRYCLEANING",
+   "full_description": "Laundry and DryCleaning Services",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": true
+  },
+  {
+   "psc_code": "S211",
+   "psc_name": "SURVEILLANCE SERVICES",
+   "full_description": "Surveillance Services",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": false
+  },
+  {
+   "psc_code": "S211",
+   "psc_name": "HOUSEKEEPING- SURVEILLANCE",
+   "full_description": "Surveillance Services",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": true
+  },
+  {
+   "psc_code": "S212",
+   "psc_name": "HOUSEKEEPING- SOLID FUEL HANDLING",
+   "full_description": "Solid Fuel Handling Services",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": true
+  },
+  {
+   "psc_code": "S212",
+   "psc_name": "SOLID FUEL HANDLING SERVICES",
+   "full_description": "Solid Fuel Handling Services",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": false
+  },
+  {
+   "psc_code": "S213",
+   "psc_name": "MESSENGER SVCS",
+   "full_description": null,
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": false
+  },
+  {
+   "psc_code": "S214",
+   "psc_name": "HOUSEKEEPING- CARPET LAYING/CLEANING",
+   "full_description": "Carpet Laying and Cleaning",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": true
+  },
+  {
+   "psc_code": "S214",
+   "psc_name": "CARPET LAYING AND CLEANING",
+   "full_description": "Carpet Laying and Cleaning",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": false
+  },
+  {
+   "psc_code": "S215",
+   "psc_name": "WAREHOUSING AND STORAGE SERVICES",
+   "full_description": "Warehousing and Storage Services",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": false
+  },
+  {
+   "psc_code": "S215",
+   "psc_name": "HOUSEKEEPING- WAREHOUSING/STORAGE",
+   "full_description": "Warehousing and Storage Services",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": true
+  },
+  {
+   "psc_code": "S216",
+   "psc_name": "HOUSEKEEPING- FACILITIES OPERATIONS SUPPORT",
+   "full_description": "Facilities Operations Support Services",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": true
+  },
+  {
+   "psc_code": "S216",
+   "psc_name": "FACILITIES OPERATIONS SUPPORT SVCS",
+   "full_description": "Facilities Operations Support Services",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": false
+  },
+  {
+   "psc_code": "S217",
+   "psc_name": "INTERIOR PLANTSCAPING",
+   "full_description": "Interior Plantscaping",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": false
+  },
+  {
+   "psc_code": "S217",
+   "psc_name": "HOUSEKEEPING- INTERIOR PLANTSCAPING",
+   "full_description": "Interior Plantscaping",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": true
+  },
+  {
+   "psc_code": "S218",
+   "psc_name": "HOUSEKEEPING- SNOW REMOVAL/SALT",
+   "full_description": "Snow Removal/Salt Service (also spreading aggregate or other snow melting material)",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": true
+  },
+  {
+   "psc_code": "S218",
+   "psc_name": "SNOW REMOVAL/SALT SERVICE",
+   "full_description": "Snow Removal/Salt Service (also spreading aggregate or other snow melting material)",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": false
+  },
+  {
+   "psc_code": "S219",
+   "psc_name": "ASBESTOS REMOVAL",
+   "full_description": null,
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": false
+  },
+  {
+   "psc_code": "S220",
+   "psc_name": "TRAVEL AGENT SERVICES",
+   "full_description": null,
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": false
+  },
+  {
+   "psc_code": "S221",
+   "psc_name": "HAZARDOUS WASTE REMOVAL",
+   "full_description": null,
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": false
+  },
+  {
+   "psc_code": "S222",
+   "psc_name": "WASTE TREATMENT AND STORAGE",
+   "full_description": "Waste Treatment and Storage",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": false
+  },
+  {
+   "psc_code": "S222",
+   "psc_name": "HOUSEKEEPING- WASTE TREATMENT/STORAGE",
+   "full_description": "Waste Treatment and Storage",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": true
+  },
+  {
+   "psc_code": "S299",
+   "psc_name": "HOUSEKEEPING- OTHER",
+   "full_description": "Other Housekeeping Services",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": true
+  },
+  {
+   "psc_code": "S299",
+   "psc_name": "OTHER HOUSEKEEPING SERVICES",
+   "full_description": "Other Housekeeping Services",
+   "includes": null,
+   "excludes": null,
+   "code_len": 4,
+   "is_active": false
+  }
+ ],
+ "activity": [
+  {
+   "naics_code": "562998",
+   "psc_code": "S222",
+   "oblB": 0.023,
+   "firms": 123
+  },
+  {
+   "naics_code": "561730",
+   "psc_code": "S208",
+   "oblB": 1.517,
+   "firms": 1986
+  },
+  {
+   "naics_code": "561210",
+   "psc_code": "S216",
+   "oblB": 8.343,
+   "firms": 618
+  },
+  {
+   "naics_code": "561990",
+   "psc_code": "S201",
+   "oblB": 0.004,
+   "firms": 24
+  },
+  {
+   "naics_code": "561790",
+   "psc_code": "S201",
+   "oblB": 0.014,
+   "firms": 36
+  },
+  {
+   "naics_code": "561710",
+   "psc_code": "S201",
+   "oblB": 0.007,
+   "firms": 10
+  },
+  {
+   "naics_code": "561710",
+   "psc_code": "S207",
+   "oblB": 0.095,
+   "firms": 320
+  },
+  {
+   "naics_code": "561210",
+   "psc_code": "S203",
+   "oblB": 0.127,
+   "firms": 9
+  },
+  {
+   "naics_code": "561720",
+   "psc_code": "S216",
+   "oblB": 0.055,
+   "firms": 79
+  },
+  {
+   "naics_code": "561720",
+   "psc_code": "S203",
+   "oblB": 0.13,
+   "firms": 29
+  },
+  {
+   "naics_code": "562111",
+   "psc_code": "S222",
+   "oblB": 0.035,
+   "firms": 123
+  },
+  {
+   "naics_code": "561499",
+   "psc_code": "S203",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "562211",
+   "psc_code": "S222",
+   "oblB": 0.363,
+   "firms": 164
+  },
+  {
+   "naics_code": "562910",
+   "psc_code": "S299",
+   "oblB": 0.001,
+   "firms": 27
+  },
+  {
+   "naics_code": "561621",
+   "psc_code": "S202",
+   "oblB": 0.015,
+   "firms": 55
+  },
+  {
+   "naics_code": "561730",
+   "psc_code": "S201",
+   "oblB": 0.013,
+   "firms": 30
+  },
+  {
+   "naics_code": "562991",
+   "psc_code": "S205",
+   "oblB": 0.019,
+   "firms": 139
+  },
+  {
+   "naics_code": "561210",
+   "psc_code": "S299",
+   "oblB": 0.04,
+   "firms": 43
+  },
+  {
+   "naics_code": "562112",
+   "psc_code": "S222",
+   "oblB": 0.074,
+   "firms": 94
+  },
+  {
+   "naics_code": "561210",
+   "psc_code": "S205",
+   "oblB": 0.019,
+   "firms": 36
+  },
+  {
+   "naics_code": "562212",
+   "psc_code": "S205",
+   "oblB": 0.01,
+   "firms": 70
+  },
+  {
+   "naics_code": "561710",
+   "psc_code": "S208",
+   "oblB": 0.005,
+   "firms": 17
+  },
+  {
+   "naics_code": "562219",
+   "psc_code": "S222",
+   "oblB": 0.027,
+   "firms": 58
+  },
+  {
+   "naics_code": "562119",
+   "psc_code": "S216",
+   "oblB": 0.003,
+   "firms": 9
+  },
+  {
+   "naics_code": "562219",
+   "psc_code": "S201",
+   "oblB": 0.001,
+   "firms": 4
+  },
+  {
+   "naics_code": "562991",
+   "psc_code": "S216",
+   "oblB": 0.003,
+   "firms": 37
+  },
+  {
+   "naics_code": "561920",
+   "psc_code": "S216",
+   "oblB": 0.001,
+   "firms": 22
+  },
+  {
+   "naics_code": "562119",
+   "psc_code": "S205",
+   "oblB": 0.044,
+   "firms": 116
+  },
+  {
+   "naics_code": "562991",
+   "psc_code": "S299",
+   "oblB": 0.002,
+   "firms": 35
+  },
+  {
+   "naics_code": "561990",
+   "psc_code": "S202",
+   "oblB": 0.066,
+   "firms": 13
+  },
+  {
+   "naics_code": "561210",
+   "psc_code": "S119",
+   "oblB": 0.006,
+   "firms": 6
+  },
+  {
+   "naics_code": "562991",
+   "psc_code": "S203",
+   "oblB": 0.0,
+   "firms": 5
+  },
+  {
+   "naics_code": "561720",
+   "psc_code": "S299",
+   "oblB": 0.375,
+   "firms": 120
+  },
+  {
+   "naics_code": "562111",
+   "psc_code": "S114",
+   "oblB": 0.0,
+   "firms": 5
+  },
+  {
+   "naics_code": "562111",
+   "psc_code": "S214",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "561720",
+   "psc_code": "S205",
+   "oblB": 0.018,
+   "firms": 41
+  },
+  {
+   "naics_code": "562998",
+   "psc_code": "S201",
+   "oblB": 0.009,
+   "firms": 14
+  },
+  {
+   "naics_code": "561210",
+   "psc_code": "S211",
+   "oblB": 0.0,
+   "firms": 5
+  },
+  {
+   "naics_code": "561210",
+   "psc_code": "S218",
+   "oblB": 0.009,
+   "firms": 34
+  },
+  {
+   "naics_code": "562998",
+   "psc_code": "S208",
+   "oblB": 0.288,
+   "firms": 7
+  },
+  {
+   "naics_code": "562991",
+   "psc_code": "S119",
+   "oblB": -0.0,
+   "firms": 4
+  },
+  {
+   "naics_code": "561320",
+   "psc_code": "S201",
+   "oblB": 0.003,
+   "firms": 7
+  },
+  {
+   "naics_code": "562111",
+   "psc_code": "S208",
+   "oblB": 0.007,
+   "firms": 12
+  },
+  {
+   "naics_code": "562112",
+   "psc_code": "S212",
+   "oblB": -0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "562910",
+   "psc_code": "S216",
+   "oblB": 0.001,
+   "firms": 14
+  },
+  {
+   "naics_code": "561612",
+   "psc_code": "S202",
+   "oblB": 0.0,
+   "firms": 3
+  },
+  {
+   "naics_code": "562998",
+   "psc_code": "S202",
+   "oblB": 0.0,
+   "firms": 4
+  },
+  {
+   "naics_code": "561790",
+   "psc_code": "S208",
+   "oblB": 0.001,
+   "firms": 22
+  },
+  {
+   "naics_code": "561790",
+   "psc_code": "S222",
+   "oblB": 0.0,
+   "firms": 3
+  },
+  {
+   "naics_code": "561790",
+   "psc_code": "S202",
+   "oblB": 0.001,
+   "firms": 10
+  },
+  {
+   "naics_code": "562111",
+   "psc_code": "S201",
+   "oblB": 0.003,
+   "firms": 22
+  },
+  {
+   "naics_code": "561622",
+   "psc_code": "S216",
+   "oblB": 0.002,
+   "firms": 6
+  },
+  {
+   "naics_code": "561210",
+   "psc_code": "S215",
+   "oblB": 0.055,
+   "firms": 13
+  },
+  {
+   "naics_code": "561710",
+   "psc_code": "S202",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "561730",
+   "psc_code": "S209",
+   "oblB": 0.001,
+   "firms": 3
+  },
+  {
+   "naics_code": "561621",
+   "psc_code": "S208",
+   "oblB": 0.0,
+   "firms": 2
+  },
+  {
+   "naics_code": "562920",
+   "psc_code": "S205",
+   "oblB": 0.008,
+   "firms": 12
+  },
+  {
+   "naics_code": "562211",
+   "psc_code": "S204",
+   "oblB": 0.0,
+   "firms": 2
+  },
+  {
+   "naics_code": "562910",
+   "psc_code": "S205",
+   "oblB": 0.0,
+   "firms": 5
+  },
+  {
+   "naics_code": "562119",
+   "psc_code": "S299",
+   "oblB": 0.002,
+   "firms": 14
+  },
+  {
+   "naics_code": "562112",
+   "psc_code": "S208",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "562998",
+   "psc_code": "S204",
+   "oblB": 0.0,
+   "firms": 7
+  },
+  {
+   "naics_code": "561720",
+   "psc_code": "S211",
+   "oblB": 0.001,
+   "firms": 3
+  },
+  {
+   "naics_code": "561720",
+   "psc_code": "S218",
+   "oblB": 0.002,
+   "firms": 14
+  },
+  {
+   "naics_code": "562119",
+   "psc_code": "S119",
+   "oblB": 0.0,
+   "firms": 3
+  },
+  {
+   "naics_code": "562111",
+   "psc_code": "S204",
+   "oblB": 0.002,
+   "firms": 1
+  },
+  {
+   "naics_code": "561790",
+   "psc_code": "S214",
+   "oblB": 0.0,
+   "firms": 2
+  },
+  {
+   "naics_code": "561320",
+   "psc_code": "S208",
+   "oblB": 0.0,
+   "firms": 2
+  },
+  {
+   "naics_code": "561730",
+   "psc_code": "S207",
+   "oblB": 0.001,
+   "firms": 8
+  },
+  {
+   "naics_code": "561730",
+   "psc_code": "S202",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "562112",
+   "psc_code": "S204",
+   "oblB": 0.0,
+   "firms": 2
+  },
+  {
+   "naics_code": "561421",
+   "psc_code": "S119",
+   "oblB": 0.0,
+   "firms": 6
+  },
+  {
+   "naics_code": "562998",
+   "psc_code": "S114",
+   "oblB": 0.0,
+   "firms": 2
+  },
+  {
+   "naics_code": "561990",
+   "psc_code": "S114",
+   "oblB": 0.0,
+   "firms": 2
+  },
+  {
+   "naics_code": "561210",
+   "psc_code": "S206",
+   "oblB": 0.556,
+   "firms": 17
+  },
+  {
+   "naics_code": "561720",
+   "psc_code": "S215",
+   "oblB": 0.0,
+   "firms": 2
+  },
+  {
+   "naics_code": "561110",
+   "psc_code": "S201",
+   "oblB": 0.001,
+   "firms": 4
+  },
+  {
+   "naics_code": "562111",
+   "psc_code": "S209",
+   "oblB": 0.0,
+   "firms": 3
+  },
+  {
+   "naics_code": "561720",
+   "psc_code": "S119",
+   "oblB": 0.0,
+   "firms": 2
+  },
+  {
+   "naics_code": "562213",
+   "psc_code": "S222",
+   "oblB": 0.0,
+   "firms": 9
+  },
+  {
+   "naics_code": "561990",
+   "psc_code": "S208",
+   "oblB": 0.0,
+   "firms": 11
+  },
+  {
+   "naics_code": "561510",
+   "psc_code": "S216",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "561421",
+   "psc_code": "S216",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "561439",
+   "psc_code": "S209",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "561990",
+   "psc_code": "S209",
+   "oblB": 0.0,
+   "firms": 4
+  },
+  {
+   "naics_code": "561730",
+   "psc_code": "S222",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "561492",
+   "psc_code": "S206",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "561990",
+   "psc_code": "S222",
+   "oblB": 0.0,
+   "firms": 5
+  },
+  {
+   "naics_code": "561740",
+   "psc_code": "S299",
+   "oblB": 0.0,
+   "firms": 5
+  },
+  {
+   "naics_code": "561611",
+   "psc_code": "S211",
+   "oblB": 0.0,
+   "firms": 2
+  },
+  {
+   "naics_code": "562219",
+   "psc_code": "S114",
+   "oblB": 0.002,
+   "firms": 2
+  },
+  {
+   "naics_code": "561210",
+   "psc_code": "S217",
+   "oblB": 0.0,
+   "firms": 2
+  },
+  {
+   "naics_code": "561210",
+   "psc_code": "S112",
+   "oblB": 0.0,
+   "firms": 4
+  },
+  {
+   "naics_code": "561520",
+   "psc_code": "S216",
+   "oblB": 0.009,
+   "firms": 2
+  },
+  {
+   "naics_code": "561611",
+   "psc_code": "S206",
+   "oblB": 0.004,
+   "firms": 2
+  },
+  {
+   "naics_code": "561621",
+   "psc_code": "S201",
+   "oblB": 0.001,
+   "firms": 1
+  },
+  {
+   "naics_code": "562920",
+   "psc_code": "S216",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "561612",
+   "psc_code": "S201",
+   "oblB": 0.015,
+   "firms": 3
+  },
+  {
+   "naics_code": "561110",
+   "psc_code": "S208",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "561990",
+   "psc_code": "S204",
+   "oblB": 0.0,
+   "firms": 2
+  },
+  {
+   "naics_code": "562211",
+   "psc_code": "S201",
+   "oblB": 0.0,
+   "firms": 4
+  },
+  {
+   "naics_code": "562112",
+   "psc_code": "S201",
+   "oblB": 0.002,
+   "firms": 5
+  },
+  {
+   "naics_code": "562920",
+   "psc_code": "S299",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "562998",
+   "psc_code": "S212",
+   "oblB": 0.0,
+   "firms": 3
+  },
+  {
+   "naics_code": "561612",
+   "psc_code": "S209",
+   "oblB": 0.011,
+   "firms": 2
+  },
+  {
+   "naics_code": "561591",
+   "psc_code": "S112",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "561599",
+   "psc_code": "S203",
+   "oblB": 0.001,
+   "firms": 5
+  },
+  {
+   "naics_code": "561431",
+   "psc_code": "S201",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "562212",
+   "psc_code": "S216",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "561720",
+   "psc_code": "S206",
+   "oblB": -0.0,
+   "firms": 3
+  },
+  {
+   "naics_code": "562910",
+   "psc_code": "S215",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "561499",
+   "psc_code": "S299",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "562212",
+   "psc_code": "S119",
+   "oblB": 0.0,
+   "firms": 5
+  },
+  {
+   "naics_code": "562112",
+   "psc_code": "S202",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "561920",
+   "psc_code": "S218",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "561920",
+   "psc_code": "S203",
+   "oblB": 0.0,
+   "firms": 2
+  },
+  {
+   "naics_code": "562211",
+   "psc_code": "S207",
+   "oblB": 0.0,
+   "firms": 2
+  },
+  {
+   "naics_code": "562211",
+   "psc_code": "S209",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "561622",
+   "psc_code": "S299",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "562212",
+   "psc_code": "S299",
+   "oblB": 0.001,
+   "firms": 2
+  },
+  {
+   "naics_code": "562910",
+   "psc_code": "S206",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "561499",
+   "psc_code": "S215",
+   "oblB": -0.0,
+   "firms": 2
+  },
+  {
+   "naics_code": "561440",
+   "psc_code": "S222",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "561320",
+   "psc_code": "S222",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "561720",
+   "psc_code": "S201",
+   "oblB": 4.966,
+   "firms": 2402
+  },
+  {
+   "naics_code": "562119",
+   "psc_code": "S208",
+   "oblB": 2.403,
+   "firms": 21
+  },
+  {
+   "naics_code": "562111",
+   "psc_code": "S205",
+   "oblB": 0.742,
+   "firms": 1020
+  },
+  {
+   "naics_code": "561612",
+   "psc_code": "S206",
+   "oblB": 13.339,
+   "firms": 647
+  },
+  {
+   "naics_code": "561990",
+   "psc_code": "S216",
+   "oblB": 0.004,
+   "firms": 50
+  },
+  {
+   "naics_code": "561790",
+   "psc_code": "S299",
+   "oblB": 0.015,
+   "firms": 84
+  },
+  {
+   "naics_code": "561790",
+   "psc_code": "S216",
+   "oblB": 0.011,
+   "firms": 46
+  },
+  {
+   "naics_code": "561210",
+   "psc_code": "S201",
+   "oblB": 0.665,
+   "firms": 204
+  },
+  {
+   "naics_code": "561210",
+   "psc_code": "S208",
+   "oblB": 0.078,
+   "firms": 95
+  },
+  {
+   "naics_code": "561740",
+   "psc_code": "S214",
+   "oblB": 0.004,
+   "firms": 69
+  },
+  {
+   "naics_code": "562213",
+   "psc_code": "S205",
+   "oblB": 0.002,
+   "firms": 8
+  },
+  {
+   "naics_code": "562111",
+   "psc_code": "S299",
+   "oblB": 0.004,
+   "firms": 23
+  },
+  {
+   "naics_code": "562910",
+   "psc_code": "S222",
+   "oblB": 0.003,
+   "firms": 31
+  },
+  {
+   "naics_code": "562119",
+   "psc_code": "S222",
+   "oblB": 0.006,
+   "firms": 48
+  },
+  {
+   "naics_code": "561730",
+   "psc_code": "S205",
+   "oblB": 0.002,
+   "firms": 14
+  },
+  {
+   "naics_code": "561730",
+   "psc_code": "S218",
+   "oblB": 0.029,
+   "firms": 160
+  },
+  {
+   "naics_code": "561730",
+   "psc_code": "S216",
+   "oblB": 0.009,
+   "firms": 33
+  },
+  {
+   "naics_code": "561621",
+   "psc_code": "S211",
+   "oblB": 0.016,
+   "firms": 89
+  },
+  {
+   "naics_code": "562991",
+   "psc_code": "S222",
+   "oblB": 0.048,
+   "firms": 360
+  },
+  {
+   "naics_code": "562119",
+   "psc_code": "S114",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "561210",
+   "psc_code": "S114",
+   "oblB": 0.0,
+   "firms": 5
+  },
+  {
+   "naics_code": "562211",
+   "psc_code": "S119",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "561990",
+   "psc_code": "S299",
+   "oblB": 0.543,
+   "firms": 91
+  },
+  {
+   "naics_code": "561210",
+   "psc_code": "S202",
+   "oblB": 0.018,
+   "firms": 23
+  },
+  {
+   "naics_code": "561421",
+   "psc_code": "S113",
+   "oblB": -0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "562111",
+   "psc_code": "S119",
+   "oblB": 0.004,
+   "firms": 28
+  },
+  {
+   "naics_code": "561740",
+   "psc_code": "S209",
+   "oblB": 0.0,
+   "firms": 8
+  },
+  {
+   "naics_code": "562219",
+   "psc_code": "S205",
+   "oblB": 0.022,
+   "firms": 48
+  },
+  {
+   "naics_code": "562998",
+   "psc_code": "S299",
+   "oblB": 0.004,
+   "firms": 26
+  },
+  {
+   "naics_code": "562212",
+   "psc_code": "S222",
+   "oblB": 0.004,
+   "firms": 46
+  },
+  {
+   "naics_code": "561790",
+   "psc_code": "S218",
+   "oblB": 0.033,
+   "firms": 229
+  },
+  {
+   "naics_code": "561990",
+   "psc_code": "S203",
+   "oblB": 0.005,
+   "firms": 5
+  },
+  {
+   "naics_code": "562998",
+   "psc_code": "S205",
+   "oblB": 0.011,
+   "firms": 71
+  },
+  {
+   "naics_code": "562991",
+   "psc_code": "S201",
+   "oblB": 0.003,
+   "firms": 64
+  },
+  {
+   "naics_code": "561612",
+   "psc_code": "S211",
+   "oblB": 0.009,
+   "firms": 23
+  },
+  {
+   "naics_code": "561210",
+   "psc_code": "S207",
+   "oblB": 0.005,
+   "firms": 18
+  },
+  {
+   "naics_code": "561720",
+   "psc_code": "S208",
+   "oblB": 0.049,
+   "firms": 96
+  },
+  {
+   "naics_code": "561621",
+   "psc_code": "S216",
+   "oblB": 0.0,
+   "firms": 13
+  },
+  {
+   "naics_code": "561210",
+   "psc_code": "S214",
+   "oblB": 0.0,
+   "firms": 10
+  },
+  {
+   "naics_code": "561210",
+   "psc_code": "S209",
+   "oblB": 0.007,
+   "firms": 12
+  },
+  {
+   "naics_code": "561710",
+   "psc_code": "S299",
+   "oblB": 0.0,
+   "firms": 3
+  },
+  {
+   "naics_code": "561320",
+   "psc_code": "S215",
+   "oblB": 0.001,
+   "firms": 1
+  },
+  {
+   "naics_code": "562219",
+   "psc_code": "S119",
+   "oblB": 0.026,
+   "firms": 6
+  },
+  {
+   "naics_code": "561110",
+   "psc_code": "S216",
+   "oblB": 0.0,
+   "firms": 7
+  },
+  {
+   "naics_code": "562910",
+   "psc_code": "S214",
+   "oblB": 0.0,
+   "firms": 6
+  },
+  {
+   "naics_code": "561210",
+   "psc_code": "S222",
+   "oblB": 0.0,
+   "firms": 8
+  },
+  {
+   "naics_code": "561730",
+   "psc_code": "S217",
+   "oblB": 0.001,
+   "firms": 22
+  },
+  {
+   "naics_code": "561621",
+   "psc_code": "S206",
+   "oblB": 0.249,
+   "firms": 17
+  },
+  {
+   "naics_code": "562910",
+   "psc_code": "S208",
+   "oblB": 0.0,
+   "firms": 4
+  },
+  {
+   "naics_code": "562112",
+   "psc_code": "S216",
+   "oblB": 0.002,
+   "firms": 11
+  },
+  {
+   "naics_code": "561613",
+   "psc_code": "S206",
+   "oblB": 0.005,
+   "firms": 13
+  },
+  {
+   "naics_code": "561990",
+   "psc_code": "S205",
+   "oblB": 0.001,
+   "firms": 15
+  },
+  {
+   "naics_code": "562111",
+   "psc_code": "S216",
+   "oblB": 0.004,
+   "firms": 12
+  },
+  {
+   "naics_code": "561612",
+   "psc_code": "S216",
+   "oblB": 0.002,
+   "firms": 4
+  },
+  {
+   "naics_code": "561720",
+   "psc_code": "S209",
+   "oblB": 0.004,
+   "firms": 14
+  },
+  {
+   "naics_code": "562112",
+   "psc_code": "S299",
+   "oblB": 0.001,
+   "firms": 12
+  },
+  {
+   "naics_code": "561740",
+   "psc_code": "S201",
+   "oblB": 0.0,
+   "firms": 10
+  },
+  {
+   "naics_code": "561320",
+   "psc_code": "S206",
+   "oblB": 0.0,
+   "firms": 3
+  },
+  {
+   "naics_code": "562910",
+   "psc_code": "S201",
+   "oblB": 0.001,
+   "firms": 26
+  },
+  {
+   "naics_code": "562211",
+   "psc_code": "S205",
+   "oblB": 0.006,
+   "firms": 43
+  },
+  {
+   "naics_code": "562920",
+   "psc_code": "S222",
+   "oblB": 0.001,
+   "firms": 7
+  },
+  {
+   "naics_code": "561210",
+   "psc_code": "S204",
+   "oblB": 0.118,
+   "firms": 6
+  },
+  {
+   "naics_code": "562112",
+   "psc_code": "S205",
+   "oblB": 0.021,
+   "firms": 46
+  },
+  {
+   "naics_code": "562111",
+   "psc_code": "S206",
+   "oblB": 0.001,
+   "firms": 9
+  },
+  {
+   "naics_code": "561440",
+   "psc_code": "S205",
+   "oblB": 0.005,
+   "firms": 4
+  },
+  {
+   "naics_code": "561720",
+   "psc_code": "S207",
+   "oblB": 0.0,
+   "firms": 8
+  },
+  {
+   "naics_code": "561720",
+   "psc_code": "S214",
+   "oblB": 0.002,
+   "firms": 25
+  },
+  {
+   "naics_code": "562219",
+   "psc_code": "S299",
+   "oblB": 0.003,
+   "firms": 6
+  },
+  {
+   "naics_code": "562991",
+   "psc_code": "S208",
+   "oblB": 0.0,
+   "firms": 2
+  },
+  {
+   "naics_code": "561320",
+   "psc_code": "S299",
+   "oblB": 0.0,
+   "firms": 3
+  },
+  {
+   "naics_code": "561710",
+   "psc_code": "S216",
+   "oblB": 0.001,
+   "firms": 5
+  },
+  {
+   "naics_code": "562998",
+   "psc_code": "S119",
+   "oblB": 0.0,
+   "firms": 5
+  },
+  {
+   "naics_code": "561730",
+   "psc_code": "S203",
+   "oblB": 0.0,
+   "firms": 2
+  },
+  {
+   "naics_code": "561720",
+   "psc_code": "S202",
+   "oblB": 0.001,
+   "firms": 4
+  },
+  {
+   "naics_code": "562998",
+   "psc_code": "S216",
+   "oblB": 0.002,
+   "firms": 10
+  },
+  {
+   "naics_code": "561790",
+   "psc_code": "S203",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "562111",
+   "psc_code": "S215",
+   "oblB": 0.0,
+   "firms": 4
+  },
+  {
+   "naics_code": "561710",
+   "psc_code": "S218",
+   "oblB": -0.0,
+   "firms": 2
+  },
+  {
+   "naics_code": "561499",
+   "psc_code": "S201",
+   "oblB": 0.001,
+   "firms": 1
+  },
+  {
+   "naics_code": "561320",
+   "psc_code": "S205",
+   "oblB": 0.0,
+   "firms": 5
+  },
+  {
+   "naics_code": "562211",
+   "psc_code": "S299",
+   "oblB": 0.001,
+   "firms": 12
+  },
+  {
+   "naics_code": "561499",
+   "psc_code": "S222",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "561790",
+   "psc_code": "S112",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "561110",
+   "psc_code": "S215",
+   "oblB": 0.001,
+   "firms": 4
+  },
+  {
+   "naics_code": "561621",
+   "psc_code": "S299",
+   "oblB": 0.0,
+   "firms": 3
+  },
+  {
+   "naics_code": "561720",
+   "psc_code": "S222",
+   "oblB": 0.0,
+   "firms": 4
+  },
+  {
+   "naics_code": "561621",
+   "psc_code": "S119",
+   "oblB": 0.0,
+   "firms": 3
+  },
+  {
+   "naics_code": "561790",
+   "psc_code": "S205",
+   "oblB": 0.0,
+   "firms": 3
+  },
+  {
+   "naics_code": "561622",
+   "psc_code": "S201",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "561110",
+   "psc_code": "S205",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "562998",
+   "psc_code": "S203",
+   "oblB": -0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "561910",
+   "psc_code": "S216",
+   "oblB": 0.005,
+   "firms": 2
+  },
+  {
+   "naics_code": "562910",
+   "psc_code": "S209",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "561790",
+   "psc_code": "S217",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "561990",
+   "psc_code": "S119",
+   "oblB": 0.001,
+   "firms": 2
+  },
+  {
+   "naics_code": "561320",
+   "psc_code": "S203",
+   "oblB": 0.0,
+   "firms": 2
+  },
+  {
+   "naics_code": "562119",
+   "psc_code": "S201",
+   "oblB": 0.002,
+   "firms": 2
+  },
+  {
+   "naics_code": "562111",
+   "psc_code": "S203",
+   "oblB": 0.001,
+   "firms": 3
+  },
+  {
+   "naics_code": "562112",
+   "psc_code": "S218",
+   "oblB": 0.004,
+   "firms": 1
+  },
+  {
+   "naics_code": "562211",
+   "psc_code": "S216",
+   "oblB": 0.009,
+   "firms": 7
+  },
+  {
+   "naics_code": "561990",
+   "psc_code": "S111",
+   "oblB": -0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "561990",
+   "psc_code": "S218",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "561730",
+   "psc_code": "S299",
+   "oblB": 0.002,
+   "firms": 5
+  },
+  {
+   "naics_code": "562910",
+   "psc_code": "S202",
+   "oblB": 0.0,
+   "firms": 2
+  },
+  {
+   "naics_code": "561720",
+   "psc_code": "S204",
+   "oblB": 0.003,
+   "firms": 1
+  },
+  {
+   "naics_code": "562219",
+   "psc_code": "S216",
+   "oblB": 0.003,
+   "firms": 5
+  },
+  {
+   "naics_code": "562920",
+   "psc_code": "S201",
+   "oblB": 0.004,
+   "firms": 2
+  },
+  {
+   "naics_code": "561612",
+   "psc_code": "S205",
+   "oblB": 0.008,
+   "firms": 1
+  },
+  {
+   "naics_code": "561790",
+   "psc_code": "S119",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "561612",
+   "psc_code": "S203",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "561710",
+   "psc_code": "S205",
+   "oblB": 0.0,
+   "firms": 2
+  },
+  {
+   "naics_code": "561611",
+   "psc_code": "S201",
+   "oblB": 0.0,
+   "firms": 2
+  },
+  {
+   "naics_code": "561499",
+   "psc_code": "S209",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "561320",
+   "psc_code": "S216",
+   "oblB": -0.001,
+   "firms": 3
+  },
+  {
+   "naics_code": "562910",
+   "psc_code": "S207",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "562910",
+   "psc_code": "S114",
+   "oblB": 0.0,
+   "firms": 2
+  },
+  {
+   "naics_code": "561599",
+   "psc_code": "S209",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "561320",
+   "psc_code": "S119",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "561110",
+   "psc_code": "S299",
+   "oblB": -0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "562910",
+   "psc_code": "S204",
+   "oblB": 0.0,
+   "firms": 3
+  },
+  {
+   "naics_code": "561730",
+   "psc_code": "S206",
+   "oblB": 0.0,
+   "firms": 2
+  },
+  {
+   "naics_code": "561311",
+   "psc_code": "S299",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "562991",
+   "psc_code": "S202",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "562991",
+   "psc_code": "S209",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "562219",
+   "psc_code": "S203",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "561210",
+   "psc_code": "S212",
+   "oblB": 0.0,
+   "firms": 1
+  },
+  {
+   "naics_code": "561990",
+   "psc_code": "S215",
+   "oblB": 0.007,
+   "firms": 2
+  }
+ ]
+}
