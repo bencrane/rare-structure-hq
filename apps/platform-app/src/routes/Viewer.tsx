@@ -22,6 +22,7 @@ import { MedDevPairs } from "@/viewer/MedDevPairs";
 import { MedStaffPairs } from "@/viewer/MedStaffPairs";
 import { StaffingPairs } from "@/viewer/StaffingPairs";
 import { TextilesPairs } from "@/viewer/TextilesPairs";
+import { TranspoPairs } from "@/viewer/TranspoPairs";
 import { ConstructionPairs } from "@/viewer/ConstructionPairs";
 import { PairAssignment } from "@/viewer/PairAssignment";
 import { PairCuration } from "@/viewer/PairCuration";
@@ -123,6 +124,12 @@ const TABS: { key: string; label: string; sub: string; body: () => React.ReactNo
     label: "Fire & Forestry Pairs",
     sub: "suppression/rehab/land mgmt · judged",
     body: () => <FirePairs />,
+  },
+  {
+    key: "transpo-pairs",
+    label: "Transport & Logistics Pairs",
+    sub: "sea · air · avMRO · whse · ground",
+    body: () => <TranspoPairs />,
   },
 ];
 
