@@ -214,16 +214,22 @@ export type Command =
       id: string;
       kind: "active-awards";
       label: string;
-      /** Total vs single grain (Q1/Q2). ABSENT on event verbs (Q3 has no grain marker). */
+      /** Total vs single grain (Q1/Q2). ABSENT on event verbs (Q3) and step-growth (Q4). */
       grain?: "total" | "single";
-      /** Active obligations (default), won-in-window, or FPDS modification events (Q3).
-       * `won`/`events` require `windowDays`. */
-      mode?: "active" | "won" | "events";
+      /** Active obligations (default), won-in-window, FPDS modification events (Q3), or
+       * step-growth (Q4). `won`/`events` require `windowDays`; `growth` requires
+       * `multiplier` + `windowPair`. */
+      mode?: "active" | "won" | "events" | "growth";
       /** Q3 event verb, sent verbatim (e.g. "received new funding") — the edge maps it to
        * an FPDS action_type_code set. Present only when `mode === "events"`. */
       eventVerb?: string;
       /** Window length in days — one of 30/45/60/90/180/365/730/1095 (won/events mode). */
       windowDays?: number;
+      /** Q4 step-growth multiplier — one of 2/3/4/5/10. Present only when `mode === "growth"`. */
+      multiplier?: number;
+      /** Q4 step-growth window pair — "12v24" | "6v12" | "90v90" (recent A vs preceding B).
+       * Present only when `mode === "growth"`. */
+      windowPair?: "12v24" | "6v12" | "90v90";
       /** The chosen job phrase in "to: …" form (absent = no job-phrase filter). */
       jobPhrase?: string;
       /** 2-letter US state code — place-of-performance filter (absent = no PoP filter). */

@@ -183,3 +183,66 @@ describe("leading industry token", () => {
     expect(rows.some((c) => c.jobPhrase === "to: weld structural steel")).toBe(true);
   });
 });
+
+describe("Q4 step-growth (grew {N}x)", () => {
+  test("`grew` fans all 5 multipliers × all 3 window pairs, no grain, no PoP", () => {
+    const rows = q1s("grew");
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.every((c) => c.mode === "growth")).toBe(true);
+    expect(rows.every((c) => c.grain == null)).toBe(true);
+    expect(rows.every((c) => c.stateCode == null)).toBe(true);
+    const mults = new Set(rows.map((c) => c.multiplier));
+    for (const m of [2, 3, 4, 5, 10]) expect(mults.has(m)).toBe(true);
+    const pairs = new Set(rows.map((c) => c.windowPair));
+    for (const p of ["12v24", "6v12", "90v90"] as const) expect(pairs.has(p)).toBe(true);
+  });
+
+  test("a bare `4x` multiplier pins it and flips to growth", () => {
+    const rows = q1s("grew 4x");
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.every((c) => c.mode === "growth")).toBe(true);
+    expect(rows.every((c) => c.multiplier === 4)).toBe(true);
+    // no window pair typed → still fans all 3
+    expect(new Set(rows.map((c) => c.windowPair)).size).toBe(3);
+    expect(rows[0].label).toContain("prime obligations grew 4x");
+  });
+
+  test("window pairs render exactly and pin from a `prior 24` fragment", () => {
+    const rows = q1s("grew 5x in the last 12 months vs the prior 24 months");
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.every((c) => c.multiplier === 5 && c.windowPair === "12v24")).toBe(true);
+    expect(rows[0].label).toContain(
+      "prime obligations grew 5x in the last 12 months vs the prior 24 months",
+    );
+    // the 90-day pair renders in days, not months
+    const days = q1s("grew 10x in the last 90 days vs the prior 90 days");
+    expect(days[0].windowPair).toBe("90v90");
+    expect(days[0].label).toContain("in the last 90 days vs the prior 90 days");
+  });
+
+  test("composes industry prefix + `to <job>` + `based in <state>` + `and need`", () => {
+    const rows = q1s(
+      "construction grew 3x in the last 6 months vs the prior 12 months to weld based in texas and need welders",
+    );
+    expect(rows.length).toBeGreaterThan(0);
+    const [row] = rows;
+    expect(row.mode).toBe("growth");
+    expect(row.multiplier).toBe(3);
+    expect(row.windowPair).toBe("6v12");
+    expect(row.industry).toBe("construction");
+    expect(row.jobPhrase).toBe("to: weld structural steel");
+    expect(row.hqState).toBe("TX");
+    expect(row.need).toBe("welders");
+    expect(row.label).toBe(
+      "construction companies whose prime obligations grew 3x in the last 6 months vs the prior 12 months to weld structural steel based in texas and need welders",
+    );
+  });
+
+  test("PoP `in <state>` is never offered on growth rows", () => {
+    const rows = q1s("grew 2x in california");
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.every((c) => c.mode === "growth")).toBe(true);
+    expect(rows.every((c) => c.stateCode == null)).toBe(true);
+    expect(rows.every((c) => !c.label.includes("in california"))).toBe(true);
+  });
+});
