@@ -13,6 +13,7 @@ import activeBaked from "@/internal/facilities-codes-active.json";
 import windowBaked from "@/internal/facilities-codes.json";
 import { type CodeDataset, CodeReference } from "@/viewer/CodeReference";
 import { CombosTable } from "@/viewer/CombosTable";
+import { BucketExplorer } from "@/viewer/BucketExplorer";
 import { PairAssignment } from "@/viewer/PairAssignment";
 import { PairCuration } from "@/viewer/PairCuration";
 
@@ -46,6 +47,12 @@ const TABS: { key: string; label: string; sub: string; body: () => React.ReactNo
     label: "Pair Assignment",
     sub: "one category per pair · nothing dropped",
     body: () => <PairAssignment />,
+  },
+  {
+    key: "bucket-explorer",
+    label: "Bucket Explorer",
+    sub: "pick buckets + won band · live table",
+    body: () => <BucketExplorer />,
   },
 ];
 
