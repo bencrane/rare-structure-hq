@@ -50,7 +50,7 @@ import ManageDocumensoTemplates from "./routes/app/ManageDocumensoTemplates";
 import Mandate from "./routes/app/Mandate";
 import MandateBrief from "./routes/app/MandateBrief";
 import MapTab from "./routes/app/MapTab";
-import Market from "./routes/app/Market";
+import MarketSpec from "./routes/app/MarketSpec";
 import Overview from "./routes/app/Overview";
 import Preferences from "./routes/app/Preferences";
 import Research from "./routes/app/Research";
@@ -194,7 +194,7 @@ export function App() {
             path="market"
             element={
               <RequireOperator>
-                <Market />
+                <MarketSpec />
               </RequireOperator>
             }
           />

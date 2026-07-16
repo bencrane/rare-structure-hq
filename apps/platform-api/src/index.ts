@@ -39,6 +39,7 @@ import { engagementTemplateRoutes } from "./routes/engagement-templates-admin.ts
 import { federalRoutes } from "./routes/federal.ts";
 import { insightsAdminRoutes } from "./routes/insights-admin.ts";
 import { marketRoutes } from "./routes/market.ts";
+import { marketSpecRoutes } from "./routes/market-spec.ts";
 import { proposalTemplateEditorRoutes } from "./routes/proposal-templates-admin.ts";
 import { proposalTemplateRoutes } from "./routes/proposals-admin.ts";
 import { settingsRoutes } from "./routes/settings.ts";
@@ -151,6 +152,9 @@ app.route("/api/v1/insights", insightsAdminRoutes);
 // Market — the audience-builder cockpit tab. requireUser-gated dumb proxy to edge_api's
 // /api/v1/audience/* (cohort queries + the Close push flow); bodies and statuses verbatim.
 app.route("/api/v1/market", marketRoutes);
+// Market-spec — the live market-definition instrument (Market tab). requireUser-gated
+// dumb proxy to edge_api's /api/v1/market-spec/* (sidecar-served spec counts).
+app.route("/api/v1/market-spec", marketSpecRoutes);
 // PUBLIC federal map/chart surface — warm in-memory snapshot, no auth (the cockpit /map
 // route is public). Read-only projections of precomputed public federal-spend data.
 app.route("/api/v1/federal", federalRoutes);
