@@ -200,6 +200,24 @@ export type Command =
       kind: "aggregate-phrase";
       label: string;
       phrase: string;
+    }
+  | {
+      /**
+       * A completed Q1 canonical sentence — "companies with active {total|single}
+       * awards[ {job phrase}][ in {state}][ over ${amount}]". Composed client-side
+       * from the canonical vocabulary in the ⌘K palette; running it POSTs the
+       * resolved slots to catalyst's active-awards query and plots the companies.
+       */
+      id: string;
+      kind: "active-awards";
+      label: string;
+      grain: "total" | "single";
+      /** The chosen job phrase in "to: …" form (absent = no job-phrase filter). */
+      jobPhrase?: string;
+      /** 2-letter US state code (absent = no state filter). */
+      stateCode?: string;
+      /** Obligation floor in USD (absent = no floor). */
+      minAmt?: number;
     };
 
 /** One bar in an aggregate chart. `median`/`p90` ride along when the aggregate requested them

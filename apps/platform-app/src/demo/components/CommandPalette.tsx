@@ -13,9 +13,11 @@
  */
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { BarChart3, CornerDownLeft, MapPin, Search, Sparkles } from "lucide-react";
+import { BarChart3, CornerDownLeft, MapPin, Search, Sparkles, Target } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { COMMANDS } from "../data";
+import { type JtbdPhrase, fetchJtbdVocab } from "../federalApi";
+import { q1Candidates } from "../q1";
 import type { Command } from "../types";
 
 export function CommandPalette({
@@ -32,11 +34,18 @@ export function CommandPalette({
   const [selected, setSelected] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // The canonical job-phrase vocabulary — fetched once (module-level cache in
+  // federalApi), feeds the Q1 typeahead.
+  const [vocab, setVocab] = useState<JtbdPhrase[]>([]);
+
   // Reset state and focus the input each time the palette opens.
   useEffect(() => {
     if (!open) return;
     setQueryText("");
     setSelected(0);
+    fetchJtbdVocab()
+      .then(setVocab)
+      .catch(() => setVocab([]));
     const t = setTimeout(() => inputRef.current?.focus(), 40);
     return () => clearTimeout(t);
   }, [open]);
@@ -70,21 +79,28 @@ export function CommandPalette({
     return [phrase, ...filtered];
   }, [queryText, filtered]);
 
+  // Q1 canonical candidates lead the list; the free-typed phrase row and canned
+  // commands follow. Completed canonical sentences are the only runnable Q1 rows.
+  const allRows = useMemo<Command[]>(
+    () => [...q1Candidates(queryText, vocab), ...rows],
+    [queryText, vocab, rows],
+  );
+
   // Keep the selection in range as the list narrows.
   useEffect(() => {
-    setSelected((s) => Math.min(s, Math.max(0, rows.length - 1)));
-  }, [rows.length]);
+    setSelected((s) => Math.min(s, Math.max(0, allRows.length - 1)));
+  }, [allRows.length]);
 
   function onInputKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setSelected((s) => Math.min(s + 1, rows.length - 1));
+      setSelected((s) => Math.min(s + 1, allRows.length - 1));
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setSelected((s) => Math.max(s - 1, 0));
     } else if (e.key === "Enter") {
       e.preventDefault();
-      const cmd = rows[selected];
+      const cmd = allRows[selected];
       if (cmd) onRun(cmd);
     }
   }
@@ -136,12 +152,12 @@ export function CommandPalette({
 
             {/* Command list */}
             <ul className="max-h-[52vh] overflow-y-auto py-1.5">
-              {rows.length === 0 && (
+              {allRows.length === 0 && (
                 <li className="px-5 py-6 text-center font-mono text-[color:var(--color-text-muted)] text-mono-xs uppercase">
                   No commands match
                 </li>
               )}
-              {rows.map((cmd, i) => (
+              {allRows.map((cmd, i) => (
                 <CommandRow
                   key={cmd.id}
                   command={cmd}
@@ -179,8 +195,9 @@ function CommandRow({
   // A phrase row (free-typed or canned) routes through the deterministic compiler.
   const isPhrase = command.kind === "map-query" && !!command.query.nl;
   const isChart = command.kind === "aggregate" || command.kind === "aggregate-phrase";
-  const Icon = isPhrase ? Sparkles : isChart ? BarChart3 : MapPin;
-  const kindLabel = isPhrase ? "Phrase" : isChart ? "Chart" : "Map";
+  const isQ1 = command.kind === "active-awards";
+  const Icon = isQ1 ? Target : isPhrase ? Sparkles : isChart ? BarChart3 : MapPin;
+  const kindLabel = isQ1 ? "Q1" : isPhrase ? "Phrase" : isChart ? "Chart" : "Map";
 
   return (
     <li>
