@@ -411,12 +411,21 @@ export async function fetchPhrase(phrase: string): Promise<PhraseResponse> {
  * empty-input suggestions. */
 export type JtbdPhrase = { phrase: string; combo_count: number };
 
-let vocabCache: JtbdPhrase[] | null = null;
-let vocabInflight: Promise<JtbdPhrase[]> | null = null;
+/** One canonical occupation token — the `and need <occupation>` labor-need vocabulary;
+ * `soc_count` (number of SOC codes behind the token) ranks the suggestions. */
+export type Occupation = { token: string; soc_count: number };
 
-/** Fetch the canonical job-phrase vocabulary once (module-level cache). Concurrent
- * callers share the in-flight request; a failure clears the latch so a later open retries. */
-export async function fetchJtbdVocab(): Promise<JtbdPhrase[]> {
+/** The `/jtbd-vocab` payload — the job-phrase vocabulary plus the occupation vocabulary
+ * (the Q1/Q2 typeahead resolves the `and need <occupation>` slot from the latter). */
+export type JtbdVocab = { phrases: JtbdPhrase[]; occupations: Occupation[] };
+
+let vocabCache: JtbdVocab | null = null;
+let vocabInflight: Promise<JtbdVocab> | null = null;
+
+/** Fetch the canonical vocabulary once (module-level cache) — both the job phrases and the
+ * occupation tokens. Concurrent callers share the in-flight request; a failure clears the
+ * latch so a later open retries. */
+export async function fetchJtbdVocab(): Promise<JtbdVocab> {
   if (vocabCache) return vocabCache;
   if (vocabInflight) return vocabInflight;
   vocabInflight = (async () => {
@@ -424,8 +433,8 @@ export async function fetchJtbdVocab(): Promise<JtbdPhrase[]> {
       headers: { "Content-Type": "application/json" },
     });
     if (!res.ok) throw new Error(`jtbd-vocab failed: ${res.status} ${await res.text()}`);
-    const body = (await res.json()) as { phrases?: JtbdPhrase[] };
-    vocabCache = body.phrases ?? [];
+    const body = (await res.json()) as { phrases?: JtbdPhrase[]; occupations?: Occupation[] };
+    vocabCache = { phrases: body.phrases ?? [], occupations: body.occupations ?? [] };
     return vocabCache;
   })();
   try {
@@ -438,12 +447,25 @@ export async function fetchJtbdVocab(): Promise<JtbdPhrase[]> {
   }
 }
 
-/** The body for one completed Q1 sentence run. */
+/** The body for one completed Q1/Q2 sentence run. */
 export type ActiveAwardsQueryBody = {
   grain: "total" | "single";
+  /** Active obligations (default) vs. won-in-window. */
+  mode?: "active" | "won";
+  /** Won-window length in days (required iff `mode === "won"`). */
+  window_days?: number;
   job_phrase?: string;
+  /** Place-of-performance state (2-letter). */
   state?: string;
+  /** HQ state (2-letter) — the `based in <state>` slot. */
+  hq_state?: string;
+  /** Industry vertical token. */
+  industry?: string;
+  /** Occupation token — the `and need <occupation>` labor need. */
+  need?: string;
   min_amt?: number;
+  /** Include support/indirect roles in the labor-need match (default false). */
+  include_support?: boolean;
   limit?: number;
 };
 

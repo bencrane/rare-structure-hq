@@ -171,8 +171,13 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
         setLoading(true);
         fetchActiveAwardsQuery({
           grain: command.grain,
+          mode: command.mode,
+          window_days: command.windowDays,
           job_phrase: command.jobPhrase,
           state: command.stateCode,
+          hq_state: command.hqState,
+          industry: command.industry,
+          need: command.need,
           min_amt: command.minAmt,
         })
           .then((res) => {

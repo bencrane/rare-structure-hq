@@ -16,7 +16,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { BarChart3, CornerDownLeft, MapPin, Search, Sparkles, Target } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { COMMANDS } from "../data";
-import { type JtbdPhrase, fetchJtbdVocab } from "../federalApi";
+import { type JtbdPhrase, type Occupation, fetchJtbdVocab } from "../federalApi";
 import { q1Candidates } from "../q1";
 import type { Command } from "../types";
 
@@ -34,9 +34,10 @@ export function CommandPalette({
   const [selected, setSelected] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // The canonical job-phrase vocabulary — fetched once (module-level cache in
-  // federalApi), feeds the Q1 typeahead.
+  // The canonical vocabulary — fetched once (module-level cache in federalApi): the job
+  // phrases feed the Q1/Q2 typeahead, the occupations resolve the `and need <occupation>` slot.
   const [vocab, setVocab] = useState<JtbdPhrase[]>([]);
+  const [occupations, setOccupations] = useState<Occupation[]>([]);
 
   // Reset state and focus the input each time the palette opens.
   useEffect(() => {
@@ -44,8 +45,14 @@ export function CommandPalette({
     setQueryText("");
     setSelected(0);
     fetchJtbdVocab()
-      .then(setVocab)
-      .catch(() => setVocab([]));
+      .then((v) => {
+        setVocab(v.phrases);
+        setOccupations(v.occupations);
+      })
+      .catch(() => {
+        setVocab([]);
+        setOccupations([]);
+      });
     const t = setTimeout(() => inputRef.current?.focus(), 40);
     return () => clearTimeout(t);
   }, [open]);
@@ -82,8 +89,8 @@ export function CommandPalette({
   // Q1 canonical candidates lead the list; the free-typed phrase row and canned
   // commands follow. Completed canonical sentences are the only runnable Q1 rows.
   const allRows = useMemo<Command[]>(
-    () => [...q1Candidates(queryText, vocab), ...rows],
-    [queryText, vocab, rows],
+    () => [...q1Candidates(queryText, vocab, occupations), ...rows],
+    [queryText, vocab, occupations, rows],
   );
 
   // Keep the selection in range as the list narrows.
