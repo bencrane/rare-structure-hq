@@ -203,19 +203,32 @@ export type Command =
     }
   | {
       /**
-       * A completed Q1 canonical sentence — "companies with active {total|single}
-       * awards[ {job phrase}][ in {state}][ over ${amount}]". Composed client-side
-       * from the canonical vocabulary in the ⌘K palette; running it POSTs the
-       * resolved slots to catalyst's active-awards query and plots the companies.
+       * A completed Q1/Q2 canonical sentence. Q1 (active):
+       *   "[<industry> ]companies with active {total|single} awards[ to <job>]
+       *    [ in <state>][ based in <state>][ over $X][ and need <occupation>]".
+       * Q2 (won) swaps the opener to "…that have won…" and appends a required
+       *   " in the last <window>" clause. Composed client-side from the canonical
+       *   vocabulary in the ⌘K palette; running it POSTs the resolved slots to
+       *   catalyst's active-awards query and plots the companies.
        */
       id: string;
       kind: "active-awards";
       label: string;
       grain: "total" | "single";
+      /** Active obligations (default) vs. won-in-window. `won` requires `windowDays`. */
+      mode?: "active" | "won";
+      /** Won-window length in days — one of 30/45/60/90/180/365/730/1095 (won mode only). */
+      windowDays?: number;
       /** The chosen job phrase in "to: …" form (absent = no job-phrase filter). */
       jobPhrase?: string;
-      /** 2-letter US state code (absent = no state filter). */
+      /** 2-letter US state code — place-of-performance filter (absent = no PoP filter). */
       stateCode?: string;
+      /** 2-letter US state code — HQ (`based in`) filter (absent = no HQ filter). */
+      hqState?: string;
+      /** Industry token — one of the 30 canonical verticals (absent = no industry filter). */
+      industry?: string;
+      /** Occupation token — the `and need <occupation>` labor need (absent = none). */
+      need?: string;
       /** Obligation floor in USD (absent = no floor). */
       minAmt?: number;
     };
