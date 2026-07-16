@@ -214,10 +214,15 @@ export type Command =
       id: string;
       kind: "active-awards";
       label: string;
-      grain: "total" | "single";
-      /** Active obligations (default) vs. won-in-window. `won` requires `windowDays`. */
-      mode?: "active" | "won";
-      /** Won-window length in days — one of 30/45/60/90/180/365/730/1095 (won mode only). */
+      /** Total vs single grain (Q1/Q2). ABSENT on event verbs (Q3 has no grain marker). */
+      grain?: "total" | "single";
+      /** Active obligations (default), won-in-window, or FPDS modification events (Q3).
+       * `won`/`events` require `windowDays`. */
+      mode?: "active" | "won" | "events";
+      /** Q3 event verb, sent verbatim (e.g. "received new funding") — the edge maps it to
+       * an FPDS action_type_code set. Present only when `mode === "events"`. */
+      eventVerb?: string;
+      /** Window length in days — one of 30/45/60/90/180/365/730/1095 (won/events mode). */
       windowDays?: number;
       /** The chosen job phrase in "to: …" form (absent = no job-phrase filter). */
       jobPhrase?: string;
