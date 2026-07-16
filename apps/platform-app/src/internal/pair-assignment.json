@@ -7,7 +7,8 @@
   "Facilities Support & Operations",
   "Security & Protective Services",
   "Building Services",
-  "Misc"
+  "Misc",
+  "Waste Management & Sanitation"
  ],
  "pairs": [
   {
@@ -283,8 +284,8 @@
    "what_was_done": "Trash and garbage collection",
    "obl_m": 17.7,
    "firms": 37,
-   "category": "Building Services",
-   "basis": "work = trash/garbage collection"
+   "category": "Waste Management & Sanitation",
+   "basis": "work = trash/waste \u2014 moved to the Waste Management & Sanitation bucket (PSC base set)"
   },
   {
    "naics_code": "561720",
@@ -295,8 +296,8 @@
    "what_was_done": "Trash and garbage collection services",
    "obl_m": 17.3,
    "firms": 41,
-   "category": "Building Services",
-   "basis": "work = trash/garbage collection"
+   "category": "Waste Management & Sanitation",
+   "basis": "work = trash/waste \u2014 moved to the Waste Management & Sanitation bucket (PSC base set)"
   },
   {
    "naics_code": "561621",
@@ -427,8 +428,8 @@
    "what_was_done": "Trash and garbage collection services",
    "obl_m": 7.0,
    "firms": 1,
-   "category": "Building Services",
-   "basis": "work = trash/garbage collection"
+   "category": "Waste Management & Sanitation",
+   "basis": "work = trash/waste \u2014 moved to the Waste Management & Sanitation bucket (PSC base set)"
   },
   {
    "naics_code": "561790",
@@ -511,8 +512,8 @@
    "what_was_done": "Trash and garbage collection services",
    "obl_m": 5.0,
    "firms": 4,
-   "category": "Building Services",
-   "basis": "work = trash/garbage collection"
+   "category": "Waste Management & Sanitation",
+   "basis": "work = trash/waste \u2014 moved to the Waste Management & Sanitation bucket (PSC base set)"
   },
   {
    "naics_code": "561910",
@@ -619,8 +620,8 @@
    "what_was_done": null,
    "obl_m": 2.4,
    "firms": 15,
-   "category": "Building Services",
-   "basis": "work = trash/garbage collection"
+   "category": "Waste Management & Sanitation",
+   "basis": "work = trash/waste \u2014 moved to the Waste Management & Sanitation bucket (PSC base set)"
   },
   {
    "naics_code": "561720",
@@ -799,8 +800,8 @@
    "what_was_done": "Trash and garbage collection services",
    "obl_m": 0.7,
    "firms": 15,
-   "category": "Building Services",
-   "basis": "work = trash/garbage collection"
+   "category": "Waste Management & Sanitation",
+   "basis": "work = trash/waste \u2014 moved to the Waste Management & Sanitation bucket (PSC base set)"
   },
   {
    "naics_code": "561110",
@@ -907,8 +908,8 @@
    "what_was_done": "Waste treatment and storage services",
    "obl_m": 0.4,
    "firms": 7,
-   "category": "Misc",
-   "basis": "waste treatment \u2014 waste parked per ruling, not one of the three"
+   "category": "Waste Management & Sanitation",
+   "basis": "work = trash/waste \u2014 moved to the Waste Management & Sanitation bucket (PSC base set)"
   },
   {
    "naics_code": "561612",
@@ -1087,8 +1088,8 @@
    "what_was_done": "Trash and garbage collection services",
    "obl_m": 0.1,
    "firms": 4,
-   "category": "Building Services",
-   "basis": "work = trash/garbage collection"
+   "category": "Waste Management & Sanitation",
+   "basis": "work = trash/waste \u2014 moved to the Waste Management & Sanitation bucket (PSC base set)"
   },
   {
    "naics_code": "561730",
@@ -1123,8 +1124,8 @@
    "what_was_done": null,
    "obl_m": 0.1,
    "firms": 4,
-   "category": "Misc",
-   "basis": "waste treatment \u2014 waste parked per ruling, not one of the three"
+   "category": "Waste Management & Sanitation",
+   "basis": "work = trash/waste \u2014 moved to the Waste Management & Sanitation bucket (PSC base set)"
   },
   {
    "naics_code": "561431",
@@ -1147,8 +1148,8 @@
    "what_was_done": null,
    "obl_m": 0.1,
    "firms": 5,
-   "category": "Misc",
-   "basis": "waste treatment \u2014 waste parked per ruling, not one of the three"
+   "category": "Waste Management & Sanitation",
+   "basis": "work = trash/waste \u2014 moved to the Waste Management & Sanitation bucket (PSC base set)"
   },
   {
    "naics_code": "561110",
@@ -1171,8 +1172,8 @@
    "what_was_done": "Waste treatment and storage services",
    "obl_m": 0.1,
    "firms": 1,
-   "category": "Misc",
-   "basis": "waste treatment \u2014 waste parked per ruling, not one of the three"
+   "category": "Waste Management & Sanitation",
+   "basis": "work = trash/waste \u2014 moved to the Waste Management & Sanitation bucket (PSC base set)"
   },
   {
    "naics_code": "561210",
@@ -1207,8 +1208,8 @@
    "what_was_done": "Waste treatment and storage services",
    "obl_m": 0.0,
    "firms": 2,
-   "category": "Misc",
-   "basis": "waste treatment \u2014 waste parked per ruling, not one of the three"
+   "category": "Waste Management & Sanitation",
+   "basis": "work = trash/waste \u2014 moved to the Waste Management & Sanitation bucket (PSC base set)"
   },
   {
    "naics_code": "561710",
@@ -1219,8 +1220,8 @@
    "what_was_done": "Trash and garbage collection services",
    "obl_m": 0.0,
    "firms": 2,
-   "category": "Building Services",
-   "basis": "work = trash/garbage collection"
+   "category": "Waste Management & Sanitation",
+   "basis": "work = trash/waste \u2014 moved to the Waste Management & Sanitation bucket (PSC base set)"
   },
   {
    "naics_code": "561710",
@@ -1291,8 +1292,8 @@
    "what_was_done": "Waste treatment and storage services",
    "obl_m": 0.0,
    "firms": 1,
-   "category": "Misc",
-   "basis": "waste treatment \u2014 waste parked per ruling, not one of the three"
+   "category": "Waste Management & Sanitation",
+   "basis": "work = trash/waste \u2014 moved to the Waste Management & Sanitation bucket (PSC base set)"
   },
   {
    "naics_code": "561720",
@@ -1399,8 +1400,8 @@
    "what_was_done": null,
    "obl_m": 0.0,
    "firms": 5,
-   "category": "Building Services",
-   "basis": "work = trash/garbage collection"
+   "category": "Waste Management & Sanitation",
+   "basis": "work = trash/waste \u2014 moved to the Waste Management & Sanitation bucket (PSC base set)"
   },
   {
    "naics_code": "561110",
@@ -1423,8 +1424,8 @@
    "what_was_done": null,
    "obl_m": 0.0,
    "firms": 1,
-   "category": "Misc",
-   "basis": "waste treatment \u2014 waste parked per ruling, not one of the three"
+   "category": "Waste Management & Sanitation",
+   "basis": "work = trash/waste \u2014 moved to the Waste Management & Sanitation bucket (PSC base set)"
   },
   {
    "naics_code": "561320",
@@ -1495,8 +1496,8 @@
    "what_was_done": null,
    "obl_m": 0.0,
    "firms": 1,
-   "category": "Misc",
-   "basis": "waste treatment \u2014 waste parked per ruling, not one of the three"
+   "category": "Waste Management & Sanitation",
+   "basis": "work = trash/waste \u2014 moved to the Waste Management & Sanitation bucket (PSC base set)"
   },
   {
    "naics_code": "561110",
@@ -1507,8 +1508,8 @@
    "what_was_done": null,
    "obl_m": 0.0,
    "firms": 1,
-   "category": "Building Services",
-   "basis": "work = trash/garbage collection"
+   "category": "Waste Management & Sanitation",
+   "basis": "work = trash/waste \u2014 moved to the Waste Management & Sanitation bucket (PSC base set)"
   },
   {
    "naics_code": "561110",
