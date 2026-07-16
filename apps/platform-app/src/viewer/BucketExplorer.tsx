@@ -30,6 +30,7 @@ const BUCKETS = [
   "Facilities Support & Operations",
   "Security & Protective Services",
   "Building Services",
+  "Equipment-Heavy Construction",
   "Misc",
 ];
 
