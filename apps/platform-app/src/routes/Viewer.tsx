@@ -20,6 +20,7 @@ import { ImcPairs } from "@/viewer/ImcPairs";
 import { MedDevPairs } from "@/viewer/MedDevPairs";
 import { MedStaffPairs } from "@/viewer/MedStaffPairs";
 import { StaffingPairs } from "@/viewer/StaffingPairs";
+import { TextilesPairs } from "@/viewer/TextilesPairs";
 import { ConstructionPairs } from "@/viewer/ConstructionPairs";
 import { PairAssignment } from "@/viewer/PairAssignment";
 import { PairCuration } from "@/viewer/PairCuration";
@@ -109,6 +110,12 @@ const TABS: { key: string; label: string; sub: string; body: () => React.ReactNo
     label: "Food Pairs",
     sub: "subsistence products · judged",
     body: () => <FoodPairs />,
+  },
+  {
+    key: "textiles-pairs",
+    label: "Clothing & Textiles Pairs",
+    sub: "uniforms/armor/gear/textiles · judged",
+    body: () => <TextilesPairs />,
   },
 ];
 
