@@ -413,15 +413,19 @@ federalRoutes.post("/phrase", async (c) => {
 // ── Q1 canonical-query typeahead — vocab + run brokers ──────────────────────
 // The ⌘K palette completes the approved Q1 sentence ("companies with active
 // {total|single} awards …") from a canonical vocabulary. Two verbatim brokers to
-// catalyst's market surface, same posture as the phrase broker above (service-token
-// gated, body + status + response pass through unchanged).
+// EDGE_API's market surface (the active-awards engine lives on edge_api, NOT catalyst
+// — same upstream seam as routes/market.ts), service-token gated, body + status +
+// response pass through unchanged.
 
-// GET /jtbd-vocab → catalyst /api/v1/market/jtbd-vocab: the ~304 canonical job phrases
+const EDGE_API_URL = (process.env.EDGE_API_URL ?? "").replace(/\/$/, "");
+const EDGE_API_SERVICE_TOKEN = process.env.EDGE_API_SERVICE_TOKEN ?? "";
+
+// GET /jtbd-vocab → edge /api/v1/market/jtbd-vocab: the ~304 canonical job phrases
 // (each "to: …") + combo_count. The palette fetches this once on open and completes
 // against it client-side; no cross-product is pre-generated.
 federalRoutes.get("/jtbd-vocab", async (c) => {
-  const res = await fetch(`${env.COREX_API_URL}/api/v1/market/jtbd-vocab`, {
-    headers: { Authorization: `Bearer ${env.COREX_SERVICE_TOKEN}` },
+  const res = await fetch(`${EDGE_API_URL}/api/v1/market/jtbd-vocab`, {
+    headers: { Authorization: `Bearer ${EDGE_API_SERVICE_TOKEN}` },
     signal: AbortSignal.timeout(120_000),
   });
   const text = await res.text();
@@ -431,15 +435,15 @@ federalRoutes.get("/jtbd-vocab", async (c) => {
   });
 });
 
-// POST /active-awards-query → catalyst /api/v1/market/active-awards-query: runs one
+// POST /active-awards-query → edge /api/v1/market/active-awards-query: runs one
 // completed Q1 sentence (grain + optional job_phrase/state/min_amt). Body forwarded
 // VERBATIM; status + response pass through unchanged.
 federalRoutes.post("/active-awards-query", async (c) => {
   const rawBody = await c.req.text();
-  const res = await fetch(`${env.COREX_API_URL}/api/v1/market/active-awards-query`, {
+  const res = await fetch(`${EDGE_API_URL}/api/v1/market/active-awards-query`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${env.COREX_SERVICE_TOKEN}`,
+      Authorization: `Bearer ${EDGE_API_SERVICE_TOKEN}`,
       "content-type": "application/json",
     },
     body: rawBody,
