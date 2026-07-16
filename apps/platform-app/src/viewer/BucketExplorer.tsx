@@ -328,7 +328,8 @@ export function BucketExplorer() {
           <p style={{ fontSize: 13, color: "#666", maxWidth: 720, marginTop: 10 }}>
             A vehicle seat = a position on an IDIQ/BPA-type contract vehicle — the right to
             receive orders, not committed work. Ceiling = the maximum the government may order
-            against the seat (potential_ceiling); many seats report no ceiling and count at $0.
+            against the seat (potential_ceiling); many seats report no ceiling and count at $0,
+            and negative reported values (reporting artifacts) are floored at $0 per award.
             Ceiling headroom = ceiling − obligated: capacity the government may still order,
             not funded or committed. Vehicle numbers are never blended into the award-size or
             book statistics above.
