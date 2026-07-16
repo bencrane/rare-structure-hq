@@ -136,8 +136,9 @@ function makeCommand(
   };
 }
 
-const CANDIDATE_CAP = 40;
-const EMPTY_TOP_N = 20;
+// The WHOLE query space stays browsable: the cap only guards against pathological
+// growth (2 grains x ~304 phrases ~= 610 rows — the list scrolls).
+const CANDIDATE_CAP = 1000;
 
 /**
  * Compose the Q1 candidate rows for the current palette input.
@@ -150,13 +151,6 @@ const EMPTY_TOP_N = 20;
  */
 export function q1Candidates(raw: string, vocab: JtbdPhrase[]): Command[] {
   const text = raw.toLowerCase().replace(/\s+/g, " ").trim();
-
-  if (!text) {
-    return [...vocab]
-      .sort((a, b) => b.combo_count - a.combo_count)
-      .slice(0, EMPTY_TOP_N)
-      .map((p) => makeCommand("total", p.phrase, undefined, undefined, undefined));
-  }
 
   let rest = text;
 
@@ -197,11 +191,19 @@ export function q1Candidates(raw: string, vocab: JtbdPhrase[]): Command[] {
 
   const out: Command[] = [];
   if (jobTokens.length === 0) {
-    // No job phrase typed — the slot is optional; offer the grain (+ state/amount) sentence.
+    // No job words typed — the job slot is optional, so the all-work sentences lead,
+    // followed by the ENTIRE phrase space (scrollable browse; typing only narrows).
     for (const grain of grains) {
       out.push(makeCommand(grain, undefined, stateName, stateCode, minAmt));
     }
-    return out.slice(0, CANDIDATE_CAP);
+    const all = [...vocab].sort((a, b) => b.combo_count - a.combo_count);
+    for (const p of all) {
+      for (const grain of grains) {
+        out.push(makeCommand(grain, p.phrase, stateName, stateCode, minAmt));
+        if (out.length >= CANDIDATE_CAP) return out;
+      }
+    }
+    return out;
   }
 
   const phrases = vocab
