@@ -116,7 +116,7 @@ export default function JtbdReview() {
           </div>
         </Panel>
       ) : (
-        <div className="grid items-start gap-6 lg:grid-cols-[380px_minmax(0,1fr)]">
+        <div className="grid items-start gap-6 lg:grid-cols-[minmax(560px,45%)_minmax(0,1fr)]">
           <div className="lg:sticky lg:top-6">
             <Panel>
               <Stack gap="3">
