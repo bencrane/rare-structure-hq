@@ -18,7 +18,8 @@ const data = baked as unknown as {
   book_convention: string;
   precondition: string;
   columns: string[];
-  rows: [string, string, number, number, number, number][]; // bucket, uei, won, active_ct, book, remaining
+  // bucket, uei, won, active_ct, book, remaining, award_values_k (per-award book $ in $K)
+  rows: [string, string, number, number, number, number, number[]][];
 };
 
 const BUCKETS = [
@@ -80,14 +81,18 @@ export function BucketExplorer() {
   const result = useMemo(() => {
     if (selected.size === 0) return null;
     // union: sum per-firm metrics across the selected buckets (pair sets are disjoint)
-    const byFirm = new Map<string, { won: number; activeCt: number; book: number; remaining: number }>();
-    for (const [bucket, uei, won, activeCt, book, remaining] of data.rows) {
+    const byFirm = new Map<
+      string,
+      { won: number; activeCt: number; book: number; remaining: number; awardsK: number[] }
+    >();
+    for (const [bucket, uei, won, activeCt, book, remaining, awardsK] of data.rows) {
       if (!selected.has(bucket)) continue;
-      const cur = byFirm.get(uei) ?? { won: 0, activeCt: 0, book: 0, remaining: 0 };
+      const cur = byFirm.get(uei) ?? { won: 0, activeCt: 0, book: 0, remaining: 0, awardsK: [] };
       cur.won += won;
       cur.activeCt += activeCt;
       cur.book += book;
       cur.remaining += remaining;
+      cur.awardsK.push(...awardsK);
       byFirm.set(uei, cur);
     }
     const lo = min ?? 0;
@@ -95,8 +100,12 @@ export function BucketExplorer() {
     const members = [...byFirm.values()].filter(
       (f) => f.activeCt >= 1 && f.won >= lo && f.won < hi,
     );
+    const memberAwards = members.flatMap((f) => f.awardsK.map((k) => k * 1000));
     return {
       firms: members.length,
+      awardCt: memberAwards.length,
+      awardMed: median(memberAwards),
+      awardAvg: avg(memberAwards),
       wonMed: median(members.map((f) => f.won)),
       wonAvg: avg(members.map((f) => f.won)),
       wonTotal: members.reduce((n, f) => n + f.won, 0),
@@ -126,6 +135,10 @@ export function BucketExplorer() {
         ["Active book — med / avg", `${fmt$(result.bookMed)} / ${fmt$(result.bookAvg)}`],
         ["Active book — segment total", fmt$(result.bookTotal)],
         ["Active awards held — med", `${result.awardsMed}`],
+        [
+          `Active award $ — med / avg (${result.awardCt.toLocaleString()} awards)`,
+          `${fmt$(result.awardMed)} / ${fmt$(result.awardAvg)}`,
+        ],
         ["Remaining — med / avg", `${fmt$(result.remMed)} / ${fmt$(result.remAvg)}`],
         ["Remaining — segment total", fmt$(result.remTotal)],
       ]
