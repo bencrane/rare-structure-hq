@@ -11,7 +11,9 @@
    "what_was_done": "Armed guard and patrol services",
    "active_obl_m": 6003.5,
    "active_award_ct": 2226,
-   "active_recipients": 325
+   "active_recipients": 325,
+   "median_award_k": 20.0,
+   "psc_description": "Guard Services"
   },
   {
    "naics_code": "561210",
@@ -21,7 +23,9 @@
    "what_was_done": "Facilities operations support services",
    "active_obl_m": 5013.6,
    "active_award_ct": 516,
-   "active_recipients": 273
+   "active_recipients": 273,
+   "median_award_k": 0.0,
+   "psc_description": "Facilities Operations Support Services"
   },
   {
    "naics_code": "561720",
@@ -31,7 +35,9 @@
    "what_was_done": "Custodial and janitorial services",
    "active_obl_m": 2667.8,
    "active_award_ct": 2262,
-   "active_recipients": 1043
+   "active_recipients": 1043,
+   "median_award_k": 92.1,
+   "psc_description": "Custodial Janitorial Services"
   },
   {
    "naics_code": "561210",
@@ -41,7 +47,9 @@
    "what_was_done": "Food service operations",
    "active_obl_m": 773.2,
    "active_award_ct": 2,
-   "active_recipients": 2
+   "active_recipients": 2,
+   "median_award_k": 386581.7,
+   "psc_description": "Food Services"
   },
   {
    "naics_code": "561210",
@@ -51,7 +59,9 @@
    "what_was_done": "Fueling and petroleum handling services",
    "active_obl_m": 496.6,
    "active_award_ct": 2,
-   "active_recipients": 2
+   "active_recipients": 2,
+   "median_award_k": 248312.3,
+   "psc_description": "Fueling and Other Petroleum Services - Excluding Storage"
   },
   {
    "naics_code": "561730",
@@ -61,7 +71,9 @@
    "what_was_done": "Landscaping and groundskeeping services",
    "active_obl_m": 362.1,
    "active_award_ct": 1120,
-   "active_recipients": 688
+   "active_recipients": 688,
+   "median_award_k": 31.4,
+   "psc_description": "Landscaping/Groundskeeping Services"
   },
   {
    "naics_code": "561210",
@@ -71,7 +83,9 @@
    "what_was_done": "Custodial and janitorial services",
    "active_obl_m": 335.5,
    "active_award_ct": 190,
-   "active_recipients": 84
+   "active_recipients": 84,
+   "median_award_k": 253.4,
+   "psc_description": "Custodial Janitorial Services"
   },
   {
    "naics_code": "561990",
@@ -81,7 +95,9 @@
    "what_was_done": "Housekeeping and facility support services",
    "active_obl_m": 333.8,
    "active_award_ct": 80,
-   "active_recipients": 38
+   "active_recipients": 38,
+   "median_award_k": 3002.3,
+   "psc_description": "Other Housekeeping Services"
   },
   {
    "naics_code": "562111",
@@ -91,7 +107,9 @@
    "what_was_done": "Trash and garbage collection services",
    "active_obl_m": 233.8,
    "active_award_ct": 790,
-   "active_recipients": 439
+   "active_recipients": 439,
+   "median_award_k": 59.3,
+   "psc_description": "Trash/Garbage Collection Services - Including Portable Sanitation Services"
   },
   {
    "naics_code": "561210",
@@ -101,7 +119,9 @@
    "what_was_done": "Guard and protective services",
    "active_obl_m": 129.5,
    "active_award_ct": 13,
-   "active_recipients": 8
+   "active_recipients": 8,
+   "median_award_k": 830.4,
+   "psc_description": "Guard Services"
   },
   {
    "naics_code": "561621",
@@ -111,7 +131,9 @@
    "what_was_done": "Guard and physical security services",
    "active_obl_m": 84.4,
    "active_award_ct": 10,
-   "active_recipients": 7
+   "active_recipients": 7,
+   "median_award_k": 9.8,
+   "psc_description": "Guard Services"
   },
   {
    "naics_code": "561990",
@@ -121,7 +143,9 @@
    "what_was_done": "Fire protection services",
    "active_obl_m": 73.6,
    "active_award_ct": 6,
-   "active_recipients": 6
+   "active_recipients": 6,
+   "median_award_k": 6303.9,
+   "psc_description": "Fire Protection Services"
   },
   {
    "naics_code": "561720",
@@ -131,7 +155,9 @@
    "what_was_done": "Custodial and housekeeping services",
    "active_obl_m": 42.7,
    "active_award_ct": 45,
-   "active_recipients": 35
+   "active_recipients": 35,
+   "median_award_k": 206.8,
+   "psc_description": "Other Housekeeping Services"
   },
   {
    "naics_code": "562211",
@@ -141,7 +167,9 @@
    "what_was_done": "Hazardous waste treatment and disposal",
    "active_obl_m": 41.6,
    "active_award_ct": 1524,
-   "active_recipients": 83
+   "active_recipients": 83,
+   "median_award_k": 8.3,
+   "psc_description": "Waste Treatment and Storage"
   },
   {
    "naics_code": "562112",
@@ -151,7 +179,9 @@
    "what_was_done": "Waste treatment and storage services",
    "active_obl_m": 41.4,
    "active_award_ct": 80,
-   "active_recipients": 43
+   "active_recipients": 43,
+   "median_award_k": 103.1,
+   "psc_description": "Waste Treatment and Storage"
   },
   {
    "naics_code": "561210",
@@ -161,7 +191,9 @@
    "what_was_done": "Housekeeping and custodial services",
    "active_obl_m": 34.8,
    "active_award_ct": 10,
-   "active_recipients": 9
+   "active_recipients": 9,
+   "median_award_k": 144.9,
+   "psc_description": "Other Housekeeping Services"
   },
   {
    "naics_code": "561710",
@@ -171,7 +203,9 @@
    "what_was_done": "Insect and rodent pest control",
    "active_obl_m": 34.6,
    "active_award_ct": 230,
-   "active_recipients": 136
+   "active_recipients": 136,
+   "median_award_k": 42.8,
+   "psc_description": "Insect and Rodent Control Services"
   },
   {
    "naics_code": "561210",
@@ -181,7 +215,9 @@
    "what_was_done": "Landscaping and groundskeeping services",
    "active_obl_m": 26.4,
    "active_award_ct": 40,
-   "active_recipients": 30
+   "active_recipients": 30,
+   "median_award_k": 0.0,
+   "psc_description": "Landscaping/Groundskeeping Services"
   },
   {
    "naics_code": "561720",
@@ -191,7 +227,9 @@
    "what_was_done": "Facilities operations support services",
    "active_obl_m": 24.7,
    "active_award_ct": 24,
-   "active_recipients": 22
+   "active_recipients": 22,
+   "median_award_k": 133.3,
+   "psc_description": "Facilities Operations Support Services"
   },
   {
    "naics_code": "561790",
@@ -201,7 +239,9 @@
    "what_was_done": "Snow removal and salting services",
    "active_obl_m": 23.6,
    "active_award_ct": 170,
-   "active_recipients": 103
+   "active_recipients": 103,
+   "median_award_k": 16.3,
+   "psc_description": "Snow Removal/Salt Service (also spreading aggregate or other snow melting material)"
   },
   {
    "naics_code": "562991",
@@ -211,7 +251,9 @@
    "what_was_done": "Septic and waste treatment services",
    "active_obl_m": 19.7,
    "active_award_ct": 191,
-   "active_recipients": 139
+   "active_recipients": 139,
+   "median_award_k": 23.4,
+   "psc_description": "Waste Treatment and Storage"
   },
   {
    "naics_code": "561720",
@@ -221,7 +263,9 @@
    "what_was_done": "Trash and garbage collection services",
    "active_obl_m": 15.6,
    "active_award_ct": 17,
-   "active_recipients": 13
+   "active_recipients": 13,
+   "median_award_k": 79.9,
+   "psc_description": "Trash/Garbage Collection Services - Including Portable Sanitation Services"
   },
   {
    "naics_code": "561720",
@@ -231,7 +275,9 @@
    "what_was_done": "Landscaping and grounds maintenance",
    "active_obl_m": 13.5,
    "active_award_ct": 26,
-   "active_recipients": 25
+   "active_recipients": 25,
+   "median_award_k": 82.8,
+   "psc_description": "Landscaping/Groundskeeping Services"
   },
   {
    "naics_code": "561612",
@@ -241,7 +287,9 @@
    "what_was_done": "Physical surveillance and monitoring services",
    "active_obl_m": 12.3,
    "active_award_ct": 7,
-   "active_recipients": 7
+   "active_recipients": 7,
+   "median_award_k": 111.0,
+   "psc_description": "Surveillance Services"
   },
   {
    "naics_code": "561730",
@@ -251,7 +299,9 @@
    "what_was_done": "Snow removal and salting services",
    "active_obl_m": 12.0,
    "active_award_ct": 60,
-   "active_recipients": 53
+   "active_recipients": 53,
+   "median_award_k": 32.6,
+   "psc_description": "Snow Removal/Salt Service (also spreading aggregate or other snow melting material)"
   },
   {
    "naics_code": "562219",
@@ -261,7 +311,9 @@
    "what_was_done": "Trash and garbage collection services",
    "active_obl_m": 11.3,
    "active_award_ct": 17,
-   "active_recipients": 14
+   "active_recipients": 14,
+   "median_award_k": 0.0,
+   "psc_description": "Trash/Garbage Collection Services - Including Portable Sanitation Services"
   },
   {
    "naics_code": "561612",
@@ -271,7 +323,9 @@
    "what_was_done": "Trash and garbage collection services",
    "active_obl_m": 11.1,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 11120.6,
+   "psc_description": "Trash/Garbage Collection Services - Including Portable Sanitation Services"
   },
   {
    "naics_code": "561730",
@@ -281,7 +335,9 @@
    "what_was_done": "Custodial and janitorial services",
    "active_obl_m": 10.9,
    "active_award_ct": 8,
-   "active_recipients": 8
+   "active_recipients": 8,
+   "median_award_k": 168.1,
+   "psc_description": "Custodial Janitorial Services"
   },
   {
    "naics_code": "561210",
@@ -291,7 +347,9 @@
    "what_was_done": "Warehousing and storage services",
    "active_obl_m": 10.8,
    "active_award_ct": 3,
-   "active_recipients": 3
+   "active_recipients": 3,
+   "median_award_k": 2094.1,
+   "psc_description": "Warehousing and Storage Services"
   },
   {
    "naics_code": "562112",
@@ -301,7 +359,9 @@
    "what_was_done": "Hazardous waste collection services",
    "active_obl_m": 10.0,
    "active_award_ct": 33,
-   "active_recipients": 18
+   "active_recipients": 18,
+   "median_award_k": 37.8,
+   "psc_description": "Trash/Garbage Collection Services - Including Portable Sanitation Services"
   },
   {
    "naics_code": "562920",
@@ -311,7 +371,9 @@
    "what_was_done": "Trash and garbage collection services",
    "active_obl_m": 9.4,
    "active_award_ct": 6,
-   "active_recipients": 6
+   "active_recipients": 6,
+   "median_award_k": 377.0,
+   "psc_description": "Trash/Garbage Collection Services - Including Portable Sanitation Services"
   },
   {
    "naics_code": "562998",
@@ -321,7 +383,9 @@
    "what_was_done": "Trash and garbage collection services",
    "active_obl_m": 9.3,
    "active_award_ct": 25,
-   "active_recipients": 23
+   "active_recipients": 23,
+   "median_award_k": 21.0,
+   "psc_description": "Trash/Garbage Collection Services - Including Portable Sanitation Services"
   },
   {
    "naics_code": "562998",
@@ -331,7 +395,9 @@
    "what_was_done": "Waste treatment and storage services",
    "active_obl_m": 8.3,
    "active_award_ct": 41,
-   "active_recipients": 38
+   "active_recipients": 38,
+   "median_award_k": 32.3,
+   "psc_description": "Waste Treatment and Storage"
   },
   {
    "naics_code": "562119",
@@ -341,7 +407,9 @@
    "what_was_done": "Trash and garbage collection",
    "active_obl_m": 7.7,
    "active_award_ct": 39,
-   "active_recipients": 37
+   "active_recipients": 37,
+   "median_award_k": 38.2,
+   "psc_description": "Trash/Garbage Collection Services - Including Portable Sanitation Services"
   },
   {
    "naics_code": "562991",
@@ -351,7 +419,9 @@
    "what_was_done": "Trash and garbage collection services",
    "active_obl_m": 7.6,
    "active_award_ct": 53,
-   "active_recipients": 51
+   "active_recipients": 51,
+   "median_award_k": 16.6,
+   "psc_description": "Trash/Garbage Collection Services - Including Portable Sanitation Services"
   },
   {
    "naics_code": "561621",
@@ -361,7 +431,9 @@
    "what_was_done": "Surveillance services",
    "active_obl_m": 6.6,
    "active_award_ct": 24,
-   "active_recipients": 23
+   "active_recipients": 23,
+   "median_award_k": 29.2,
+   "psc_description": "Surveillance Services"
   },
   {
    "naics_code": "562111",
@@ -371,7 +443,9 @@
    "what_was_done": "Waste treatment and storage services",
    "active_obl_m": 6.4,
    "active_award_ct": 59,
-   "active_recipients": 51
+   "active_recipients": 51,
+   "median_award_k": 22.6,
+   "psc_description": "Waste Treatment and Storage"
   },
   {
    "naics_code": "561720",
@@ -381,7 +455,9 @@
    "what_was_done": "Laundry and drycleaning services",
    "active_obl_m": 6.0,
    "active_award_ct": 7,
-   "active_recipients": 3
+   "active_recipients": 3,
+   "median_award_k": 0.0,
+   "psc_description": "Laundry and DryCleaning Services"
   },
   {
    "naics_code": "561790",
@@ -391,7 +467,9 @@
    "what_was_done": "Housekeeping and building services",
    "active_obl_m": 5.7,
    "active_award_ct": 24,
-   "active_recipients": 24
+   "active_recipients": 24,
+   "median_award_k": 94.2,
+   "psc_description": "Other Housekeeping Services"
   },
   {
    "naics_code": "561210",
@@ -401,7 +479,9 @@
    "what_was_done": "Trash and garbage collection",
    "active_obl_m": 5.6,
    "active_award_ct": 11,
-   "active_recipients": 7
+   "active_recipients": 7,
+   "median_award_k": 134.5,
+   "psc_description": "Trash/Garbage Collection Services - Including Portable Sanitation Services"
   },
   {
    "naics_code": "561910",
@@ -411,7 +491,9 @@
    "what_was_done": null,
    "active_obl_m": 4.9,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 4924.6,
+   "psc_description": "Facilities Operations Support Services"
   },
   {
    "naics_code": "561611",
@@ -421,7 +503,9 @@
    "what_was_done": null,
    "active_obl_m": 4.8,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 4786.5,
+   "psc_description": "Guard Services"
   },
   {
    "naics_code": "561990",
@@ -431,7 +515,9 @@
    "what_was_done": "Custodial and janitorial services",
    "active_obl_m": 4.7,
    "active_award_ct": 4,
-   "active_recipients": 4
+   "active_recipients": 4,
+   "median_award_k": 526.4,
+   "psc_description": "Custodial Janitorial Services"
   },
   {
    "naics_code": "562920",
@@ -441,7 +527,9 @@
    "what_was_done": "Custodial and janitorial services",
    "active_obl_m": 4.4,
    "active_award_ct": 2,
-   "active_recipients": 2
+   "active_recipients": 2,
+   "median_award_k": 2211.6,
+   "psc_description": "Custodial Janitorial Services"
   },
   {
    "naics_code": "561210",
@@ -451,7 +539,9 @@
    "what_was_done": "Facility fire protection services",
    "active_obl_m": 4.3,
    "active_award_ct": 18,
-   "active_recipients": 8
+   "active_recipients": 8,
+   "median_award_k": 198.1,
+   "psc_description": "Fire Protection Services"
   },
   {
    "naics_code": "561720",
@@ -461,7 +551,9 @@
    "what_was_done": "Food services",
    "active_obl_m": 4.2,
    "active_award_ct": 19,
-   "active_recipients": 14
+   "active_recipients": 14,
+   "median_award_k": 0.0,
+   "psc_description": "Food Services"
   },
   {
    "naics_code": "562119",
@@ -471,7 +563,9 @@
    "what_was_done": "Custodial and janitorial services",
    "active_obl_m": 3.1,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 3087.6,
+   "psc_description": "Custodial Janitorial Services"
   },
   {
    "naics_code": "562119",
@@ -481,7 +575,9 @@
    "what_was_done": "Waste treatment and storage services",
    "active_obl_m": 2.9,
    "active_award_ct": 15,
-   "active_recipients": 13
+   "active_recipients": 13,
+   "median_award_k": 35.1,
+   "psc_description": "Waste Treatment and Storage"
   },
   {
    "naics_code": "562212",
@@ -491,7 +587,9 @@
    "what_was_done": "Waste treatment and storage services",
    "active_obl_m": 2.7,
    "active_award_ct": 18,
-   "active_recipients": 18
+   "active_recipients": 18,
+   "median_award_k": 32.8,
+   "psc_description": "Waste Treatment and Storage"
   },
   {
    "naics_code": "562211",
@@ -501,7 +599,9 @@
    "what_was_done": "Hazardous and medical waste collection and disposal",
    "active_obl_m": 2.6,
    "active_award_ct": 16,
-   "active_recipients": 15
+   "active_recipients": 15,
+   "median_award_k": 37.5,
+   "psc_description": "Trash/Garbage Collection Services - Including Portable Sanitation Services"
   },
   {
    "naics_code": "561990",
@@ -511,7 +611,9 @@
    "what_was_done": "Facilities operations and housekeeping support",
    "active_obl_m": 2.5,
    "active_award_ct": 13,
-   "active_recipients": 13
+   "active_recipients": 13,
+   "median_award_k": 39.8,
+   "psc_description": "Facilities Operations Support Services"
   },
   {
    "naics_code": "561710",
@@ -521,7 +623,9 @@
    "what_was_done": "Landscaping and groundskeeping services",
    "active_obl_m": 2.3,
    "active_award_ct": 3,
-   "active_recipients": 3
+   "active_recipients": 3,
+   "median_award_k": 84.6,
+   "psc_description": "Landscaping/Groundskeeping Services"
   },
   {
    "naics_code": "561790",
@@ -531,7 +635,9 @@
    "what_was_done": "Custodial and janitorial services",
    "active_obl_m": 2.2,
    "active_award_ct": 11,
-   "active_recipients": 10
+   "active_recipients": 10,
+   "median_award_k": 207.0,
+   "psc_description": "Custodial Janitorial Services"
   },
   {
    "naics_code": "561790",
@@ -541,7 +647,9 @@
    "what_was_done": "Facilities operations support services",
    "active_obl_m": 2.1,
    "active_award_ct": 15,
-   "active_recipients": 13
+   "active_recipients": 13,
+   "median_award_k": 32.1,
+   "psc_description": "Facilities Operations Support Services"
   },
   {
    "naics_code": "562111",
@@ -551,7 +659,9 @@
    "what_was_done": "Utility services",
    "active_obl_m": 2.0,
    "active_award_ct": 11,
-   "active_recipients": 11
+   "active_recipients": 11,
+   "median_award_k": 70.7,
+   "psc_description": "Other Utilities"
   },
   {
    "naics_code": "561210",
@@ -561,7 +671,9 @@
    "what_was_done": "Electric utility services",
    "active_obl_m": 1.7,
    "active_award_ct": 3,
-   "active_recipients": 3
+   "active_recipients": 3,
+   "median_award_k": 349.5,
+   "psc_description": "Electric Services"
   },
   {
    "naics_code": "561210",
@@ -571,7 +683,9 @@
    "what_was_done": "Utility services",
    "active_obl_m": 1.5,
    "active_award_ct": 2,
-   "active_recipients": 2
+   "active_recipients": 2,
+   "median_award_k": 765.7,
+   "psc_description": "Other Utilities"
   },
   {
    "naics_code": "561720",
@@ -581,7 +695,9 @@
    "what_was_done": "Facility surveillance and monitoring services",
    "active_obl_m": 1.5,
    "active_award_ct": 3,
-   "active_recipients": 3
+   "active_recipients": 3,
+   "median_award_k": 63.4,
+   "psc_description": "Surveillance Services"
   },
   {
    "naics_code": "562111",
@@ -591,7 +707,9 @@
    "what_was_done": "Guard services",
    "active_obl_m": 1.5,
    "active_award_ct": 4,
-   "active_recipients": 4
+   "active_recipients": 4,
+   "median_award_k": 330.8,
+   "psc_description": "Guard Services"
   },
   {
    "naics_code": "562212",
@@ -601,7 +719,9 @@
    "what_was_done": "Trash and garbage collection services",
    "active_obl_m": 1.4,
    "active_award_ct": 28,
-   "active_recipients": 25
+   "active_recipients": 25,
+   "median_award_k": 40.4,
+   "psc_description": "Trash/Garbage Collection Services - Including Portable Sanitation Services"
   },
   {
    "naics_code": "561740",
@@ -611,7 +731,9 @@
    "what_was_done": "Carpet and upholstery cleaning services",
    "active_obl_m": 1.4,
    "active_award_ct": 24,
-   "active_recipients": 13
+   "active_recipients": 13,
+   "median_award_k": 23.3,
+   "psc_description": "Carpet Laying and Cleaning"
   },
   {
    "naics_code": "562991",
@@ -621,7 +743,9 @@
    "what_was_done": "Custodial and janitorial services",
    "active_obl_m": 1.3,
    "active_award_ct": 15,
-   "active_recipients": 14
+   "active_recipients": 14,
+   "median_award_k": 73.2,
+   "psc_description": "Custodial Janitorial Services"
   },
   {
    "naics_code": "561621",
@@ -631,7 +755,9 @@
    "what_was_done": "Fire protection and life-safety services",
    "active_obl_m": 1.3,
    "active_award_ct": 10,
-   "active_recipients": 9
+   "active_recipients": 9,
+   "median_award_k": 89.6,
+   "psc_description": "Fire Protection Services"
   },
   {
    "naics_code": "561210",
@@ -641,7 +767,9 @@
    "what_was_done": "Snow removal and de-icing services",
    "active_obl_m": 1.3,
    "active_award_ct": 9,
-   "active_recipients": 8
+   "active_recipients": 8,
+   "median_award_k": 58.0,
+   "psc_description": "Snow Removal/Salt Service (also spreading aggregate or other snow melting material)"
   },
   {
    "naics_code": "562998",
@@ -651,7 +779,9 @@
    "what_was_done": "Waste management housekeeping services",
    "active_obl_m": 1.2,
    "active_award_ct": 9,
-   "active_recipients": 8
+   "active_recipients": 8,
+   "median_award_k": 44.1,
+   "psc_description": "Other Housekeeping Services"
   },
   {
    "naics_code": "562219",
@@ -661,7 +791,9 @@
    "what_was_done": "Water utility services",
    "active_obl_m": 1.2,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 1210.6,
+   "psc_description": "Water Services"
   },
   {
    "naics_code": "562219",
@@ -671,7 +803,9 @@
    "what_was_done": "Waste treatment and storage services",
    "active_obl_m": 1.1,
    "active_award_ct": 21,
-   "active_recipients": 18
+   "active_recipients": 18,
+   "median_award_k": 0.0,
+   "psc_description": "Waste Treatment and Storage"
   },
   {
    "naics_code": "561710",
@@ -681,7 +815,9 @@
    "what_was_done": "Custodial and janitorial services",
    "active_obl_m": 1.0,
    "active_award_ct": 6,
-   "active_recipients": 6
+   "active_recipients": 6,
+   "median_award_k": 5.7,
+   "psc_description": "Custodial Janitorial Services"
   },
   {
    "naics_code": "562111",
@@ -691,7 +827,9 @@
    "what_was_done": "Housekeeping and waste-handling services",
    "active_obl_m": 0.9,
    "active_award_ct": 10,
-   "active_recipients": 10
+   "active_recipients": 10,
+   "median_award_k": 0.0,
+   "psc_description": "Other Housekeeping Services"
   },
   {
    "naics_code": "561612",
@@ -701,7 +839,9 @@
    "what_was_done": "Custodial and janitorial services",
    "active_obl_m": 0.8,
    "active_award_ct": 2,
-   "active_recipients": 2
+   "active_recipients": 2,
+   "median_award_k": 419.5,
+   "psc_description": "Custodial Janitorial Services"
   },
   {
    "naics_code": "562112",
@@ -711,7 +851,9 @@
    "what_was_done": "Facilities operations support services",
    "active_obl_m": 0.8,
    "active_award_ct": 6,
-   "active_recipients": 6
+   "active_recipients": 6,
+   "median_award_k": 0.0,
+   "psc_description": "Facilities Operations Support Services"
   },
   {
    "naics_code": "562910",
@@ -721,7 +863,9 @@
    "what_was_done": null,
    "active_obl_m": 0.8,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 792.7,
+   "psc_description": "Water Services"
   },
   {
    "naics_code": "561210",
@@ -731,7 +875,9 @@
    "what_was_done": "Laundry and drycleaning services",
    "active_obl_m": 0.8,
    "active_award_ct": 4,
-   "active_recipients": 3
+   "active_recipients": 3,
+   "median_award_k": 224.7,
+   "psc_description": "Laundry and DryCleaning Services"
   },
   {
    "naics_code": "562910",
@@ -741,7 +887,9 @@
    "what_was_done": "Fire protection services",
    "active_obl_m": 0.8,
    "active_award_ct": 3,
-   "active_recipients": 2
+   "active_recipients": 2,
+   "median_award_k": 0.0,
+   "psc_description": "Fire Protection Services"
   },
   {
    "naics_code": "562998",
@@ -751,7 +899,9 @@
    "what_was_done": "Facilities operations support services",
    "active_obl_m": 0.7,
    "active_award_ct": 6,
-   "active_recipients": 5
+   "active_recipients": 5,
+   "median_award_k": 66.6,
+   "psc_description": "Facilities Operations Support Services"
   },
   {
    "naics_code": "562991",
@@ -761,7 +911,9 @@
    "what_was_done": "Facilities operations and support services",
    "active_obl_m": 0.7,
    "active_award_ct": 17,
-   "active_recipients": 14
+   "active_recipients": 14,
+   "median_award_k": 36.7,
+   "psc_description": "Facilities Operations Support Services"
   },
   {
    "naics_code": "561110",
@@ -771,7 +923,9 @@
    "what_was_done": "Warehousing and storage services",
    "active_obl_m": 0.6,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 610.0,
+   "psc_description": "Warehousing and Storage Services"
   },
   {
    "naics_code": "561210",
@@ -781,7 +935,9 @@
    "what_was_done": "Waste treatment and storage services",
    "active_obl_m": 0.5,
    "active_award_ct": 3,
-   "active_recipients": 2
+   "active_recipients": 2,
+   "median_award_k": 197.2,
+   "psc_description": "Waste Treatment and Storage"
   },
   {
    "naics_code": "562910",
@@ -791,7 +947,9 @@
    "what_was_done": "Custodial and janitorial services",
    "active_obl_m": 0.5,
    "active_award_ct": 2,
-   "active_recipients": 2
+   "active_recipients": 2,
+   "median_award_k": 251.1,
+   "psc_description": "Custodial Janitorial Services"
   },
   {
    "naics_code": "562119",
@@ -801,7 +959,9 @@
    "what_was_done": "Nonhazardous waste collection and hauling services",
    "active_obl_m": 0.5,
    "active_award_ct": 5,
-   "active_recipients": 5
+   "active_recipients": 5,
+   "median_award_k": 19.6,
+   "psc_description": "Other Housekeeping Services"
   },
   {
    "naics_code": "561611",
@@ -811,7 +971,9 @@
    "what_was_done": "Surveillance and monitoring services",
    "active_obl_m": 0.5,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 480.9,
+   "psc_description": "Surveillance Services"
   },
   {
    "naics_code": "562111",
@@ -821,7 +983,9 @@
    "what_was_done": "Landscaping and grounds maintenance services",
    "active_obl_m": 0.5,
    "active_award_ct": 2,
-   "active_recipients": 2
+   "active_recipients": 2,
+   "median_award_k": 238.6,
+   "psc_description": "Landscaping/Groundskeeping Services"
   },
   {
    "naics_code": "562991",
@@ -831,7 +995,9 @@
    "what_was_done": "Facility sanitation and housekeeping services",
    "active_obl_m": 0.5,
    "active_award_ct": 9,
-   "active_recipients": 8
+   "active_recipients": 8,
+   "median_award_k": 26.7,
+   "psc_description": "Other Housekeeping Services"
   },
   {
    "naics_code": "561990",
@@ -841,7 +1007,9 @@
    "what_was_done": "Trash and garbage collection services",
    "active_obl_m": 0.4,
    "active_award_ct": 4,
-   "active_recipients": 4
+   "active_recipients": 4,
+   "median_award_k": 62.2,
+   "psc_description": "Trash/Garbage Collection Services - Including Portable Sanitation Services"
   },
   {
    "naics_code": "562111",
@@ -851,7 +1019,9 @@
    "what_was_done": "Warehousing and storage services",
    "active_obl_m": 0.4,
    "active_award_ct": 2,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 206.8,
+   "psc_description": "Warehousing and Storage Services"
   },
   {
    "naics_code": "562910",
@@ -861,7 +1031,9 @@
    "what_was_done": "Waste treatment and storage services",
    "active_obl_m": 0.4,
    "active_award_ct": 4,
-   "active_recipients": 3
+   "active_recipients": 3,
+   "median_award_k": 80.0,
+   "psc_description": "Waste Treatment and Storage"
   },
   {
    "naics_code": "562112",
@@ -871,7 +1043,9 @@
    "what_was_done": "Hazardous housekeeping and waste-handling services",
    "active_obl_m": 0.4,
    "active_award_ct": 2,
-   "active_recipients": 2
+   "active_recipients": 2,
+   "median_award_k": 201.5,
+   "psc_description": "Other Housekeeping Services"
   },
   {
    "naics_code": "561320",
@@ -881,7 +1055,9 @@
    "what_was_done": "Custodial and janitorial personnel",
    "active_obl_m": 0.4,
    "active_award_ct": 2,
-   "active_recipients": 2
+   "active_recipients": 2,
+   "median_award_k": 189.9,
+   "psc_description": "Custodial Janitorial Services"
   },
   {
    "naics_code": "562111",
@@ -891,7 +1067,9 @@
    "what_was_done": null,
    "active_obl_m": 0.4,
    "active_award_ct": 2,
-   "active_recipients": 2
+   "active_recipients": 2,
+   "median_award_k": 189.8,
+   "psc_description": "Custodial Janitorial Services"
   },
   {
    "naics_code": "561622",
@@ -901,7 +1079,9 @@
    "what_was_done": "Facilities operations support services",
    "active_obl_m": 0.4,
    "active_award_ct": 2,
-   "active_recipients": 2
+   "active_recipients": 2,
+   "median_award_k": 189.0,
+   "psc_description": "Facilities Operations Support Services"
   },
   {
    "naics_code": "561790",
@@ -911,7 +1091,9 @@
    "what_was_done": null,
    "active_obl_m": 0.4,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 363.6,
+   "psc_description": "Food Services"
   },
   {
    "naics_code": "562213",
@@ -921,7 +1103,9 @@
    "what_was_done": "Trash and garbage collection services",
    "active_obl_m": 0.3,
    "active_award_ct": 2,
-   "active_recipients": 2
+   "active_recipients": 2,
+   "median_award_k": 174.9,
+   "psc_description": "Trash/Garbage Collection Services - Including Portable Sanitation Services"
   },
   {
    "naics_code": "562998",
@@ -931,7 +1115,9 @@
    "what_was_done": "Custodial and janitorial services",
    "active_obl_m": 0.3,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 328.5,
+   "psc_description": "Custodial Janitorial Services"
   },
   {
    "naics_code": "561790",
@@ -941,7 +1127,9 @@
    "what_was_done": "Landscaping and grounds maintenance services",
    "active_obl_m": 0.3,
    "active_award_ct": 6,
-   "active_recipients": 6
+   "active_recipients": 6,
+   "median_award_k": 30.7,
+   "psc_description": "Landscaping/Groundskeeping Services"
   },
   {
    "naics_code": "561710",
@@ -951,7 +1139,9 @@
    "what_was_done": null,
    "active_obl_m": 0.3,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 311.6,
+   "psc_description": "Facilities Operations Support Services"
   },
   {
    "naics_code": "561720",
@@ -961,7 +1151,9 @@
    "what_was_done": "Carpet and janitorial cleaning services",
    "active_obl_m": 0.2,
    "active_award_ct": 9,
-   "active_recipients": 8
+   "active_recipients": 8,
+   "median_award_k": 0.0,
+   "psc_description": "Carpet Laying and Cleaning"
   },
   {
    "naics_code": "561621",
@@ -971,7 +1163,9 @@
    "what_was_done": "Facilities operations support services",
    "active_obl_m": 0.2,
    "active_award_ct": 2,
-   "active_recipients": 2
+   "active_recipients": 2,
+   "median_award_k": 99.3,
+   "psc_description": "Facilities Operations Support Services"
   },
   {
    "naics_code": "561613",
@@ -981,7 +1175,9 @@
    "what_was_done": "Armed guard services",
    "active_obl_m": 0.2,
    "active_award_ct": 3,
-   "active_recipients": 3
+   "active_recipients": 3,
+   "median_award_k": 84.5,
+   "psc_description": "Guard Services"
   },
   {
    "naics_code": "561720",
@@ -991,7 +1187,9 @@
    "what_was_done": null,
    "active_obl_m": 0.2,
    "active_award_ct": 4,
-   "active_recipients": 4
+   "active_recipients": 4,
+   "median_award_k": 42.6,
+   "psc_description": "Insect and Rodent Control Services"
   },
   {
    "naics_code": "561790",
@@ -1001,7 +1199,9 @@
    "what_was_done": null,
    "active_obl_m": 0.2,
    "active_award_ct": 2,
-   "active_recipients": 2
+   "active_recipients": 2,
+   "median_award_k": 90.3,
+   "psc_description": "Fire Protection Services"
   },
   {
    "naics_code": "561730",
@@ -1011,7 +1211,9 @@
    "what_was_done": "Grounds and facilities operations support",
    "active_obl_m": 0.2,
    "active_award_ct": 5,
-   "active_recipients": 5
+   "active_recipients": 5,
+   "median_award_k": 28.3,
+   "psc_description": "Facilities Operations Support Services"
   },
   {
    "naics_code": "561740",
@@ -1021,7 +1223,9 @@
    "what_was_done": "Custodial and janitorial services",
    "active_obl_m": 0.2,
    "active_award_ct": 2,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 82.0,
+   "psc_description": "Custodial Janitorial Services"
   },
   {
    "naics_code": "561990",
@@ -1031,7 +1235,9 @@
    "what_was_done": null,
    "active_obl_m": 0.2,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 163.3,
+   "psc_description": "Food Services"
   },
   {
    "naics_code": "561720",
@@ -1041,7 +1247,9 @@
    "what_was_done": "Snow removal and de-icing services",
    "active_obl_m": 0.2,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 162.0,
+   "psc_description": "Snow Removal/Salt Service (also spreading aggregate or other snow melting material)"
   },
   {
    "naics_code": "561730",
@@ -1051,7 +1259,9 @@
    "what_was_done": "Interior plantscaping services",
    "active_obl_m": 0.2,
    "active_award_ct": 4,
-   "active_recipients": 4
+   "active_recipients": 4,
+   "median_award_k": 34.9,
+   "psc_description": "Interior Plantscaping"
   },
   {
    "naics_code": "562211",
@@ -1061,7 +1271,9 @@
    "what_was_done": "Facilities operations support services",
    "active_obl_m": 0.2,
    "active_award_ct": 4,
-   "active_recipients": 3
+   "active_recipients": 3,
+   "median_award_k": 0.0,
+   "psc_description": "Facilities Operations Support Services"
   },
   {
    "naics_code": "561210",
@@ -1071,7 +1283,9 @@
    "what_was_done": "Pest and rodent control services",
    "active_obl_m": 0.1,
    "active_award_ct": 5,
-   "active_recipients": 5
+   "active_recipients": 5,
+   "median_award_k": 16.6,
+   "psc_description": "Insect and Rodent Control Services"
   },
   {
    "naics_code": "561621",
@@ -1081,7 +1295,9 @@
    "what_was_done": "Utility support services",
    "active_obl_m": 0.1,
    "active_award_ct": 2,
-   "active_recipients": 2
+   "active_recipients": 2,
+   "median_award_k": 72.4,
+   "psc_description": "Other Utilities"
   },
   {
    "naics_code": "562212",
@@ -1091,7 +1307,9 @@
    "what_was_done": "Nonhazardous solid waste disposal utility services",
    "active_obl_m": 0.1,
    "active_award_ct": 3,
-   "active_recipients": 3
+   "active_recipients": 3,
+   "median_award_k": 63.1,
+   "psc_description": "Other Utilities"
   },
   {
    "naics_code": "562111",
@@ -1101,7 +1319,9 @@
    "what_was_done": null,
    "active_obl_m": 0.1,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 106.9,
+   "psc_description": "Laundry and DryCleaning Services"
   },
   {
    "naics_code": "562213",
@@ -1111,7 +1331,9 @@
    "what_was_done": "Solid waste housekeeping services",
    "active_obl_m": 0.1,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 105.0,
+   "psc_description": "Other Housekeeping Services"
   },
   {
    "naics_code": "561720",
@@ -1121,7 +1343,9 @@
    "what_was_done": "Fire protection housekeeping services",
    "active_obl_m": 0.1,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 105.0,
+   "psc_description": "Fire Protection Services"
   },
   {
    "naics_code": "562111",
@@ -1131,7 +1355,9 @@
    "what_was_done": "Water utility services",
    "active_obl_m": 0.1,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 99.6,
+   "psc_description": "Water Services"
   },
   {
    "naics_code": "562111",
@@ -1141,7 +1367,9 @@
    "what_was_done": "Facilities operations support services",
    "active_obl_m": 0.1,
    "active_award_ct": 4,
-   "active_recipients": 4
+   "active_recipients": 4,
+   "median_award_k": 9.2,
+   "psc_description": "Facilities Operations Support Services"
   },
   {
    "naics_code": "561740",
@@ -1151,7 +1379,9 @@
    "what_was_done": "Laundry and drycleaning services",
    "active_obl_m": 0.1,
    "active_award_ct": 7,
-   "active_recipients": 5
+   "active_recipients": 5,
+   "median_award_k": 0.0,
+   "psc_description": "Laundry and DryCleaning Services"
   },
   {
    "naics_code": "561499",
@@ -1161,7 +1391,9 @@
    "what_was_done": "Facilities operations support services",
    "active_obl_m": 0.1,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 90.0,
+   "psc_description": "Facilities Operations Support Services"
   },
   {
    "naics_code": "562998",
@@ -1171,7 +1403,9 @@
    "what_was_done": "Water utility services",
    "active_obl_m": 0.1,
    "active_award_ct": 2,
-   "active_recipients": 2
+   "active_recipients": 2,
+   "median_award_k": 40.8,
+   "psc_description": "Water Services"
   },
   {
    "naics_code": "562998",
@@ -1181,7 +1415,9 @@
    "what_was_done": "Solid fuel handling services",
    "active_obl_m": 0.1,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 75.7,
+   "psc_description": "Solid Fuel Handling Services"
   },
   {
    "naics_code": "562991",
@@ -1191,7 +1427,9 @@
    "what_was_done": null,
    "active_obl_m": 0.1,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 70.5,
+   "psc_description": "Fire Protection Services"
   },
   {
    "naics_code": "562211",
@@ -1201,7 +1439,9 @@
    "what_was_done": null,
    "active_obl_m": 0.1,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 52.0,
+   "psc_description": "Insect and Rodent Control Services"
   },
   {
    "naics_code": "562119",
@@ -1211,7 +1451,9 @@
    "what_was_done": "Laundry and drycleaning services",
    "active_obl_m": 0.0,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 47.8,
+   "psc_description": "Laundry and DryCleaning Services"
   },
   {
    "naics_code": "562213",
@@ -1221,7 +1463,9 @@
    "what_was_done": "Waste treatment and storage services",
    "active_obl_m": 0.0,
    "active_award_ct": 5,
-   "active_recipients": 4
+   "active_recipients": 4,
+   "median_award_k": 0.0,
+   "psc_description": "Waste Treatment and Storage"
   },
   {
    "naics_code": "561710",
@@ -1231,7 +1475,9 @@
    "what_was_done": "Trash and garbage collection services",
    "active_obl_m": 0.0,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 44.0,
+   "psc_description": "Trash/Garbage Collection Services - Including Portable Sanitation Services"
   },
   {
    "naics_code": "562211",
@@ -1241,7 +1487,9 @@
    "what_was_done": "Hazardous waste housekeeping services",
    "active_obl_m": 0.0,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 40.8,
+   "psc_description": "Other Housekeeping Services"
   },
   {
    "naics_code": "561790",
@@ -1251,7 +1499,9 @@
    "what_was_done": "Trash and garbage collection services",
    "active_obl_m": 0.0,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 36.8,
+   "psc_description": "Trash/Garbage Collection Services - Including Portable Sanitation Services"
   },
   {
    "naics_code": "562212",
@@ -1261,7 +1511,9 @@
    "what_was_done": null,
    "active_obl_m": 0.0,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 31.6,
+   "psc_description": "Facilities Operations Support Services"
   },
   {
    "naics_code": "562991",
@@ -1271,7 +1523,9 @@
    "what_was_done": null,
    "active_obl_m": 0.0,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 20.0,
+   "psc_description": "Food Services"
   },
   {
    "naics_code": "561110",
@@ -1281,7 +1535,9 @@
    "what_was_done": "Facilities operations support services",
    "active_obl_m": 0.0,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 16.6,
+   "psc_description": "Facilities Operations Support Services"
   },
   {
    "naics_code": "562920",
@@ -1291,7 +1547,9 @@
    "what_was_done": null,
    "active_obl_m": 0.0,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 14.8,
+   "psc_description": "Facilities Operations Support Services"
   },
   {
    "naics_code": "561421",
@@ -1301,7 +1559,9 @@
    "what_was_done": "Telecommunications utility services",
    "active_obl_m": 0.0,
    "active_award_ct": 3,
-   "active_recipients": 2
+   "active_recipients": 2,
+   "median_award_k": 3.0,
+   "psc_description": "Other Utilities"
   },
   {
    "naics_code": "561210",
@@ -1311,7 +1571,9 @@
    "what_was_done": null,
    "active_obl_m": 0.0,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 11.3,
+   "psc_description": "Surveillance Services"
   },
   {
    "naics_code": "562119",
@@ -1321,7 +1583,9 @@
    "what_was_done": "Waste utility services",
    "active_obl_m": 0.0,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 10.2,
+   "psc_description": "Other Utilities"
   },
   {
    "naics_code": "562119",
@@ -1331,7 +1595,9 @@
    "what_was_done": "Debris removal and grounds cleanup",
    "active_obl_m": 0.0,
    "active_award_ct": 10,
-   "active_recipients": 3
+   "active_recipients": 3,
+   "median_award_k": 0.0,
+   "psc_description": "Landscaping/Groundskeeping Services"
   },
   {
    "naics_code": "561710",
@@ -1341,7 +1607,9 @@
    "what_was_done": "Housekeeping and facility support services",
    "active_obl_m": 0.0,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 3.8,
+   "psc_description": "Other Housekeeping Services"
   },
   {
    "naics_code": "562910",
@@ -1351,7 +1619,9 @@
    "what_was_done": "Environmental housekeeping services",
    "active_obl_m": 0.0,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 0.0,
+   "psc_description": "Other Housekeeping Services"
   },
   {
    "naics_code": "561440",
@@ -1361,7 +1631,9 @@
    "what_was_done": "Trash and garbage collection services",
    "active_obl_m": 0.0,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 0.0,
+   "psc_description": "Trash/Garbage Collection Services - Including Portable Sanitation Services"
   },
   {
    "naics_code": "561440",
@@ -1371,7 +1643,9 @@
    "what_was_done": "Waste treatment and storage services",
    "active_obl_m": 0.0,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 0.0,
+   "psc_description": "Waste Treatment and Storage"
   },
   {
    "naics_code": "561990",
@@ -1381,7 +1655,9 @@
    "what_was_done": null,
    "active_obl_m": 0.0,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 0.0,
+   "psc_description": "Other Utilities"
   },
   {
    "naics_code": "561621",
@@ -1391,7 +1667,9 @@
    "what_was_done": "Housekeeping and facility support services",
    "active_obl_m": 0.0,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 0.0,
+   "psc_description": "Other Housekeeping Services"
   },
   {
    "naics_code": "561990",
@@ -1401,7 +1679,9 @@
    "what_was_done": null,
    "active_obl_m": 0.0,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 0.0,
+   "psc_description": "Fueling and Other Petroleum Services - Excluding Storage"
   },
   {
    "naics_code": "561990",
@@ -1411,7 +1691,9 @@
    "what_was_done": null,
    "active_obl_m": 0.0,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 0.0,
+   "psc_description": "Landscaping/Groundskeeping Services"
   },
   {
    "naics_code": "561990",
@@ -1421,7 +1703,9 @@
    "what_was_done": null,
    "active_obl_m": 0.0,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 0.0,
+   "psc_description": "Warehousing and Storage Services"
   },
   {
    "naics_code": "561990",
@@ -1431,7 +1715,9 @@
    "what_was_done": null,
    "active_obl_m": 0.0,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 0.0,
+   "psc_description": "Snow Removal/Salt Service (also spreading aggregate or other snow melting material)"
   },
   {
    "naics_code": "561720",
@@ -1441,7 +1727,9 @@
    "what_was_done": "Waste treatment and storage services",
    "active_obl_m": 0.0,
    "active_award_ct": 3,
-   "active_recipients": 2
+   "active_recipients": 2,
+   "median_award_k": 0.0,
+   "psc_description": "Waste Treatment and Storage"
   },
   {
    "naics_code": "562111",
@@ -1451,7 +1739,9 @@
    "what_was_done": null,
    "active_obl_m": 0.0,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 0.0,
+   "psc_description": "Food Services"
   },
   {
    "naics_code": "561740",
@@ -1461,7 +1751,9 @@
    "what_was_done": "Housekeeping and cleaning support services",
    "active_obl_m": 0.0,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 0.0,
+   "psc_description": "Other Housekeeping Services"
   },
   {
    "naics_code": "561210",
@@ -1471,7 +1763,9 @@
    "what_was_done": null,
    "active_obl_m": 0.0,
    "active_award_ct": 3,
-   "active_recipients": 3
+   "active_recipients": 3,
+   "median_award_k": 0.0,
+   "psc_description": "Carpet Laying and Cleaning"
   },
   {
    "naics_code": "562998",
@@ -1481,7 +1775,9 @@
    "what_was_done": null,
    "active_obl_m": 0.0,
    "active_award_ct": 2,
-   "active_recipients": 2
+   "active_recipients": 2,
+   "median_award_k": 0.0,
+   "psc_description": "Landscaping/Groundskeeping Services"
   },
   {
    "naics_code": "562219",
@@ -1491,7 +1787,9 @@
    "what_was_done": null,
    "active_obl_m": 0.0,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 0.0,
+   "psc_description": "Other Utilities"
   },
   {
    "naics_code": "562219",
@@ -1501,7 +1799,9 @@
    "what_was_done": null,
    "active_obl_m": 0.0,
    "active_award_ct": 3,
-   "active_recipients": 3
+   "active_recipients": 3,
+   "median_award_k": 0.0,
+   "psc_description": "Custodial Janitorial Services"
   },
   {
    "naics_code": "562219",
@@ -1511,7 +1811,9 @@
    "what_was_done": null,
    "active_obl_m": 0.0,
    "active_award_ct": 2,
-   "active_recipients": 2
+   "active_recipients": 2,
+   "median_award_k": 0.0,
+   "psc_description": "Facilities Operations Support Services"
   },
   {
    "naics_code": "561439",
@@ -1521,7 +1823,9 @@
    "what_was_done": null,
    "active_obl_m": 0.0,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 0.0,
+   "psc_description": "Laundry and DryCleaning Services"
   },
   {
    "naics_code": "562910",
@@ -1531,7 +1835,9 @@
    "what_was_done": null,
    "active_obl_m": 0.0,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 0.0,
+   "psc_description": "Facilities Operations Support Services"
   },
   {
    "naics_code": "562219",
@@ -1541,7 +1847,9 @@
    "what_was_done": "Nonhazardous waste housekeeping services",
    "active_obl_m": 0.0,
    "active_award_ct": 2,
-   "active_recipients": 2
+   "active_recipients": 2,
+   "median_award_k": 0.0,
+   "psc_description": "Other Housekeeping Services"
   },
   {
    "naics_code": "562920",
@@ -1551,7 +1859,9 @@
    "what_was_done": null,
    "active_obl_m": 0.0,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 0.0,
+   "psc_description": "Waste Treatment and Storage"
   },
   {
    "naics_code": "561740",
@@ -1561,7 +1871,9 @@
    "what_was_done": null,
    "active_obl_m": 0.0,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 0.0,
+   "psc_description": "Trash/Garbage Collection Services - Including Portable Sanitation Services"
   },
   {
    "naics_code": "561320",
@@ -1571,7 +1883,9 @@
    "what_was_done": null,
    "active_obl_m": 0.0,
    "active_award_ct": 1,
-   "active_recipients": 1
+   "active_recipients": 1,
+   "median_award_k": 92.4,
+   "psc_description": "Warehousing and Storage Services"
   }
  ]
 }
