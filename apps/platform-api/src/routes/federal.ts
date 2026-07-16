@@ -410,6 +410,48 @@ federalRoutes.post("/phrase", async (c) => {
   });
 });
 
+// ── Q1 canonical-query typeahead — vocab + run brokers ──────────────────────
+// The ⌘K palette completes the approved Q1 sentence ("companies with active
+// {total|single} awards …") from a canonical vocabulary. Two verbatim brokers to
+// catalyst's market surface, same posture as the phrase broker above (service-token
+// gated, body + status + response pass through unchanged).
+
+// GET /jtbd-vocab → catalyst /api/v1/market/jtbd-vocab: the ~304 canonical job phrases
+// (each "to: …") + combo_count. The palette fetches this once on open and completes
+// against it client-side; no cross-product is pre-generated.
+federalRoutes.get("/jtbd-vocab", async (c) => {
+  const res = await fetch(`${env.COREX_API_URL}/api/v1/market/jtbd-vocab`, {
+    headers: { Authorization: `Bearer ${env.COREX_SERVICE_TOKEN}` },
+    signal: AbortSignal.timeout(120_000),
+  });
+  const text = await res.text();
+  return new Response(text, {
+    status: res.status,
+    headers: { "content-type": res.headers.get("content-type") ?? "application/json" },
+  });
+});
+
+// POST /active-awards-query → catalyst /api/v1/market/active-awards-query: runs one
+// completed Q1 sentence (grain + optional job_phrase/state/min_amt). Body forwarded
+// VERBATIM; status + response pass through unchanged.
+federalRoutes.post("/active-awards-query", async (c) => {
+  const rawBody = await c.req.text();
+  const res = await fetch(`${env.COREX_API_URL}/api/v1/market/active-awards-query`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${env.COREX_SERVICE_TOKEN}`,
+      "content-type": "application/json",
+    },
+    body: rawBody,
+    signal: AbortSignal.timeout(120_000),
+  });
+  const text = await res.text();
+  return new Response(text, {
+    status: res.status,
+    headers: { "content-type": res.headers.get("content-type") ?? "application/json" },
+  });
+});
+
 // The legacy NL /ask route (edge_api forced-tool LLM compile) is REMOVED: free-typed
 // sentences route through POST /phrase (the deterministic compiler) — every answer
 // carries a replayable plan, and an off-vocabulary sentence refuses naming the token.

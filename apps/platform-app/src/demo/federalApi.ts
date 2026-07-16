@@ -401,3 +401,92 @@ export async function fetchPhrase(phrase: string): Promise<PhraseResponse> {
   }
   return JSON.parse(text) as PhraseResponse;
 }
+
+// ── Q1 canonical-query typeahead (active-awards) ─────────────────────────────
+// The ⌘K palette completes the approved Q1 sentence from a canonical vocabulary
+// (~304 job phrases). The vocab is fetched ONCE on palette open and cached at
+// module scope; candidate rows are composed client-side (no cross-product).
+
+/** One canonical job phrase — stored in "to: …" form; `combo_count` ranks the
+ * empty-input suggestions. */
+export type JtbdPhrase = { phrase: string; combo_count: number };
+
+let vocabCache: JtbdPhrase[] | null = null;
+let vocabInflight: Promise<JtbdPhrase[]> | null = null;
+
+/** Fetch the canonical job-phrase vocabulary once (module-level cache). Concurrent
+ * callers share the in-flight request; a failure clears the latch so a later open retries. */
+export async function fetchJtbdVocab(): Promise<JtbdPhrase[]> {
+  if (vocabCache) return vocabCache;
+  if (vocabInflight) return vocabInflight;
+  vocabInflight = (async () => {
+    const res = await fetch(`${API_BASE}/api/v1/federal/jtbd-vocab`, {
+      headers: { "Content-Type": "application/json" },
+    });
+    if (!res.ok) throw new Error(`jtbd-vocab failed: ${res.status} ${await res.text()}`);
+    const body = (await res.json()) as { phrases?: JtbdPhrase[] };
+    vocabCache = body.phrases ?? [];
+    return vocabCache;
+  })();
+  try {
+    return await vocabInflight;
+  } catch (e) {
+    vocabInflight = null;
+    throw e;
+  } finally {
+    vocabInflight = null;
+  }
+}
+
+/** The body for one completed Q1 sentence run. */
+export type ActiveAwardsQueryBody = {
+  grain: "total" | "single";
+  job_phrase?: string;
+  state?: string;
+  min_amt?: number;
+  limit?: number;
+};
+
+/** One returned company row from the active-awards query. */
+export type ActiveAwardsRow = {
+  uei: string;
+  legal_business_name: string;
+  physical_city: string | null;
+  physical_state: string | null;
+  normalized_domain: string | null;
+  active_total_obl: number;
+  active_max_single: number;
+  active_award_ct: number;
+};
+
+export type ActiveAwardsResponse = {
+  query: unknown;
+  total: number;
+  rows: ActiveAwardsRow[];
+  elapsed_ms?: number;
+  artifact?: unknown;
+};
+
+/** Run one completed Q1 sentence — catalyst's active-awards query via the BFF's verbatim
+ * broker. A refusal surfaces the upstream detail verbatim (same posture as the phrase path). */
+export async function fetchActiveAwardsQuery(
+  body: ActiveAwardsQueryBody,
+): Promise<ActiveAwardsResponse> {
+  const res = await fetch(`${API_BASE}/api/v1/federal/active-awards-query`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const text = await res.text();
+  if (!res.ok) {
+    let detail: string | null = null;
+    try {
+      const parsed = JSON.parse(text) as { detail?: unknown };
+      if (typeof parsed?.detail === "string") detail = parsed.detail;
+    } catch {
+      /* non-JSON error body — fall through to the raw surface */
+    }
+    throw new Error(detail ?? `active-awards-query failed: ${res.status} ${text}`);
+  }
+  return JSON.parse(text) as ActiveAwardsResponse;
+}

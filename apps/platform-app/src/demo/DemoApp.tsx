@@ -30,7 +30,7 @@ import { SuboutConsole } from "./components/SuboutConsole";
 import { SuboutProfile } from "./components/SuboutProfile";
 import type { ResultView } from "./components/TerminalChrome";
 import { type QueryResult, runQuery, scopeIsToggleable } from "./data";
-import { fetchSubUniverse, fetchSuboutOpportunities } from "./federalApi";
+import { fetchActiveAwardsQuery, fetchSubUniverse, fetchSuboutOpportunities } from "./federalApi";
 import {
   type SubUniverseGateParams,
   type SubUniverseLayer,
@@ -158,7 +158,52 @@ export function DemoApp({ embedded = false }: { embedded?: boolean }) {
       setCommandOpen(false);
       setSelectedCompany(null);
       setWorkbenchOpen(false); // an ⌘K command targets the map/chart surface, not the bench
-      if (command.kind === "map-query") {
+      if (command.kind === "active-awards") {
+        // Q1 canonical query — resolved slots POST to the active-awards engine;
+        // the rows land as an ALREADY-RESOLVED QueryResult (composed: no refetch).
+        setAggregate(null);
+        setAggregatePhrase(null);
+        setScopeRaw(false);
+        setResultView("table");
+        setQuery({ nl: command.label, minAward: 0, composed: true });
+        setResult(null);
+        setError(null);
+        setLoading(true);
+        fetchActiveAwardsQuery({
+          grain: command.grain,
+          job_phrase: command.jobPhrase,
+          state: command.stateCode,
+          min_amt: command.minAmt,
+        })
+          .then((res) => {
+            const companies: Company[] = res.rows.map((r) => ({
+              id: r.uei,
+              name: r.legal_business_name ?? r.uei,
+              naics: "",
+              city: r.physical_city ?? undefined,
+              state: r.physical_state ?? undefined,
+              totalAwarded: r.active_total_obl ?? 0,
+              activeAwarded: r.active_total_obl ?? 0,
+              contractCount: r.active_award_ct ?? undefined,
+              activeAward: true,
+              catalysts: [],
+            }));
+            setResult({
+              companies,
+              total: res.total,
+              minLifetimeBound: 0,
+              fullUniverse: res.total,
+              materializedAt: typeof res.artifact === "string" ? res.artifact : "",
+              profileAsOfDate: null,
+              interpretedTitle: command.label,
+            });
+            setLoading(false);
+          })
+          .catch((e) => {
+            setError(e instanceof Error ? e.message : "query failed");
+            setLoading(false);
+          });
+      } else if (command.kind === "map-query") {
         setAggregate(null);
         setAggregatePhrase(null);
         setResultView(defaultView); // each new query starts from the global default
