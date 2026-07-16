@@ -45,6 +45,7 @@ import DocumensoTemplatesManage from "./routes/app/DocumensoTemplatesManage";
 import Dossier from "./routes/app/Dossier";
 import EngagementTemplateToDocumenso from "./routes/app/EngagementTemplateToDocumenso";
 import EngagementTemplatesRender from "./routes/app/EngagementTemplatesRender";
+import FacilitiesCodes from "./routes/app/FacilitiesCodes";
 import Insights from "./routes/app/Insights";
 import JtbdReview from "./routes/app/JtbdReview";
 import ManageDocumensoTemplates from "./routes/app/ManageDocumensoTemplates";
@@ -206,6 +207,15 @@ export function App() {
             element={
               <RequireOperator>
                 <JtbdReview />
+              </RequireOperator>
+            }
+          />
+          {/* Facilities-cut code reference — internal viewer (plain legible styling). */}
+          <Route
+            path="facilities-codes"
+            element={
+              <RequireOperator>
+                <FacilitiesCodes />
               </RequireOperator>
             }
           />
