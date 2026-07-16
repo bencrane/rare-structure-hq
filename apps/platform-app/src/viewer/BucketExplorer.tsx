@@ -35,6 +35,10 @@ const BUCKETS = [
   "Environmental Remediation & Services",
   "Aerospace, Defense & Space Manufacturing",
   "Medical & Clinical Staffing",
+  "Federal IT Staffing",
+  "Engineering & Technical Staffing",
+  "Program & Management Support Staffing",
+  "Administrative & Office Support Staffing",
 ];
 
 const median = (xs: number[]): number => {
