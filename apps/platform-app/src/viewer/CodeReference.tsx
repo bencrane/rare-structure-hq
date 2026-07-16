@@ -1,27 +1,24 @@
 /**
- * FacilitiesCodes — internal code reference for the facilities-services cut
- * (NAICS 56 × PSC S*). Every NAICS under 56 at each digit granularity with
- * official titles + descriptions, and every S-family PSC with name/description,
- * each annotated with its activity in the narrative's 3-year window (obligated
- * $B + distinct winning firms, aggregated by prefix at coarser granularities).
+ * CodeReference — the internal viewer's code-reference body for the
+ * facilities-services cut (NAICS 56 × PSC S*). Every NAICS under 56 at each
+ * digit granularity with official titles + descriptions, and every S-family
+ * PSC with name/description, each annotated with the passed dataset's activity
+ * (obligated $B + firms, aggregated by prefix at coarser granularities).
+ * Datasets are baked JSONs in src/internal/ (window vs active-awards).
  *
  * INTERNAL VIEWER: deliberately not on the app design system — plain light,
- * high-contrast, wide-measure styling optimized for reading, per operator
- * directive 2026-07-16. Data baked from the sidecar reference tables
- * (naics_reference / psc_reference / gtm_txn_events_slim) into
- * src/internal/facilities-codes.json.
+ * high-contrast styling optimized for reading, per operator directive
+ * 2026-07-16.
  */
 import { useMemo, useState } from "react";
 
-import baked from "@/internal/facilities-codes.json";
-
-type NaicsRow = {
+export type NaicsRow = {
   naics_code: string;
   naics_title: string;
   description: string | null;
   code_len: number;
 };
-type PscRow = {
+export type PscRow = {
   psc_code: string;
   psc_name: string;
   full_description: string | null;
@@ -32,7 +29,7 @@ type PscRow = {
 };
 type ActRow = { naics_code: string; psc_code: string; oblB: number; firms: number };
 
-const data = baked as unknown as {
+export type CodeDataset = {
   scope: string;
   window: string;
   baked_from: string;
@@ -88,7 +85,7 @@ function tabBtn(active: boolean) {
 const fmtB = (n: number): string =>
   n >= 1 ? `$${n.toFixed(1)}B` : n > 0 ? `$${Math.round(n * 1000)}M` : "—";
 
-export default function FacilitiesCodes() {
+export function CodeReference({ data }: { data: CodeDataset }) {
   const [digits, setDigits] = useState<number>(6);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
@@ -108,7 +105,7 @@ export default function FacilitiesCodes() {
       }
     }
     return agg;
-  }, []);
+  }, [data]);
 
   const byPsc = useMemo(() => {
     const agg = new Map<string, { oblB: number; pairs: number; firmsMax: number }>();
@@ -122,14 +119,14 @@ export default function FacilitiesCodes() {
       }
     }
     return agg;
-  }, []);
+  }, [data]);
 
   const naicsAtLevel = useMemo(
     () =>
       data.naics
         .filter((r) => r.code_len === digits)
         .sort((a, b) => a.naics_code.localeCompare(b.naics_code)),
-    [digits],
+    [digits, data],
   );
 
   const toggle = (code: string) => {

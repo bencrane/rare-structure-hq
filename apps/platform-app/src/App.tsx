@@ -31,6 +31,7 @@ import { AuthProvider, useAuth } from "./lib/auth";
 // re-enable; do not delete. Restore this import to bring the route back.
 // import MapDemo from "./routes/MapDemo";
 import SignIn from "./routes/SignIn";
+import Viewer from "./routes/Viewer";
 import Account from "./routes/app/Account";
 import Application from "./routes/app/Application";
 import Applications from "./routes/app/Applications";
@@ -45,7 +46,6 @@ import DocumensoTemplatesManage from "./routes/app/DocumensoTemplatesManage";
 import Dossier from "./routes/app/Dossier";
 import EngagementTemplateToDocumenso from "./routes/app/EngagementTemplateToDocumenso";
 import EngagementTemplatesRender from "./routes/app/EngagementTemplatesRender";
-import FacilitiesCodes from "./routes/app/FacilitiesCodes";
 import Insights from "./routes/app/Insights";
 import JtbdReview from "./routes/app/JtbdReview";
 import ManageDocumensoTemplates from "./routes/app/ManageDocumensoTemplates";
@@ -123,6 +123,18 @@ export function App() {
 
         {/* Email + password gate. */}
         <Route path="/signin" element={<SignIn />} />
+
+        {/* Internal data viewer — its own shell + sidebar, outside AppShell. */}
+        <Route
+          path="/viewer"
+          element={
+            <RequireAuth>
+              <RequireOperator>
+                <Viewer />
+              </RequireOperator>
+            </RequireAuth>
+          }
+        />
 
         {/* Authenticated cockpit — persistent sidebar shell wraps the tabs. */}
         <Route
@@ -207,15 +219,6 @@ export function App() {
             element={
               <RequireOperator>
                 <JtbdReview />
-              </RequireOperator>
-            }
-          />
-          {/* Facilities-cut code reference — internal viewer (plain legible styling). */}
-          <Route
-            path="facilities-codes"
-            element={
-              <RequireOperator>
-                <FacilitiesCodes />
               </RequireOperator>
             }
           />
