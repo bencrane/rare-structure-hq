@@ -52,6 +52,7 @@ import ManageDocumensoTemplates from "./routes/app/ManageDocumensoTemplates";
 import Mandate from "./routes/app/Mandate";
 import MandateBrief from "./routes/app/MandateBrief";
 import MapTab from "./routes/app/MapTab";
+import DealIntake from "./routes/app/DealIntake";
 import MarketSpec from "./routes/app/MarketSpec";
 import Overview from "./routes/app/Overview";
 import Preferences from "./routes/app/Preferences";
@@ -209,6 +210,16 @@ export function App() {
             element={
               <RequireOperator>
                 <MarketSpec />
+              </RequireOperator>
+            }
+          />
+          {/* Deal intake — PROTOTYPE: capital-provider intake answers compiled live
+              into the Market result card (per-deal instrument; persistence TBD). */}
+          <Route
+            path="deal"
+            element={
+              <RequireOperator>
+                <DealIntake />
               </RequireOperator>
             }
           />
