@@ -412,20 +412,21 @@ federalRoutes.post("/phrase", async (c) => {
 
 // ── Q1 canonical-query typeahead — vocab + run brokers ──────────────────────
 // The ⌘K palette completes the approved Q1 sentence ("companies with active
-// {total|single} awards …") from a canonical vocabulary. Two verbatim brokers to
-// EDGE_API's market surface (the active-awards engine lives on edge_api, NOT catalyst
-// — same upstream seam as routes/market.ts), service-token gated, body + status +
+// {total|single} awards …") from a canonical vocabulary. Verbatim brokers to
+// catalyst_api's market surface (/api/v1/market/* relocated from edge_api
+// 2026-07-17 — core-x #1181 — so composition reads are isolated from the
+// automation deploy cadence). CATALYST_API_TOKEN gated; body + status +
 // response pass through unchanged.
 
-const EDGE_API_URL = (process.env.EDGE_API_URL ?? "").replace(/\/$/, "");
-const EDGE_API_SERVICE_TOKEN = process.env.EDGE_API_SERVICE_TOKEN ?? "";
+const CATALYST_API_URL = (process.env.CATALYST_API_URL ?? "").replace(/\/$/, "");
+const CATALYST_API_TOKEN = process.env.CATALYST_API_TOKEN ?? "";
 
 // GET /jtbd-vocab → edge /api/v1/market/jtbd-vocab: the ~304 canonical job phrases
 // (each "to: …") + combo_count. The palette fetches this once on open and completes
 // against it client-side; no cross-product is pre-generated.
 federalRoutes.get("/jtbd-vocab", async (c) => {
-  const res = await fetch(`${EDGE_API_URL}/api/v1/market/jtbd-vocab`, {
-    headers: { Authorization: `Bearer ${EDGE_API_SERVICE_TOKEN}` },
+  const res = await fetch(`${CATALYST_API_URL}/api/v1/market/jtbd-vocab`, {
+    headers: { Authorization: `Bearer ${CATALYST_API_TOKEN}` },
     signal: AbortSignal.timeout(120_000),
   });
   const text = await res.text();
@@ -439,8 +440,8 @@ federalRoutes.get("/jtbd-vocab", async (c) => {
 // audit map (350 canonical phrases → distinct gpt-5.4 variants) for the operator's
 // phrase-quality review page.
 federalRoutes.get("/jtbd-phrase-map", async (c) => {
-  const res = await fetch(`${EDGE_API_URL}/api/v1/market/jtbd-phrase-map`, {
-    headers: { Authorization: `Bearer ${EDGE_API_SERVICE_TOKEN}` },
+  const res = await fetch(`${CATALYST_API_URL}/api/v1/market/jtbd-phrase-map`, {
+    headers: { Authorization: `Bearer ${CATALYST_API_TOKEN}` },
     signal: AbortSignal.timeout(120_000),
   });
   const text = await res.text();
@@ -455,10 +456,10 @@ federalRoutes.get("/jtbd-phrase-map", async (c) => {
 // VERBATIM; status + response pass through unchanged.
 federalRoutes.post("/active-awards-query", async (c) => {
   const rawBody = await c.req.text();
-  const res = await fetch(`${EDGE_API_URL}/api/v1/market/active-awards-query`, {
+  const res = await fetch(`${CATALYST_API_URL}/api/v1/market/active-awards-query`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${EDGE_API_SERVICE_TOKEN}`,
+      Authorization: `Bearer ${CATALYST_API_TOKEN}`,
       "content-type": "application/json",
     },
     body: rawBody,
