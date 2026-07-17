@@ -27,6 +27,7 @@ import { ConstructionPairs } from "@/viewer/ConstructionPairs";
 import { PairAssignment } from "@/viewer/PairAssignment";
 import { PaymentComboPairs } from "@/viewer/PaymentComboPairs";
 import { PaymentRegimes } from "@/viewer/PaymentRegimes";
+import { TerritoryMap } from "@/viewer/TerritoryMap";
 import { PairCuration } from "@/viewer/PairCuration";
 import { WasteEnvPairs } from "@/viewer/WasteEnvPairs";
 
@@ -66,6 +67,12 @@ const TABS: { key: string; label: string; sub: string; body: () => React.ReactNo
     label: "Payment Regimes",
     sub: "pair → pricing × financing · drill-down",
     body: () => <PaymentRegimes />,
+  },
+  {
+    key: "territory-map",
+    label: "Territory Map",
+    sub: "member work by zip3 · installations overlay",
+    body: () => <TerritoryMap />,
   },
   {
     key: "payment-combo-pairs",
