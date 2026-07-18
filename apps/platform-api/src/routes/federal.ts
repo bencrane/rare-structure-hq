@@ -418,8 +418,9 @@ federalRoutes.post("/phrase", async (c) => {
 // automation deploy cadence). CATALYST_API_TOKEN gated; body + status +
 // response pass through unchanged.
 
-const CATALYST_API_URL = (process.env.CATALYST_API_URL ?? "").replace(/\/$/, "");
-const CATALYST_API_TOKEN = process.env.CATALYST_API_TOKEN ?? "";
+// Catalyst seam — zod-validated fail-fast at boot in env.ts.
+const CATALYST_API_URL = env.CATALYST_API_URL;
+const CATALYST_API_TOKEN = env.CATALYST_API_TOKEN;
 
 // GET /jtbd-vocab → edge /api/v1/market/jtbd-vocab: the ~304 canonical job phrases
 // (each "to: …") + combo_count. The palette fetches this once on open and completes

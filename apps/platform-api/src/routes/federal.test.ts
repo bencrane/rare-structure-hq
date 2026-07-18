@@ -30,6 +30,8 @@ process.env.HQX_SUPABASE_ISSUER ??= "https://hqx.test.supabase.co/auth/v1";
 process.env.HQX_SUPABASE_SERVICE_ROLE_KEY ??= "test-service-role-key";
 process.env.COREX_API_URL = "https://catalyst.test";
 process.env.COREX_SERVICE_TOKEN = "test-corex-token";
+process.env.CATALYST_API_URL = "https://catalyst.test";
+process.env.CATALYST_API_TOKEN = "test-catalyst-token";
 process.env.APP_ENV ??= "dev";
 
 const { federalRoutes, clearSuboutCache, SUBOUT_CACHE_MAX_ENTRIES } = await import("./federal.ts");

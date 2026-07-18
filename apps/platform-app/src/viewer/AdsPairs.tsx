@@ -93,7 +93,7 @@ export function AdsPairs() {
     let outCt = 0;
     let outM = 0;
     for (const p of data.pairs) {
-      if (isIn(p)) {
+      if (overrides[pairKey(p)] === undefined) {
         inCt += 1;
         inM += p.obl_m;
       } else {
@@ -102,7 +102,6 @@ export function AdsPairs() {
       }
     }
     return { inCt, inM, outCt, outM };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [overrides]);
 
   const copyDecisions = () => {

@@ -25,6 +25,8 @@ import { type AuthVariables, requireUser } from "../auth.ts";
 
 // Same env seam as lib/edge.ts — EDGE_API_URL + EDGE_API_SERVICE_TOKEN from
 // Doppler `hq-rare-structure-hq` (not in env.ts's zod schema by convention).
+// Intentionally on edge_api (NOT catalyst): this is the write/push flow, which
+// stayed behind when the composition reads moved to catalyst (core-x #1181).
 const EDGE_API_URL = (process.env.EDGE_API_URL ?? "").replace(/\/$/, "");
 const EDGE_API_SERVICE_TOKEN = process.env.EDGE_API_SERVICE_TOKEN ?? "";
 

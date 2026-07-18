@@ -16,8 +16,11 @@
 
 import { Hono } from "hono";
 
-const CATALYST_API_URL = (process.env.CATALYST_API_URL ?? "").replace(/\/$/, "");
-const CATALYST_API_TOKEN = process.env.CATALYST_API_TOKEN ?? "";
+import { env } from "../env.ts";
+
+// Catalyst seam — zod-validated fail-fast at boot in env.ts.
+const CATALYST_API_URL = env.CATALYST_API_URL;
+const CATALYST_API_TOKEN = env.CATALYST_API_TOKEN;
 
 const UPSTREAM = "/api/v1/market-collections";
 

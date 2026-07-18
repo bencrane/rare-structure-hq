@@ -154,10 +154,12 @@ app.route("/api/v1/insights", insightsAdminRoutes);
 // /api/v1/audience/* (cohort queries + the Close push flow); bodies and statuses verbatim.
 app.route("/api/v1/market", marketRoutes);
 // Market-spec — the live market-definition instrument (Market tab). requireUser-gated
-// dumb proxy to edge_api's /api/v1/market-spec/* (sidecar-served spec counts).
+// dumb proxy to catalyst_api's /api/v1/market-spec/* (relocated from edge_api,
+// core-x #1181; sidecar-served spec counts).
 app.route("/api/v1/market-spec", marketSpecRoutes);
 // Market collections — the 22 durable pair-defined collections (Market tab).
-// requireUser-gated proxy to edge_api's /api/v1/market-collections/*.
+// Public proxy to catalyst_api's /api/v1/market-collections/* (relocated from
+// edge_api, core-x #1181).
 app.route("/api/v1/market-collections", marketCollectionsRoutes);
 // PUBLIC federal map/chart surface — warm in-memory snapshot, no auth (the cockpit /map
 // route is public). Read-only projections of precomputed public federal-spend data.
