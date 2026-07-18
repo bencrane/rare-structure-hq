@@ -15,7 +15,7 @@
  *   firms without an enriched band are "unknown" and stay visible unless
  *   bands are filtered.
  */
-import { useMemo, useState } from "react";
+import { type CSSProperties, type ReactNode, useMemo, useState } from "react";
 
 import baked from "@/internal/subawardee-market.json";
 
@@ -303,6 +303,101 @@ function JtbdList({ jtbds, muted }: { jtbds: string[]; muted?: boolean }) {
 }
 
 const SHOW = 300;
+
+/**
+ * THE column contract: header and cell live in ONE entry, so they can never
+ * desync (the #328/#330 misalignment class). Add/remove/reorder columns HERE
+ * only — never touch <thead>/<tbody> directly.
+ */
+type Column = {
+  header: string;
+  align: "left" | "right";
+  sortKey?: SortKey;
+  cell: (r: RowFull) => ReactNode;
+  cellStyle?: CSSProperties;
+};
+
+const num = (v: ReactNode): ReactNode => v;
+
+const COLUMNS: Column[] = [
+  {
+    header: "Firm",
+    align: "left",
+    cellStyle: { maxWidth: 340 },
+    cell: (r) => (
+      <>
+        <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {r.name}
+        </div>
+        <div style={{ ...mono, fontSize: 11, color: "#999" }}>
+          {r.uei}
+          {r.domain ? ` · ${r.domain}` : ""}
+        </div>
+      </>
+    ),
+  },
+  { header: "St", align: "left", cell: (r) => r.state },
+  {
+    header: "Employees",
+    align: "left",
+    cellStyle: { ...mono, fontSize: 13 },
+    cell: (r) => r.band,
+  },
+  {
+    header: "Primary NAICS",
+    align: "left",
+    cellStyle: { maxWidth: 220 },
+    cell: (r) => (
+      <div
+        style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: 13 }}
+      >
+        <span style={mono}>{r.naics}</span>
+        {r.naicsName ? ` ${r.naicsName}` : ""}
+      </div>
+    ),
+  },
+  { header: "Top Prime Combos", align: "left", cell: (r) => <ComboList combos={r.top3Prime} /> },
+  {
+    header: "Top Prime Combo JTBDs",
+    align: "left",
+    cellStyle: { maxWidth: 240 },
+    cell: (r) => <JtbdList jtbds={r.primeJtbds} />,
+  },
+  {
+    header: "Top Subbed Under Combos",
+    align: "left",
+    cell: (r) => <ComboList combos={r.top3Sub} />,
+  },
+  {
+    header: "Top Subbed Under Combo JTBDs",
+    align: "left",
+    cellStyle: { maxWidth: 240 },
+    cell: (r) => <JtbdList jtbds={r.subJtbds} muted />,
+  },
+  {
+    header: "Total $",
+    align: "right",
+    sortKey: "total",
+    cellStyle: { fontWeight: 700 },
+    cell: (r) => num(fmt$(r.total)),
+  },
+  { header: "Sub $", align: "right", sortKey: "sub", cell: (r) => num(fmt$(r.sub)) },
+  { header: "Prime $", align: "right", sortKey: "prime", cell: (r) => num(fmt$(r.prime)) },
+  {
+    header: "Sub share",
+    align: "right",
+    sortKey: "share",
+    cell: (r) => num(`${Math.round(r.share * 100)}%`),
+  },
+  {
+    header: "# subawards",
+    align: "right",
+    sortKey: "nSubs",
+    cell: (r) => num(r.nSubs.toLocaleString()),
+  },
+  { header: "Avg sub", align: "right", sortKey: "avgSub", cell: (r) => num(fmt$(r.avgSub)) },
+  { header: "Med sub", align: "right", sortKey: "medSub", cell: (r) => num(fmt$(r.medSub)) },
+];
 
 export function SubawardeeMarket() {
   // #1 total band — cohort floor pre-applied at bake time ($1M).
@@ -667,99 +762,54 @@ export function SubawardeeMarket() {
             <table style={{ borderCollapse: "collapse", width: "100%" }}>
               <thead>
                 <tr>
-                  <th style={{ ...th, textAlign: "left", cursor: "default" }}>Firm</th>
-                  <th style={{ ...th, textAlign: "left", cursor: "default" }}>St</th>
-                  <th style={{ ...th, textAlign: "left", cursor: "default" }}>Employees</th>
-                  <th style={{ ...th, textAlign: "left", cursor: "default" }}>Primary NAICS</th>
-                  <th style={{ ...th, textAlign: "left", cursor: "default" }}>Top Prime Combos</th>
-                  <th style={{ ...th, textAlign: "left", cursor: "default" }}>
-                    Top Prime Combo JTBDs
-                  </th>
-                  <th style={{ ...th, textAlign: "left", cursor: "default" }}>
-                    Top Subbed Under Combos
-                  </th>
-                  <th style={{ ...th, textAlign: "left", cursor: "default" }}>
-                    Top Subbed Under Combo JTBDs
-                  </th>
-                  {SORTS.map((s) => (
-                    <th key={s.key} style={{ ...th, cursor: "default", padding: 0 }}>
-                      <button
-                        type="button"
-                        onClick={() => setSortKey(s.key)}
-                        title="sort"
-                        style={{
-                          border: 0,
-                          background: "transparent",
-                          padding: "8px 10px",
-                          font: "inherit",
-                          fontSize: 12,
-                          textTransform: "uppercase",
-                          letterSpacing: "0.04em",
-                          fontWeight: 700,
-                          cursor: "pointer",
-                          color: sortKey === s.key ? "#1a1a1a" : "#555",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {s.label}
-                        {sortKey === s.key ? " ↓" : ""}
-                      </button>
-                    </th>
-                  ))}
+                  {COLUMNS.map((c) =>
+                    c.sortKey ? (
+                      <th key={c.header} style={{ ...th, cursor: "default", padding: 0 }}>
+                        <button
+                          type="button"
+                          onClick={() => setSortKey(c.sortKey as SortKey)}
+                          title="sort"
+                          style={{
+                            border: 0,
+                            background: "transparent",
+                            padding: "8px 10px",
+                            font: "inherit",
+                            fontSize: 12,
+                            textTransform: "uppercase",
+                            letterSpacing: "0.04em",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            color: sortKey === c.sortKey ? "#1a1a1a" : "#555",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {c.header}
+                          {sortKey === c.sortKey ? " ↓" : ""}
+                        </button>
+                      </th>
+                    ) : (
+                      <th key={c.header} style={{ ...th, textAlign: c.align, cursor: "default" }}>
+                        {c.header}
+                      </th>
+                    ),
+                  )}
                 </tr>
               </thead>
               <tbody>
                 {filtered.slice(0, SHOW).map((r) => (
                   <tr key={r.uei} style={{ borderBottom: "1px solid #eee" }}>
-                    <td style={{ padding: "7px 10px", maxWidth: 340 }}>
-                      <div
-                        style={{
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        }}
+                    {COLUMNS.map((c) => (
+                      <td
+                        key={c.header}
+                        style={
+                          c.align === "right"
+                            ? { ...td, ...c.cellStyle }
+                            : { padding: "7px 10px", ...c.cellStyle }
+                        }
                       >
-                        {r.name}
-                      </div>
-                      <div style={{ ...mono, fontSize: 11, color: "#999" }}>
-                        {r.uei}
-                        {r.domain ? ` · ${r.domain}` : ""}
-                      </div>
-                    </td>
-                    <td style={{ padding: "7px 10px" }}>{r.state}</td>
-                    <td style={{ ...mono, padding: "7px 10px", fontSize: 13 }}>{r.band}</td>
-                    <td style={{ padding: "7px 10px", maxWidth: 220 }}>
-                      <div
-                        style={{
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                          fontSize: 13,
-                        }}
-                      >
-                        <span style={mono}>{r.naics}</span>
-                        {r.naicsName ? ` ${r.naicsName}` : ""}
-                      </div>
-                    </td>
-                    <td style={{ padding: "7px 10px" }}>
-                      <ComboList combos={r.top3Prime} />
-                    </td>
-                    <td style={{ padding: "7px 10px", maxWidth: 240 }}>
-                      <JtbdList jtbds={r.primeJtbds} />
-                    </td>
-                    <td style={{ padding: "7px 10px" }}>
-                      <ComboList combos={r.top3Sub} />
-                    </td>
-                    <td style={{ padding: "7px 10px", maxWidth: 240 }}>
-                      <JtbdList jtbds={r.subJtbds} muted />
-                    </td>
-                    <td style={{ ...td, fontWeight: 700 }}>{fmt$(r.total)}</td>
-                    <td style={td}>{fmt$(r.sub)}</td>
-                    <td style={td}>{fmt$(r.prime)}</td>
-                    <td style={td}>{Math.round(r.share * 100)}%</td>
-                    <td style={td}>{r.nSubs.toLocaleString()}</td>
-                    <td style={td}>{fmt$(r.avgSub)}</td>
-                    <td style={td}>{fmt$(r.medSub)}</td>
+                        {c.cell(r)}
+                      </td>
+                    ))}
                   </tr>
                 ))}
               </tbody>
