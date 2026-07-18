@@ -93,7 +93,7 @@ type Row = {
 };
 
 type Combo = { naics: string; psc: string; share: number };
-type RowFull = Row & { leadJtbd: string; leadWorkSummary: string; leadIsSub: boolean };
+type RowFull = Row & { jtbds: string[]; jtbdIsSub: boolean };
 
 /** Unpack "336411x1510|79~336411xJ016|5" → Combo[]. */
 function parseCombos(packed: string | null): Combo[] {
@@ -147,13 +147,11 @@ const ROWS: RowFull[] = data.rows
     }),
   )
   .map((r) => {
-    const lead = r.top3Prime[0] ?? r.top3Sub[0];
-    const [jtbd, workSummary] = langFor(lead);
+    const src = r.top3Prime.length > 0 ? r.top3Prime : r.top3Sub;
     return {
       ...r,
-      leadJtbd: jtbd,
-      leadWorkSummary: workSummary,
-      leadIsSub: r.top3Prime.length === 0,
+      jtbds: src.map((c) => langFor(c)[0]),
+      jtbdIsSub: r.top3Prime.length === 0,
     };
   });
 
@@ -409,10 +407,10 @@ export function SubawardeeMarket() {
         Every subawardee with ≥ $1M total (subaward $ received + prime obligations won) in{" "}
         {data.window}. Blank min = 0, blank max = no cap, max exclusive; $ inputs accept 500k / $10m
         / 1.5b. Avg/median subaward size are per-firm over that firm&apos;s own FY23–25 subawards
-        (prime awards never blended in). Job / Work summary describe the firm&apos;s #1 combo
-        (own-prime preferred; marked &quot;(subs-under)&quot; when the firm has no prime combos —
-        then it describes the PRIME&apos;s work they sub under, not their own). Hover any combo for
-        both texts. {data.artifact.replace("query-sidecar/", "")}
+        (prime awards never blended in). JTBD lines are the gpt-5.4 job phrases of the firm&apos;s
+        top own-prime combos, in combo order; &quot;(subs-under)&quot; rows have no prime combos —
+        the phrases then describe the PRIME&apos;s work they sub under, not their own. Hover any
+        combo for its JTBD + work summary. {data.artifact.replace("query-sidecar/", "")}
       </p>
 
       <div
@@ -655,6 +653,9 @@ export function SubawardeeMarket() {
                   <th style={{ ...th, textAlign: "left", cursor: "default" }}>
                     Top subs-under combos
                   </th>
+                  <th style={{ ...th, textAlign: "left", cursor: "default" }}>
+                    JTBD — top own-prime combos (gpt-5.4)
+                  </th>
                   {SORTS.map((s) => (
                     <th key={s.key} style={{ ...th, cursor: "default", padding: 0 }}>
                       <button
@@ -702,36 +703,30 @@ export function SubawardeeMarket() {
                     </td>
                     <td style={{ padding: "7px 10px" }}>{r.state}</td>
                     <td style={{ ...mono, padding: "7px 10px", fontSize: 13 }}>{r.band}</td>
-                    <td style={{ padding: "7px 10px", maxWidth: 220 }}>
-                      <div
-                        style={{
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                          fontSize: 13,
-                        }}
-                      >
-                        <span style={mono}>{r.naics}</span>
-                        {r.naicsName ? ` ${r.naicsName}` : ""}
+                    <td style={{ padding: "7px 10px", maxWidth: 260 }}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                        {r.jtbds.map((jt, idx) => {
+                          const combo = (r.jtbdIsSub ? r.top3Sub : r.top3Prime)[idx];
+                          return (
+                            <div
+                              key={`${combo.naics}x${combo.psc}`}
+                              style={{
+                                fontSize: 12,
+                                color: r.jtbdIsSub ? "#996" : "#333",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}
+                              title={jt || undefined}
+                            >
+                              {jt || "—"}
+                            </div>
+                          );
+                        })}
+                        {r.jtbdIsSub && (
+                          <div style={{ fontSize: 11, color: "#996" }}>(subs-under)</div>
+                        )}
                       </div>
-                    </td>
-                    <td style={{ padding: "7px 10px" }}>
-                      <ComboList combos={r.top3Prime} />
-                    </td>
-                    <td style={{ padding: "7px 10px" }}>
-                      <ComboList combos={r.top3Sub} />
-                    </td>
-                    <td style={{ padding: "7px 10px", maxWidth: 220 }}>
-                      <div
-                        style={{ fontSize: 12, color: r.leadIsSub ? "#996" : "#333" }}
-                        title={r.leadJtbd}
-                      >
-                        {r.leadJtbd}
-                        {r.leadJtbd && r.leadIsSub ? " (subs-under)" : ""}
-                      </div>
-                    </td>
-                    <td style={{ padding: "7px 10px", maxWidth: 320 }}>
-                      <div style={{ fontSize: 12, color: "#333" }}>{r.leadWorkSummary}</div>
                     </td>
                     <td style={{ ...td, fontWeight: 700 }}>{fmt$(r.total)}</td>
                     <td style={td}>{fmt$(r.sub)}</td>
