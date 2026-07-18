@@ -15,7 +15,9 @@
  *   firms without an enriched band are "unknown" and stay visible unless
  *   bands are filtered.
  */
-import { type CSSProperties, type ReactNode, useMemo, useState } from "react";
+import { type CSSProperties, type ReactNode, useMemo, useRef, useState } from "react";
+
+import { useVirtualizer } from "@tanstack/react-virtual";
 
 import baked from "@/internal/subawardee-market.json";
 
@@ -302,15 +304,15 @@ function JtbdList({ jtbds, muted }: { jtbds: string[]; muted?: boolean }) {
   );
 }
 
-const SHOW = 300;
-
 /**
  * THE column contract: header and cell live in ONE entry, so they can never
  * desync (the #328/#330 misalignment class). Add/remove/reorder columns HERE
- * only — never touch <thead>/<tbody> directly.
+ * only — the header row and virtualized body rows both render from this array.
+ * `width` is the fixed px column width (virtualized rows need stable geometry).
  */
 type Column = {
   header: string;
+  width: number;
   align: "left" | "right";
   sortKey?: SortKey;
   cell: (r: RowFull) => ReactNode;
@@ -322,8 +324,8 @@ const num = (v: ReactNode): ReactNode => v;
 const COLUMNS: Column[] = [
   {
     header: "Firm",
+    width: 300,
     align: "left",
-    cellStyle: { maxWidth: 340 },
     cell: (r) => (
       <>
         <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -336,17 +338,18 @@ const COLUMNS: Column[] = [
       </>
     ),
   },
-  { header: "St", align: "left", cell: (r) => r.state },
+  { header: "St", width: 44, align: "left", cell: (r) => r.state },
   {
     header: "Employees",
+    width: 96,
     align: "left",
     cellStyle: { ...mono, fontSize: 13 },
     cell: (r) => r.band,
   },
   {
     header: "Primary NAICS",
+    width: 210,
     align: "left",
-    cellStyle: { maxWidth: 220 },
     cell: (r) => (
       <div
         style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: 13 }}
@@ -356,48 +359,198 @@ const COLUMNS: Column[] = [
       </div>
     ),
   },
-  { header: "Top Prime Combos", align: "left", cell: (r) => <ComboList combos={r.top3Prime} /> },
+  {
+    header: "Top Prime Combos",
+    width: 150,
+    align: "left",
+    cell: (r) => <ComboList combos={r.top3Prime} />,
+  },
   {
     header: "Top Prime Combo JTBDs",
+    width: 250,
     align: "left",
-    cellStyle: { maxWidth: 240 },
     cell: (r) => <JtbdList jtbds={r.primeJtbds} />,
   },
   {
     header: "Top Subbed Under Combos",
+    width: 150,
     align: "left",
     cell: (r) => <ComboList combos={r.top3Sub} />,
   },
   {
     header: "Top Subbed Under Combo JTBDs",
+    width: 250,
     align: "left",
-    cellStyle: { maxWidth: 240 },
     cell: (r) => <JtbdList jtbds={r.subJtbds} muted />,
   },
   {
     header: "Total $",
+    width: 90,
     align: "right",
     sortKey: "total",
     cellStyle: { fontWeight: 700 },
     cell: (r) => num(fmt$(r.total)),
   },
-  { header: "Sub $", align: "right", sortKey: "sub", cell: (r) => num(fmt$(r.sub)) },
-  { header: "Prime $", align: "right", sortKey: "prime", cell: (r) => num(fmt$(r.prime)) },
+  { header: "Sub $", width: 85, align: "right", sortKey: "sub", cell: (r) => num(fmt$(r.sub)) },
+  {
+    header: "Prime $",
+    width: 85,
+    align: "right",
+    sortKey: "prime",
+    cell: (r) => num(fmt$(r.prime)),
+  },
   {
     header: "Sub share",
+    width: 85,
     align: "right",
     sortKey: "share",
     cell: (r) => num(`${Math.round(r.share * 100)}%`),
   },
   {
     header: "# subawards",
+    width: 100,
     align: "right",
     sortKey: "nSubs",
     cell: (r) => num(r.nSubs.toLocaleString()),
   },
-  { header: "Avg sub", align: "right", sortKey: "avgSub", cell: (r) => num(fmt$(r.avgSub)) },
-  { header: "Med sub", align: "right", sortKey: "medSub", cell: (r) => num(fmt$(r.medSub)) },
+  {
+    header: "Avg sub",
+    width: 80,
+    align: "right",
+    sortKey: "avgSub",
+    cell: (r) => num(fmt$(r.avgSub)),
+  },
+  {
+    header: "Med sub",
+    width: 80,
+    align: "right",
+    sortKey: "medSub",
+    cell: (r) => num(fmt$(r.medSub)),
+  },
 ];
+
+const TABLE_WIDTH = COLUMNS.reduce((n, c) => n + c.width, 0);
+const ROW_HEIGHT = 76;
+
+/**
+ * Virtualized table over the COLUMNS contract: fixed column geometry, sticky
+ * header, only the visible rows in the DOM (~20 at a time regardless of
+ * filter size) — no row cap, no repaint jank at 19k rows.
+ */
+function VirtualTable({
+  rows,
+  sortKey,
+  setSortKey,
+}: {
+  rows: RowFull[];
+  sortKey: SortKey;
+  setSortKey: (k: SortKey) => void;
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const virtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => ROW_HEIGHT,
+    overscan: 12,
+  });
+
+  const cellBase: CSSProperties = {
+    padding: "7px 10px",
+    overflow: "hidden",
+    flexShrink: 0,
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+  };
+
+  return (
+    <div
+      ref={scrollRef}
+      style={{ height: "72vh", overflow: "auto", border: "1px solid #ddd", background: "#fff" }}
+    >
+      <div style={{ width: TABLE_WIDTH, minWidth: "100%" }}>
+        <div
+          style={{
+            display: "flex",
+            position: "sticky",
+            top: 0,
+            zIndex: 1,
+            background: "#fff",
+            borderBottom: "2px solid #1a1a1a",
+          }}
+        >
+          {COLUMNS.map((c) => {
+            const headStyle: CSSProperties = {
+              width: c.width,
+              flexShrink: 0,
+              padding: "8px 10px",
+              fontSize: 12,
+              textTransform: "uppercase",
+              letterSpacing: "0.04em",
+              fontWeight: 700,
+              color: sortKey === c.sortKey ? "#1a1a1a" : "#555",
+              textAlign: c.align,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            };
+            return c.sortKey ? (
+              <button
+                key={c.header}
+                type="button"
+                title="sort"
+                onClick={() => setSortKey(c.sortKey as SortKey)}
+                style={{ ...headStyle, border: 0, background: "transparent", cursor: "pointer" }}
+              >
+                {c.header}
+                {sortKey === c.sortKey ? " ↓" : ""}
+              </button>
+            ) : (
+              <div key={c.header} style={headStyle} title={c.header}>
+                {c.header}
+              </div>
+            );
+          })}
+        </div>
+        <div style={{ height: virtualizer.getTotalSize(), position: "relative" }}>
+          {virtualizer.getVirtualItems().map((v) => {
+            const r = rows[v.index];
+            return (
+              <div
+                key={r.uei}
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  transform: `translateY(${v.start}px)`,
+                  height: v.size,
+                  display: "flex",
+                  borderBottom: "1px solid #eee",
+                  background: v.index % 2 ? "#fafafa" : "#fff",
+                }}
+              >
+                {COLUMNS.map((c) => (
+                  <div
+                    key={c.header}
+                    style={{
+                      ...cellBase,
+                      width: c.width,
+                      textAlign: c.align,
+                      ...(c.align === "right" ? { ...mono, whiteSpace: "nowrap" } : {}),
+                      ...c.cellStyle,
+                    }}
+                  >
+                    {c.cell(r)}
+                  </div>
+                ))}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function SubawardeeMarket() {
   // #1 total band — cohort floor pre-applied at bake time ($1M).
@@ -497,25 +650,6 @@ export function SubawardeeMarket() {
       medSubMed: median(filtered.map((r) => r.medSub)),
     };
   }, [filtered]);
-
-  const th = {
-    textAlign: "right" as const,
-    borderBottom: "2px solid #1a1a1a",
-    padding: "8px 10px",
-    fontSize: 12,
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.04em",
-    color: "#555",
-    whiteSpace: "nowrap" as const,
-    cursor: "pointer",
-    userSelect: "none" as const,
-  };
-  const td = {
-    ...mono,
-    padding: "7px 10px",
-    textAlign: "right" as const,
-    whiteSpace: "nowrap" as const,
-  };
 
   return (
     <div style={{ padding: "40px 48px", fontSize: 15, lineHeight: 1.5, color: "#1a1a1a" }}>
@@ -758,69 +892,11 @@ export function SubawardeeMarket() {
             ))}
           </div>
 
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ borderCollapse: "collapse", width: "100%" }}>
-              <thead>
-                <tr>
-                  {COLUMNS.map((c) =>
-                    c.sortKey ? (
-                      <th key={c.header} style={{ ...th, cursor: "default", padding: 0 }}>
-                        <button
-                          type="button"
-                          onClick={() => setSortKey(c.sortKey as SortKey)}
-                          title="sort"
-                          style={{
-                            border: 0,
-                            background: "transparent",
-                            padding: "8px 10px",
-                            font: "inherit",
-                            fontSize: 12,
-                            textTransform: "uppercase",
-                            letterSpacing: "0.04em",
-                            fontWeight: 700,
-                            cursor: "pointer",
-                            color: sortKey === c.sortKey ? "#1a1a1a" : "#555",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {c.header}
-                          {sortKey === c.sortKey ? " ↓" : ""}
-                        </button>
-                      </th>
-                    ) : (
-                      <th key={c.header} style={{ ...th, textAlign: c.align, cursor: "default" }}>
-                        {c.header}
-                      </th>
-                    ),
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.slice(0, SHOW).map((r) => (
-                  <tr key={r.uei} style={{ borderBottom: "1px solid #eee" }}>
-                    {COLUMNS.map((c) => (
-                      <td
-                        key={c.header}
-                        style={
-                          c.align === "right"
-                            ? { ...td, ...c.cellStyle }
-                            : { padding: "7px 10px", ...c.cellStyle }
-                        }
-                      >
-                        {c.cell(r)}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          {filtered.length > SHOW && (
-            <p style={{ fontSize: 13, color: "#666", marginTop: 10 }}>
-              Showing top {SHOW} of {filtered.length.toLocaleString()} by{" "}
-              {SORTS.find((s) => s.key === sortKey)?.label} — tighten filters to narrow.
-            </p>
-          )}
+          <VirtualTable rows={filtered} sortKey={sortKey} setSortKey={setSortKey} />
+          <p style={{ fontSize: 13, color: "#666", marginTop: 10 }}>
+            {filtered.length.toLocaleString()} firms, sorted by{" "}
+            {SORTS.find((s) => s.key === sortKey)?.label} — all rows scrollable (virtualized).
+          </p>
         </>
       )}
     </div>
