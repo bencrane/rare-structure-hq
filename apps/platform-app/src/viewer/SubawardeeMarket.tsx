@@ -643,102 +643,108 @@ export function SubawardeeMarket() {
             ))}
           </div>
 
-          <table style={{ borderCollapse: "collapse", width: "100%" }}>
-            <thead>
-              <tr>
-                <th style={{ ...th, textAlign: "left", cursor: "default" }}>Firm</th>
-                <th style={{ ...th, textAlign: "left", cursor: "default" }}>St</th>
-                <th style={{ ...th, textAlign: "left", cursor: "default" }}>Employees</th>
-                <th style={{ ...th, textAlign: "left", cursor: "default" }}>Primary NAICS</th>
-                <th style={{ ...th, textAlign: "left", cursor: "default" }}>Top prime combos</th>
-                <th style={{ ...th, textAlign: "left", cursor: "default" }}>
-                  Top subs-under combos
-                </th>
-                {SORTS.map((s) => (
-                  <th key={s.key} style={{ ...th, cursor: "default", padding: 0 }}>
-                    <button
-                      type="button"
-                      onClick={() => setSortKey(s.key)}
-                      title="sort"
-                      style={{
-                        border: 0,
-                        background: "transparent",
-                        padding: "8px 10px",
-                        font: "inherit",
-                        fontSize: 12,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.04em",
-                        fontWeight: 700,
-                        cursor: "pointer",
-                        color: sortKey === s.key ? "#1a1a1a" : "#555",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {s.label}
-                      {sortKey === s.key ? " ↓" : ""}
-                    </button>
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ borderCollapse: "collapse", width: "100%" }}>
+              <thead>
+                <tr>
+                  <th style={{ ...th, textAlign: "left", cursor: "default" }}>Firm</th>
+                  <th style={{ ...th, textAlign: "left", cursor: "default" }}>St</th>
+                  <th style={{ ...th, textAlign: "left", cursor: "default" }}>Employees</th>
+                  <th style={{ ...th, textAlign: "left", cursor: "default" }}>Primary NAICS</th>
+                  <th style={{ ...th, textAlign: "left", cursor: "default" }}>Top prime combos</th>
+                  <th style={{ ...th, textAlign: "left", cursor: "default" }}>
+                    Top subs-under combos
                   </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.slice(0, SHOW).map((r) => (
-                <tr key={r.uei} style={{ borderBottom: "1px solid #eee" }}>
-                  <td style={{ padding: "7px 10px", maxWidth: 340 }}>
-                    <div
-                      style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
-                    >
-                      {r.name}
-                    </div>
-                    <div style={{ ...mono, fontSize: 11, color: "#999" }}>
-                      {r.uei}
-                      {r.domain ? ` · ${r.domain}` : ""}
-                    </div>
-                  </td>
-                  <td style={{ padding: "7px 10px" }}>{r.state}</td>
-                  <td style={{ ...mono, padding: "7px 10px", fontSize: 13 }}>{r.band}</td>
-                  <td style={{ padding: "7px 10px", maxWidth: 220 }}>
-                    <div
-                      style={{
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                        fontSize: 13,
-                      }}
-                    >
-                      <span style={mono}>{r.naics}</span>
-                      {r.naicsName ? ` ${r.naicsName}` : ""}
-                    </div>
-                  </td>
-                  <td style={{ padding: "7px 10px" }}>
-                    <ComboList combos={r.top3Prime} />
-                  </td>
-                  <td style={{ padding: "7px 10px" }}>
-                    <ComboList combos={r.top3Sub} />
-                  </td>
-                  <td style={{ padding: "7px 10px", maxWidth: 220 }}>
-                    <div
-                      style={{ fontSize: 12, color: r.leadIsSub ? "#996" : "#333" }}
-                      title={r.leadJtbd}
-                    >
-                      {r.leadJtbd}
-                      {r.leadJtbd && r.leadIsSub ? " (subs-under)" : ""}
-                    </div>
-                  </td>
-                  <td style={{ padding: "7px 10px", maxWidth: 320 }}>
-                    <div style={{ fontSize: 12, color: "#333" }}>{r.leadWorkSummary}</div>
-                  </td>
-                  <td style={{ ...td, fontWeight: 700 }}>{fmt$(r.total)}</td>
-                  <td style={td}>{fmt$(r.sub)}</td>
-                  <td style={td}>{fmt$(r.prime)}</td>
-                  <td style={td}>{Math.round(r.share * 100)}%</td>
-                  <td style={td}>{r.nSubs.toLocaleString()}</td>
-                  <td style={td}>{fmt$(r.avgSub)}</td>
-                  <td style={td}>{fmt$(r.medSub)}</td>
+                  {SORTS.map((s) => (
+                    <th key={s.key} style={{ ...th, cursor: "default", padding: 0 }}>
+                      <button
+                        type="button"
+                        onClick={() => setSortKey(s.key)}
+                        title="sort"
+                        style={{
+                          border: 0,
+                          background: "transparent",
+                          padding: "8px 10px",
+                          font: "inherit",
+                          fontSize: 12,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.04em",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          color: sortKey === s.key ? "#1a1a1a" : "#555",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {s.label}
+                        {sortKey === s.key ? " ↓" : ""}
+                      </button>
+                    </th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filtered.slice(0, SHOW).map((r) => (
+                  <tr key={r.uei} style={{ borderBottom: "1px solid #eee" }}>
+                    <td style={{ padding: "7px 10px", maxWidth: 340 }}>
+                      <div
+                        style={{
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {r.name}
+                      </div>
+                      <div style={{ ...mono, fontSize: 11, color: "#999" }}>
+                        {r.uei}
+                        {r.domain ? ` · ${r.domain}` : ""}
+                      </div>
+                    </td>
+                    <td style={{ padding: "7px 10px" }}>{r.state}</td>
+                    <td style={{ ...mono, padding: "7px 10px", fontSize: 13 }}>{r.band}</td>
+                    <td style={{ padding: "7px 10px", maxWidth: 220 }}>
+                      <div
+                        style={{
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                          fontSize: 13,
+                        }}
+                      >
+                        <span style={mono}>{r.naics}</span>
+                        {r.naicsName ? ` ${r.naicsName}` : ""}
+                      </div>
+                    </td>
+                    <td style={{ padding: "7px 10px" }}>
+                      <ComboList combos={r.top3Prime} />
+                    </td>
+                    <td style={{ padding: "7px 10px" }}>
+                      <ComboList combos={r.top3Sub} />
+                    </td>
+                    <td style={{ padding: "7px 10px", maxWidth: 220 }}>
+                      <div
+                        style={{ fontSize: 12, color: r.leadIsSub ? "#996" : "#333" }}
+                        title={r.leadJtbd}
+                      >
+                        {r.leadJtbd}
+                        {r.leadJtbd && r.leadIsSub ? " (subs-under)" : ""}
+                      </div>
+                    </td>
+                    <td style={{ padding: "7px 10px", maxWidth: 320 }}>
+                      <div style={{ fontSize: 12, color: "#333" }}>{r.leadWorkSummary}</div>
+                    </td>
+                    <td style={{ ...td, fontWeight: 700 }}>{fmt$(r.total)}</td>
+                    <td style={td}>{fmt$(r.sub)}</td>
+                    <td style={td}>{fmt$(r.prime)}</td>
+                    <td style={td}>{Math.round(r.share * 100)}%</td>
+                    <td style={td}>{r.nSubs.toLocaleString()}</td>
+                    <td style={td}>{fmt$(r.avgSub)}</td>
+                    <td style={td}>{fmt$(r.medSub)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
           {filtered.length > SHOW && (
             <p style={{ fontSize: 13, color: "#666", marginTop: 10 }}>
               Showing top {SHOW} of {filtered.length.toLocaleString()} by{" "}
