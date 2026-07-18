@@ -25,7 +25,7 @@ const data = baked as unknown as {
   cohort: string;
   columns: string[];
   // uei, name, state, band, naics, naics_name, sub_amt, prime_amt, n_subs,
-  // avg_sub, med_sub, prime_action_ct
+  // avg_sub, med_sub, prime_action_ct, domain, domain_source
   rows: [
     string,
     string,
@@ -39,6 +39,8 @@ const data = baked as unknown as {
     number,
     number,
     number,
+    string | null,
+    string | null,
   ][];
 };
 
@@ -68,10 +70,27 @@ type Row = {
   nSubs: number;
   avgSub: number;
   medSub: number;
+  domain: string;
+  domainSource: string;
 };
 
 const ROWS: Row[] = data.rows.map(
-  ([uei, name, state, band, naics, naicsName, sub, prime, nSubs, avgSub, medSub]) => ({
+  ([
+    uei,
+    name,
+    state,
+    band,
+    naics,
+    naicsName,
+    sub,
+    prime,
+    nSubs,
+    avgSub,
+    medSub,
+    ,
+    domain,
+    domainSource,
+  ]) => ({
     uei,
     name,
     state: state ?? "—",
@@ -85,6 +104,8 @@ const ROWS: Row[] = data.rows.map(
     nSubs,
     avgSub,
     medSub,
+    domain: domain ?? "",
+    domainSource: domainSource ?? "",
   }),
 );
 
@@ -207,6 +228,8 @@ export function SubawardeeMarket() {
   // #3 employee bands (empty selection = all, incl. unknown).
   const [bands, setBands] = useState<Set<string>>(new Set());
   const [state, setState] = useState("");
+  // Domain toggle: all / has (SAM entity_url or DSBS) / none.
+  const [domainFilter, setDomainFilter] = useState<"all" | "has" | "none">("all");
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("total");
 
@@ -235,6 +258,7 @@ export function SubawardeeMarket() {
         r.share >= (Number.isNaN(shareLo) ? 0 : shareLo) &&
         r.share <= (Number.isNaN(shareHi) ? 1 : shareHi) &&
         (bands.size === 0 || bands.has(r.band)) &&
+        (domainFilter === "all" || (domainFilter === "has") === (r.domain !== "")) &&
         (st === "" || r.state === st) &&
         (q === "" || r.name.toLowerCase().includes(q) || r.uei.toLowerCase() === q),
     );
@@ -257,6 +281,7 @@ export function SubawardeeMarket() {
     state,
     search,
     sortKey,
+    domainFilter,
   ]);
 
   const stats = useMemo(() => {
@@ -268,6 +293,7 @@ export function SubawardeeMarket() {
       totalMed: median(filtered.map((r) => r.total)),
       shareMed: median(filtered.map((r) => r.share)),
       subsOnly: filtered.filter((r) => r.prime <= 0).length,
+      withDomain: filtered.filter((r) => r.domain !== "").length,
       medSubMed: median(filtered.map((r) => r.medSub)),
     };
   }, [filtered]);
@@ -413,6 +439,36 @@ export function SubawardeeMarket() {
       </div>
 
       <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 18 }}>
+        <span style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", color: "#777" }}>
+          Domain
+        </span>
+        {(
+          [
+            ["all", "all"],
+            ["has", "has domain"],
+            ["none", "no domain"],
+          ] as const
+        ).map(([key, label]) => {
+          const on = domainFilter === key;
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setDomainFilter(key)}
+              style={{
+                padding: "5px 10px",
+                border: `1px solid ${on ? "#1a1a1a" : "#bbb"}`,
+                background: on ? "#1a1a1a" : "#fff",
+                color: on ? "#fff" : "#555",
+                fontSize: 13,
+                fontWeight: on ? 700 : 500,
+                cursor: "pointer",
+              }}
+            >
+              {label}
+            </button>
+          );
+        })}
         <input
           placeholder="state (e.g. VA)"
           value={state}
@@ -458,6 +514,10 @@ export function SubawardeeMarket() {
                 [
                   "Subs-only firms",
                   `${stats.subsOnly.toLocaleString()} (${Math.round((stats.subsOnly / stats.firms) * 100)}%)`,
+                ],
+                [
+                  "With domain",
+                  `${stats.withDomain.toLocaleString()} (${Math.round((stats.withDomain / stats.firms) * 100)}%)`,
                 ],
                 ["Median subaward — median firm", fmt$(stats.medSubMed)],
               ] as [string, string][]
@@ -514,7 +574,10 @@ export function SubawardeeMarket() {
                     >
                       {r.name}
                     </div>
-                    <div style={{ ...mono, fontSize: 11, color: "#999" }}>{r.uei}</div>
+                    <div style={{ ...mono, fontSize: 11, color: "#999" }}>
+                      {r.uei}
+                      {r.domain ? ` · ${r.domain}` : ""}
+                    </div>
                   </td>
                   <td style={{ padding: "7px 10px" }}>{r.state}</td>
                   <td style={{ ...mono, padding: "7px 10px", fontSize: 13 }}>{r.band}</td>
