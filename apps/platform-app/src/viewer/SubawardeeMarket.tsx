@@ -25,7 +25,8 @@ const data = baked as unknown as {
   cohort: string;
   columns: string[];
   // uei, name, state, band, naics, naics_name, sub_amt, prime_amt, n_subs,
-  // avg_sub, med_sub, prime_action_ct, domain, domain_source
+  // avg_sub, med_sub, prime_action_ct, domain, domain_source,
+  // top3_prime, top3_sub (packed "NAICSxPSC|share~..." FY23–25, own-side shares)
   rows: [
     string,
     string,
@@ -39,6 +40,8 @@ const data = baked as unknown as {
     number,
     number,
     number,
+    string | null,
+    string | null,
     string | null,
     string | null,
   ][];
@@ -72,7 +75,23 @@ type Row = {
   medSub: number;
   domain: string;
   domainSource: string;
+  top3Prime: Combo[];
+  top3Sub: Combo[];
+  primeComboKey: string;
+  subComboKey: string;
 };
+
+type Combo = { naics: string; psc: string; share: number };
+
+/** Unpack "336411x1510|79~336411xJ016|5" → Combo[]. */
+function parseCombos(packed: string | null): Combo[] {
+  if (!packed) return [];
+  return packed.split("~").map((part) => {
+    const [codes, share] = part.split("|");
+    const [naics, psc] = codes.split("x");
+    return { naics, psc, share: Number(share) };
+  });
+}
 
 const ROWS: Row[] = data.rows.map(
   ([
@@ -90,6 +109,8 @@ const ROWS: Row[] = data.rows.map(
     ,
     domain,
     domainSource,
+    top3Prime,
+    top3Sub,
   ]) => ({
     uei,
     name,
@@ -106,6 +127,10 @@ const ROWS: Row[] = data.rows.map(
     medSub,
     domain: domain ?? "",
     domainSource: domainSource ?? "",
+    top3Prime: parseCombos(top3Prime),
+    top3Sub: parseCombos(top3Sub),
+    primeComboKey: (top3Prime ?? "").toLowerCase(),
+    subComboKey: (top3Sub ?? "").toLowerCase(),
   }),
 );
 
@@ -206,6 +231,21 @@ const inBand = (v: number, minS: string, maxS: string): boolean => {
   return v >= (lo ?? 0) && v < (hi ?? Number.POSITIVE_INFINITY);
 };
 
+/** Up to three "NAICS×PSC share%" lines; share is of that side's own FY23–25 $. */
+function ComboList({ combos }: { combos: Combo[] }) {
+  if (combos.length === 0) return <span style={{ color: "#ccc" }}>—</span>;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+      {combos.map((c) => (
+        <span key={`${c.naics}x${c.psc}`} style={{ ...mono, fontSize: 12, whiteSpace: "nowrap" }}>
+          {c.naics}×{c.psc}
+          <span style={{ color: "#999" }}> {c.share}%</span>
+        </span>
+      ))}
+    </div>
+  );
+}
+
 const SHOW = 300;
 
 export function SubawardeeMarket() {
@@ -230,6 +270,9 @@ export function SubawardeeMarket() {
   const [state, setState] = useState("");
   // Domain toggle: all / has (SAM entity_url or DSBS) / none.
   const [domainFilter, setDomainFilter] = useState<"all" | "has" | "none">("all");
+  // Combo filters: substring over the firm's top-3 codes ("541511", "R425", "541511xR425").
+  const [primeCombo, setPrimeCombo] = useState("");
+  const [subCombo, setSubCombo] = useState("");
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("total");
 
@@ -248,6 +291,8 @@ export function SubawardeeMarket() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     const st = state.trim().toUpperCase();
+    const pc = primeCombo.trim().toLowerCase();
+    const sc = subCombo.trim().toLowerCase();
     const rows = ROWS.filter(
       (r) =>
         inBand(r.total, totalMin, totalMax) &&
@@ -259,6 +304,8 @@ export function SubawardeeMarket() {
         r.share <= (Number.isNaN(shareHi) ? 1 : shareHi) &&
         (bands.size === 0 || bands.has(r.band)) &&
         (domainFilter === "all" || (domainFilter === "has") === (r.domain !== "")) &&
+        (pc === "" || r.primeComboKey.includes(pc)) &&
+        (sc === "" || r.subComboKey.includes(sc)) &&
         (st === "" || r.state === st) &&
         (q === "" || r.name.toLowerCase().includes(q) || r.uei.toLowerCase() === q),
     );
@@ -282,6 +329,8 @@ export function SubawardeeMarket() {
     search,
     sortKey,
     domainFilter,
+    primeCombo,
+    subCombo,
   ]);
 
   const stats = useMemo(() => {
@@ -470,6 +519,30 @@ export function SubawardeeMarket() {
           );
         })}
         <input
+          placeholder="prime combo (541511 / R425)"
+          value={primeCombo}
+          onChange={(e) => setPrimeCombo(e.target.value)}
+          style={{
+            border: "1px solid #bbb",
+            padding: "6px 10px",
+            fontSize: 14,
+            width: 200,
+            ...mono,
+          }}
+        />
+        <input
+          placeholder="subs-under combo"
+          value={subCombo}
+          onChange={(e) => setSubCombo(e.target.value)}
+          style={{
+            border: "1px solid #bbb",
+            padding: "6px 10px",
+            fontSize: 14,
+            width: 170,
+            ...mono,
+          }}
+        />
+        <input
           placeholder="state (e.g. VA)"
           value={state}
           onChange={(e) => setState(e.target.value)}
@@ -538,6 +611,10 @@ export function SubawardeeMarket() {
                 <th style={{ ...th, textAlign: "left", cursor: "default" }}>St</th>
                 <th style={{ ...th, textAlign: "left", cursor: "default" }}>Employees</th>
                 <th style={{ ...th, textAlign: "left", cursor: "default" }}>Primary NAICS</th>
+                <th style={{ ...th, textAlign: "left", cursor: "default" }}>Top prime combos</th>
+                <th style={{ ...th, textAlign: "left", cursor: "default" }}>
+                  Top subs-under combos
+                </th>
                 {SORTS.map((s) => (
                   <th key={s.key} style={{ ...th, cursor: "default", padding: 0 }}>
                     <button
@@ -593,6 +670,12 @@ export function SubawardeeMarket() {
                       <span style={mono}>{r.naics}</span>
                       {r.naicsName ? ` ${r.naicsName}` : ""}
                     </div>
+                  </td>
+                  <td style={{ padding: "7px 10px" }}>
+                    <ComboList combos={r.top3Prime} />
+                  </td>
+                  <td style={{ padding: "7px 10px" }}>
+                    <ComboList combos={r.top3Sub} />
                   </td>
                   <td style={{ ...td, fontWeight: 700 }}>{fmt$(r.total)}</td>
                   <td style={td}>{fmt$(r.sub)}</td>
