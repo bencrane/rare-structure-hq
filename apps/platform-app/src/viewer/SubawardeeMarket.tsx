@@ -15,7 +15,7 @@
  *   firms without an enriched band are "unknown" and stay visible unless
  *   bands are filtered.
  */
-import { useMemo, useState } from "react";
+import { type CSSProperties, type ReactNode, useMemo, useState } from "react";
 
 import baked from "@/internal/subawardee-market.json";
 
