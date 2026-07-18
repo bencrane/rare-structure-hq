@@ -93,7 +93,7 @@ type Row = {
 };
 
 type Combo = { naics: string; psc: string; share: number };
-type RowFull = Row & { jtbds: string[]; jtbdIsSub: boolean };
+type RowFull = Row & { primeJtbds: string[]; subJtbds: string[] };
 
 /** Unpack "336411x1510|79~336411xJ016|5" → Combo[]. */
 function parseCombos(packed: string | null): Combo[] {
@@ -146,14 +146,11 @@ const ROWS: RowFull[] = data.rows
       subComboKey: (top3Sub ?? "").toLowerCase(),
     }),
   )
-  .map((r) => {
-    const src = r.top3Prime.length > 0 ? r.top3Prime : r.top3Sub;
-    return {
-      ...r,
-      jtbds: src.map((c) => langFor(c)[0]),
-      jtbdIsSub: r.top3Prime.length === 0,
-    };
-  });
+  .map((r) => ({
+    ...r,
+    primeJtbds: r.top3Prime.map((c) => langFor(c)[0]),
+    subJtbds: r.top3Sub.map((c) => langFor(c)[0]),
+  }));
 
 const median = (xs: number[]): number => {
   if (xs.length === 0) return 0;
@@ -276,6 +273,31 @@ function ComboList({ combos }: { combos: Combo[] }) {
           </span>
         );
       })}
+    </div>
+  );
+}
+
+/** JTBD phrase lines aligned 1:1 with the ComboList beside it. */
+function JtbdList({ jtbds, muted }: { jtbds: string[]; muted?: boolean }) {
+  if (jtbds.length === 0) return <span style={{ color: "#ccc" }}>—</span>;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+      {jtbds.map((jt, idx) => (
+        <div
+          key={`${idx}-${jt}`}
+          style={{
+            fontSize: 12,
+            lineHeight: "18px",
+            color: muted ? "#996" : "#333",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+          title={jt || undefined}
+        >
+          {jt || "—"}
+        </div>
+      ))}
     </div>
   );
 }
@@ -407,10 +429,10 @@ export function SubawardeeMarket() {
         Every subawardee with ≥ $1M total (subaward $ received + prime obligations won) in{" "}
         {data.window}. Blank min = 0, blank max = no cap, max exclusive; $ inputs accept 500k / $10m
         / 1.5b. Avg/median subaward size are per-firm over that firm&apos;s own FY23–25 subawards
-        (prime awards never blended in). JTBD lines are the gpt-5.4 job phrases of the firm&apos;s
-        top own-prime combos, in combo order; &quot;(subs-under)&quot; rows have no prime combos —
-        the phrases then describe the PRIME&apos;s work they sub under, not their own. Hover any
-        combo for its JTBD + work summary. {data.artifact.replace("query-sidecar/", "")}
+        (prime awards never blended in). JTBD columns carry the gpt-5.4 job phrase per combo, in
+        combo order: prime-side JTBDs describe the firm&apos;s OWN prime work; subbed-under JTBDs
+        describe the PRIME award&apos;s work they subbed under, not their own. Hover any combo for
+        its JTBD + work summary. {data.artifact.replace("query-sidecar/", "")}
       </p>
 
       <div
@@ -649,12 +671,15 @@ export function SubawardeeMarket() {
                   <th style={{ ...th, textAlign: "left", cursor: "default" }}>St</th>
                   <th style={{ ...th, textAlign: "left", cursor: "default" }}>Employees</th>
                   <th style={{ ...th, textAlign: "left", cursor: "default" }}>Primary NAICS</th>
-                  <th style={{ ...th, textAlign: "left", cursor: "default" }}>Top prime combos</th>
+                  <th style={{ ...th, textAlign: "left", cursor: "default" }}>Top Prime Combos</th>
                   <th style={{ ...th, textAlign: "left", cursor: "default" }}>
-                    Top subs-under combos
+                    Top Prime Combo JTBDs
                   </th>
                   <th style={{ ...th, textAlign: "left", cursor: "default" }}>
-                    JTBD — top own-prime combos (gpt-5.4)
+                    Top Subbed Under Combos
+                  </th>
+                  <th style={{ ...th, textAlign: "left", cursor: "default" }}>
+                    Top Subbed Under Combo JTBDs
                   </th>
                   {SORTS.map((s) => (
                     <th key={s.key} style={{ ...th, cursor: "default", padding: 0 }}>
@@ -703,30 +728,30 @@ export function SubawardeeMarket() {
                     </td>
                     <td style={{ padding: "7px 10px" }}>{r.state}</td>
                     <td style={{ ...mono, padding: "7px 10px", fontSize: 13 }}>{r.band}</td>
-                    <td style={{ padding: "7px 10px", maxWidth: 260 }}>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                        {r.jtbds.map((jt, idx) => {
-                          const combo = (r.jtbdIsSub ? r.top3Sub : r.top3Prime)[idx];
-                          return (
-                            <div
-                              key={`${combo.naics}x${combo.psc}`}
-                              style={{
-                                fontSize: 12,
-                                color: r.jtbdIsSub ? "#996" : "#333",
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                whiteSpace: "nowrap",
-                              }}
-                              title={jt || undefined}
-                            >
-                              {jt || "—"}
-                            </div>
-                          );
-                        })}
-                        {r.jtbdIsSub && (
-                          <div style={{ fontSize: 11, color: "#996" }}>(subs-under)</div>
-                        )}
+                    <td style={{ padding: "7px 10px", maxWidth: 220 }}>
+                      <div
+                        style={{
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                          fontSize: 13,
+                        }}
+                      >
+                        <span style={mono}>{r.naics}</span>
+                        {r.naicsName ? ` ${r.naicsName}` : ""}
                       </div>
+                    </td>
+                    <td style={{ padding: "7px 10px" }}>
+                      <ComboList combos={r.top3Prime} />
+                    </td>
+                    <td style={{ padding: "7px 10px", maxWidth: 240 }}>
+                      <JtbdList jtbds={r.primeJtbds} />
+                    </td>
+                    <td style={{ padding: "7px 10px" }}>
+                      <ComboList combos={r.top3Sub} />
+                    </td>
+                    <td style={{ padding: "7px 10px", maxWidth: 240 }}>
+                      <JtbdList jtbds={r.subJtbds} muted />
                     </td>
                     <td style={{ ...td, fontWeight: 700 }}>{fmt$(r.total)}</td>
                     <td style={td}>{fmt$(r.sub)}</td>
