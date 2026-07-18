@@ -29,7 +29,7 @@ import {
   Workflow,
   X,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 
 import { Inline, Stack, Text, cx } from "@rare-structure-hq/ui";
@@ -339,7 +339,20 @@ export function AppShell() {
           </button>
         </Inline>
         <main className="flex-1">
-          <Outlet />
+          {/* Nearest Suspense boundary for the lazy route chunks (App.tsx):
+              a tab-to-tab navigation swaps only the main pane, keeping the
+              sidebar/shell chrome mounted. */}
+          <Suspense
+            fallback={
+              <div className="flex min-h-dvh items-center justify-center">
+                <span className="font-mono text-[0.625rem] uppercase tracking-[0.2em] text-[color:var(--color-text-subtle)]">
+                  Loading…
+                </span>
+              </div>
+            }
+          >
+            <Outlet />
+          </Suspense>
         </main>
       </div>
 
