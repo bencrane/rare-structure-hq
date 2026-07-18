@@ -14,11 +14,12 @@
 import { Hono } from "hono";
 
 import { type AuthVariables, requireUser } from "../auth.ts";
+import { env } from "../env.ts";
 
-// Catalyst seam — CATALYST_API_URL + CATALYST_API_TOKEN from
-// Doppler `hq-rare-structure-hq` (not in env.ts's zod schema by convention).
-const CATALYST_API_URL = (process.env.CATALYST_API_URL ?? "").replace(/\/$/, "");
-const CATALYST_API_TOKEN = process.env.CATALYST_API_TOKEN ?? "";
+// Catalyst seam — CATALYST_API_URL + CATALYST_API_TOKEN from Doppler
+// `hq-rare-structure-hq`, zod-validated fail-fast at boot in env.ts.
+const CATALYST_API_URL = env.CATALYST_API_URL;
+const CATALYST_API_TOKEN = env.CATALYST_API_TOKEN;
 
 const MARKET_SPEC = "/api/v1/market-spec";
 
