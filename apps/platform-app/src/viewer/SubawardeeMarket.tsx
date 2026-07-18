@@ -45,6 +45,17 @@ const data = baked as unknown as {
     string | null,
     string | null,
   ][];
+  // "NAICSxPSC" -> [gpt-5.4 "to: ..." phrase | null, work_summary | null]
+  combo_lang: Record<string, [string | null, string | null]>;
+};
+
+const LANG: Record<string, [string | null, string | null]> =
+  (data as { combo_lang?: Record<string, [string | null, string | null]> }).combo_lang ?? {};
+
+const langFor = (c: Combo | undefined): [string, string] => {
+  if (!c) return ["", ""];
+  const hit = LANG[`${c.naics}x${c.psc}`];
+  return [hit?.[0] ?? "", hit?.[1] ?? ""];
 };
 
 const BANDS = [
@@ -82,6 +93,7 @@ type Row = {
 };
 
 type Combo = { naics: string; psc: string; share: number };
+type RowFull = Row & { leadJtbd: string; leadWorkSummary: string; leadIsSub: boolean };
 
 /** Unpack "336411x1510|79~336411xJ016|5" → Combo[]. */
 function parseCombos(packed: string | null): Combo[] {
@@ -93,46 +105,57 @@ function parseCombos(packed: string | null): Combo[] {
   });
 }
 
-const ROWS: Row[] = data.rows.map(
-  ([
-    uei,
-    name,
-    state,
-    band,
-    naics,
-    naicsName,
-    sub,
-    prime,
-    nSubs,
-    avgSub,
-    medSub,
-    ,
-    domain,
-    domainSource,
-    top3Prime,
-    top3Sub,
-  ]) => ({
-    uei,
-    name,
-    state: state ?? "—",
-    band: band ?? "unknown",
-    naics: naics ?? "—",
-    naicsName: naicsName ?? "",
-    sub,
-    prime,
-    total: sub + prime,
-    share: sub / (sub + prime),
-    nSubs,
-    avgSub,
-    medSub,
-    domain: domain ?? "",
-    domainSource: domainSource ?? "",
-    top3Prime: parseCombos(top3Prime),
-    top3Sub: parseCombos(top3Sub),
-    primeComboKey: (top3Prime ?? "").toLowerCase(),
-    subComboKey: (top3Sub ?? "").toLowerCase(),
-  }),
-);
+const ROWS: RowFull[] = data.rows
+  .map(
+    ([
+      uei,
+      name,
+      state,
+      band,
+      naics,
+      naicsName,
+      sub,
+      prime,
+      nSubs,
+      avgSub,
+      medSub,
+      ,
+      domain,
+      domainSource,
+      top3Prime,
+      top3Sub,
+    ]) => ({
+      uei,
+      name,
+      state: state ?? "—",
+      band: band ?? "unknown",
+      naics: naics ?? "—",
+      naicsName: naicsName ?? "",
+      sub,
+      prime,
+      total: sub + prime,
+      share: sub / (sub + prime),
+      nSubs,
+      avgSub,
+      medSub,
+      domain: domain ?? "",
+      domainSource: domainSource ?? "",
+      top3Prime: parseCombos(top3Prime),
+      top3Sub: parseCombos(top3Sub),
+      primeComboKey: (top3Prime ?? "").toLowerCase(),
+      subComboKey: (top3Sub ?? "").toLowerCase(),
+    }),
+  )
+  .map((r) => {
+    const lead = r.top3Prime[0] ?? r.top3Sub[0];
+    const [jtbd, workSummary] = langFor(lead);
+    return {
+      ...r,
+      leadJtbd: jtbd,
+      leadWorkSummary: workSummary,
+      leadIsSub: r.top3Prime.length === 0,
+    };
+  });
 
 const median = (xs: number[]): number => {
   if (xs.length === 0) return 0;
@@ -236,12 +259,25 @@ function ComboList({ combos }: { combos: Combo[] }) {
   if (combos.length === 0) return <span style={{ color: "#ccc" }}>—</span>;
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
-      {combos.map((c) => (
-        <span key={`${c.naics}x${c.psc}`} style={{ ...mono, fontSize: 12, whiteSpace: "nowrap" }}>
-          {c.naics}×{c.psc}
-          <span style={{ color: "#999" }}> {c.share}%</span>
-        </span>
-      ))}
+      {combos.map((c) => {
+        const [jtbd, ws] = langFor(c);
+        const tip = [jtbd, ws].filter(Boolean).join("\n");
+        return (
+          <span
+            key={`${c.naics}x${c.psc}`}
+            title={tip || undefined}
+            style={{
+              ...mono,
+              fontSize: 12,
+              whiteSpace: "nowrap",
+              cursor: tip ? "help" : undefined,
+            }}
+          >
+            {c.naics}×{c.psc}
+            <span style={{ color: "#999" }}> {c.share}%</span>
+          </span>
+        );
+      })}
     </div>
   );
 }
@@ -373,7 +409,10 @@ export function SubawardeeMarket() {
         Every subawardee with ≥ $1M total (subaward $ received + prime obligations won) in{" "}
         {data.window}. Blank min = 0, blank max = no cap, max exclusive; $ inputs accept 500k / $10m
         / 1.5b. Avg/median subaward size are per-firm over that firm&apos;s own FY23–25 subawards
-        (prime awards never blended in). {data.artifact.replace("query-sidecar/", "")}
+        (prime awards never blended in). Job / Work summary describe the firm&apos;s #1 combo
+        (own-prime preferred; marked &quot;(subs-under)&quot; when the firm has no prime combos —
+        then it describes the PRIME&apos;s work they sub under, not their own). Hover any combo for
+        both texts. {data.artifact.replace("query-sidecar/", "")}
       </p>
 
       <div
@@ -676,6 +715,18 @@ export function SubawardeeMarket() {
                   </td>
                   <td style={{ padding: "7px 10px" }}>
                     <ComboList combos={r.top3Sub} />
+                  </td>
+                  <td style={{ padding: "7px 10px", maxWidth: 220 }}>
+                    <div
+                      style={{ fontSize: 12, color: r.leadIsSub ? "#996" : "#333" }}
+                      title={r.leadJtbd}
+                    >
+                      {r.leadJtbd}
+                      {r.leadJtbd && r.leadIsSub ? " (subs-under)" : ""}
+                    </div>
+                  </td>
+                  <td style={{ padding: "7px 10px", maxWidth: 320 }}>
+                    <div style={{ fontSize: 12, color: "#333" }}>{r.leadWorkSummary}</div>
                   </td>
                   <td style={{ ...td, fontWeight: 700 }}>{fmt$(r.total)}</td>
                   <td style={td}>{fmt$(r.sub)}</td>
