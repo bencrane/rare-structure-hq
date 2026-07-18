@@ -11,24 +11,25 @@ import { useState } from "react";
 
 import activeBaked from "@/internal/facilities-codes-active.json";
 import windowBaked from "@/internal/facilities-codes.json";
-import { type CodeDataset, CodeReference } from "@/viewer/CodeReference";
-import { CombosTable } from "@/viewer/CombosTable";
 import { AdsPairs } from "@/viewer/AdsPairs";
 import { BucketExplorer } from "@/viewer/BucketExplorer";
+import { type CodeDataset, CodeReference } from "@/viewer/CodeReference";
+import { CombosTable } from "@/viewer/CombosTable";
+import { ConstructionPairs } from "@/viewer/ConstructionPairs";
 import { FirePairs } from "@/viewer/FirePairs";
 import { FoodPairs } from "@/viewer/FoodPairs";
 import { ImcPairs } from "@/viewer/ImcPairs";
 import { MedDevPairs } from "@/viewer/MedDevPairs";
 import { MedStaffPairs } from "@/viewer/MedStaffPairs";
-import { StaffingPairs } from "@/viewer/StaffingPairs";
-import { TextilesPairs } from "@/viewer/TextilesPairs";
-import { TranspoPairs } from "@/viewer/TranspoPairs";
-import { ConstructionPairs } from "@/viewer/ConstructionPairs";
 import { PairAssignment } from "@/viewer/PairAssignment";
+import { PairCuration } from "@/viewer/PairCuration";
 import { PaymentComboPairs } from "@/viewer/PaymentComboPairs";
 import { PaymentRegimes } from "@/viewer/PaymentRegimes";
+import { StaffingPairs } from "@/viewer/StaffingPairs";
+import { SubawardeeMarket } from "@/viewer/SubawardeeMarket";
 import { TerritoryMap } from "@/viewer/TerritoryMap";
-import { PairCuration } from "@/viewer/PairCuration";
+import { TextilesPairs } from "@/viewer/TextilesPairs";
+import { TranspoPairs } from "@/viewer/TranspoPairs";
 import { WasteEnvPairs } from "@/viewer/WasteEnvPairs";
 
 const TABS: { key: string; label: string; sub: string; body: () => React.ReactNode }[] = [
@@ -79,6 +80,12 @@ const TABS: { key: string; label: string; sub: string; body: () => React.ReactNo
     label: "Combo Lookup",
     sub: "pricing × financing → ranked pairs",
     body: () => <PaymentComboPairs />,
+  },
+  {
+    key: "subawardee-market",
+    label: "Subawardee Market",
+    sub: "FY23–25 ≥$1M total · filterable firms",
+    body: () => <SubawardeeMarket />,
   },
   {
     key: "bucket-explorer",
