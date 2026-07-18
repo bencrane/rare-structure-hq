@@ -171,6 +171,7 @@ export default function Viewer() {
         display: "grid",
         gridTemplateColumns: "220px 1fr",
         minHeight: "100vh",
+        minWidth: "fit-content",
         background: "#fff",
         color: "#1a1a1a",
         fontFamily: "-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif",
