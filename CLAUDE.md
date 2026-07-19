@@ -9,6 +9,9 @@ reaches into Lance/R2 directly, and never composes SQL against core-x.
 - `apps/platform-app` — Vite + React SPA (dev port 5173).
 - `apps/platform-api` — Hono BFF (dev port 8000; `PORT` env at the Railway layer).
 - `apps/marketing-site`, `apps/marketing-site-ao` — marketing surfaces.
+- `apps/lander` — access.governmentcontracted.com: per-prospect private-memorandum pages
+  (tokenized, baked to R2 `data-sink/landers/`, no database; mint/media/views operator
+  workflow in its README).
 - `packages/tokens`, `packages/ui`, `packages/shared`,
   `packages/eslint-plugin-rare-structure-hq`.
 - Secrets: Doppler project `hq-rare-structure-hq`.
