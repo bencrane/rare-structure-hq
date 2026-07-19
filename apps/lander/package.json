@@ -1,0 +1,21 @@
+{
+  "name": "lander",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "start": "bun src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "mint": "bun scripts/mint.ts",
+    "media": "bun scripts/media.ts",
+    "views": "bun scripts/views.ts"
+  },
+  "dependencies": {
+    "hono": "^4.6.0"
+  },
+  "devDependencies": {
+    "bun-types": "^1.3.14",
+    "typescript": "^5.7.2"
+  }
+}

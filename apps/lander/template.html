@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Private Memorandum — {{FIRM_TITLE}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper: oklch(0.966 0.006 90);
+    --card: oklch(0.995 0.002 95);
+    --ink: oklch(0.225 0.035 262);
+    --ink-2: oklch(0.47 0.035 255);
+    --navy: oklch(0.38 0.08 255);
+    --rail: oklch(0.215 0.033 262);
+    --copper: oklch(0.44 0.085 70);
+    --copper-bright: oklch(0.75 0.08 75);
+    --hairline: oklch(0.896 0.014 92);
+    --muted: oklch(0.936 0.009 92);
+    --serif: "Fraunces", Georgia, serif;
+    --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+    --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:860px;margin:0 auto;padding:0 28px}
+  .num{font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+
+  header{border-bottom:2px solid var(--rail);padding:22px 0 18px}
+  .mast{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap}
+  .brand{font-family:var(--serif);font-size:18px;font-weight:500;letter-spacing:.005em}
+  .mast .kicker{font-family:var(--mono);font-size:11px;color:var(--ink-2);text-transform:uppercase;letter-spacing:.14em}
+  .mast .kicker b{color:var(--copper);font-weight:500}
+
+  .prepared{padding:54px 0 40px}
+  .eyebrow{font-family:var(--mono);font-size:11.5px;color:var(--copper);text-transform:uppercase;letter-spacing:.18em;margin-bottom:16px}
+  h1{font-family:var(--serif);font-weight:400;font-size:clamp(30px,4.6vw,44px);line-height:1.14;letter-spacing:-.012em}
+  .prepared .sub{margin-top:14px;color:var(--ink-2);font-size:15px}
+  .prepared .sub .num{font-size:13px}
+
+  .panel{background:var(--card);border:1px solid var(--hairline);border-top:2px solid var(--rail)}
+  .videoPanel{margin:8px 0 0}
+  .videoPanel video{display:block;width:100%;aspect-ratio:16/9;background:var(--rail)}
+  .videoPanel .cap{padding:14px 20px;font-family:var(--mono);font-size:12px;color:var(--ink-2);line-height:1.55;border-top:1px solid var(--hairline)}
+
+  section{padding:46px 0 0}
+  .secEyebrow{font-family:var(--mono);font-size:11.5px;color:var(--copper);text-transform:uppercase;letter-spacing:.18em;margin-bottom:10px}
+  h2{font-family:var(--serif);font-weight:500;font-size:24px;letter-spacing:-.008em;margin-bottom:6px}
+  .secSub{color:var(--ink-2);max-width:46em;margin-bottom:26px;font-size:14.5px}
+
+  .statGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--hairline);border:1px solid var(--hairline)}
+  .statGrid>div{background:var(--card);padding:18px 18px 16px}
+  .statGrid .v{font-family:var(--mono);font-size:clamp(20px,2.6vw,27px);letter-spacing:-.02em}
+  .statGrid .v small{font-size:.6em;color:var(--ink-2)}
+  .statGrid .l{margin-top:6px;font-size:12px;color:var(--ink-2);line-height:1.45}
+  @media(max-width:700px){.statGrid{grid-template-columns:1fr 1fr}}
+
+  .subStats{display:flex;gap:26px;flex-wrap:wrap;margin-top:14px;font-size:13px;color:var(--ink-2)}
+  .subStats .num{color:var(--ink);font-size:13px}
+
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:26px}
+  @media(max-width:700px){.split{grid-template-columns:1fr}}
+  .figure{background:var(--card);border:1px solid var(--hairline);padding:20px 20px 14px}
+  .figTitle{font-size:13px;font-weight:600;margin-bottom:2px}
+  .figSub{font-family:var(--mono);font-size:11.5px;color:var(--ink-2);margin-bottom:16px}
+  .bandRow{display:grid;grid-template-columns:86px 1fr 44px;gap:10px;align-items:center;padding:4px 0}
+  .bandRow .bl{font-family:var(--mono);font-size:11.5px;color:var(--ink-2);text-align:right}
+  .bandRow .bar{height:14px;background:var(--muted);position:relative}
+  .bandRow .bar>i{position:absolute;inset:0 auto 0 0;background:var(--navy)}
+  .bandRow.alt .bar>i{background:var(--copper-bright)}
+  .bandRow .bv{font-family:var(--mono);font-size:11.5px}
+
+  .method{margin-top:46px;background:var(--card);border:1px solid var(--hairline);padding:22px 24px}
+  .method .mh{font-family:var(--mono);font-size:11px;color:var(--ink-2);text-transform:uppercase;letter-spacing:.14em;margin-bottom:12px}
+  .method p{font-size:13px;color:var(--ink-2);line-height:1.65;margin-bottom:8px}
+  .method p b{color:var(--ink);font-weight:600}
+  .method .stamp{font-family:var(--mono);font-size:11px;color:var(--ink-2);margin-top:10px;word-break:break-all}
+
+  footer{margin-top:56px;border-top:1px solid var(--hairline);padding:22px 0 48px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  footer .f1{font-family:var(--serif);font-size:14px}
+  footer .f2{font-size:12px;color:var(--ink-2);max-width:34em}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap mast">
+    <div class="brand">Government Contracted</div>
+    <div class="kicker"><b>Private memorandum</b> · Ref {{REF}}</div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <div class="prepared">
+    <div class="eyebrow">Prepared for</div>
+    <h1>{{FIRM_TITLE}}</h1>
+    <div class="sub">{{CITY_STATE}} · <span class="num">{{DATE}}</span></div>
+  </div>
+
+  <div class="panel videoPanel">
+    <video controls preload="metadata" src="/m/{{MEDIA}}"></video>
+    <div class="cap">Recording — a live pass over the federal demand relevant to {{FIRM_SHORT}}, within {{GEO_DESC}}.</div>
+  </div>
+
+  <section>
+    <div class="secEyebrow">The market on record</div>
+    <h2>Federal demand within {{GEO_DESC}}</h2>
+    <p class="secSub">Counts and dollars below are the federal government&rsquo;s own procurement records for firms whose active or recent work is relevant to {{FIRM_POSS}} line. No estimates, no projections.</p>
+
+    <div class="statGrid">
+      <div><div class="v num">{{UNIVERSE}}</div><div class="l">relevant firms in the market</div></div>
+      <div><div class="v num">{{ACTIVE_FIRMS}}</div><div class="l">holding awards in force today — <span class="num">{{ACTIVE_DOLLARS}}</span> committed</div></div>
+      <div><div class="v num">{{BETWEEN_FIRMS}}</div><div class="l">worked FY25–26, currently between awards here — <span class="num">{{BETWEEN_DOLLARS}}</span> in recent actions</div></div>
+      <div><div class="v num">{{SAM_PCT}}<small>%</small></div><div class="l">of the between-awards set holds an active SAM registration</div></div>
+    </div>
+    <div class="subStats">
+      <span><span class="num">{{RECENT12_PCT}}%</span> saw contract action within the last 12 months</span>
+      <span><span class="num">{{VEHICLE_PCT}}%</span> hold a seat on a vehicle with an open ordering period</span>
+    </div>
+
+    <div class="split">
+      <div class="figure">
+        <div class="figTitle">Firms with awards in force</div>
+        <div class="figSub">by reported employee count</div>
+        {{BANDS_ACTIVE}}
+      </div>
+      <div class="figure">
+        <div class="figTitle">Firms between awards</div>
+        <div class="figSub">by reported employee count</div>
+        {{BANDS_BETWEEN}}
+      </div>
+    </div>
+  </section>
+
+  <div class="method">
+    <div class="mh">Method</div>
+    <p><b>Awards in force</b> — {{WINDOW_ACTIVE}}.</p>
+    <p><b>Between awards</b> — {{WINDOW_BETWEEN}}.</p>
+    <p>Source: the federal procurement record (FPDS / USAspending / SAM). Firm identities within this market are held for direct discussion.</p>
+    <p class="stamp">Artifact {{ARTIFACT}}</p>
+  </div>
+
+  <footer>
+    <div class="f1">Government Contracted</div>
+    <div class="f2">This memorandum was prepared for {{FIRM_TITLE}} and is not for redistribution.</div>
+  </footer>
+
+</main>
+
+<script>
+(function(){
+  var t = "{{TOKEN}}";
+  function send(e){
+    try{
+      navigator.sendBeacon("/v/" + t, new Blob([JSON.stringify({e: e})], {type: "application/json"}));
+    }catch(_e){}
+  }
+  send("open");
+  var v = document.querySelector("video");
+  if(v){
+    var seen = {};
+    function once(k){ if(!seen[k]){ seen[k] = 1; send(k); } }
+    v.addEventListener("play", function(){ once("play"); });
+    v.addEventListener("timeupdate", function(){
+      if(!v.duration) return;
+      var p = v.currentTime / v.duration;
+      if(p >= 0.25) once("p25");
+      if(p >= 0.5) once("p50");
+      if(p >= 0.75) once("p75");
+    });
+    v.addEventListener("ended", function(){ once("end"); });
+  }
+})();
+</script>
+</body>
+</html>
