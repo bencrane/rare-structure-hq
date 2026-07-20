@@ -360,18 +360,6 @@ const COLUMNS: Column[] = [
     ),
   },
   {
-    header: "Top Prime Combos",
-    width: 150,
-    align: "left",
-    cell: (r) => <ComboList combos={r.top3Prime} />,
-  },
-  {
-    header: "Top Prime Combo JTBDs",
-    width: 250,
-    align: "left",
-    cell: (r) => <JtbdList jtbds={r.primeJtbds} />,
-  },
-  {
     header: "Top Subbed Under Combos",
     width: 150,
     align: "left",
@@ -382,6 +370,18 @@ const COLUMNS: Column[] = [
     width: 250,
     align: "left",
     cell: (r) => <JtbdList jtbds={r.subJtbds} muted />,
+  },
+  {
+    header: "Top Prime Combos",
+    width: 150,
+    align: "left",
+    cell: (r) => <ComboList combos={r.top3Prime} />,
+  },
+  {
+    header: "Top Prime Combo JTBDs",
+    width: 250,
+    align: "left",
+    cell: (r) => <JtbdList jtbds={r.primeJtbds} />,
   },
   {
     header: "Total $",
