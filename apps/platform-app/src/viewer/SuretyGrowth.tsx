@@ -106,7 +106,8 @@ export function SuretyGrowth() {
   }, [selected, mult, minM, maxM]);
 
   return (
-    <div style={{ maxWidth: 980 }}>
+    <div style={{ padding: "40px 48px", maxWidth: 1150 }}>
+      <h1 style={{ fontSize: 22, margin: "0 0 6px" }}>Surety Growth — construction cohorts</h1>
       <p style={{ fontSize: 11, color: "#aaa", margin: "0 0 18px" }}>
         baked {data.as_of} · {data.artifact.replace("query-sidecar/", "")} · prime obligations,
         last 12mo vs prior 24mo (months 13–36) · pair-sets: hq/data-cache/surety/construction_pairsets_v1
