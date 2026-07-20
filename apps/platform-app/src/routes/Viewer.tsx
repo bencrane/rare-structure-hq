@@ -24,7 +24,9 @@ import { MedStaffPairs } from "@/viewer/MedStaffPairs";
 import { PairAssignment } from "@/viewer/PairAssignment";
 import { PairCuration } from "@/viewer/PairCuration";
 import { PaymentComboPairs } from "@/viewer/PaymentComboPairs";
+import { SuretyGrowth } from "@/viewer/SuretyGrowth";
 import { PaymentRegimes } from "@/viewer/PaymentRegimes";
+import { StaffingMarket } from "@/viewer/StaffingMarket";
 import { StaffingPairs } from "@/viewer/StaffingPairs";
 import { SubawardeeMarket } from "@/viewer/SubawardeeMarket";
 import { TerritoryMap } from "@/viewer/TerritoryMap";
@@ -33,6 +35,18 @@ import { TranspoPairs } from "@/viewer/TranspoPairs";
 import { WasteEnvPairs } from "@/viewer/WasteEnvPairs";
 
 const TABS: { key: string; label: string; sub: string; body: () => React.ReactNode }[] = [
+  {
+    key: "staffing-market",
+    label: "Staffing Market",
+    sub: "178 firms · SOC vs collection sizing",
+    body: () => <StaffingMarket />,
+  },
+  {
+    key: "subawardee-market",
+    label: "Subawardee Market",
+    sub: "FY23–25 ≥$1M total · filterable firms",
+    body: () => <SubawardeeMarket />,
+  },
   {
     key: "window",
     label: "2022 – 2025",
@@ -76,16 +90,16 @@ const TABS: { key: string; label: string; sub: string; body: () => React.ReactNo
     body: () => <TerritoryMap />,
   },
   {
+    key: "surety-growth",
+    label: "Surety Growth",
+    sub: "construction growth cohorts · dials",
+    body: () => <SuretyGrowth />,
+  },
+  {
     key: "payment-combo-pairs",
     label: "Combo Lookup",
     sub: "pricing × financing → ranked pairs",
     body: () => <PaymentComboPairs />,
-  },
-  {
-    key: "subawardee-market",
-    label: "Subawardee Market",
-    sub: "FY23–25 ≥$1M total · filterable firms",
-    body: () => <SubawardeeMarket />,
   },
   {
     key: "bucket-explorer",
@@ -172,6 +186,11 @@ export default function Viewer() {
         gridTemplateColumns: "220px 1fr",
         minHeight: "100vh",
         minWidth: "fit-content",
+        // The document is color-scheme:dark (Stripe iframe rationale in index.css);
+        // this white-painted island must opt back to light or the UA renders its
+        // dark-scheme (near-white) selection highlight over white cells — the
+        // "whiteout on select/copy" bug.
+        colorScheme: "light",
         background: "#fff",
         color: "#1a1a1a",
         fontFamily: "-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif",
