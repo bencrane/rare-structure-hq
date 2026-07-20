@@ -66,28 +66,29 @@ export function SuretyGrowth() {
   };
 
   const { firms, newEntrants, bandRows, totalLast12k } = useMemo(() => {
-    // Aggregate per-firm across the selected markets (pair-union semantics).
-    const agg = new Map<string, { last12: number; prior24: number }>();
-    for (const [market, uei, last12, prior24] of data.rows) {
-      if (!selected.has(market)) continue;
-      const a = agg.get(uei) ?? { last12: 0, prior24: 0 };
-      a.last12 += last12;
-      a.prior24 += prior24;
-      agg.set(uei, a);
-    }
+    // PER-LANE qualification (operator ruling 2026-07-19): a firm appears if it clears the
+    // dials in ANY selected market — multi-select widens the net, never blends a firm's
+    // lanes against each other. A firm qualifying in several lanes shows its largest
+    // qualifying lane (deduped by uei).
     const lo = minM * 1000;
     const hi = maxM * 1000;
-    const grown: { uei: string; last12: number; prior24: number; ratio: number }[] = [];
-    let newcomers = 0;
-    for (const [uei, a] of agg) {
-      if (a.last12 < lo || a.last12 > hi) continue;
-      if (a.prior24 <= 0) {
-        if (a.last12 > 0) newcomers += 1;
+    const best = new Map<string, { last12: number; prior24: number; ratio: number; market: string }>();
+    const newcomerSet = new Set<string>();
+    for (const [market, uei, last12, prior24] of data.rows) {
+      if (!selected.has(market)) continue;
+      if (last12 < lo || last12 > hi) continue;
+      if (prior24 <= 0) {
+        if (last12 > 0) newcomerSet.add(uei);
         continue;
       }
-      const ratio = a.last12 / a.prior24;
-      if (ratio >= mult) grown.push({ uei, last12: a.last12, prior24: a.prior24, ratio });
+      const ratio = last12 / prior24;
+      if (ratio < mult) continue;
+      const cur = best.get(uei);
+      if (!cur || last12 > cur.last12) best.set(uei, { last12, prior24, ratio, market });
     }
+    const grown = [...best.entries()].map(([uei, a]) => ({ uei, ...a }));
+    for (const u of best.keys()) newcomerSet.delete(u);
+    const newcomers = newcomerSet.size;
     grown.sort((x, y) => y.last12 - x.last12);
     const bands = BANDS.map(([label, blo, bhi]) => {
       const inBand = grown.filter((g) => g.last12 >= blo && g.last12 < bhi);
@@ -192,6 +193,7 @@ export function SuretyGrowth() {
           <tr style={{ textAlign: "left", color: "#888", fontSize: 11.5, textTransform: "uppercase", letterSpacing: "0.06em" }}>
             <th style={{ padding: "6px 10px 6px 0" }}>Firm</th>
             <th style={{ padding: "6px 10px" }}>UEI</th>
+            <th style={{ padding: "6px 10px" }}>Qualifying lane</th>
             <th style={{ padding: "6px 10px", textAlign: "right" }}>Last 12</th>
             <th style={{ padding: "6px 10px", textAlign: "right" }}>Prior 24</th>
             <th style={{ padding: "6px 10px", textAlign: "right" }}>Growth</th>
@@ -204,6 +206,7 @@ export function SuretyGrowth() {
                 {data.names[f.uei] ?? <span style={{ color: "#999" }}>—</span>}
               </td>
               <td style={{ padding: "8px 10px", fontFamily: "ui-monospace, monospace", fontSize: 12.5 }}>{f.uei}</td>
+              <td style={{ padding: "8px 10px", fontSize: 12, color: "#777" }}>{data.markets[f.market] ?? f.market}</td>
               <td style={{ padding: "8px 10px", textAlign: "right", fontVariantNumeric: "tabular-nums", fontWeight: 600 }}>{fmt$(f.last12)}</td>
               <td style={{ padding: "8px 10px", textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{fmt$(f.prior24)}</td>
               <td style={{ padding: "8px 10px", textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{f.ratio >= 100 ? `${Math.round(f.ratio)}×` : `${f.ratio.toFixed(1)}×`}</td>
