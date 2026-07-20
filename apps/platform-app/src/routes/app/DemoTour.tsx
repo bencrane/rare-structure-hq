@@ -32,7 +32,11 @@ import { FacilitiesAwardsMapView } from "@/demo/FacilitiesAwardsMapView";
 import { FederalEstateMapView } from "@/demo/FederalEstateMapView";
 import { FirmPortraitView } from "@/demo/FirmPortraitView";
 import { HoleView } from "@/demo/HoleView";
+import constrMapHistorical from "@/demo/constr-map-historical.json";
+import constrMapSince from "@/demo/constr-map-since.json";
 import ironMiragePie from "@/demo/iron-mirage-pie.json";
+import ironYearMaps from "@/demo/iron-year-maps.json";
+import { IronSurgeView } from "@/demo/IronSurgeView";
 import waveObbbaLong from "@/demo/wave-obbba-long.json";
 import facilities56Pie from "@/demo/facilities-56-pie.json";
 import facilitiesServicesPie from "@/demo/facilities-services-pie.json";
@@ -331,35 +335,191 @@ export default function DemoTour() {
           <SeptSprintView />
         ) : activeState.status === "done" && active && active.kind === "hole" ? (
           <HoleView />
+        ) : activeState.status === "done" && active && active.kind === "dhs-buildout" ? (
+          <ThesisView
+            kicker="The second engine"
+            title="The $50B nobody read"
+            subtitle="h.r.1 · the same bill everyone watched · dhs facilities program"
+            lines={[
+              {
+                amount: "~$50B",
+                label: "New federal facilities — DHS",
+                detail:
+                  "The bill everyone watched for the wall also funds the largest federal facilities expansion in decades",
+              },
+              {
+                amount: "Sep 2029",
+                label: "Statutory obligation deadline",
+                detail:
+                  "Five-year money with a hard clock — the program must move, and it has already started",
+              },
+              {
+                amount: "39¢",
+                label: "Of every facilities dollar is guards",
+                detail:
+                  "New square footage lands first in this market's biggest category: guarding, then cleaning, feeding, waste",
+              },
+            ]}
+            statement="New federal square footage is permanent new services demand. Every facility this program builds needs guards, custodians, and operators — every year, for as long as it stands."
+            footer="public record · p.l. 119-21 · program figures per enrolled text"
+          />
+        ) : activeState.status === "done" && active && active.kind === "dhs-growth" ? (
+          <ThesisView
+            kicker="Already moving"
+            title="DHS — the fastest-growing buyer in the market"
+            subtitle="dhs facilities-services obligations · 12 months before vs since signing"
+            lines={[
+              {
+                amount: "+40%",
+                label: "DHS facilities services, year one",
+                detail: "$3.6B in the twelve months before the signature → $5.0B in the twelve since",
+              },
+              {
+                amount: "+$1.4B",
+                label: "Of new annual run-rate",
+                detail: "Landing in guard services, station support, and facility operations",
+              },
+              {
+                amount: "824 → more",
+                label: "The estate is growing",
+                detail:
+                  "The first market-wide expansion of guarded federal square footage in a generation",
+              },
+            ]}
+            statement="This is the buildout arriving in the services data — before most of the program's money has even been obligated."
+            footer="figures from the pinned snapshot · buyer = awarding agency dhs (070) · psc s-codes"
+          />
+        ) : activeState.status === "done" && active && active.kind === "facilities-dropmic" ? (
+          <ThesisView
+            kicker="Three streams, one set of names"
+            title="Every stream becomes an invoice to the Treasury"
+            subtitle="the annuity · the catch-up · the buildout"
+            lines={[
+              {
+                amount: "$19B/yr",
+                label: "The annuity that never stops",
+                detail: "A billion a month, five years without a bad month — the floor gets cleaned regardless",
+              },
+              {
+                amount: "~$2B",
+                label: "The funded catch-up",
+                detail:
+                  "Missed beats on signed DoD contracts, money law since February 3rd — accruing, not vanishing",
+              },
+              {
+                amount: "~$50B",
+                label: "The buildout on a clock",
+                detail: "New DHS square footage through 2029 — permanent new demand in the market's biggest category",
+              },
+            ]}
+            statement="Three streams are converging on the same fragmented middle — firms with payroll every two weeks and a customer who pays in thirty-plus. Someone has to carry that payroll until the Treasury pays. We know their names, their contracts, and their renewal dates."
+            footer="synthesis of the pinned figures in this walkthrough"
+          />
+        ) : activeState.status === "done" && active && active.kind === "iron-surge" ? (
+          <IronSurgeView />
+        ) : activeState.status === "done" && active && active.kind === "constr-map-historical" ? (
+          <MoneyMapView
+            snap={constrMapHistorical as never}
+            kicker="The map, before"
+            title="A normal year of federal construction"
+            subtitle="3-yr annual average by place of performance · naics 23"
+            scaleMaxB={21.07}
+          />
+        ) : activeState.status === "done" && active && active.kind === "constr-map-since" ? (
+          <MoneyMapView
+            snap={constrMapSince as never}
+            kicker="The map, since"
+            title="The twelve months since the signature"
+            subtitle="since 2025-07-04 by place of performance · naics 23 · same dot scale"
+            scaleMaxB={21.07}
+          />
+        ) : activeState.status === "done" && active && active.kind === "iron-year-map" ? (
+          (() => {
+            const yearKey = active.id === "iw-map-since" ? "since" : `y${active.id.slice(7)}`;
+            const iym = ironYearMaps as unknown as {
+              artifact: string;
+              windows: Record<string, string>;
+              years: Record<string, unknown[]>;
+            };
+            const isSince = yearKey === "since";
+            return (
+              <MoneyMapView
+                snap={
+                  {
+                    since: iym.windows[yearKey],
+                    artifact: iym.artifact,
+                    states: iym.years[yearKey],
+                  } as never
+                }
+                kicker={isSince ? "The signature" : "Federal construction, that year"}
+                title={
+                  isSince
+                    ? "The year since — the map detonates"
+                    : `${iym.windows[yearKey].slice(0, 4)} — same map as always`
+                }
+                subtitle={`naics 23 · place of performance · ${iym.windows[yearKey]}`}
+                scaleMaxB={21.07}
+              />
+            );
+          })()
+        ) : activeState.status === "done" && active && active.kind === "iron-bill" ? (
+          <ThesisView
+            kicker="What performs it"
+            title="The iron bill on year one alone"
+            subtitle="derived from the since-signing wins · construction-iron scope"
+            lines={[
+              {
+                amount: "$63.4B",
+                label: "New iron-scope work since the signature",
+                detail:
+                  "Every dollar of it flagged as machine-performed — earthmoving, cranes, lifts, heavy haul",
+              },
+              {
+                amount: "68¢",
+                label: "Of each dollar is non-labor",
+                detail:
+                  "BEA cost structure for construction: ~32¢ compensation; the rest is materials, subs — and machines",
+              },
+              {
+                amount: "$10–16B",
+                label: "Of machine time to perform it",
+                detail:
+                  "At heavy-civil equipment cost shares of 15–25% of contract value — owned, rented, or financed",
+              },
+            ]}
+            statement="Ten to sixteen billion dollars of equipment demand, created in twelve months, concentrated in firms that don't have megacap balance sheets. The machines get bought, leased, or financed — there is no fourth option."
+            footer="derived · bea comp-share 31.8% (naics_labor_share) · equipment share range per industry cost structures"
+          />
         ) : activeState.status === "done" && active && active.kind === "iron-mirage" ? (
           <ConstrPieView
             snap={ironMiragePie as never}
             kicker="The mirage"
-            title="47 firms hold 80% of the wave"
-            subtitle="active heavy-civil awards · by firm band · obligated $"
+            title="94 firms hold 82% of the iron book"
+            subtitle="active construction-iron awards · by firm band · obligated $"
             centerLabel="active book"
           />
         ) : activeState.status === "done" && active && active.kind === "iron-book" ? (
           <ThesisView
             kicker="Right now"
             title="The middle's book, as it sits today"
-            subtitle="mid-market heavy-civil primes · active awards · $1–150m open books"
+            subtitle="mid-market construction primes · construction-iron scope · $1–150m open books"
             lines={[
               {
-                amount: "490",
+                amount: "959",
                 label: "Firms holding live paper",
-                detail: "Regional heavy-civil primes — winning federal awards directly, not as subs",
+                detail: "Regional construction primes — winning federal awards directly, not as subs",
               },
               {
-                amount: "929",
+                amount: "2,535",
                 label: "Active awards, right now",
-                detail: "Roads, border packages, utilities, dams, airfields — work in performance today",
+                detail:
+                  "Roads, border packages, buildings, hospitals, dams — work in performance today",
               },
               {
-                amount: "$16.2B",
-                label: "Signed capacity — $9.1B funded",
+                amount: "$82.3B",
+                label: "Signed capacity — $17.8B funded",
                 detail:
-                  "Another $7B of ceiling already under contract, funding as the work rolls forward",
+                  "The rest is ceiling already under contract, funding as the work rolls forward",
               },
             ]}
             statement="Every dollar of it is performed with machines. The award is public; the iron it requires is not yet on their balance sheets."
@@ -368,27 +528,27 @@ export default function DemoTour() {
         ) : activeState.status === "done" && active && active.kind === "iron-dropmic" ? (
           <ThesisView
             kicker="The names"
-            title="The headlines belong to 47 companies. The market doesn't."
+            title="The headlines belong to 94 companies. The market doesn't."
             subtitle="mid-market heavy-civil primes · new work since the signature"
             lines={[
               {
-                amount: "$1.13B",
+                amount: "$3.3B",
                 label: "To grade, pave & build roads and bridges",
                 detail: "Paving crews on new highways — and resurfacing the ones already there",
               },
               {
-                amount: "$0.48B",
-                label: "To move earth at the border",
-                detail: "Heavy-civil crews — earthworks and structures behind the barrier",
+                amount: "$2.7B",
+                label: "To move earth — the border and beyond",
+                detail: "Non-building earthworks and structures: excavators, dozers, haul trucks",
               },
               {
-                amount: "$0.36B",
-                label: "To pour dams, cut canals, dredge waterways",
-                detail: "Concrete placement, channel excavation, marine dredge crews",
+                amount: "$4.3B",
+                label: "To raise & renovate the buildings themselves",
+                detail: "Hospitals, offices, base facilities — crane and lift work, top to bottom",
               },
             ]}
-            statement="Every one of those awards is performed with iron — excavators, dozers, cranes — and iron gets financed. We know their names, their awards, and their start dates."
-            footer="new obligations since 2025-07-04 · mid-market cohort · figures from the pinned snapshot"
+            statement="935 mid-market firms, $16.3B of new federal work since the signature — and every dollar of it is performed with iron: excavators, dozers, cranes, lifts. Iron gets financed. We know their names, their awards, and their start dates."
+            footer="new obligations since 2025-07-04 · construction-iron scope · figures from the pinned snapshot"
           />
         ) : activeState.status === "done" && active && active.kind === "wave-long" ? (
           <WaveView

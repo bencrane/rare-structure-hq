@@ -1,28 +1,28 @@
 {
-  "scope": "gtm_open_awards · heavy-civil scope (naics 237*/238910 + 236220 on Y1L/Y1P/Z2L/Z2P) · active awards · by firm band (total open obligation)",
+  "scope": "gtm_open_awards × construction-iron scope (equipment-needs buckets: earthmoving/aerial/trucks/cranes · naics 23 gate) · by firm band (total open obligation)",
   "window": "active book · as of 2026-07-06",
   "artifact": "query-sidecar/query_sidecar_20260713T043612Z.duckdb",
   "slices": [
     {
       "key": "mega",
       "label": "The mega tier",
-      "sub": "→ the firms in the headlines — national primes on the barrier packages",
-      "oblB": 38.3,
-      "firms": 47
+      "sub": "→ the firms in the headlines — national primes, >$150M open books",
+      "oblB": 79.5,
+      "firms": 94
     },
     {
       "key": "middle",
       "label": "The middle",
-      "sub": "→ regional heavy-civil primes: $1–150M open books, winning directly",
-      "oblB": 9.1,
-      "firms": 490
+      "sub": "→ regional construction primes: $1–150M open books, winning directly",
+      "oblB": 17.8,
+      "firms": 959
     },
     {
       "key": "micro",
       "label": "The tail",
       "sub": "→ small and single-award holders",
-      "oblB": 0.1,
-      "firms": 563
+      "oblB": 0.2,
+      "firms": 1024
     }
   ]
 }
