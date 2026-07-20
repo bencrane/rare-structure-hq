@@ -1,0 +1,18 @@
+{
+  "scope": "naics 23 (all agencies) · gtm_txn_events_slim · each month since signing vs the same month's 3-year average (2022-07 → 2025-06)",
+  "artifact": "query-sidecar/query_sidecar_20260713T043612Z.duckdb",
+  "months": [
+    { "label": "Jul", "actualB": 5.58, "avgB": 4.65 },
+    { "label": "Aug", "actualB": 5.13, "avgB": 4.9 },
+    { "label": "Sep", "actualB": 19.21, "avgB": 17.01 },
+    { "label": "Oct", "actualB": 0.88, "avgB": 1.11 },
+    { "label": "Nov", "actualB": 2.48, "avgB": 2.0 },
+    { "label": "Dec", "actualB": 7.86, "avgB": 2.79 },
+    { "label": "Jan", "actualB": 4.42, "avgB": 2.19 },
+    { "label": "Feb", "actualB": 1.55, "avgB": 2.53 },
+    { "label": "Mar", "actualB": 9.97, "avgB": 3.47 },
+    { "label": "Apr", "actualB": 4.37, "avgB": 3.61 },
+    { "label": "May", "actualB": 4.93, "avgB": 3.65 },
+    { "label": "Jun", "actualB": 6.72, "avgB": 3.53 }
+  ]
+}

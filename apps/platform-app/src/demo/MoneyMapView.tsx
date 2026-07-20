@@ -57,16 +57,19 @@ export function MoneyMapView({
   kicker = "Where the money lands",
   title,
   subtitle,
+  scaleMaxB,
 }: {
   snap?: Snap;
   kicker?: string;
   title?: string;
   subtitle?: string;
+  /** Pin the dot scale (e.g. across a before/after card pair). */
+  scaleMaxB?: number;
 }) {
   const SNAP = snap;
   const [selected, setSelected] = useState<string | null>(null);
   const total = SNAP.states.reduce((s, r) => s + r.oblB, 0);
-  const maxB = SNAP.states[0]?.oblB ?? 1;
+  const maxB = scaleMaxB ?? SNAP.states[0]?.oblB ?? 1;
   const dots = SNAP.states
     .map((s) => {
       const c = CENTROIDS[s.state];
@@ -158,17 +161,19 @@ export function MoneyMapView({
                   >
                     {s.state} · ${s.oblB.toFixed(1)}B
                   </text>
-                  <text
-                    x={lx}
-                    y={ly + 13}
-                    textAnchor={anchor}
-                    fontSize={10}
-                    fontFamily="var(--font-mono, monospace)"
-                    fill="var(--color-text-muted)"
-                    style={{ textTransform: "uppercase", letterSpacing: "0.04em" }}
-                  >
-                    ${s.topComboB?.toFixed(1)}B {firstClause(s.topWork)}
-                  </text>
+                  {s.topComboB != null ? (
+                    <text
+                      x={lx}
+                      y={ly + 13}
+                      textAnchor={anchor}
+                      fontSize={10}
+                      fontFamily="var(--font-mono, monospace)"
+                      fill="var(--color-text-muted)"
+                      style={{ textTransform: "uppercase", letterSpacing: "0.04em" }}
+                    >
+                      ${s.topComboB.toFixed(1)}B {firstClause(s.topWork)}
+                    </text>
+                  ) : null}
                 </g>
               );
             })}

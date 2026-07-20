@@ -54,7 +54,15 @@ export type BeatKind =
   | "wave-long"
   | "iron-mirage"
   | "iron-book"
-  | "iron-dropmic";
+  | "iron-dropmic"
+  | "iron-surge"
+  | "constr-map-historical"
+  | "constr-map-since"
+  | "iron-year-map"
+  | "dhs-buildout"
+  | "dhs-growth"
+  | "facilities-dropmic"
+  | "iron-bill";
 
 export type Beat = {
   id: string;
@@ -166,51 +174,119 @@ const EQUIPMENT_FINANCE: Narrative = {
   blurb:
     "OBBBA money → the obligation wave → the dirt-iron combos it lands in — the demand curve behind equipment paper.",
   status: "draft",
+  // Everything parked under Archive while the arc is re-sequenced piece by piece.
   beats: [
     {
+      id: "iw-map-2020",
+      act: "Act 1",
+      title: "2020–21 — the map",
+      phrase: "construction $ by pop state · 2020-07 → 2021-07 · snapshot",
+      kind: "iron-year-map",
+    },
+    {
+      id: "iw-map-2021",
+      act: "Act 1",
+      title: "2021–22 — the map",
+      phrase: "construction $ by pop state · 2021-07 → 2022-07 · snapshot",
+      kind: "iron-year-map",
+    },
+    {
+      id: "iw-map-2022",
+      act: "Act 1",
+      title: "2022–23 — the map",
+      phrase: "construction $ by pop state · 2022-07 → 2023-07 · snapshot",
+      kind: "iron-year-map",
+    },
+    {
+      id: "iw-map-2023",
+      act: "Act 1",
+      title: "2023–24 — the map",
+      phrase: "construction $ by pop state · 2023-07 → 2024-07 · snapshot",
+      kind: "iron-year-map",
+    },
+    {
+      id: "iw-map-2024",
+      act: "Act 1",
+      title: "2024–25 — the map",
+      phrase: "construction $ by pop state · 2024-07 → 2025-07 · snapshot",
+      kind: "iron-year-map",
+    },
+    {
+      id: "iw-map-since",
+      act: "Act 1",
+      title: "The year since — the map detonates",
+      phrase: "construction $ by pop state · since 2025-07-04 · snapshot",
+      kind: "iron-year-map",
+    },
+    ...EQUIPMENT_YARD.beats
+      .filter((b) => b.id === "thesis-obbba")
+      .map((b): Beat => ({ ...b, act: "Act 1" })),
+    {
+      id: "iron-mirage",
+      act: "Act 1",
+      title: "94 firms hold 82% — the mirage",
+      phrase: "active construction-iron awards by firm band · snapshot",
+      kind: "iron-mirage",
+    },
+    {
+      id: "iron-bill",
+      act: "Act 1",
+      title: "The iron bill — $10–16B",
+      phrase: "derived: iron-scope wins × bea non-labor share × equipment cost share",
+      kind: "iron-bill",
+    },
+    ...([
+    {
       id: "ef-sector-pie",
-      act: "Act 1 · The standing order",
       title: "$2.26T — the standing order",
       phrase: "all $ by naics sector · 2022-07-04 → 2025-07-03 · snapshot",
       kind: "sector-pie",
     },
     {
       id: "ef-constr-pie",
-      act: "Act 1 · The standing order",
       title: "Construction — the historical split",
       phrase: "construction $ by psc-family bucket · fy23–fy25 · snapshot",
       kind: "constr-pie",
     },
-    ...EQUIPMENT_YARD.beats.filter((b) => ["thesis-obbba", "wave-obbba"].includes(b.id)),
+    ...EQUIPMENT_YARD.beats.filter((b) => ["wave-obbba"].includes(b.id)),
+    {
+      id: "iron-surge",
+      title: "The year since vs history",
+      phrase: "monthly construction $ vs 3yr same-month avg · since signing · snapshot",
+      kind: "iron-surge",
+    },
+    {
+      id: "constr-map-historical",
+      title: "The map, historically",
+      phrase: "construction $ by pop state · 3yr annual avg · snapshot",
+      kind: "constr-map-historical",
+    },
+    {
+      id: "constr-map-since",
+      title: "The map, since signing",
+      phrase: "construction $ by pop state · since 2025-07-04 · snapshot",
+      kind: "constr-map-since",
+    },
     {
       id: "wave-obbba-long",
-      act: "Act 1 · The thesis",
       title: "The jump — four years of context",
       phrase: "monthly obligations · dhs × horizontal construction · 2022→ · snapshot",
       kind: "wave-long",
     },
     ...EQUIPMENT_YARD.beats.filter((b) => ["money-map", "flow-national"].includes(b.id)),
     {
-      id: "iron-mirage",
-      act: "Act 2 · The mirage",
-      title: "47 firms hold 80% — the mirage",
-      phrase: "active heavy-civil awards by firm band · snapshot",
-      kind: "iron-mirage",
-    },
-    {
       id: "iron-book",
-      act: "Act 2 · The mirage",
       title: "The middle's book — right now",
-      phrase: "490 mid firms · 929 active awards · obligated vs ceiling · snapshot",
+      phrase: "959 mid firms · 2,535 active awards · obligated vs ceiling · snapshot",
       kind: "iron-book",
     },
     {
       id: "iron-dropmic",
-      act: "Act 3 · The names",
       title: "We know their names",
-      phrase: "mid-market heavy-civil primes · new work since signing · snapshot",
+      phrase: "mid-market construction-iron primes · new work since signing · snapshot",
       kind: "iron-dropmic",
     },
+  ] as Omit<Beat, "act">[]).map((b): Beat => ({ ...b, act: "Archive" })),
   ],
 };
 
@@ -525,7 +601,7 @@ const CAPITAL_ARC: Narrative = {
   beats: [
     {
       id: "cp-thesis",
-      act: "Act 1 · The signature",
+      act: "Act 1",
       title: "OBBBA — signed into law",
       phrase: "h.r.1 enrolled text · signed 2025-07-04 · public record",
       kind: "cp-thesis",
@@ -589,6 +665,242 @@ const CAPITAL_ARC: Narrative = {
   ],
 };
 
+
+// ── Narrative 8 · Facilities v2 — the tight end-to-end arc (2026-07-14) ──────
+const FACILITIES_V2: Narrative = {
+  id: "facilities-v2",
+  title: "The Facilities Floor · v2",
+  audience: "Capital providers / factoring · AR — facilities services",
+  blurb:
+    "The $20B annuity → the metronome → one buyer goes dark → the funded catch-up → the $50B buildout on a deadline → the firms carrying payroll until it pays.",
+  status: "draft",
+  beats: [
+    {
+      id: "fv2-ocean",
+      act: "Act 1 · The ocean",
+      title: "$2.26T — the standing order",
+      phrase: "all $ by naics sector · 3yr pre-obbba · snapshot",
+      kind: "sector-pie",
+    },
+    {
+      id: "facilities-services-pie",
+      act: "Act 1 · The ocean",
+      title: "The unsexy $20B — what the work is",
+      phrase: "naics 56 × psc s · $ by psc · 3yr pre-obbba · snapshot",
+      kind: "facilities-services-pie",
+    },
+    {
+      id: "facilities-awards-map",
+      act: "Act 1 · The ocean",
+      title: "Real contracts, running right now",
+      phrase: "12 named active s-code awards · pop lat/lon · snapshot",
+      kind: "facilities-awards-map",
+    },
+    {
+      id: "boring-2023",
+      act: "Act 2 · The metronome",
+      title: "2023 — a billion a month",
+      phrase: "monthly s-code obligations · calendar 2023 · snapshot",
+      kind: "boring-year",
+    },
+    {
+      id: "boring-2024",
+      act: "Act 2 · The metronome",
+      title: "2024 — best year yet",
+      phrase: "monthly s-code obligations · calendar 2024 · snapshot",
+      kind: "boring-year",
+    },
+    {
+      id: "boring-2025",
+      act: "Act 2 · The metronome",
+      title: "2025 — hotter still",
+      phrase: "monthly s-code obligations · jan–sep 2025 · snapshot",
+      kind: "boring-year",
+    },
+    {
+      id: "dod-split",
+      act: "Act 2 · The reveal",
+      title: "Half of it is one buyer",
+      phrase: "s-code $ dod vs civilian · fy23–25 · snapshot",
+      kind: "dod-split",
+    },
+    {
+      id: "estate-map",
+      act: "Act 2 · The reveal",
+      title: "824 places you've never been",
+      phrase: "federal_sites · gsa buildings + military bases · snapshot",
+      kind: "estate-map",
+    },
+    {
+      id: "boring-2025-oct",
+      act: "Act 3 · The knife",
+      title: "October — the metronome stops",
+      phrase: "monthly s-code obligations · jan–oct 2025 · snapshot",
+      kind: "boring-year",
+    },
+    {
+      id: "recovery-steps",
+      act: "Act 3 · The knife",
+      title: "Everyone recovered — except one lane",
+      phrase: "dod $ by lane vs fy25 avg · oct→dec 2025 · snapshot",
+      kind: "recovery-steps",
+    },
+    {
+      id: "facilities-catalyst",
+      act: "Act 4 · The spring",
+      title: "Feb 3 — the money is law",
+      phrase: "public law · dod approps $838.7b enacted 2026-02-03 · public record",
+      kind: "dod-catalyst",
+    },
+    {
+      id: "facilities-hole",
+      act: "Act 4 · The spring",
+      title: "The hole — what the metronome owes",
+      phrase: "dod s-code actual vs fy25 pace · oct–jan · snapshot",
+      kind: "hole",
+    },
+    {
+      id: "dhs-buildout",
+      act: "Act 4 · The second engine",
+      title: "The $50B nobody read",
+      phrase: "h.r.1 · dhs facilities program · obligation deadline 2029-09-30 · public record",
+      kind: "dhs-buildout",
+    },
+    {
+      id: "dhs-growth",
+      act: "Act 4 · The second engine",
+      title: "Already moving — DHS +40%",
+      phrase: "dhs s-code $ · 12mo before vs since signing · snapshot",
+      kind: "dhs-growth",
+    },
+    {
+      id: "middle-band",
+      act: "Act 5 · The firms",
+      title: "The middle — 1,379 firms",
+      phrase: "naics 56 × psc s · per-firm 3yr book banded · snapshot",
+      kind: "middle-band",
+    },
+    {
+      id: "cp-firm-simmons",
+      act: "Act 5 · The firms",
+      title: "One of them — Simmons & Golden",
+      phrase: "s-code obligations by fy + open awards · uei-level · snapshot",
+      kind: "firm-portrait",
+    },
+    {
+      id: "cp-deal-econ",
+      act: "Act 5 · The close",
+      title: "What one borrower is worth",
+      phrase: "derived: 1.75mo float × 90% advance · illustrative $10m federal book",
+      kind: "deal-econ",
+    },
+    {
+      id: "facilities-dropmic",
+      act: "Act 5 · The close",
+      title: "Three streams, one set of names",
+      phrase: "the annuity + the catch-up + the buildout · synthesis",
+      kind: "facilities-dropmic",
+    },
+  ],
+};
+
+
+// ── Narrative 9 · Iron Wave v2 — the tight end-to-end arc (2026-07-14) ───────
+const IRON_WAVE_V2: Narrative = {
+  id: "iron-wave-v2",
+  title: "The Iron Wave · v2",
+  audience: "Equipment finance / capital providers",
+  blurb:
+    "Fifty billion a year, every year → the signature → the detonation → the 94-firm mirage → the 959-firm middle → the $10–16B iron bill.",
+  status: "draft",
+  beats: [
+    {
+      id: "fv2-ocean",
+      act: "Act 1 · The ocean",
+      title: "$2.26T — the standing order",
+      phrase: "all $ by naics sector · 3yr pre-obbba · snapshot",
+      kind: "sector-pie",
+    },
+    {
+      id: "ef-constr-pie",
+      act: "Act 1 · The ocean",
+      title: "Construction — always huge, no surprise",
+      phrase: "construction $ by psc-family bucket · fy23–fy25 · snapshot",
+      kind: "constr-pie",
+    },
+    {
+      id: "iw-map-2022",
+      act: "Act 2 · The still water",
+      title: "2022–23 — the map",
+      phrase: "construction $ by pop state · 2022-07 → 2023-07 · snapshot",
+      kind: "iron-year-map",
+    },
+    {
+      id: "iw-map-2023",
+      act: "Act 2 · The still water",
+      title: "2023–24 — same map",
+      phrase: "construction $ by pop state · 2023-07 → 2024-07 · snapshot",
+      kind: "iron-year-map",
+    },
+    {
+      id: "iw-map-2024",
+      act: "Act 2 · The still water",
+      title: "2024–25 — same map again",
+      phrase: "construction $ by pop state · 2024-07 → 2025-07 · snapshot",
+      kind: "iron-year-map",
+    },
+    {
+      id: "thesis-obbba",
+      act: "Act 2 · The signature",
+      title: "OBBBA — $46.5B for the border",
+      phrase: "h.r.1 enrolled text · signed 2025-07-04 · public record",
+      kind: "thesis",
+    },
+    {
+      id: "iw-map-since",
+      act: "Act 2 · The signature",
+      title: "The year since — the map detonates",
+      phrase: "construction $ by pop state · since 2025-07-04 · snapshot",
+      kind: "iron-year-map",
+    },
+    {
+      id: "iron-surge",
+      act: "Act 2 · The signature",
+      title: "+42% — and that is the floor",
+      phrase: "monthly construction $ vs 3yr same-month avg · since signing · snapshot",
+      kind: "iron-surge",
+    },
+    {
+      id: "iron-mirage",
+      act: "Act 3 · The mirage",
+      title: "94 firms hold 82%",
+      phrase: "active construction-iron awards by firm band · snapshot",
+      kind: "iron-mirage",
+    },
+    {
+      id: "iron-book",
+      act: "Act 3 · The middle",
+      title: "959 firms · 2,535 live awards",
+      phrase: "mid firms · active awards · obligated vs ceiling · snapshot",
+      kind: "iron-book",
+    },
+    {
+      id: "iron-bill",
+      act: "Act 4 · The close",
+      title: "The iron bill — $10–16B",
+      phrase: "derived: iron-scope wins × bea non-labor share × equipment cost share",
+      kind: "iron-bill",
+    },
+    {
+      id: "iron-dropmic",
+      act: "Act 4 · The close",
+      title: "We know their names",
+      phrase: "mid-market construction-iron primes · new work since signing · snapshot",
+      kind: "iron-dropmic",
+    },
+  ],
+};
+
 export const NARRATIVES: Narrative[] = [
   EQUIPMENT_YARD,
   EQUIPMENT_FINANCE,
@@ -597,6 +909,8 @@ export const NARRATIVES: Narrative[] = [
   PROFSERVICES,
   MEDICAL_STAFFING,
   CAPITAL_ARC,
+  FACILITIES_V2,
+  IRON_WAVE_V2,
 ];
 
 export const getNarrative = (id: string | undefined): Narrative | null =>
